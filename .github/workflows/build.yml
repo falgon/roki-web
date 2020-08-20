@@ -1,5 +1,9 @@
 name: CI
 
+env:
+  SYSTEM_REPOSITORY_NAME: roki-web
+  SYSTEM_REPOSITORY: '${{ GITHUB_ACTOR }}/${{ SYSTEM_REPOSITORY_NAME }}'
+
 on:
   push:
     branches:
@@ -11,6 +15,7 @@ on:
       - master
 jobs:
   build:
+    if: ${{ SYSTEM_REPOSITORY }} == ${{ GITHUB_REPOSITORY }}
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
@@ -69,6 +74,7 @@ jobs:
         name: roki.dev
         path: docs.tar.xz
   deploy:
+    if: ${{ SYSTEM_REPOSITORY }} == ${{ GITHUB_REPOSITORY }}
     runs-on: ubuntu-latest
     needs: build
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
@@ -85,6 +91,7 @@ jobs:
         deploy_key: ${{ secrets.ACTIONS_DEPLOY_KEY }}
         publish_dir: ./docs
   page-insight:
+    if: ${{ SYSTEM_REPOSITORY }} == ${{ GITHUB_REPOSITORY }}
     runs-on: ubuntu-latest
     needs: deploy
     steps:
