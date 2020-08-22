@@ -1,0 +1,17 @@
+name: PR Merge CI for updating blog posts
+
+on:
+  pull_request:
+    branches: [master]
+    types: [opened]
+
+jobs:
+  merge:
+    runs-on: ubuntu-latest
+    if: github.head_ref == 'released-posts/roki.log' || github.head_ref == 'released-posts/roki.diary'
+    steps:
+    - name: Merging
+      uses: ridedott/merge-me-action@master
+      with:
+        GITHUB_LOGIN: github-actions
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
