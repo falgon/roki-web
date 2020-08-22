@@ -1,0 +1,23 @@
+name: PR CI (for roki.diary blog post)
+
+on:
+  push:
+    branches: [released-posts/roki.diary]
+
+env:
+  BLOG_NAME: roki.diary
+
+jobs:
+  post-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Create PR
+        uses: repo-sync/pull-request@v2
+        with:
+          pr_title: "Update Blog post"
+          pr_body: ":sparkles: Update new blog :page_facing_up: post :pencil2:"
+          pr_assignee: "falgon"
+          pr_label: "${{ env.BLOG_NAME }}/post update,post-update"
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
