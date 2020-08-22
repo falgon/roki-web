@@ -6,7 +6,7 @@ header-warn: この記事は, 旧ブログから移植された記事です. よ
 ---
 
 下記の通り, ロクロ回しをしてきました.
-中央の一番小さいものが私の作品です[^1].
+中央の一番小さいものが私の作品です [^1].
 主人によれば, 器の大きさによって器の大きさが示されるらしいです:thinking:
 
 <blockquote class="twitter-tweet tw-align-center"><p lang="ja" dir="ltr">ロクロ回しやってきた。主人の方はパソコンスクールの講師さんだった。まさか、ロクロ回しに行ってプログラミングの話をするとは…。 <a href="https://t.co/WSnJcNG0yp">pic.twitter.com/WSnJcNG0yp</a></p>&mdash; Roki (@530506) <a href="https://twitter.com/530506/status/853509025387773952?ref_src=twsrc%5Etfw">April 16, 2017</a></blockquote> <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
@@ -20,4 +20,4 @@ header-warn: この記事は, 旧ブログから移植された記事です. よ
 ロクロ回しと技術ネタ好きの相関もあるのかもしれませんね (ない).
 土が指をすり抜けていく感触が心地良かったです.
 
-[^1]: 両脇のものは彼女の作品です. 私より手が小さいのに何故そんな大きなものが作れるのか, 謎が深まるばかりでした.
+[^1]: 両脇のものは私のものではありませんが...私より手が小さいのに何故そんな大きなものが作れるのか, 謎が深まるばかりでした.
