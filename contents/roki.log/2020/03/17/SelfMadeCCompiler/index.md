@@ -44,10 +44,10 @@ Haskell で C コンパイラを作ってみたという単なる取り組みへ
 (ナップザック問題, 連結リストのマージソート, Fisher–Yates シャッフルとクイックソート,
 ライフゲームシミュレータ等).
 
-htcc は標準 C 言語[^2]の構文の他に, 一部の GNU 拡張の構文を実装している. 
+htcc は標準 C 言語 [^2] の構文の他に, 一部の GNU 拡張の構文を実装している. 
 例えば, [Statement Expression](https://gcc.gnu.org/onlinedocs/gcc/Statement-Exprs.html) はそのうちの一つである. 
 近年, Rust のような多くの"現代的な"言語は, 
-文の構文を式として捉えている[^3]が, Statement Expression はそれと同様の機能, 
+文の構文を式として捉えている [^3] が, Statement Expression はそれと同様の機能, 
 すなわち, C の compound-statement を式として捉える機能を提供する.
 また, [Conditionals with Omitted Operands](https://gcc.gnu.org/onlinedocs/gcc/Conditionals.html)
 もそのうちの一つである.
@@ -105,7 +105,7 @@ $ echo 'int printf(); int main() { printf("hello world!\n"); }' | stack exec htc
 ```
 
 htcc には, 内部で構築した構文木をベクタ画像として視覚化し,
-出力する機能を実装してある[^4].
+出力する機能を実装してある [^4].
 次の表は, 実行されるコマンドと出力されるベクタ画像の対応を示したものである.
 
 <div class="table-responsive">
@@ -185,7 +185,7 @@ C コンパイラはそれなりに動くところまで作れ, またモナド�
 今後は, 生成コードの最適化, 質の良いエラーと警告情報の提供,
 アドレスサニタイザに関して深掘りしていきたい.
 また, いわゆるプログラム論理として言われる分野の応用による,
-マルチステージプログラミング[^5]や, 定理証明支援等の分野には非常に興味があるため,
+マルチステージプログラミング [^5] や, 定理証明支援等の分野には非常に興味があるため,
 そのような方向へ広げていきたい.
 
 [^1]: [Why is writing a compiler in a functional language easier? - stack overflow](https://stackoverflow.com/questions/2906064/why-is-writing-a-compiler-in-a-functional-language-easier) より. なお, 同質問は [opnion-based](https://stackoverflow.com/help/closed-questions) とされているため文中ではこれを一部の認識としている. 
