@@ -2,7 +2,7 @@ name: PR CI (for roki.log blog post)
 
 on:
   push:
-    branches: [released-post/roki.log]
+    branches: [released-posts/roki.log]
 
 env:
   BLOG_NAME: roki.log
