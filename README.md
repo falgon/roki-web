@@ -9,13 +9,17 @@
 
 The roki's website and blog.
 
+* Website: [roki.dev](https://roki.dev)
+    * Tech blog: [roki.dev/roki.log](https://roki.dev/roki.log/)
+    * Diary: [roki.dev/roki.diary](https://roki.dev/roki.diary/)
+
 ## System overview
 
 ![system overview](https://user-images.githubusercontent.com/1241783/90969880-d99b8a00-e538-11ea-8f35-684365e14406.png)
 
 [GitHub Actions for GitHub pages](https://github.com/peaceiris/actions-gh-pages)
 has been very helpful in building this system. 
-Thanks for this project.
+Thanks for it.
 
 ## History
 
