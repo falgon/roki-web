@@ -48,7 +48,7 @@ and commits to a specific branch in that repository are triggered and pushed to 
 This makes it possible to make open source and keep drafts private, 
 improving and integrating the previously separated management form.
 
-## Liscense
+## License
 
 * [Bulma](https://bulma.io/): [MIT License](https://github.com/jgthms/bulma/blob/master/LICENSE)
 * [D3.js](https://d3js.org/): [BSD 3-Clause "New" or "Revised" License](https://github.com/d3/d3/blob/master/LICENSE)
