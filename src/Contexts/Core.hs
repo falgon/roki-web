@@ -60,6 +60,7 @@ authorCtx = constField "author-name" "Roki"
     <> constField "author-steam" "r0k1"
     <> constField "author-yukicoder" "3223"
     <> constField "author-teratail" "kjfkhfhgx"
+    <> constField "google-analytics" "UA-116653080-2"
     where
         fav = TL.unpack $ renderText $ 
             ul_ [style_ "margin: 0;", class_ "comma-list"] $ do
