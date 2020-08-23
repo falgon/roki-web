@@ -13,13 +13,44 @@ The roki's website and blog.
     * Tech blog: [roki.dev/roki.log](https://roki.dev/roki.log/)
     * Diary: [roki.dev/roki.diary](https://roki.dev/roki.diary/)
 
+## Usage
+
+```sh
+$ stack exec site -- --help
+Usage: site [--version] [--preview] [-v|--verbose] [--internal-links] COMMAND
+  The static site roki.dev compiler version 0.1.0.0 powerted by Hakyll
+
+Available options:
+  -h,--help                Show this help text
+  --version                Show version
+  --preview                Enable a preview flag
+  -v,--verbose             Run in verbose mode
+  --internal-links         Check internal links only
+
+Available commands:
+  build                    Generate the site
+  check                    Validate the site output
+  clean                    Clean up and remove cache
+  deploy                   Upload/deploy roki.dev
+  rebuild                  Clean and build again
+  server                   Start a preview server
+  watch                    Autocompile on changes and start a preview server
+
+$ stack exec site -- build --preview # fast build (This does not render KaTeX)
+$ stack exec site -- build # release build
+```
+
 ## System overview
 
 ![system overview](https://user-images.githubusercontent.com/1241783/90969880-d99b8a00-e538-11ea-8f35-684365e14406.png)
 
+* [roki-web](https://github.com/falgon/roki-web) (this repository)
+* [roki-web-post](https://github.com/falgon/roki-web-post) (private repository)
+
 [GitHub Actions for GitHub pages](https://github.com/peaceiris/actions-gh-pages)
 has been very helpful in building this system. 
 Thanks for it.
+
 
 ## History
 
