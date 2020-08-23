@@ -89,5 +89,7 @@ improving and integrating the previously separated management form.
 * [KaTeX](https://github.com/Khan/KaTeX): [MIT License](https://github.com/Khan/KaTeX/blob/master/LICENSE.txt)
 * [math.js](https://mathjs.org/): [Apache 2.0](https://github.com/josdejong/mathjs/blob/develop/LICENSE)
 
-Licenses of this project is managed by [FOSSA](https://fossa.com/) (you can see above "license scan" badge).
+Licenses of this project is managed by [FOSSA](https://fossa.com/) (you can see above "license scan" badge and [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Ffalgon%2Froki-web.svg?type=small)](https://app.fossa.com/projects/git%2Bgithub.com%2Ffalgon%2Froki-web?ref=badge_small) ).
 For more details, you can see [the dependency report of FOSSA](https://app.fossa.com/projects/git%2Bgithub.com%2Ffalgon%2Froki-web?utm_source=share_link).
+
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Ffalgon%2Froki-web.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Ffalgon%2Froki-web?ref=badge_large)
