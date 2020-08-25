@@ -13,9 +13,8 @@ updates:
       timezone: "Asia/Tokyo"
     target-branch: "develop"
     assignees:
-      - "octocat"
+      - "dependabot"
     reviewers:
-      - "octocat"
       - "falgon"
     labels:
       - "dependabot/npm"
