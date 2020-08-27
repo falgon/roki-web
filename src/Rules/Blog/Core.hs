@@ -12,7 +12,7 @@ import Data.Maybe (catMaybes, isJust)
 import Control.Monad (forM_)
 import Control.Monad.Except (MonadError (..))
 import Control.Monad.Extra (findM, ifM, mconcatMapM)
-import Hakyll hiding (FeedConfiguration (..), renderAtom)
+import Hakyll hiding (FeedConfiguration (..), renderAtom, renderRss)
 import Hakyll.Web.Feed.Extra
 import System.FilePath ((</>))
 
@@ -201,6 +201,14 @@ blogRules isPreview bc faIcons = do
                 >>= fmap (take 20) . recentFirst
                 >>= renderAtom (blogAtomConfig bc) (bodyField "description" <> postCtx')
 
+    -- RSS Feed
+    create [fromFilePath (blogName bc </> "feed" </> blogName bc <> "-rss.xml")] $ do
+        route idRoute
+        compile $
+            loadAllSnapshots (blogEntryPattern bc) feedContent
+                >>= fmap (take 20) . recentFirst
+                >>= renderRss (blogAtomConfig bc) (bodyField "description" <> postCtx')
+
     -- Search result page
     let rootTemplate = fromFilePath $ 
             intercalateDir [contentsRoot, "templates", "blog", "default.html"]
@@ -214,6 +222,7 @@ blogRules isPreview bc faIcons = do
                 >>= modifyExternalLinkAttr
                 >>= FA.render faIcons
 
+    -- Site map
     create [fromFilePath (blogName bc </> "sitemap.xml")] $ do
         route idRoute
         compile $ do

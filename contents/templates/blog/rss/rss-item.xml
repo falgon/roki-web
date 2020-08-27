@@ -3,6 +3,6 @@
     <link>$webroot$$url$</link>
     <description><![CDATA[$description$]]></description>
     <pubDate>$published$</pubDate>
-    <guid>$webroot$$url$</link>
+    <guid>$webroot$$url$</guid>
     <dc:creator>$authorName$</dc:creator>
 </item>
