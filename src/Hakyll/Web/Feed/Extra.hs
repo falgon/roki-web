@@ -1,6 +1,7 @@
 {-# LANGUAGE TemplateHaskell, OverloadedStrings, LambdaCase #-}
 module Hakyll.Web.Feed.Extra (
     FeedConfiguration (..)
+  , renderRss
   , renderAtom
 ) where
 
@@ -21,6 +22,16 @@ data FeedConfiguration = FeedConfiguration {
   , feedAuthorName :: String
   , feedAuthorEmail :: String
   } deriving (Show, Eq)
+
+rssTemplate :: Template
+rssTemplate =
+    $(makeRelativeToProject ("contents" </> "templates" </> "blog" </> "rss" </> "rss.xml")
+        >>= embedTemplate)
+
+rssItemTemplate :: Template
+rssItemTemplate = 
+    $(makeRelativeToProject ("contents" </> "templates" </> "blog" </> "rss" </> "rss-item.xml")
+        >>= embedTemplate)
 
 atomTemplate :: Template
 atomTemplate = 
@@ -75,6 +86,16 @@ renderFeed feedTpl itemTpl config itemContext items = do
                 _ -> fail "Hakyll.Web.Feed.Extra.renderFeed: Internal error"
 
 
+renderRssWithTemplates :: Template
+    -> Template
+    -> FeedConfiguration
+    -> Context String
+    -> [Item String]
+    -> Compiler (Item String)
+renderRssWithTemplates feedTemplate itemTemplate config context = renderFeed
+    feedTemplate itemTemplate config
+    (makeItemContext "%a, %d %b %Y %H:%M:%S UT" context)
+
 renderAtomWithTemplates :: Template           
     -> Template 
     -> FeedConfiguration
@@ -88,6 +109,12 @@ renderAtomWithTemplates feedTemplate itemTemplate config context = renderFeed
 makeItemContext :: String -> Context a -> Context a
 makeItemContext fmt context = mconcat   
     [context, dateField "published" fmt, dateField "updated" fmt]
+
+renderRss :: FeedConfiguration
+    -> Context String
+    -> [Item String]
+    -> Compiler (Item String)
+renderRss = renderRssWithTemplates rssTemplate rssItemTemplate
 
 renderAtom :: FeedConfiguration
     -> Context String

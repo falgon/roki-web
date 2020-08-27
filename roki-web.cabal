@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 43708aeff80d4cfa8fd6a06af474a42f36b43d2166ee0e3f009d99cb4fa19e09
+-- hash: caeae7bdb3b305dba413f043289a176675e40a5d176a64b0787c57368fd14ae1
 
 name:           roki-web
 version:        0.1.0.0
@@ -15,6 +15,7 @@ author:         Roki
 maintainer:     falgon53@yahoo.co.jp
 copyright:      Copyright (c) 2020 Roki
 license:        BSD3
+license-file:   LICENSE
 build-type:     Simple
 extra-source-files:
     README.md

@@ -3,7 +3,7 @@
     <title>$title$</title>
     <link href="$webroot$$url$" rel="self" />
     <link href="$webroot$/$blog-title$" />
-    <id>$webroot$/$blog-title$</id>
+    <id>$webroot$$url$</id>
     <author>
         <name>$authorName$</name>
         <email>$authorEmail$</email>
