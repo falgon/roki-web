@@ -65,7 +65,9 @@
     </div>
     
     <div class="content has-text-centered mt-3">
-        <a href="https://haskell.jp/blog/posts/links.html#roki.dev/roki.log/"><img width="234" src="https://haskell.jp/img/supported-by-haskell-jp.svg" alt="Supported By Haskell-jp."></a>
+        $if(footer-additional-component)$
+        $footer-additional-component$
+        $endif$
         $partial("contents/templates/footer/copyright.html")$
     </div>
 </footer>

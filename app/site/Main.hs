@@ -2,6 +2,7 @@
 module Main (main) where
 
 import Data.Foldable (fold)
+import qualified Data.Text.Lazy as TL
 import Data.Version (showVersion)
 import Development.GitRev (gitHash)
 import Data.String (fromString)
@@ -21,6 +22,8 @@ import qualified Rules.Vendor as Vendor
 import qualified Rules.Src.Style as Style
 import qualified Rules.Src.JavaScript as Js
 import qualified Rules.IndexPage as IP
+import Lucid.Base (renderText)
+import Lucid.Html5
 
 data Opts = Opts 
     { optPreviewFlag :: !Bool
@@ -113,10 +116,21 @@ optsParser conf = OA.info (OA.helper <*> versionOption <*> programOptions conf) 
       ]
   ]
 
+
+haskellJp :: String
+haskellJp = TL.unpack $ renderText $ do
+    a_ [href_ "https://haskell.jp/blog/posts/links.html#roki.dev/roki.log/"] $
+        img_ [
+            width_ "234"
+          , src_ "https://haskell.jp/img/supported-by-haskell-jp.svg"
+          , alt_"Supported By Haskell-jp."
+          ]
+
 techBlogConf :: B.BlogConfig Rules
 techBlogConf = B.BlogConfig {
     B.blogName = TB.blogName
   , B.blogDescription = TB.blogDesc
+  , B.blogFooterAdditional = haskellJp
   , B.blogTagBuilder = TB.buildTags
   , B.blogTagPagesPath = TB.tagPagesPath
   , B.blogEntryPattern = TB.entryPattern
@@ -135,6 +149,7 @@ diaryConf :: B.BlogConfig Rules
 diaryConf = B.BlogConfig {
     B.blogName = AB.blogName
   , B.blogDescription = AB.blogDesc
+  , B.blogFooterAdditional = mempty
   , B.blogTagBuilder = AB.buildTags
   , B.blogTagPagesPath = AB.tagPagesPath
   , B.blogEntryPattern = AB.entryPattern

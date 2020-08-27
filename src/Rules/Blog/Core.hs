@@ -190,6 +190,7 @@ blogRules isPreview bc faIcons = do
                         <> tagCloudField' "tag-cloud" tags
                         <> yearMonthArchiveField "archives" yearlyArchives monthlyArchives year
                         <> siteCtx
+                        <> constField "footer-additional-component" (blogFooterAdditional bc)
                 makeItem "" >>= loadAndApplyTemplate footerPath ctx
 
     -- Atom Feed
