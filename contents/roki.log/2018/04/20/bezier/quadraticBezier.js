@@ -55,16 +55,16 @@ function dispBezier() {
     const movingCircle1 = svg.append("circle").attr("cx", x0).attr("cy", y0).attr("r", "3px").attr("stroke", "black").attr("stroke-width", "1px").attr("fill", "none");
     const movingCircle2 = svg.append("circle").attr("cx", x1).attr("cy", y1).attr("r", "3px").attr("stroke", "black").attr("stroke-width", "1px").attr("fill", "none");
 
-    function dragcall(d) {
-        d3.event.sourceEvent.stopPropagation();
+    function dragcall(event, d) {
+        event.sourceEvent.stopPropagation();
     }
 
     function radmax(ev) {
         return [ Math.max(radius, Math.min(width - radius, ev.x)), Math.max(radius, Math.min(height - radius, ev.y)) ];
     }
 
-    function dragmove0() {
-        [x0, y0] = radmax(d3.event);
+    function dragmove0(event) {
+        [x0, y0] = radmax(event);
 
         d3.select(this).attr("cx", x0).attr("cy", y0);
         bCurve.attr("d", "M " + x0 + "," + y0 + " Q "+ x1 + "," + y1 + " " + x2 + "," + y2);
@@ -76,8 +76,8 @@ function dispBezier() {
         Q0.attr("x", x0).attr("y", y0);
     }
 
-    function dragmove1() {
-        [x1, y1] = radmax(d3.event);
+    function dragmove1(event) {
+        [x1, y1] = radmax(event);
 
         d3.select(this).attr("cx", x1).attr("cy", y1);
         bCurve.attr("d", "M "+ x0 + "," + y0 + " Q "+ x1 + "," + y1 + " " + x2 + "," + y2);
@@ -88,8 +88,8 @@ function dispBezier() {
         Q1.attr("x", x1).attr("y", y1);
     }
 
-    function dragmove2() {
-        [x2, y2] = radmax(d3.event);
+    function dragmove2(event) {
+        [x2, y2] = radmax(event);
     
         d3.select(this).attr("cx", x2).attr("cy", y2);
         bCurve.attr("d", "M " + x0 + "," + y0 + " Q " + x1 + "," + y1 + " " + x2 + "," + y2);
