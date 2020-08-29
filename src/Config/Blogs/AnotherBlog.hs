@@ -14,17 +14,17 @@ module Config.Blogs.AnotherBlog (
   , buildMonthlyArchives
 ) where
 
-import qualified Data.Text as T
-import qualified Data.Text.Lazy as TL
-import Data.String (fromString)
-import qualified Hakyll as H
-import Hakyll.Web.Feed.Extra hiding (renderAtom)
-import Lucid.Base (renderText)
-import Lucid.Html5
+import           Data.String           (fromString)
+import qualified Data.Text             as T
+import qualified Data.Text.Lazy        as TL
+import qualified Hakyll                as H
+import           Hakyll.Web.Feed.Extra hiding (renderAtom)
+import           Lucid.Base            (renderText)
+import           Lucid.Html5
 
-import qualified Archives as A
-import qualified Config.Blogs.Utils as BU
-import Config.Site (siteName)
+import qualified Archives              as A
+import qualified Config.Blogs.Utils    as BU
+import           Config.Site           (siteName)
 
 {-# INLINE blogName #-}
 blogName :: FilePath
@@ -33,7 +33,7 @@ blogName = "roki.diary"
 blogDesc :: String
 blogDesc = TL.unpack $ renderText $ do
     a_ [href_ $ T.pack $ "/" <> blogName] $ fromString blogName
-    p_ [class_ "is-inline"] $ 
+    p_ [class_ "is-inline"] $
         " is just a diary. I write about my daily events and thoughts "
             <> "(Most of the content of the article is written in Japanese)."
 
@@ -63,7 +63,7 @@ tagPagesPath = BU.tagPagesPath blogName
 
 buildTags :: H.MonadMetadata m => m H.Tags
 buildTags = BU.buildTags blogName
-        
+
 {-# INLINE yearlyPagePath #-}
 yearlyPagePath :: FilePath -> FilePath
 yearlyPagePath = BU.yearlyPagePath blogName

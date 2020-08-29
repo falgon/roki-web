@@ -2,11 +2,11 @@ module Rules.Media (
     rules
 ) where
 
-import Hakyll
+import           Hakyll
 
-import Config (contentsRoot)
-import Config.RegexUtils (intercalateDir)
-import Media (optimizeSVGCompiler)
+import           Config            (contentsRoot)
+import           Config.RegexUtils (intercalateDir)
+import           Media             (optimizeSVGCompiler)
 
 rules :: Rules ()
 rules = do

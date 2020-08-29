@@ -7,8 +7,8 @@ module Config.Site (
   , gSuiteConf
 ) where
 
-import Data.Time.Format (TimeLocale (..), defaultTimeLocale)
-import Data.Time.LocalTime (TimeZone (..))
+import           Data.Time.Format    (TimeLocale (..), defaultTimeLocale)
+import           Data.Time.LocalTime (TimeZone (..))
 
 siteName :: String
 siteName = "roki.dev"
@@ -22,7 +22,7 @@ defaultTimeLocale' = defaultTimeLocale {
   }
 
 data GSuite = GSuite {
-    gCxPrefix :: String
+    gCxPrefix      :: String
   , gSiteVerifyKey :: String
   } deriving Show
 

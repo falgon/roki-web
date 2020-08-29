@@ -3,5 +3,5 @@ module Vendor.FontAwesome (
     module Vendor.FontAwesome.Compiler
 ) where
 
-import Vendor.FontAwesome.Core
-import Vendor.FontAwesome.Compiler
+import           Vendor.FontAwesome.Compiler
+import           Vendor.FontAwesome.Core

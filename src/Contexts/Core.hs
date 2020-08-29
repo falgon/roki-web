@@ -9,19 +9,22 @@ module Contexts.Core (
   , gSuiteCtx
 ) where
 
-import Data.String (fromString)
-import qualified Data.Text.Lazy as TL
-import Data.List.Extra (dropPrefix)
-import Lucid.Base (renderText)
-import Lucid.Html5
-import Hakyll
-import System.FilePath (takeDirectory, (</>))
+import           Data.List.Extra          (dropPrefix)
+import           Data.String              (fromString)
+import qualified Data.Text.Lazy           as TL
+import           Hakyll
+import           Lucid.Base               (renderText)
+import           Lucid.Html5
+import           System.FilePath          (takeDirectory, (</>))
 
-import Config (timeZoneJST, defaultTimeLocale', siteName, contentsRoot, GSuite (..), gSuiteConf)
-import Config.Blog
-import qualified Config.Blogs.TechBlog as TB
+import           Config                   (GSuite (..), contentsRoot,
+                                           defaultTimeLocale', gSuiteConf,
+                                           siteName, timeZoneJST)
+import           Config.Blog
 import qualified Config.Blogs.AnotherBlog as BA
-import Contexts.Field (localDateField, tagsField', descriptionField, imageField)
+import qualified Config.Blogs.TechBlog    as TB
+import           Contexts.Field           (descriptionField, imageField,
+                                           localDateField, tagsField')
 
 dateCtx :: Context String
 dateCtx = localDateField defaultTimeLocale' timeZoneJST "date" "%Y/%m/%d %R"
@@ -50,7 +53,7 @@ authorCtx = constField "author-name" "Roki"
     <> constField "author-sex" "Male"
     <> constField "author-locale" "Tokyo, JP"
     <> constField "author-fav" fav
-    <> constField "author-interested" 
+    <> constField "author-interested"
         "・FP&#10;・Compiler&#10;・Category theory&#10;・Low layer networking, Infrastructure"
     <> constField "author-job" "Engineer"
     <> constField "author-github" "falgon"
@@ -62,11 +65,11 @@ authorCtx = constField "author-name" "Roki"
     <> constField "author-teratail" "kjfkhfhgx"
     <> constField "google-analytics" "UA-116653080-2"
     where
-        fav = TL.unpack $ renderText $ 
+        fav = TL.unpack $ renderText $
             ul_ [style_ "margin: 0;", class_ "comma-list"] $ do
                 li_ "Beer"
                 li_ "Coffee"
-                li_ $ a_ 
+                li_ $ a_
                     [href_ "https://www.san-x.co.jp/rilakkuma/profile/#&gid=1&pid=3"]
                     "Kiiroitori"
 
@@ -103,7 +106,7 @@ katexJsCtx = constField "katex-script" $ TL.unpack $ renderText $ do
 
 
 jsPathCtx :: Context String
-jsPathCtx = listFieldWith "js" ctx $ \item -> do 
+jsPathCtx = listFieldWith "js" ctx $ \item -> do
     mds <- getMetadataField (itemIdentifier item) "js"
     return $ case mds of
         Just xs -> map (itemize item . trim) $ splitAll "," xs
@@ -114,7 +117,7 @@ jsPathCtx = listFieldWith "js" ctx $ \item -> do
             itemIdentifier = fromString md
           , itemBody = jsDirPath item </> md
         }
-        jsDirPath s = dropPrefix contentsRoot $ takeDirectory $ 
+        jsDirPath s = dropPrefix contentsRoot $ takeDirectory $
             toFilePath (itemIdentifier s)
 
 gSuiteCtx :: BlogConfig m -> Context String

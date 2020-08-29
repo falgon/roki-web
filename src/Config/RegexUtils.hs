@@ -6,10 +6,10 @@ module Config.RegexUtils (
     intercalateDir
 ) where
 
-import BasicPrelude (intercalate)
-import Data.String (IsString)
+import           BasicPrelude (intercalate)
+import           Data.String  (IsString)
 
--- NOTE: 
+-- NOTE:
 --  Hakyll uses the regex-tdfa library, which supports POSIX extended regular expressions
 --  Ref. https://github.com/jaspervdj/hakyll/issues/524#issuecomment-282253949
 

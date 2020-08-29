@@ -1,5 +1,4 @@
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE OverloadedStrings, RecordWildCards #-}
 
 module Vendor.FontAwesome.Core (
     FontAwesomeIcons,
@@ -7,12 +6,13 @@ module Vendor.FontAwesome.Core (
     loadFontAwesome
 ) where
 
-import Data.Aeson (FromJSON (..), decode, withObject, (.!=), (.:), (.:?))
+import           Data.Aeson                 (FromJSON (..), decode, withObject,
+                                             (.!=), (.:), (.:?))
 import qualified Data.ByteString.Lazy.Char8 as B
-import qualified Data.HashMap.Strict as M
-import System.Process (readProcess)
-import Text.HTML.TagSoup (Attribute)
-import Text.HTML.TagSoup.Tree (TagTree (..))
+import qualified Data.HashMap.Strict        as M
+import           System.Process             (readProcess)
+import           Text.HTML.TagSoup          (Attribute)
+import           Text.HTML.TagSoup.Tree     (TagTree (..))
 
 data Elem = Elem { tag :: String, attr :: [Attribute String], child :: [Elem] } deriving Show
 

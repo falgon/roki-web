@@ -4,49 +4,51 @@ module Rules.Blog.Core (
   , blogRules
 ) where
 
-import Data.Binary (Binary)
-import Data.Time.Format (formatTime, TimeLocale)
-import Data.Time.LocalTime (utcToLocalTime, TimeZone)
-import Data.Typeable (Typeable)
-import Data.Maybe (catMaybes, isJust)
-import Control.Monad (forM_)
-import Control.Monad.Except (MonadError (..))
-import Control.Monad.Extra (findM, ifM, mconcatMapM)
-import Hakyll hiding (FeedConfiguration (..), renderAtom, renderRss)
-import Hakyll.Web.Feed.Extra
-import System.FilePath ((</>))
+import           Control.Monad         (forM_)
+import           Control.Monad.Except  (MonadError (..))
+import           Control.Monad.Extra   (findM, ifM, mconcatMapM)
+import           Data.Binary           (Binary)
+import           Data.Maybe            (catMaybes, isJust)
+import           Data.Time.Format      (TimeLocale, formatTime)
+import           Data.Time.LocalTime   (TimeZone, utcToLocalTime)
+import           Data.Typeable         (Typeable)
+import           Hakyll                hiding (FeedConfiguration (..),
+                                        renderAtom, renderRss)
+import           Hakyll.Web.Feed.Extra
+import           System.FilePath       ((</>))
 
-import Archives
-import Config
-import Config.Blog
-import Contexts (siteMapDateCtx, postCtx, siteCtx, listCtx, blogTitleCtx, katexJsCtx, gSuiteCtx)
-import Contexts.Field (tagCloudField', yearMonthArchiveField, searchBoxResultField)
-import Config.RegexUtils (intercalateDir)
-import Utils (
-    absolutizeUrls
-  , makePageIdentifier
-  , modifyExternalLinkAttr
-  , sanitizeDisqusName)
-import qualified Vendor.FontAwesome as FA
-import qualified Vendor.KaTeX as KaTeX
+import           Archives
+import           Config
+import           Config.Blog
+import           Config.RegexUtils     (intercalateDir)
+import           Contexts              (blogTitleCtx, gSuiteCtx, katexJsCtx,
+                                        listCtx, postCtx, siteCtx,
+                                        siteMapDateCtx)
+import           Contexts.Field        (searchBoxResultField, tagCloudField',
+                                        yearMonthArchiveField)
+import           Utils                 (absolutizeUrls, makePageIdentifier,
+                                        modifyExternalLinkAttr,
+                                        sanitizeDisqusName)
+import qualified Vendor.FontAwesome    as FA
+import qualified Vendor.KaTeX          as KaTeX
 
-appendFooter :: (Binary a, Typeable a, Semigroup a) 
+appendFooter :: (Binary a, Typeable a, Semigroup a)
     => BlogConfig m
-    -> TimeLocale 
-    -> TimeZone 
-    -> Item a 
+    -> TimeLocale
+    -> TimeZone
+    -> Item a
     -> Compiler (Item a)
 appendFooter bc locale zone item = do
     utc <- fmap Just (getItemUTC locale (itemIdentifier item))
         `catchError` const (return Nothing)
     appendFooterWith (fmap (formatTime locale "%Y" . utcToLocalTime zone) utc) item
-    where 
+    where
         appendFooterWith y item' = do
             footer <- loadBody $ setVersion y $ fromFilePath (blogName bc <> "-footer.html")
             withItemBody (return . (<> footer)) item'
 
 eachPostsSeries :: [Identifier] -> (Context String -> Rules ()) -> Rules ()
-eachPostsSeries postIDs rules = 
+eachPostsSeries postIDs rules =
     forM_ (zip3 postIDs nextPosts prevPosts) $ \(pID, np, pp) -> create [pID] $
         rules $ mconcat $ catMaybes [
             field "previousPageUrl" . pageUrlOf <$> pp
@@ -57,16 +59,16 @@ eachPostsSeries postIDs rules =
           , field "nextPageDate" . pageDateOf <$> np
           ]
     where
-        nextPosts = tail $ map Just postIDs ++ [Nothing] 
+        nextPosts = tail $ map Just postIDs ++ [Nothing]
         prevPosts = Nothing : map Just postIDs
         pageTitleOf i = const $ do
-            t <- getMetadataField i "title" 
+            t <- getMetadataField i "title"
             case t of
                 Nothing -> fail "no 'title' field"
                 Just t' -> return $ if length t' > 6 then take 6 t' <> "..." else t'
         pageUrlOf i = const (getRoute i >>= maybe (fail "no route") (return . toUrl))
-        pageDateOf i = const $ 
-            getMetadataField i "date" 
+        pageDateOf i = const $
+            getMetadataField i "date"
                 >>= maybe (fail "no 'date' field") (return . map (\x -> if x == '-' then '/' else x))
 
 {-# INLINE pluginCtx #-}
@@ -111,8 +113,8 @@ listPageRules isPreview title faIcons tags bc pgs = paginateRules pgs $ \pn pat 
 
 blogRules :: Bool -> BlogConfig Rules -> FA.FontAwesomeIcons -> Rules ()
 blogRules isPreview bc faIcons = do
-    tags <- blogTagBuilder bc 
-    let postCtx' = postCtx isPreview tags 
+    tags <- blogTagBuilder bc
+    let postCtx' = postCtx isPreview tags
             <> tagCloudField' "tag-cloud" tags
             <> blogTitleCtx (blogName bc)
             <> constField "blog-description" (blogDescription bc)
@@ -124,12 +126,12 @@ blogRules isPreview bc faIcons = do
     postIDs <- sortChronological =<< getMatches (blogEntryPattern bc)
     eachPostsSeries postIDs $ \s -> do
         route $ gsubRoute "contents/" (const "") `composeRoutes` setExtension "html"
-        compile $ pandocCompilerWith readerOptions (blogWriterOptions bc) 
+        compile $ pandocCompilerWith readerOptions (blogWriterOptions bc)
             >>= absolutizeUrls
             >>= saveSnapshot feedContent
             >>= (if isPreview then return else KaTeX.render)
             >>= saveSnapshot (blogContentSnapshot bc)
-            >>= loadAndApplyTemplate "contents/templates/blog/post.html" 
+            >>= loadAndApplyTemplate "contents/templates/blog/post.html"
                 (s <> postCtx' <> constField "disqus" (sanitizeDisqusName (blogName bc)))
             >>= appendFooter bc defaultTimeLocale' timeZoneJST
             >>= loadAndApplyTemplate "contents/templates/blog/default.html" postCtx'
@@ -145,7 +147,7 @@ blogRules isPreview bc faIcons = do
         let grouper = fmap (paginateEvery 5) . sortRecentFirst
             makeId = makePageIdentifier $ blogTagPagesPath bc tag
             title = "Tagged posts: " <> tag
-        in buildPaginateWith grouper pat makeId 
+        in buildPaginateWith grouper pat makeId
             >>= listPageRules isPreview (Just title) faIcons tags bc
 
     -- yearly paginate
@@ -154,17 +156,17 @@ blogRules isPreview bc faIcons = do
         let grouper = fmap (paginateEvery 5) . sortRecentFirst
             makeId = makePageIdentifier $ blogYearlyPagePath bc year
             title = "Yearly posts: " <> year
-        in buildPaginateWith grouper pat makeId 
-            >>= listPageRules isPreview (Just title) faIcons tags bc 
+        in buildPaginateWith grouper pat makeId
+            >>= listPageRules isPreview (Just title) faIcons tags bc
 
     -- monthly paginate
     monthlyArchives <- blogMonthlyArchivesBuilder bc
     archivesRules monthlyArchives $ \key@(year, month) pat ->
-        let grouper = fmap (paginateEvery 5) . sortRecentFirst 
+        let grouper = fmap (paginateEvery 5) . sortRecentFirst
             makeId = makePageIdentifier $ blogMonthlyPagePath bc key
             title = "Monthly posts: " <> year </> month
         in buildPaginateWith grouper pat makeId
-            >>= listPageRules isPreview (Just title) faIcons tags bc 
+            >>= listPageRules isPreview (Just title) faIcons tags bc
 
     -- all tags
     let allTagsPagePath = blogName bc </> "tags" </> "index.html"
@@ -173,7 +175,7 @@ blogRules isPreview bc faIcons = do
             makeId = makePageIdentifier allTagsPagePath
         in buildPaginateWith grouper (blogEntryPattern bc) makeId
 
-    -- the index page of tech blog 
+    -- the index page of tech blog
     listPageRules isPreview Nothing faIcons tags bc =<<
         let grouper = fmap (paginateEvery 5) . sortRecentFirst
             makeId = makePageIdentifier (blogName bc </> "index.html")
@@ -184,7 +186,7 @@ blogRules isPreview bc faIcons = do
     forM_ (Nothing:map (Just . fst) (archivesMap yearlyArchives)) $ \year -> maybe id version year $
         create [fromFilePath $ blogName bc <> "-footer.html"] $
             compile $ do
-                recent <- fmap (take 5) . recentFirst =<< 
+                recent <- fmap (take 5) . recentFirst =<<
                     loadAllSnapshots (blogEntryPattern bc) (blogContentSnapshot bc)
                 let ctx = listField "recent-posts" (postCtx isPreview tags) (return recent)
                         <> tagCloudField' "tag-cloud" tags
@@ -210,7 +212,7 @@ blogRules isPreview bc faIcons = do
                 >>= renderRss (blogAtomConfig bc) (bodyField "description" <> postCtx')
 
     -- Search result page
-    let rootTemplate = fromFilePath $ 
+    let rootTemplate = fromFilePath $
             intercalateDir [contentsRoot, "templates", "blog", "default.html"]
     create [fromFilePath (blogName bc </> "search.html")] $ do
         route idRoute
@@ -226,12 +228,12 @@ blogRules isPreview bc faIcons = do
     create [fromFilePath (blogName bc </> "sitemap.xml")] $ do
         route idRoute
         compile $ do
-            posts <- recentFirst =<< loadAllSnapshots (blogEntryPattern bc) feedContent 
+            posts <- recentFirst =<< loadAllSnapshots (blogEntryPattern bc) feedContent
             let hostCtx = constField "webroot" ("https://" <> siteName)
                 sitemapCtx = hostCtx
                     <> blogTitleCtx (blogName bc)
                     <> listField "pages" (siteMapDateCtx <> hostCtx <> defaultContext) (return posts)
             makeItem ""
-                >>= loadAndApplyTemplate 
+                >>= loadAndApplyTemplate
                     (fromFilePath $ intercalateDir [contentsRoot, "templates", "blog", "sitemap.xml"])
                         sitemapCtx

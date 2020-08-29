@@ -3,5 +3,5 @@ module Media (
     module Media.JS
 ) where
 
-import Media.SVG
-import Media.JS
+import           Media.JS
+import           Media.SVG

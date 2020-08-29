@@ -2,10 +2,10 @@ module Rules.Src.JavaScript (
     rules
 ) where
 
-import Hakyll
+import           Hakyll
 
-import Config.RegexUtils (intercalateDir)
-import Media (compressJsCompiler)
+import           Config.RegexUtils (intercalateDir)
+import           Media             (compressJsCompiler)
 
 rules :: Rules ()
 rules = match jsPath $ do

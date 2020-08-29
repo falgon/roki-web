@@ -8,19 +8,16 @@ module Config.Program (
   , tagSoupOption
 ) where
 
-import Control.Monad (liftM2)
-import Data.Char (toLower)
-import Data.List (isPrefixOf, isSuffixOf)
-import Hakyll
-import System.FilePath (takeFileName)
-import Text.Pandoc.Options (
-    HTMLMathMethod ( KaTeX, MathJax )
-  , ReaderOptions (..)
-  , WriterOptions (..)
-  , Extension (..)
-  , enableExtension
-  , disableExtension)
-import qualified Text.HTML.TagSoup as T
+import           Control.Monad       (liftM2)
+import           Data.Char           (toLower)
+import           Data.List           (isPrefixOf, isSuffixOf)
+import           Hakyll
+import           System.FilePath     (takeFileName)
+import qualified Text.HTML.TagSoup   as T
+import           Text.Pandoc.Options (Extension (..),
+                                      HTMLMathMethod (KaTeX, MathJax),
+                                      ReaderOptions (..), WriterOptions (..),
+                                      disableExtension, enableExtension)
 
 contentsRoot :: FilePath
 contentsRoot = "contents"
@@ -36,16 +33,16 @@ hakyllConfig = defaultConfiguration {
   , ignoreFile = ignoreFile'
   }
   where
-    ignoreFile' = foldr1 (liftM2 (||)) 
+    ignoreFile' = foldr1 (liftM2 (||))
         [isPrefixOf ".", isPrefixOf "#", isSuffixOf "~", isSuffixOf ".swp"] . takeFileName
 
 writerOptions :: WriterOptions
 writerOptions = defaultHakyllWriterOptions {
     writerHTMLMathMethod = KaTeX ""
   }
-    
+
 writerPreviewOptions :: WriterOptions
-writerPreviewOptions = defaultHakyllWriterOptions { 
+writerPreviewOptions = defaultHakyllWriterOptions {
     writerHTMLMathMethod = MathJax ""
  }
 

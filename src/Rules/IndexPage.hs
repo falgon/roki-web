@@ -1,17 +1,17 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Rules.IndexPage (rules) where
 
-import Control.Monad (forM)
-import System.FilePath ((</>))
-import Hakyll
+import           Control.Monad        (forM)
+import           Hakyll
+import           System.FilePath      ((</>))
 
-import Config (contentsRoot, siteName)
-import Config.Blog
-import Config.RegexUtils (intercalateDir)
-import Config.Contributions
-import Contexts (siteCtx)
-import Utils (absolutizeUrls, modifyExternalLinkAttr)
-import qualified Vendor.FontAwesome as FA
+import           Config               (contentsRoot, siteName)
+import           Config.Blog
+import           Config.Contributions
+import           Config.RegexUtils    (intercalateDir)
+import           Contexts             (siteCtx)
+import           Utils                (absolutizeUrls, modifyExternalLinkAttr)
+import qualified Vendor.FontAwesome   as FA
 
 mkBlogCtx :: String -> BlogConfig m -> Compiler (Context String)
 mkBlogCtx key obs = do
@@ -20,7 +20,7 @@ mkBlogCtx key obs = do
         <> constField "blog-title" (blogName obs)
         <> constField "blog-description" (blogDescription obs)
         <> siteCtx
-        <> defaultContext 
+        <> defaultContext
 
 rules :: [BlogConfig m] -> FA.FontAwesomeIcons -> Rules ()
 rules bcs faIcons = do
@@ -31,12 +31,12 @@ rules bcs faIcons = do
         route $ gsubRoute (contentsRoot </> "pages/") (const "")
         compile $ do
             blogs <- mconcat <$> forM bcs (\bc -> mkBlogCtx (blogName bc <> "-" <> "posts") bc)
-            
+
             let aBlogCtx = constField "title" siteName
                     <> constField "projs" projs
                     <> constField "contable" conts
                     <> blogs
-            
+
             getResourceBody
                 >>= absolutizeUrls
                 >>= applyAsTemplate aBlogCtx

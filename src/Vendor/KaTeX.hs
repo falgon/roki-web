@@ -3,16 +3,16 @@ module Vendor.KaTeX (
     render
 ) where
 
-import Hakyll
-import Control.Monad.Extra (concatMapM)
-import Data.Maybe (fromMaybe)
-import qualified Text.HTML.TagSoup as TS
+import           Control.Monad.Extra    (concatMapM)
+import           Data.Maybe             (fromMaybe)
+import           Hakyll
+import qualified Text.HTML.TagSoup      as TS
 import qualified Text.HTML.TagSoup.Tree as TT
 
-import Config (tagSoupOption)
+import           Config                 (tagSoupOption)
 
 transformTreeM :: Monad m => (TT.TagTree s -> m [TT.TagTree s]) -> [TT.TagTree s] -> m [TT.TagTree s]
-transformTreeM act = concatMapM $ \case 
+transformTreeM act = concatMapM $ \case
     (TT.TagBranch x y z) -> transformTreeM act z >>= act . TT.TagBranch x y
     x -> act x
 
@@ -20,7 +20,7 @@ render :: Item String -> Compiler (Item String)
 render = withItemBody $ fmap (TT.renderTreeOptions tagSoupOption) . transformTreeM f . TT.parseTree
     where
         f tag@(TT.TagBranch _ as [TT.TagLeaf (TS.TagText e)])
-            | hasMathClass as = TT.parseTree <$> 
+            | hasMathClass as = TT.parseTree <$>
                 unixFilter "tools/katex_runner.sh" ["displayMode" | hasDisplayClass as] e
             | otherwise = return [tag]
         f tag = return [tag]

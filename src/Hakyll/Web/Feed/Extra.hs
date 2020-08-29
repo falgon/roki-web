@@ -1,25 +1,25 @@
-{-# LANGUAGE TemplateHaskell, OverloadedStrings, LambdaCase #-}
+{-# LANGUAGE LambdaCase, OverloadedStrings, TemplateHaskell #-}
 module Hakyll.Web.Feed.Extra (
     FeedConfiguration (..)
   , renderRss
   , renderAtom
 ) where
 
-import Hakyll.Core.Compiler
-import Hakyll.Core.Item
-import Hakyll.Core.Util.String (replaceAll)
-import Hakyll.Web.Template
-import Hakyll.Web.Template.Context
-import Hakyll.Web.Template.List
-import Data.FileEmbed (makeRelativeToProject)
-import System.FilePath ((</>))
+import           Data.FileEmbed              (makeRelativeToProject)
+import           Hakyll.Core.Compiler
+import           Hakyll.Core.Item
+import           Hakyll.Core.Util.String     (replaceAll)
+import           Hakyll.Web.Template
+import           Hakyll.Web.Template.Context
+import           Hakyll.Web.Template.List
+import           System.FilePath             ((</>))
 
 data FeedConfiguration = FeedConfiguration {
-    feedTitle :: String
-  , feedWebRoot :: String
-  , feedBlogName :: String
+    feedTitle       :: String
+  , feedWebRoot     :: String
+  , feedBlogName    :: String
   , feedDescription :: String
-  , feedAuthorName :: String
+  , feedAuthorName  :: String
   , feedAuthorEmail :: String
   } deriving (Show, Eq)
 
@@ -29,21 +29,21 @@ rssTemplate =
         >>= embedTemplate)
 
 rssItemTemplate :: Template
-rssItemTemplate = 
+rssItemTemplate =
     $(makeRelativeToProject ("contents" </> "templates" </> "blog" </> "rss" </> "rss-item.xml")
         >>= embedTemplate)
 
 atomTemplate :: Template
-atomTemplate = 
+atomTemplate =
     $(makeRelativeToProject ("contents" </> "templates" </> "blog" </> "atom" </> "atom.xml")
         >>= embedTemplate)
 
 atomItemTemplate :: Template
-atomItemTemplate = 
+atomItemTemplate =
     $(makeRelativeToProject ("contents" </> "templates" </> "blog" </> "atom" </> "atom-item.xml")
         >>= embedTemplate)
 
-renderFeed :: Template 
+renderFeed :: Template
     -> Template
     -> FeedConfiguration
     -> Context String
@@ -78,7 +78,7 @@ renderFeed feedTpl itemTpl config itemContext items = do
             , updatedField
             , missingField
             ]
-        
+
         updatedField = field "updated" $ const $ case items of
             [] -> return "Unknown"
             (x:_) -> unContext itemContext' "updated" [] x >>= \case
@@ -96,8 +96,8 @@ renderRssWithTemplates feedTemplate itemTemplate config context = renderFeed
     feedTemplate itemTemplate config
     (makeItemContext "%a, %d %b %Y %H:%M:%S UT" context)
 
-renderAtomWithTemplates :: Template           
-    -> Template 
+renderAtomWithTemplates :: Template
+    -> Template
     -> FeedConfiguration
     -> Context String
     -> [Item String]
@@ -107,7 +107,7 @@ renderAtomWithTemplates feedTemplate itemTemplate config context = renderFeed
     (makeItemContext "%Y-%m-%dT%H:%M:%SZ" context)
 
 makeItemContext :: String -> Context a -> Context a
-makeItemContext fmt context = mconcat   
+makeItemContext fmt context = mconcat
     [context, dateField "published" fmt, dateField "updated" fmt]
 
 renderRss :: FeedConfiguration

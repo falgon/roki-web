@@ -1,35 +1,36 @@
 {-# LANGUAGE OverloadedStrings, TemplateHaskell #-}
 module Main (main) where
 
-import Data.Foldable (fold)
-import qualified Data.Text.Lazy as TL
-import Data.Version (showVersion)
-import Development.GitRev (gitHash)
-import Data.String (fromString)
-import Hakyll
-import qualified Paths_roki_web as P 
-import qualified Options.Applicative as OA
+import           Data.Foldable            (fold)
+import           Data.String              (fromString)
+import qualified Data.Text.Lazy           as TL
+import           Data.Version             (showVersion)
+import           Development.GitRev       (gitHash)
+import           Hakyll
+import qualified Options.Applicative      as OA
+import qualified Paths_roki_web           as P
 
-import Config (hakyllConfig, siteName, writerOptions, writerPreviewOptions)
-import Config.RegexUtils (intercalateDir)
-import qualified Config.Blog as B
-import qualified Config.Blogs.TechBlog as TB
+import           Config                   (hakyllConfig, siteName,
+                                           writerOptions, writerPreviewOptions)
+import qualified Config.Blog              as B
 import qualified Config.Blogs.AnotherBlog as AB
-import qualified Vendor.FontAwesome as FA
-import qualified Rules.Blog as B
-import qualified Rules.Media as Media
-import qualified Rules.Vendor as Vendor
-import qualified Rules.Src.Style as Style
-import qualified Rules.Src.JavaScript as Js
-import qualified Rules.IndexPage as IP
-import Lucid.Base (renderText)
-import Lucid.Html5
+import qualified Config.Blogs.TechBlog    as TB
+import           Config.RegexUtils        (intercalateDir)
+import           Lucid.Base               (renderText)
+import           Lucid.Html5
+import qualified Rules.Blog               as B
+import qualified Rules.IndexPage          as IP
+import qualified Rules.Media              as Media
+import qualified Rules.Src.JavaScript     as Js
+import qualified Rules.Src.Style          as Style
+import qualified Rules.Vendor             as Vendor
+import qualified Vendor.FontAwesome       as FA
 
-data Opts = Opts 
-    { optPreviewFlag :: !Bool
-    , optVerbose :: !Bool
+data Opts = Opts
+    { optPreviewFlag   :: !Bool
+    , optVerbose       :: !Bool
     , optInternalLinks :: !Bool
-    , optCmd :: !Command
+    , optCmd           :: !Command
     }
 
 {-# INLINE buildCmd #-}
@@ -54,14 +55,14 @@ rebuildCmd = OA.command "rebuild" $ OA.info (pure Rebuild) $ OA.progDesc "Clean 
 
 {-# INLINE serverCmd #-}
 serverCmd :: Configuration -> OA.Mod OA.CommandFields Command
-serverCmd conf = OA.command "server" $ 
-    OA.info (pure $ Server (previewHost conf) (previewPort conf)) $ 
+serverCmd conf = OA.command "server" $
+    OA.info (pure $ Server (previewHost conf) (previewPort conf)) $
         OA.progDesc "Start a preview server"
 
 {-# INLINE watchCmd #-}
 watchCmd :: Configuration -> OA.Mod OA.CommandFields Command
 watchCmd conf = OA.command "watch" $
-    OA.info (pure $ Watch (previewHost conf) (previewPort conf) False) $ 
+    OA.info (pure $ Watch (previewHost conf) (previewPort conf) False) $
         OA.progDesc "Autocompile on changes and start a preview server"
 
 preview :: OA.Parser Bool
@@ -84,15 +85,15 @@ internalLinks = OA.switch $ mconcat [
   ]
 
 programOptions :: Configuration -> OA.Parser Opts
-programOptions conf = Opts 
-    <$> preview 
+programOptions conf = Opts
+    <$> preview
     <*> verbose
     <*> internalLinks
-    <*> OA.hsubparser (buildCmd 
-        <> checkCmd 
-        <> cleanCmd 
-        <> deployCmd 
-        <> rebuildCmd 
+    <*> OA.hsubparser (buildCmd
+        <> checkCmd
+        <> cleanCmd
+        <> deployCmd
+        <> rebuildCmd
         <> serverCmd conf
         <> watchCmd conf)
 
@@ -180,8 +181,8 @@ main = do
         B.blogRules (optPreviewFlag opts) dc faIcons
         IP.rules [tc, dc] faIcons
 
-        match (fromString $ intercalateDir ["contents", "templates", "**"]) $ 
+        match (fromString $ intercalateDir ["contents", "templates", "**"]) $
             compile templateBodyCompiler
     where
         mapIL b (Check _) = Check b
-        mapIL _ x = x
+        mapIL _ x         = x

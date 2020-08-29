@@ -9,21 +9,23 @@ module Contexts.Field (
   , searchBoxResultField
 ) where
 
-import Control.Monad (liftM2, forM_)
-import Control.Monad.Trans (lift)
-import Data.Function (on)
-import qualified Data.Text as T
-import qualified Data.Text.Lazy as TL
-import Data.Time.Format (TimeLocale (..), formatTime)
-import Data.Time.LocalTime (TimeZone (..), utcToLocalTime)
-import Data.Maybe (catMaybes, fromMaybe)
-import Data.List (isSuffixOf, sortBy)
-import qualified Text.HTML.TagSoup as TS
-import Lucid.Base (Html, toHtml, renderText, renderTextT, ToHtml (..))
-import Lucid.Html5
-import Hakyll
+import           Control.Monad       (forM_, liftM2)
+import           Control.Monad.Trans (lift)
+import           Data.Function       (on)
+import           Data.List           (isSuffixOf, sortBy)
+import           Data.Maybe          (catMaybes, fromMaybe)
+import qualified Data.Text           as T
+import qualified Data.Text.Lazy      as TL
+import           Data.Time.Format    (TimeLocale (..), formatTime)
+import           Data.Time.LocalTime (TimeZone (..), utcToLocalTime)
+import           Hakyll
+import           Lucid.Base          (Html, ToHtml (..), renderText,
+                                      renderTextT, toHtml)
+import           Lucid.Html5
+import qualified Text.HTML.TagSoup   as TS
 
-import Archives (YearlyArchives, MonthlyArchives, Archives (..))
+import           Archives            (Archives (..), MonthlyArchives,
+                                      YearlyArchives)
 
 toLink :: String -> String -> Html ()
 toLink text path = a_ [href_ (T.pack $ toUrl path)] $ span_ $ toHtml text
@@ -39,20 +41,20 @@ imageField key = field key $ \item ->
         (src:_) -> return src
     where
         extractImages = map (TS.fromAttrib "src") . filter f
-        f tag = 
-            let src = TS.fromAttrib "src" tag 
+        f tag =
+            let src = TS.fromAttrib "src" tag
                 cond = not $ null src || isExternal src || ".svg" `isSuffixOf` src
             in TS.isTagOpenName "img" tag && cond
 
 descriptionField :: String -> Int -> Context String
-descriptionField key len = field key $ const $ 
+descriptionField key len = field key $ const $
     take len . escapeHtml . concat . lines . itemBody <$> getResourceBody
 
 tagsField' :: String -> Tags -> Context a
 tagsField' key tags = field key $ \item -> do
     tags' <- getTags $ itemIdentifier item
     links <- catMaybes <$> mapM (liftM2 (<$>) toLink' (getRoute . tagsMakeId tags)) tags'
-    if null links 
+    if null links
         then noResult ("Field " ++ key ++ ": tag not set (" ++ show (itemIdentifier item) ++ ")")
         else return $ TL.unpack $ renderText $ mconcat $ map (span_ [class_ "tag is-dark"]) links
     where
@@ -62,9 +64,9 @@ tagCloudField' :: String -> Tags -> Context a
 tagCloudField' key tags = field key $ const $
     TL.unpack . renderText . div_ [class_ "tags"] . toHtmlRaw <$> renderTags toLink' concat tags
     where
-        toLink' tag path = const $ const $ const $ 
+        toLink' tag path = const $ const $ const $
             TL.unpack $ renderText $ span_ [class_ "tag is-dark"] $ toLink tag path
-  
+
 
 {-# INLINE buildYearMonthArchiveField #-}
 buildYearMonthArchiveField :: YearlyArchives -> MonthlyArchives -> Maybe String -> Compiler String
@@ -100,5 +102,5 @@ yearMonthArchiveField :: String -> YearlyArchives -> MonthlyArchives -> Maybe St
 yearMonthArchiveField key ya ma s = field key $ const $ buildYearMonthArchiveField ya ma s
 
 searchBoxResultField :: Context String
-searchBoxResultField = constField "body" $ 
+searchBoxResultField = constField "body" $
     TL.unpack $ renderText $ div_ [class_ "gcse-searchresults-only"] ""

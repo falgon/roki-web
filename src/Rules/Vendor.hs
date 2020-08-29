@@ -2,9 +2,9 @@ module Rules.Vendor (
     rules
 ) where
 
-import Control.Monad (zipWithM_)
-import Hakyll
-import Config.RegexUtils (intercalateDir)
+import           Config.RegexUtils (intercalateDir)
+import           Control.Monad     (zipWithM_)
+import           Hakyll
 
 vendRule :: Pattern -> FilePath -> Rules ()
 vendRule inpat outpath = match inpat $ do
@@ -23,7 +23,7 @@ rules isPreview = do
        , intercalateDir ["vendor", "bulma", "bulma-tooltip.min.css"]
        , intercalateDir ["vendor", "highlight", "highlight.css"]
        , intercalateDir ["vendor", "katex", "katex.min.css"]
-       ] 
+       ]
 
     match (fromGlob $ intercalateDir ["node_modules", "katex", "dist", "fonts", "**"]) $ do
         route $ gsubRoute "node_modules/katex/dist/" (const "vendor/katex/")
@@ -46,7 +46,7 @@ rules isPreview = do
             route $ gsubRoute "node_modules/katex/dist/contrib/" (const "vendor/katex/")
             compile copyFileCompiler
     where
-        fontAwesomeSVGPath = fromGlob $ intercalateDir 
+        fontAwesomeSVGPath = fromGlob $ intercalateDir
             ["node_modules", "@fortawesome", "fontawesome-svg-core", "styles.css"]
         bulmaToolTipPath = fromGlob $ intercalateDir
             ["node_modules", "@creativebulma", "bulma-tooltip", "dist", "bulma-tooltip.min.css"]

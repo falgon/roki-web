@@ -2,11 +2,11 @@ module Rules.Src.Style (
     rules
 ) where
 
-import Hakyll
-import Hakyll.Web.Sass
+import           Hakyll
+import           Hakyll.Web.Sass
 
-import Config (contentsRoot)
-import Config.RegexUtils (intercalateDir)
+import           Config            (contentsRoot)
+import           Config.RegexUtils (intercalateDir)
 
 rules :: Rules ()
 rules = do
@@ -18,9 +18,9 @@ rules = do
     match scssDep $ compile getResourceBody
     rulesExtraDependencies [scssDepend] $
         match scss $ do
-            route $ 
-                gsubRoute "contents/scss/" (const "style/") `composeRoutes`   
-                    setExtension "css"                
+            route $
+                gsubRoute "contents/scss/" (const "style/") `composeRoutes`
+                    setExtension "css"
             compile (fmap compressCss <$> sassCompiler)
     where
         css = fromGlob $ intercalateDir [contentsRoot, "css", "**"]

@@ -4,6 +4,6 @@ module Config (
   , module Config.Contributions
 ) where
 
-import Config.Site
-import Config.Program
-import Config.Contributions
+import           Config.Contributions
+import           Config.Program
+import           Config.Site
