@@ -124,5 +124,5 @@ jobs:
         LOCALE: ja_JP
       run: |
         npm ci
-        npx psi https://$(cat CNAME) --strategy=mobile --locale=${{ env.LOCALE }} --threshold=${{ env.SP_THRESHOLD }} || return 0
-        npx psi https://$(cat CNAME) --strategy=desktop --locale=${{ env.LOCALE }} --threshold=${{ env.PC_THRESHOLD }} || return 0
+        npx psi https://$(cat CNAME) --strategy=mobile --locale=${{ env.LOCALE }} --threshold=${{ env.SP_THRESHOLD }} 2>&1 || true
+        npx psi https://$(cat CNAME) --strategy=desktop --locale=${{ env.LOCALE }} --threshold=${{ env.PC_THRESHOLD }} 2>&1 || true
