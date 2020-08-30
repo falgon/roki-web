@@ -36,7 +36,7 @@ function dispBezier() {
     let xs = [x0, x1, x2], ys = [y0, y1, y2];
 
     const radius    = 10;
-    const LPcolor   = "gray"
+    const LPcolor   = "gray";
 
     const lineAB    = svg.append("line").attr("x1", x0).attr("y1", y0).attr("x2", x1).attr("y2", y1).attr("stroke", LPcolor).attr("stroke-width", "1px");
     const lineBC    = svg.append("line").attr("x1", x1).attr("y1", y1).attr("x2", x2).attr("y2", y2).attr("stroke", LPcolor).attr("stroke-width", "1px");

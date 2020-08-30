@@ -17,7 +17,8 @@ function newton_raphson(f, fd, init_val) {
     'use strict';
     const fn = x => x - f(x) / fd(x);
     let res = [];
-    for (let x0 = init_val, xn = fn(x0), i = 0;; x0 = xn, ++i) {
+    let xn = null;
+    for (let x0 = init_val, i = 0;; x0 = xn, ++i) {
         res.push(x0);
         xn = fn(x0);
         if (Math.abs(xn - x0) < Number.EPSILON || i > 99) break;
@@ -36,8 +37,7 @@ const Graph = (() => {
         update_scale = Symbol('update_scale'),
         update_axis = Symbol('update_axis'),
         add_new_f = Symbol('add_new_f');
-    const newtonRaphsonButton = 'newtonRaphsonButton', 
-        visited = 'vis',
+    const visited = 'vis',
         input_f = 'func',
         input_f_diff = 'func_differential',
         input_init = 'initial_value',
