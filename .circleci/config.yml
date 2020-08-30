@@ -1,0 +1,52 @@
+version: 2.1
+jobs:
+  build:
+    docker:
+    - image: haskell:8.8.3
+      environment:
+      - LC_ALL: C.UTF-8
+      - LANGUAGE: ja_JP.UTF-8
+      - LANG: ja_JP.UTF-8
+    steps:
+    - run:
+        name: Setup tools
+        command: |
+          apt update
+          apt install -y jq curl
+          stack upgrade
+          stack config set system-ghc --global true
+          stack config set install-ghc --global false
+    - checkout
+    - restore_cache:
+        keys:
+        - 'dependencies-{{ checksum "stack.yaml" }}-{{ checksum "roki-web.cabal" }}'
+        - 'dependencies-'
+    - run: 
+        name: Setup dependencies
+        command: |
+          # Build with -j1 to avoid out of memory errors
+          stack build --compiler=ghc-8.8.3 --no-terminal -j1 Cabal wai-logger
+          stack build --compiler=ghc-8.8.3 --no-terminal --only-dependencies
+    - save_cache:
+        key: 'dependencies-{{ checksum "stack.yaml" }}-{{ checksum "roki-web.cabal" }}'
+        paths:
+        - ~/.stack/
+        - .stack-work/
+    - restore_cache:
+        keys:
+        - 'executable-{{ checksum "app/site/Main.hs" }}'
+        - 'executable-'
+    - run: stack --compiler=ghc-8.8.3 --local-bin-path='.' --no-terminal install --pedantic
+    - save_cache:
+        key: 'executable-{{ checksum "app/site/Main.hs" }}'
+        paths:
+        - ./site
+    - run: ./site build
+    - store_artifacts: { path: ./docs/ }
+    - run: |
+        grep -E '^CIRCLE_|^HOME' | jq -c -s -R 'split("\n")
+            | map (split("=")
+                | select (.[0] != null)
+                | {(.[0]): .[1:] | join("=")})
+                | add'
+
