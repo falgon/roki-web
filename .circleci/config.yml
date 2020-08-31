@@ -21,7 +21,7 @@ jobs:
         keys:
         - 'dependencies-{{ checksum "stack.yaml" }}-{{ checksum "roki-web.cabal" }}'
         - 'dependencies-'
-    - run: 
+    - run:
         name: Setup dependencies
         command: |
           # Build with -j1 to avoid out of memory errors
