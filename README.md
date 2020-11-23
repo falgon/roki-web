@@ -74,6 +74,23 @@ Compiling
   updated tools/scheduled_post/template.yml
   updated my-awesome-scheduled-post.yml
 Success
+$ mv .github/workflows/scheduled/my-awesome-scheduled-post.yaml .github/workflows/ && rmdir .github/workflows/scheduled # apply
+```
+
+Update blog posts using docker container
+
+```sh
+$ docker-compose -f docker/docker-compose.yml run preview # start a preview server
+$ docker-compose -f docker/docker-compose.yml run build # build blog posts
+$ docker-compose -f docker/docker-compose.yml run clean # clean the generated docs
+$ DATE=$(date "+%m-%d-%R") BRANCH_NAME="hoge" docker-compose -f docker/docker-compose.yml run spa # run spa
+```
+
+Develop/build inside docker container
+
+```sh
+$ docker-compose -f docker/docker-compose.yml up -d dev
+$ docker exec -it roki-web-dev bash
 ```
 
 ## System overview
