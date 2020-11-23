@@ -17,7 +17,7 @@ services:
     image: roki/roki-web-env:1.0.0
     container_name: roki-web-preview
     tty: true
-    volumes: 
+    volumes:
       - "../contents:/root/roki-web/contents"
     ports:
       - "8888:8888"
