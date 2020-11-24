@@ -5,10 +5,10 @@ services:
     container_name: roki-web-build
     tty: true
     volumes:
-      - "../contents:/root/roki-web/contents"
+      - "../contents:/home/rw-c/bin/contents"
     ports:
       - "8888:8888"
-    working_dir: /root/roki-web
+    working_dir: /home/rw-c/bin
     build:
       context: ../
       dockerfile: ./docker/contents/Dockerfile
@@ -18,10 +18,10 @@ services:
     container_name: roki-web-preview
     tty: true
     volumes:
-      - "../contents:/root/roki-web/contents"
+      - "../contents:/home/rw-c/bin/contents"
     ports:
       - "8888:8888"
-    working_dir: /root/roki-web
+    working_dir: /home/rw-c/bin
     build:
       context: ../
       dockerfile: ./docker/contents/Dockerfile
@@ -31,9 +31,9 @@ services:
     container_name: roki-web-spa
     tty: true
     volumes:
-      - "../contents:/root/roki-web/contents"
-      - "../.github:/root/roki-web/.github"
-    working_dir: /root/roki-web
+      - "../contents:/home/rw-c/bin/contents"
+      - "../.github:/home/rw-c/bin/.github"
+    working_dir: /home/rw-c/bin
     build:
       context: ../
       dockerfile: ./docker/contents/Dockerfile
@@ -42,7 +42,7 @@ services:
     image: roki/roki-web-env:1.0.0
     container_name: roki-web-clean
     tty: true
-    working_dir: /root/roki-web
+    working_dir: /home/rw-c/bin
     build:
       context: ../
       dockerfile: ./docker/contents/Dockerfile
@@ -52,10 +52,10 @@ services:
     container_name: roki-web-dev
     tty: true
     volumes:
-      - "../:/opt/src"
+      - "../:/home/rw-dev/src"
     ports:
       - "8888:8888"
-    working_dir: /opt/src
+    working_dir: /home/rw-dev/src
     build:
       context: ../
       dockerfile: ./docker/dev/Dockerfile
