@@ -1,9 +1,8 @@
 FROM ubuntu:20.04
 SHELL ["/bin/bash", "-c"]
-USER root
 LABEL maintainer="Roki <falgon53@gmail.com>"
-ENV DEBIAN_FRONTEND noninteractive
-ENV DEBCONF_NOWARNINGS yes
+ENV DEBIAN_FRONTEND=noninteractive \
+    DEBCONF_NOWARNINGS=yes
 RUN apt-get -qq update \
     && apt-get -y -qq install --no-install-recommends \
         curl \
@@ -16,15 +15,15 @@ RUN apt-get -qq update \
     && apt-get -y -qq install --no-install-recommends nodejs \
     && apt-get -y -qq autoremove \
     && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
-RUN groupadd -g 61000 rw-dev \
+    && rm -rf /var/lib/apt/lists/* \
+    && groupadd -g 61000 rw-dev \
     && useradd -g 61000 -l -m -s /bin/bash -u 61000 rw-dev
 USER rw-dev
 RUN mkdir /home/rw-dev/src
-ENV LANG ja_JP.UTF-8
-ENV LANGUAGE ja_JP:ja
-ENV LC_ALL ja_JP.UTF-8
+ENV LANG=ja_JP.UTF-8 \
+    LANGUAGE=ja_JP:ja \
+    LC_ALL=ja_JP.UTF-8
 COPY --chown=rw-dev:rw-dev . /home/rw-dev/src
 WORKDIR /home/rw-dev/src
-RUN stack --no-terminal build --only-dependencies
-RUN npm i
+RUN stack --no-terminal build --only-dependencies \
+    && npm i
