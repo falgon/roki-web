@@ -14,7 +14,7 @@
         "@fortawesome/free-solid-svg-icons": "^5.15.3",
         "bulma": "^0.9.2",
         "katex": "^0.13.11",
-        "psi": "git+https://github.com/GoogleChromeLabs/psi.git#master",
+        "psi": "https://github.com/GoogleChromeLabs/psi.git#master",
         "svgo": "^2.3.0"
     },
     "dependencies": {
