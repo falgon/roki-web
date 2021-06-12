@@ -14,6 +14,14 @@ The roki's website and blog.
     * Tech blog: [roki.dev/roki.log](https://roki.dev/roki.log/)
     * Diary: [roki.dev/roki.diary](https://roki.dev/roki.diary/)
 
+## Setup
+
+```sh
+$ git clone --recursive git@github.com:falgon/roki-web.git && cd roki-web
+$ nvm install && nvm use
+$ stack build
+```
+
 ## Usage
 
 site building
@@ -86,10 +94,26 @@ $ pushd ./docker && docker-compose run clean; popd # clean the generated docs
 $ DATE=$(date "+%m-%d-%R") BRANCH_NAME="hoge" pushd ./docker && docker-compose run spa; popd # run spa
 ```
 
+When using a pre-built image...
+
+```sh
+$ pushd ./docker && docker-compose -f docker-compose-ghpr.yml run preview; popd # start a preview server
+$ pushd ./docker && docker-compose -f docker-compose-ghpr.yml run build; popd # build blog posts
+$ pushd ./docker && docker-compose -f docker-compose-ghpr.yml run clean; popd # clean the generated docs
+$ DATE=$(date "+%m-%d-%R") BRANCH_NAME="hoge" pushd ./docker && docker-compose -f docker-compose-ghpr.yml run spa; popd # run spa
+```
+
 Develop/build inside docker container
 
 ```sh
 $ pushd ./docker && docker-compose up -d dev && popd
+$ docker exec -it roki-web-dev bash
+```
+
+When using a pre-built image...
+
+```sh
+$ pushd ./docker && docker-compose -f docker-compose-ghpr.yml up -d dev && popd
 $ docker exec -it roki-web-dev bash
 ```
 
