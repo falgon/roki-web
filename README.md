@@ -24,7 +24,7 @@ $ stack build
 
 ## Usage
 
-site building
+Building a site
 ```sh
 $ stack exec site -- --help
 Usage: site [--version] [--preview] [-v|--verbose] [--internal-links] COMMAND
@@ -49,7 +49,7 @@ Available commands:
 $ stack exec site -- build --preview # fast build (This does not render KaTeX)
 $ stack exec site -- build # release build
 ```
-article scheduled posting
+Scheduled posting
 ```sh
 $ stack exec spa -- --help
 Usage: spa [--version] COMMAND [-d|--date date] [-b|--branch-name ARG] [-y]
