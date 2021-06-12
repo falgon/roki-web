@@ -33,6 +33,13 @@ jobs:
       run: |
         stack config set system-ghc --global true
         stack config set install-ghc --global false
+    - name: Read Node version
+      uses: browniebroke/read-nvmrc-action@v1
+      id: nvmrc
+    - name: Setup Node
+      uses: actions/setup-node@v2
+      with:
+        node-version: '${{ steps.nvmrc.outputs.node_version }}'
     - name: Install dependencies and build the roki.dev generator
       run: |
         stack --local-bin-path . install --flag hakyll:-previewServer --flag hakyll:-watchServer
