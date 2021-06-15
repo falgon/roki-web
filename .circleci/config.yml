@@ -27,8 +27,6 @@ jobs:
           echo 'export FN=<< pipeline.parameters.GITHUB_SHA >>-docs.tar.xz' >> $BASH_ENV
           echo 'export PATH=$HOME/go/bin:$PATH' >> $BASH_ENV
           echo "export ARTIFACTS_URL=\"https://$CIRCLE_BUILD_NUM-280922552-gh.circle-artifacts.com/0/index.html\"" >> $BASH_ENV
-          pr_response=$(curl -s --location --request GET "https://api.github.com/repos/falgon/roki-web/pulls?head=falgon:$CIRCLE_BRANCH&state=open")
-          echo "export PR_RESPONSE=\"$pr_response\"" >> $BASH_ENV
           source $HOME/.bashrc
     - run:
         name: Fetch artifact from Google Drive
@@ -42,10 +40,11 @@ jobs:
     - run:
         name: Add comment
         command: |
+          PR_RESPONSE=$(curl -s --location --request GET "https://api.github.com/repos/falgon/roki-web/pulls?head=falgon:$CIRCLE_BRANCH&state=open")
           if [ -z "$PR_RESPONSE" ]; then
             echo "No PR found to update"
           else
-            pr_comment_url=$(echo $PR_RESPONSE | jq -r ".[]._links.comments.href")
+            pr_comment_url=$(echo "$PR_RESPONSE" | jq -r ".[]._links.comments.href")
             curl -X POST \
               -H 'Content-Type:application/json' \
               -d '{"body":"* [Build log]('"$CIRCLE_BUILD_URL)\r\n"'* Preview build with this PR (commit): <'"$ARTIFACTS_URL"'>"}' \
@@ -54,10 +53,11 @@ jobs:
     - run:
         name: Notify LINE
         command: |
+          PR_RESPONSE=$(curl -s --location --request GET "https://api.github.com/repos/falgon/roki-web/pulls?head=falgon:$CIRCLE_BRANCH&state=open")
           if [ -z "$PR_RESPONSE" ]; then
             echo "No PR found to update"
           else
-            pr_url=$(echo $PR_RESPONSE | jq -r ".[]._links.html.href")
+            pr_url=$(echo "$PR_RESPONSE" | jq -r ".[]._links.html.href")
             ./tools/circleci/NotifyLine.hs --pr-url "$pr_url" --artifacts-url "$ARTIFACTS_URL"
           fi
 
