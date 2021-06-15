@@ -11,6 +11,7 @@ jobs:
     environment:
       TZ: /usr/share/zoneinfo/Asia/Tokyo
     steps:
+    - checkout
     - run:
         name: Setup tools
         command: |
@@ -58,7 +59,8 @@ jobs:
             echo "No PR found to update"
           else
             pr_url=$(echo "$PR_RESPONSE" | jq -r ".[]._links.html.href")
-            ./tools/circleci/NotifyLine.hs --pr-url "$pr_url" --artifacts-url "$ARTIFACTS_URL"
+            # eval is needed for the CIRCLE_WORKING_DIRECTORY variable as it contains a non-expanded '~'
+            eval ${CIRCLE_WORKING_DIRECTORY}/tools/circleci/NotifyLine.hs --pr-url "$pr_url" --artifacts-url "$ARTIFACTS_URL"
           fi
 
 workflows:
