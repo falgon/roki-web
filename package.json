@@ -13,7 +13,7 @@
         "@fortawesome/free-brands-svg-icons": "^5.15.4",
         "@fortawesome/free-solid-svg-icons": "^5.15.4",
         "bulma": "^0.9.3",
-        "katex": "^0.13.16",
+        "katex": "^0.13.17",
         "psi": "^4.1.0",
         "svgo": "^2.5.0"
     },
