@@ -23,7 +23,8 @@ jobs:
         key: stack-v2-${{ runner.os }}-${{ hashFiles('stack.yaml') }}
     - name: Setup Tools
       run: |
-        sudo apt-get install -y libxml2-utils
+        sudo apt-get -qq update
+        sudo apt-get install -y --no-install-recommends libxml2-utils
         xmllint --version
     - name: Setup Stack
       if: steps.stack-cache.outputs.cache-hit != 'true'
