@@ -10,7 +10,6 @@ module Contexts.Field (
   , haskellJpLogo
   , gAdSenseHeader
   , gAdSenseBody
-  , gAdSenseBeforeContentBody
 ) where
 
 import           Control.Monad       (forM_, liftM2)
@@ -122,25 +121,6 @@ haskellJpLogo =
           , src_ "https://haskell.jp/img/supported-by-haskell-jp.svg"
           , alt_"Supported By Haskell-jp."
           ]
-
-gAdSenseBeforeContentBody :: Html ()
-gAdSenseBeforeContentBody = do
-    script_ [
-        async_ mempty
-      , src_ "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5658861742931397"
-      , crossorigin_ "anonymous"
-      ]
-        TL.empty
-    ins_ [
-        class_ "adsbygoogle"
-      , style_ "display:block"
-      , data_ "ad-client" "ca-pub-5658861742931397"
-      , data_ "ad-slot" "9593271026"
-      , data_ "ad-format" "auto"
-      , data_ "full-width-responsive" "true"
-      ]
-        mempty
-    script_ "(adsbygoogle = window.adsbygoogle || []).push({});"
 
 gAdSenseBody :: Html ()
 gAdSenseBody = do
