@@ -160,7 +160,7 @@ LINE Messagin API, Webhook URL を設定する API はあるんだけど, Webhoo
 <item>
     <title>技術書典 11 にて Git (一部) を自作する記事を執筆した</title>
     <link>https://roki.dev/roki.log/2021/07/10/SelfMadeTinyGit/index.html</link>
-    <description><![CDATA[<p><a href="https://techbookfest.org/event/tbf11">技術書典 11</a> に出展の <a href="https://techbookfest.org/product/6185615265628160">KLab Tech Book Vol.8</a> 第七章にて『ミニマル Git を自作しよう』という記事を執筆した. <br /> 技術書典 11 オンラインマーケットから電子 + 物理本セットは 1000 円, 電子版のみは無料で頒布されている.</p>
+    <description><![CDATA[<p><a href="https://techbookfest.org/event/tbf11">技術書典 11</a> に出展の <a href="https://techbookfest.org/product/6185615265628160">KLab Tech Book Vol.8</a> 第七章にて『ミニマル Git を自作しよう』という記事を執筆した. <br /> 技術書典 11 オンラインマーケットから電子 + 物理本セットは 1000 円, 電子版のみは無料で頒布されている. <br /> <strong>※追記：加筆・調整版を新規にリリースしましたのでよろしければ👉 <a href="https://note.com/_roki/n/n1e17f077c2eb" class="uri">https://note.com/_roki/n/n1e17f077c2eb</a></strong></p>
 <figure>
 <img src="/roki.log/2021/07/10/SelfMadeTinyGit/tbf11.png" width="250" alt /><figcaption><a href="https://techbookfest.org/product/6185615265628160">KLab Tech Book Vol.8</a></figcaption>
 </figure>
