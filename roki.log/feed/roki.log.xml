@@ -177,7 +177,7 @@ LINE Messagin API, Webhook URL を設定する API はあるんだけど, Webhoo
 </blockquote>
 <p>と示しているので言うまでもないことではあるのだが, 記事の特性上, 社名が文章内に含まれることとなるため, ここにあらためて明示する. <strong>ここに示された意見や感想等は, 私個人のものであり, 所属する組織を代表するものではない.</strong></p>
 <h2 id="内容について">内容について</h2>
-<p>大雑把に言えば, これを読むと, Git の内部構造 (Git オブジェクトモデル, インデックス, データ構造) を理解し, インデックス化からコミットまでの主要コマンド 8 つ (<code>add</code>, <code>cat-file</code>, <code>diff</code>, <code>hash-object</code>, <code>init</code>, <code>ls-files</code>, <code>status</code>, <code>commit</code>) を実装できるようになるはず (?) の内容となっている. Git にまつわる各種概念や用語, 仕様等の紹介を通じて, 概形を把握し, その後, 詳細な実装に立ち入っていく. 実装例の説明自体には Haskell を用いているが, それほど技巧的なことはしていないつもりであるので, 拒絶反応をせずに, むしろ, それなりに簡素な作りで実際に動かすことができるという点に着目していただけると嬉しい.</p>
+<p>大雑把に言えばこれを読むと Git の内部構造 (Git オブジェクトモデル, インデックス, データ構造) を理解し, インデックス化からコミットまでの主要コマンド 8 つ (<code>add</code>, <code>cat-file</code>, <code>diff</code>, <code>hash-object</code>, <code>init</code>, <code>ls-files</code>, <code>status</code>, <code>commit</code>) を実装できるようになるはず (?) の内容となっている. Git にまつわる各種概念や用語, 仕様等の紹介を通じて, 概形を把握し, その後, 詳細な実装に立ち入っていく. 実装例の説明自体には Haskell を用いているが, それほど技巧的なことはしていないつもりであるので, 拒絶反応をせずに, むしろ, それなりに簡素な作りで実際に動かすことができるという点に着目していただけると嬉しい.</p>
 <div class="has-text-centered mt-3 mb-3">
 <p><i class="fab fa-github fa-fw"></i> <a href="https://github.com/falgon/hmgit">falgon/hmgit - HMGit (Haskell Minimal Git)</a></p>
 </div>
