@@ -1,0 +1,17 @@
+name: KiirotoriAutoApprove
+on:
+  pull_request:
+    types: [review_requested]
+jobs:
+  approve:
+    if: ${{ (github.event.sender == 'falgon') && (github.event.requested_reviewer.login == 'kiirotori') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: approve
+        run: |
+          export GH_CONFIG_DIR=$PWD/.config
+          mkdir $GH_CONFIG_DIR
+          echo "${{ secrets.KIIROTORI_GH_CONFIG_HOSTS }}" > $GH_CONFIG_DIR/hosts.yml
+          echo "${{ secrets.KIIROTORI_GH_CONFIG_CONFIG }}" > $GH_CONFIG_DIR/config.yml
+          gh pr review ${{ github.event.number }} -a -R falgon/roki-web
