@@ -4,7 +4,7 @@ on:
     types: [review_requested]
 jobs:
   approve:
-    if: ${{ (github.event.sender == 'falgon') && (github.event.requested_reviewer.login == 'kiirotori') }}
+    if: ${{ (github.event.sender.login == 'falgon') && (github.event.requested_reviewer.login == 'kiirotori') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
