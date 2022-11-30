@@ -1,4 +1,4 @@
-name: KiirotoriAutoApprove
+name: kiirotori-auto-approve
 on:
   pull_request:
     types: [review_requested]
