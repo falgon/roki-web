@@ -3,7 +3,6 @@ module Rules.Blog.Core (
     BlogConfig (..)
   , blogRules
 ) where
-
 import           Control.Monad         (forM_)
 import           Control.Monad.Except  (MonadError (..))
 import           Control.Monad.Extra   (findM, ifM, mconcatMapM)
@@ -98,6 +97,7 @@ listPageRules isPreview title faIcons tags bc pgs = paginateRules pgs $ \pn pat 
                 <> tagCloudField' "tag-cloud" tags
                 <> blogTitleCtx (blogName bc)
                 <> constField "blog-description" (blogDescription bc)
+                <> constField "before-content-body-additional-component" (blogBeforeContentBodyAdditional bc)
                 <> constField "header-additional-component" (blogHeaderAdditional bc)
                 <> gSuiteCtx bc
             postCtx' = teaserField "teaser" (blogContentSnapshot bc)
