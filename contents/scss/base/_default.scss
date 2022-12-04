@@ -215,3 +215,37 @@ span.both-lined:after {
     text-align: center;
 }
 
+.fadein-right {
+    @keyframes fadein-right-anime {
+        from {
+            opacity: 0;
+            transform: translateX(-100px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+    animation-name: fadein-right-anime;
+    animation-duration: 0.5s;
+    animation-fill-mode: forwards;
+    opacity: 0;
+}
+
+.fadein-left {
+    @keyframes fadein-left-anime {
+        from {
+            opacity: 0;
+            transform: translateX(100px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+    animation-name: fadein-left-anime;
+    animation-duration: 0.5s;
+    animation-fill-mode: forwards;
+    opacity: 0;
+}
+
