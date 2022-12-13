@@ -4,16 +4,17 @@ date: 2022-09-20 18:43:01
 tags: watch, other
 ---
 
-## SBGA439 を入手した
-
-![ジャケットと合わせる SBGA439](./jucket_listshot_sbga439.jpg){ width=550 }
-
 [Grand Seiko Heritage Collection SBGA439](https://www.grand-seiko.com/jp-ja/collections/sbga439)
 (以下 SBGA439) は Grand Seiko (以下 GS) を象徴するカラーダイアルで,
 GS 独自の機構である [9R65](https://www.grand-seiko.com/jp-ja/collections/movement/springdrive/9r65)
 スプリングドライブムーブメントが搭載されています.
-この度本実機を手にしたので, まだ 2 週間程しか経っていませんが,
+
+![ジャケットと合わせる SBGA439](./jucket_listshot_sbga439.jpg){ width=550 }
+
+まだ 2 週間程しか経っていませんが,
+この度本実機を手にいたしましたので,
 着用してみての所感を残したいと思います.
+
 
 <!--more-->
 
