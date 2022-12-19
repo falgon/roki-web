@@ -220,13 +220,13 @@ span.both-lined:after {
     justify-content: flex-end;
     align-items: center;
     list-style: none;
-    margin: 0 0 0 auto;
+    margin: 0 0 0 auto !important;
     li {
         a {
             color: $grey-darker;
         }
         .social-icon-github:hover {
-            color: #000;
+            color: #C4C4C4;
         }
         .social-icon-twitter:hover {
             color: $twitter-color;
