@@ -11,8 +11,32 @@
   <div class="card-content">
     <div class="media">
       <div class="media-content ml-5" style="overflow: visible;">
-        <div class="mb-3">
+        <div class="mb-3 is-clearfix">
             <p class="title" id="my_name">$author-name$</p>
+            <ul class="is-unstyled social-links">
+                <li class="mt-0 mr-1">
+                    <a href="https://github.com/$author-github$">
+                        <i class="fab fa-github fa-fw"></i>
+                    </a>
+                </li>
+                <li class="mt-0 mr-1">
+                    <a class="social-icon-twitter" href="https://twitter.com/$author-twitter$">
+                        <i class="fab fa-twitter fa-fw"></i>
+                    </a>
+                </li>
+                <li class="mt-0 mr-1">
+                    <a class="social-icon-zenn" href="https://zenn.dev/roki">
+                        <!-- TODO: out the settings -->
+                        <i class="fas fa-wave-square fa-fw"></i>
+                    </a>
+                </li>
+                <li>
+                    <li class="mt-0 mr-1">
+                        <a class="social-icon-note" href="https://note.com/$author-note$/">
+                            <i class="fas fa-sticky-note fa-fw"></i>
+                        </a>
+                </li>
+            </ul>
         </div>
         $partial("contents/templates/site/author-info/listed.html")$
       </div>

@@ -98,6 +98,7 @@ caption {
         'Helvetica Neue',
         'Arial',
         sans-serif;
+    float: left;
 }
 
 .main {
@@ -217,6 +218,9 @@ span.both-lined:after {
 
 .social-links {
     display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    list-style: none;
     margin: 0;
     li {
         a {
