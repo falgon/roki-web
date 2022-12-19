@@ -98,7 +98,6 @@ caption {
         'Helvetica Neue',
         'Arial',
         sans-serif;
-    float: left;
 }
 
 .main {
@@ -221,10 +220,13 @@ span.both-lined:after {
     justify-content: flex-end;
     align-items: center;
     list-style: none;
-    margin: 0;
+    margin: 0 0 0 auto;
     li {
         a {
             color: $grey-darker;
+        }
+        .social-icon-github:hover {
+            color: #000;
         }
         .social-icon-twitter:hover {
             color: $twitter-color;
