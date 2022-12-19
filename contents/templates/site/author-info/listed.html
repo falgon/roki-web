@@ -1,11 +1,10 @@
-<ul class="is-unstyled">
+<ul class="is-unstyled mb-0">
     <li><i class="fas fa-male fa-fw mr-2" aria-hidden="true"></i>$author-sex$</li>
     <li>
         <i class="fas fa-info fa-fw" aria-hidden="true"></i>
         $author-job$
     </li>
     <li><i class="fas fa-map-marker fa-fw mr-2" aria-hidden="true"></i>$author-locale$</li>
-    <li><i class="fas fa-heart fa-fw mr-2" aria-hidden="true"></i>$author-fav$</li>
     <li>
         <i class="fas fa-code-branch fa-fw"></i> 
         <a class="modal-target" data-target="modal-contributions">
@@ -23,6 +22,7 @@
              
         </span>
     </li>
+    <li><i class="fas fa-heart fa-fw mr-2" aria-hidden="true"></i>$author-fav$</li>
     <li>
         <i class="fas fa-coins fa-fw"></i>
         <a class="modal-target" data-target="modal-donate">
@@ -30,29 +30,27 @@
         </a>
     </li>
 </ul>
-<ul class="is-unstyled" style="margin-top: 0px; display: flex;">
-    <li>
+<ul class="is-unstyled social-links">
+    <li class="mt-0 mr-1">
         <a href="https://github.com/$author-github$">
             <i class="fab fa-github fa-fw"></i>
         </a>
     </li>
-    <li>
-        <a href="https://twitter.com/$author-twitter$">
+    <li class="mt-0 mr-1">
+        <a class="social-icon-twitter" href="https://twitter.com/$author-twitter$">
             <i class="fab fa-twitter fa-fw"></i>
         </a>
     </li>
-    <li>
-        <a href="https://zenn.dev/roki"> <!-- TODO: out the settings -->
-            <i class="fas fa-z fa-fw"></i>
+    <li class="mt-0 mr-1">
+        <a class="social-icon-zenn" href="https://zenn.dev/roki"> <!-- TODO: out the settings -->
+            <i class="fas fa-wave-square fa-fw"></i>
         </a>
     </li>
     <li>
-    <li>
-        <a href="https://note.com/$author-note$/">
-            <i class="fas fa-sticky-note fa-fw mr-2"></i>
+    <li class="mt-0 mr-1">
+        <a class="social-icon-note" href="https://note.com/$author-note$/">
+            <i class="fas fa-sticky-note fa-fw"></i>
         </a>
-    </li>
-    <li>
-        $partial("contents/templates/site/author-info/more-links.html")$
     </li>
 </ul>
+$partial("contents/templates/site/author-info/more-links.html")$
