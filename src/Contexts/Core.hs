@@ -55,7 +55,7 @@ authorCtx = constField "author-name" "Roki"
     <> constField "author-fav" fav
     <> constField "author-interested"
         "・FP&#10;・Compiler&#10;・Category theory&#10;・Low layer networking, Infrastructure"
-    <> constField "author-job" "Engineer"
+    <> constField "author-job" "Software Engineer"
     <> constField "author-github" "falgon"
     <> constField "author-twitter" "530506"
     <> constField "author-note" "_roki"

@@ -14,11 +14,11 @@
         </picture>
     </figure>
 
-    <div style="width: 200px; margin: 0 auto;">
-        <div class="mb-3"><p class="title" id="my_name">$author-name$</p></div>
+    <div class="mb-3" style="width: 200px; margin: 0 auto; display: flex; align-items: stretch;">
+        <p class="title mb-0" id="my_name">$author-name$</p>
         <ul class="is-unstyled social-links">
             <li class="mt-0 mr-1">
-                <a href="https://github.com/$author-github$">
+                <a class="social-icon-github" href="https://github.com/$author-github$">
                     <i class="fab fa-github fa-fw"></i>
                 </a>
             </li>
@@ -39,9 +39,9 @@
                 </a>
             </li>
         </ul>
-        $partial("contents/templates/site/author-info/listed.html")$
         <div class="is-clearfix"></div>
     </div>
+    $partial("contents/templates/site/author-info/listed.html")$
 
 </div>
 </div>
