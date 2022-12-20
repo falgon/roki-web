@@ -215,3 +215,27 @@ span.both-lined:after {
     text-align: center;
 }
 
+.social-links {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    list-style: none;
+    margin: 0 0 0 auto !important;
+    li {
+        a {
+            color: $grey-darker;
+        }
+        .social-icon-github:hover {
+            color: #C4C4C4;
+        }
+        .social-icon-twitter:hover {
+            color: $twitter-color;
+        }
+        .social-icon-zenn:hover {
+            color: $zenn-color;
+        }
+        .social-icon-note:hover {
+            color: $note-color;
+        }
+    }
+}
