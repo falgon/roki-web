@@ -1,15 +1,9 @@
-<ul class="is-unstyled mb-0">
-    <li><i class="fas fa-male fa-fw mr-2" aria-hidden="true"></i>$author-sex$</li>
-    <li>
-        <i class="fas fa-info fa-fw" aria-hidden="true"></i>$author-job$
-    </li>
-    <li><i class="fas fa-map-marker fa-fw mr-2" aria-hidden="true"></i>$author-locale$</li>
-    <li>
-        <i class="fas fa-code-branch fa-fw"></i> 
-        <a class="modal-target" data-target="modal-contributions">Contributions</a>
-    </li>
-    <li>
-        <i class="fas fa-tags fa-fw" aria-hidden="true"></i>
+<ul class="is-unstyled mb-0 fa-ul">
+    <li><span class="fa-li"><i class="fas fa-male fa-fw mr-2" aria-hidden="true"></i></span>$author-sex$</li>
+    <li><span class="fa-li"><i class="fas fa-info fa-fw" aria-hidden="true"></i></span>$author-job$</li>
+    <li><span class="fa-li"><i class="fas fa-map-marker fa-fw mr-2" aria-hidden="true"></i></span>$author-locale$</li>
+    <li><span class="fa-li"><i class="fas fa-code-branch fa-fw"></i></span><a class="modal-target" data-target="modal-contributions">Contributions</a></li>
+    <li><span class="fa-li"><i class="fas fa-tags fa-fw" aria-hidden="true"></i></span>
         <span class="has-tooltip-arrow
                 has-tooltipl-multiline 
                 has-tooltip-text-left 
@@ -19,12 +13,7 @@
              
         </span>
     </li>
-    <li><i class="fas fa-heart fa-fw mr-2" aria-hidden="true"></i>$author-fav$</li>
-    <li>
-        <i class="fas fa-coins fa-fw"></i>
-        <a class="modal-target" data-target="modal-donate">Donate</a>
-    </li>
-    <li>
-        $partial("contents/templates/site/author-info/more-links.html")$
-    </li>
+    <li><span class="fa-li"><i class="fas fa-heart fa-fw mr-2" aria-hidden="true"></i></span>$author-fav$</li>
+    <li><span class="fa-li"><i class="fas fa-coins fa-fw"></i></span><a class="modal-target" data-target="modal-donate">Donate</a></li>
+    <li>$partial("contents/templates/site/author-info/more-links.html")$</li>
 </ul>
