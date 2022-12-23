@@ -1,9 +1,12 @@
-<ul class="fa-ul" style="list-style: none;">
+<div class="columns is-centered mb-0">
+<ul class="fa-ul column is-10" style="list-style: none;">
     $for(roki.log-posts)$
         <li>
             <span class="fa-li"><i class="fas fa-pencil-alt"></i></span>
-            『<a href="$url$">$title$</a>』, 
-            <i class="fas fa-calendar-alt fa-fw mr-1"></i>$date$
+            『<a href="$url$">$title$</a>』
+            <br>
+            <p class="is-size-7">$date$</p>
         </li>
     $endfor$
 </ul>
+</div>
