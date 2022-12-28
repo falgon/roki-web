@@ -2,9 +2,9 @@
 module Rules.IndexPage (rules) where
 
 import           Control.Monad        (forM)
+import           Data.Time.Format     (formatTime)
 import           Hakyll
 import           System.FilePath      ((</>))
-import Data.Time.Format (formatTime)
 
 import           Config               (contentsRoot, defaultTimeLocale',
                                        siteName)
