@@ -4,8 +4,10 @@ module Rules.IndexPage (rules) where
 import           Control.Monad        (forM)
 import           Hakyll
 import           System.FilePath      ((</>))
+import Data.Time.Format (formatTime)
 
-import           Config               (contentsRoot, siteName)
+import           Config               (contentsRoot, defaultTimeLocale',
+                                       siteName)
 import           Config.Blog
 import           Config.Contributions
 import           Config.RegexUtils    (intercalateDir)
@@ -16,9 +18,12 @@ import qualified Vendor.FontAwesome   as FA
 mkBlogCtx :: String -> BlogConfig m -> Compiler (Context String)
 mkBlogCtx key obs = do
     posts <- fmap (take 4) . recentFirst =<< loadAllSnapshots (blogEntryPattern obs) (blogContentSnapshot obs)
+    lastUpdate <- formatTime defaultTimeLocale' "%Y%%2F%m%%2F%d"
+        <$> getItemUTC defaultTimeLocale' (head posts)
     return $ listField key (siteCtx <> defaultContext) (return posts)
         <> constField "blog-title" (blogName obs)
         <> constField "blog-description" (blogDescription obs)
+        <> constField (blogName obs <> "-intro-date")
         <> siteCtx
         <> defaultContext
 
