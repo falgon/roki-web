@@ -23,7 +23,7 @@ mkBlogCtx key obs = do
     return $ listField key (siteCtx <> defaultContext) (return posts)
         <> constField "blog-title" (blogName obs)
         <> constField "blog-description" (blogDescription obs)
-        <> constField (blogName obs <> "-intro-date")
+        <> constField (blogName obs <> "-intro-date") lastUpdate
         <> siteCtx
         <> defaultContext
 
