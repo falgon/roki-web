@@ -18,8 +18,12 @@ import qualified Vendor.FontAwesome   as FA
 mkBlogCtx :: String -> BlogConfig m -> Compiler (Context String)
 mkBlogCtx key obs = do
     posts <- fmap (take 4) . recentFirst =<< loadAllSnapshots (blogEntryPattern obs) (blogContentSnapshot obs)
-    lastUpdate <- formatTime defaultTimeLocale' "%Y%%2F%m%%2F%d" -- "%%2F" is URL encoded slash
-        <$> getItemUTC defaultTimeLocale' (itemIdentifier (head posts))
+    lastUpdate <- 
+        if not (null posts) then
+            formatTime defaultTimeLocale' "%Y%%2F%m%%2F%d" -- "%%2F" is URL encoded slash
+                <$> getItemUTC defaultTimeLocale' (itemIdentifier (head posts))
+        else
+            pure "not yet"
     return $ listField key (siteCtx <> defaultContext) (return posts)
         <> constField "blog-title" (blogName obs)
         <> constField "blog-description" (blogDescription obs)
