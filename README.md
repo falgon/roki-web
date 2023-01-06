@@ -1,5 +1,5 @@
 <h1 align="center">roki-web</h1>
-<p align="center">:page_facing_up: The <a href="https://github.com/falgon">roki</a>'s website and blog</p>
+<p align="center">:memo: The <a href="https://github.com/falgon">roki</a>'s website and blog</p>
 
 <div align="center">
 
@@ -11,8 +11,6 @@
 [![CI-CodeQL](https://github.com/falgon/roki-web/actions/workflows/codeql.yml/badge.svg)](https://github.com/falgon/roki-web/actions/workflows/codeql.yml)
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Ffalgon%2Froki-web.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Ffalgon%2Froki-web?ref=badge_shield)
 </div>
-
-The roki's website and blog.
 
 * Website: [roki.dev](https://roki.dev)
     * Tech blog: [roki.dev/roki.log](https://roki.dev/roki.log/)
