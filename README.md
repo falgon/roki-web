@@ -1,5 +1,7 @@
 # roki-web
 
+<div align="center">
+
 ![CI](https://github.com/falgon/roki-web/workflows/CI/badge.svg)
 [![Known Vulnerabilities](https://snyk.io/test/github/falgon/roki-web/badge.svg?targetFile=package.json)](https://snyk.io/test/github/falgon/roki-web?targetFile=package.json)
 [![CodeFactor](https://www.codefactor.io/repository/github/falgon/roki-web/badge?s=e4b1f45b3bb2dc89c42f654d991238ef7771bc9f)](https://www.codefactor.io/repository/github/falgon/roki-web)
@@ -7,6 +9,7 @@
 [![Maintainability](https://api.codeclimate.com/v1/badges/e6574c3042df63bf6d41/maintainability)](https://codeclimate.com/github/falgon/roki-web/maintainability)
 [![CI-CodeQL](https://github.com/falgon/roki-web/actions/workflows/codeql.yml/badge.svg)](https://github.com/falgon/roki-web/actions/workflows/codeql.yml)
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Ffalgon%2Froki-web.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Ffalgon%2Froki-web?ref=badge_shield)
+</div>
 
 The roki's website and blog.
 
