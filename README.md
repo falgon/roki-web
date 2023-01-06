@@ -5,7 +5,7 @@
 [![CodeFactor](https://www.codefactor.io/repository/github/falgon/roki-web/badge?s=e4b1f45b3bb2dc89c42f654d991238ef7771bc9f)](https://www.codefactor.io/repository/github/falgon/roki-web)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/0f3e0d5c5bbe43a78eaeed7485b72c7f)](https://www.codacy.com?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=falgon/roki-web&amp;utm_campaign=Badge_Grade)
 [![Maintainability](https://api.codeclimate.com/v1/badges/e6574c3042df63bf6d41/maintainability)](https://codeclimate.com/github/falgon/roki-web/maintainability)
-[![Language grade: JavaScript](https://img.shields.io/lgtm/grade/javascript/g/falgon/roki-web.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/falgon/roki-web/context:javascript)
+[![CI-CodeQL](https://github.com/falgon/roki-web/actions/workflows/codeql.yml/badge.svg)](https://github.com/falgon/roki-web/actions/workflows/codeql.yml)
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Ffalgon%2Froki-web.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Ffalgon%2Froki-web?ref=badge_shield)
 
 The roki's website and blog.
