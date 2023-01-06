@@ -1,4 +1,5 @@
-# roki-web
+<h1><p align="center">roki-web</p></h1>
+<p align="center">:globe_with_meridians: The <a href="https://github.com/falgon">roki</a>'s website and blog.</p>
 
 <div align="center">
 
