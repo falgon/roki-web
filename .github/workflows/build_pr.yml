@@ -9,12 +9,6 @@ jobs:
     runs-on: ubuntu-20.04
     if: github.repository == 'falgon/roki-web'
     steps:
-    - name: Set doc hash value
-      shell: bash
-      run: echo "::set-output name=hash::${GITHUB_SHA}"
-      id: myhash
-    - name: Check variables
-      run: echo "${{ steps.myhash.outputs.hash }}"
     - name: Checkout
       uses: actions/checkout@v2
       with:
@@ -110,7 +104,7 @@ jobs:
       run: |
         skicka -no-browser-auth upload -ignore-times \
           ./docs.tar.xz \
-          CI_WORK/GitHubActions/roki-web/${{ steps.myhash.outputs.hash }}-docs.tar.xz
+          CI_WORK/GitHubActions/roki-web/${{ github.sha }}-docs.tar.xz
   boot-circle-ci:
     runs-on: ubuntu-latest
     needs: upload
@@ -120,7 +114,7 @@ jobs:
           echo CIRCLE_RESP=$(curl -s -X POST \
             -H "Circle-Token: ${{ secrets.CIRCLE_API_USER_TOKEN }}" \
             -H "Content-Type: application/json" \
-            -d '{"branch":"${{ github.event.pull_request.head.ref }}","parameters":{"GITHUB_SHA":"${{ steps.myhash.outputs.hash }}"}}' \
+            -d '{"branch":"${{ github.event.pull_request.head.ref }}","parameters":{"GITHUB_SHA":"${{ github.sha }}"}}' \
             https://circleci.com/api/v2/project/gh/falgon/roki-web/pipeline) >> $GITHUB_ENV
     - name: Set CircleCI variables
       id: cc
