@@ -6,10 +6,14 @@ tags: Haskell, Git
 
 [技術書典 11](https://techbookfest.org/event/tbf11) に出展の
 [KLab Tech Book Vol.8](https://techbookfest.org/product/6185615265628160) 第七章にて『ミニマル Git を自作しよう』という記事を執筆した.
-<br />
 技術書典 11 オンラインマーケットから電子 + 物理本セットは 1000 円, 電子版のみは無料で頒布されている.
-<br />
-**※追記：加筆・調整版を新規にリリースしました👉<https://note.com/_roki/n/n1e17f077c2eb>**
+
+<article class="message is-info">
+<div class="message-body has-text-centered">
+<i class="fas fa-info-circle"></i>
+※追記：加筆・調整版を新規にリリースしました 👉 <a href=https://note.com/_roki/n/n1e17f077c2eb>https://note.com/_roki/n/n1e17f077c2eb</a>
+</div>
+</article>
 
 ![[KLab Tech Book Vol.8](https://techbookfest.org/product/6185615265628160)](./tbf11.png){width=250px}
 
