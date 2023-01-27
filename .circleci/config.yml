@@ -7,7 +7,7 @@ parameters:
 jobs:
   build:
     docker:
-    - image: cimg/golang:1.17.2
+    - image: circleci/golang:1.17.2
     environment:
       TZ: /usr/share/zoneinfo/Asia/Tokyo
     steps:
