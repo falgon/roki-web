@@ -65,7 +65,7 @@ jobs:
               -d '{"body":"* [Build log]('"$CIRCLE_BUILD_URL)\r\n"'* Preview build with this PR (commit): <'"$ARTIFACTS_URL"'>"}' \
               "$pr_comment_url"
           fi
-          echo "PR_RESPONSE=\"$PR_RESPONSE\"" >> $BASH_ENV
+          echo "PR_RESPONSE='$PR_RESPONSE'" >> $BASH_ENV
           source "$BASH_ENV"
     - restore_cache:
         key: v1-notify-line-{{ checksum "tools/circleci/NotifyLine.hs" }}
