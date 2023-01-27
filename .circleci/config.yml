@@ -8,6 +8,7 @@ jobs:
   build:
     docker:
     - image: circleci/golang:1.17.2
+    resource_class: large
     environment:
       TZ: /usr/share/zoneinfo/Asia/Tokyo
     steps:
