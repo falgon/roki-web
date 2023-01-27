@@ -2,12 +2,11 @@ name: CI-pr
 
 on:
   pull_request:
-    branches: [develop, master]
+    branches: [develop, master, release, draft]
     types: [synchronize, opened, reopened, ready_for_review]
 jobs:
   build:
     runs-on: ubuntu-20.04
-    if: github.repository == 'falgon/roki-web'
     steps:
     - name: Checkout
       uses: actions/checkout@v2
@@ -104,7 +103,7 @@ jobs:
       run: |
         skicka -no-browser-auth upload -ignore-times \
           ./docs.tar.xz \
-          CI_WORK/GitHubActions/roki-web/${{ github.sha }}-docs.tar.xz
+          CI_WORK/GitHubActions/${GITHUB_REPOSITORY#${GITHUB_REPOSITORY_OWNER}/}/${{ github.sha }}-docs.tar.xz
   boot-circle-ci:
     runs-on: ubuntu-latest
     needs: upload
@@ -115,11 +114,11 @@ jobs:
             -H "Circle-Token: ${{ secrets.CIRCLE_API_USER_TOKEN }}" \
             -H "Content-Type: application/json" \
             -d '{"branch":"${{ github.event.pull_request.head.ref }}","parameters":{"GITHUB_SHA":"${{ github.sha }}"}}' \
-            https://circleci.com/api/v2/project/gh/falgon/roki-web/pipeline) >> $GITHUB_ENV
+            https://circleci.com/api/v2/project/gh/${{ github.repository }}/pipeline) >> $GITHUB_ENV
     - name: Set CircleCI variables
       id: cc
       run: |
           echo "CIRCLE_JOB_NUM=$(echo '${{ env.CIRCLE_RESP }}' | jq .number)" >> $GITHUB_ENV
           echo "CIRCLE_JOB_ID=$(echo '${{ env.CIRCLE_RESP }}' | jq .id)" >> $GITHUB_ENV
     - name: Out CircleCI URL
-      run: echo "https://app.circleci.com/pipelines/github/falgon/roki-web/${{ env.CIRCLE_JOB_NUM }}/workflows/${{ env.CIRCLE_JOB_ID }}/jobs/${{ env.CIRCLE_JOB_NUM }}/steps"
+      run: echo "https://app.circleci.com/pipelines/github/${{ github.repository }}/${{ env.CIRCLE_JOB_NUM }}/workflows/${{ env.CIRCLE_JOB_ID }}/jobs/${{ env.CIRCLE_JOB_NUM }}/steps"
