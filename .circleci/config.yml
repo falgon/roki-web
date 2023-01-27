@@ -19,8 +19,8 @@ jobs:
           echo 'export GOPATH="$HOME/.go"' >> $BASH_ENV
           echo 'export PATH="$HOME/.go/bin:$PATH"' >> $BASH_ENV
           echo "export ARTIFACTS_URL=\"https://output.circle-artifacts.com/output/job/$CIRCLE_WORKFLOW_JOB_ID/artifacts/$CIRCLE_NODE_INDEX/index.html\"" >> $BASH_ENV
-          echo 'export ARTIFACTS_GDRIVE_PATH="CI_WORK/GitHubActions/$CIRCLE_PROJECT_REPONAME/$FN' >> $BASH_ENV
-          source $HOME/.bashrc
+          echo 'export ARTIFACTS_GDRIVE_PATH="CI_WORK/GitHubActions/$CIRCLE_PROJECT_REPONAME/$FN"' >> $BASH_ENV
+          source "$BASH_ENV"
     - restore_cache:
         key: skicka-2021-11-06-latest
     - run:
@@ -66,7 +66,7 @@ jobs:
               "$pr_comment_url"
           fi
           echo "PR_RESPONSE=\"$PR_RESPONSE\"" >> $BASH_ENV
-          source $BASH_ENV
+          source "$BASH_ENV"
     - restore_cache:
         key: v1-notify-line-{{ checksum "tools/circleci/NotifyLine.hs" }}
     - run:
