@@ -15,13 +15,11 @@ jobs:
     - run:
         name: Set variables
         command: |
-          cat << 'EOS' >> $BASH_ENV
-          export FN=<< pipeline.parameters.GITHUB_SHA >>-docs.tar.xz
-          export GOPATH="$HOME/.go"
-          export PATH="$HOME/.go/bin:$PATH"
-          export ARTIFACTS_URL="https://output.circle-artifacts.com/output/job/$CIRCLE_WORKFLOW_JOB_ID/artifacts/$CIRCLE_NODE_INDEX/index.html"
-          export ARTIFACTS_GDRIVE_PATH="CI_WORK/GitHubActions/$CIRCLE_PROJECT_REPONAME/$FN"
-          EOS
+          echo 'export FN=<< pipeline.parameters.GITHUB_SHA >>-docs.tar.xz' >> $BASH_ENV
+          echo 'export GOPATH="$HOME/.go"' >> $BASH_ENV
+          echo 'export PATH="$HOME/.go/bin:$PATH"' >> $BASH_ENV
+          echo "export ARTIFACTS_URL=\"https://output.circle-artifacts.com/output/job/$CIRCLE_WORKFLOW_JOB_ID/artifacts/$CIRCLE_NODE_INDEX/index.html\"" >> $BASH_ENV
+          echo 'export ARTIFACTS_GDRIVE_PATH="CI_WORK/GitHubActions/$CIRCLE_PROJECT_REPONAME/$FN' >> $BASH_ENV
           source $HOME/.bashrc
     - restore_cache:
         key: skicka-2021-11-06-latest
@@ -56,7 +54,7 @@ jobs:
     - run:
         name: Add comment
         command: |
-          PR_RESPONSE=$(curl -s --location --request GET -H "Authorization: token $YBGH_TOKEN" "https://api.github.com/repos/falgon/$CIRCLE_PROJECT_REPONAME/pulls?head=falgon:$CIRCLE_BRANCH&state=open")
+          PR_RESPONSE=$(curl -s --location --request GET -H "Authorization: token $YBGH_TOKEN" "https://api.github.com/repos/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/pulls?head=$CIRCLE_PROJECT_USERNAME:$CIRCLE_BRANCH&state=open")
           if [ -z "$PR_RESPONSE" ]; then
             echo "No PR found to update"
           else
@@ -67,12 +65,13 @@ jobs:
               -d '{"body":"* [Build log]('"$CIRCLE_BUILD_URL)\r\n"'* Preview build with this PR (commit): <'"$ARTIFACTS_URL"'>"}' \
               "$pr_comment_url"
           fi
+          echo "PR_RESPONSE=\"$PR_RESPONSE\"" >> $BASH_ENV
+          source $BASH_ENV
     - restore_cache:
         key: v1-notify-line-{{ checksum "tools/circleci/NotifyLine.hs" }}
     - run:
         name: Notify LINE
         command: |
-          PR_RESPONSE=$(curl -s --location --request GET -H "Authorization: token $YBGH_TOKEN" "https://api.github.com/repos/falgon/$CIRCLE_PROJECT_REPONAME/pulls?head=falgon:$CIRCLE_BRANCH&state=open")
           if [ -z "$PR_RESPONSE" ]; then
             echo "No PR found to update"
           else
