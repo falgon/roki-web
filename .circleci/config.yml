@@ -63,7 +63,7 @@ jobs:
           else
             readonly pr_comment_url=$(echo "$PR_RESPONSE" | jq -r ".[]._links.comments.href")
             readonly status_badge_endpoint='https://dl.circleci.com/status-badge'
-            readonly badge="[![CircleCI]($status_badge_endpoint/img/gh/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/tree/$CIRCLE_BRANCH.svg?style=shield)]($status_badge_endpoint/redirect/gh/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/tree/$CIRCLE_BRANCH)"
+            readonly badge="[\![CircleCI]($status_badge_endpoint/img/gh/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/tree/$CIRCLE_BRANCH.svg?style=shield)]($status_badge_endpoint/redirect/gh/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/tree/$CIRCLE_BRANCH)"
             curl -X POST \
               -H "Authorization: token $YBGH_TOKEN" \
               -H 'Content-Type:application/json' \
