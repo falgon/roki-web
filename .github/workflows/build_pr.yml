@@ -25,10 +25,10 @@ jobs:
         enable-stack: true
         stack-version: '2.7.3'
     - name: Setup XMLlint
-      run: |
-        sudo apt-get -qq -o=Dpkg::Use-Pty=0 update
-        sudo apt-get -qq -o=Dpkg::Use-Pty=0 install -y --no-install-recommends libxml2-utils
-        xmllint --version
+      uses: awalsh128/cache-apt-pkgs-action@v1.2.2
+      with:
+        packages: libxml2-utils
+        version: 1.0
     - name: Setup Stack
       if: steps.stack-cache.outputs.cache-hit != 'true'
       run: |
@@ -41,11 +41,19 @@ jobs:
       uses: actions/setup-node@v2
       with:
         node-version: '${{ steps.nvmrc.outputs.node_version }}'
-    - name: Install dependencies and build the roki.dev generator
+    - name: Node module cache
+      uses: actions/cache@v3
+      id: node-cache
+      with:
+        path: '**/node_modules'
+        key: node-v1-${{ runner.os }}-${{ hashFiles('.nvmrc') }}-${{ hashFiles('package.json') }}-${{ hashFiles('package-lock.json') }}
+    - name: Install Node dependencies
+      if: steps.node-cache.outputs.cache-hit != 'true'
+      run: npm ci
+    - name: Build the roki.dev generator
       run: |
         stack --local-bin-path . install --flag hakyll:-previewServer --flag hakyll:-watchServer
         ./site --version
-        npm ci
     - name: Build and validate roki.dev
       run: |
         ./site build
