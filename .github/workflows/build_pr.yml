@@ -45,7 +45,7 @@ jobs:
       uses: actions/cache@v2
       id: node-cache
       with:
-        path: **/node_modules
+        path: '**/node_modules'
         key: node-v1-${{ runner.os }}-${{ hashFiles('.nvmrc') }}-${{ hashFiles('package.json') }}-${{ hashFiles('package-lock.json') }}
     - name: Install Node dependencies
       if: steps.node-cache.outputs.cache-hit != 'true'
