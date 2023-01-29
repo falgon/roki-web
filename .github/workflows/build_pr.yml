@@ -25,10 +25,10 @@ jobs:
         enable-stack: true
         stack-version: '2.7.3'
     - name: Setup XMLlint
-      run: |
-        sudo apt-get -qq -o=Dpkg::Use-Pty=0 update
-        sudo apt-get -qq -o=Dpkg::Use-Pty=0 install -y --no-install-recommends libxml2-utils
-        xmllint --version
+      uses: awalsh128/cache-apt-pkgs-action@v1.2.2
+      with:
+        packages: libxml2-utils
+        version: 1.0
     - name: Setup Stack
       if: steps.stack-cache.outputs.cache-hit != 'true'
       run: |
