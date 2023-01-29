@@ -67,7 +67,7 @@ jobs:
             curl -X POST \
               -H "Authorization: token $YBGH_TOKEN" \
               -H 'Content-Type:application/json' \
-              -d '{"body":"* Status: "$badge\r\n"* [Build log]('"$CIRCLE_BUILD_URL)\r\n"'* Preview build with this PR (commit): <'"$ARTIFACTS_URL"'>"}' \
+              -d '{"body":"'* Status: "$badge\r\n"'* [Build log]('"$CIRCLE_BUILD_URL)\r\n"'* Preview build with this PR (commit): <'"$ARTIFACTS_URL"'>"}' \
               "$pr_comment_url"
           fi
           echo "PR_RESPONSE='$PR_RESPONSE'" >> $BASH_ENV
