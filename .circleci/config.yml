@@ -55,15 +55,19 @@ jobs:
     - run:
         name: Add comment
         command: |
-          PR_RESPONSE=$(curl -s --location --request GET -H "Authorization: token $YBGH_TOKEN" "https://api.github.com/repos/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/pulls?head=$CIRCLE_PROJECT_USERNAME:$CIRCLE_BRANCH&state=open")
+          PR_RESPONSE=$(curl -s --location --request GET \
+            -H "Authorization: token $YBGH_TOKEN" \
+            "https://api.github.com/repos/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/pulls?head=$CIRCLE_PROJECT_USERNAME:$CIRCLE_BRANCH&state=open")
           if [ -z "$PR_RESPONSE" ]; then
             echo "No PR found to update"
           else
-            pr_comment_url=$(echo "$PR_RESPONSE" | jq -r ".[]._links.comments.href")
+            readonly pr_comment_url=$(echo "$PR_RESPONSE" | jq -r ".[]._links.comments.href")
+            readonly status_badge_endpoint='https://dl.circleci.com/status-badge'
+            readonly badge="[![CircleCI]($status_badge_endpoint/img/gh/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/tree/$CIRCLE_BRANCH.svg?style=svg)]($status_badge_endpoint/redirect/gh/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/tree/$CIRCLE_BRANCH)"
             curl -X POST \
               -H "Authorization: token $YBGH_TOKEN" \
               -H 'Content-Type:application/json' \
-              -d '{"body":"* [Build log]('"$CIRCLE_BUILD_URL)\r\n"'* Preview build with this PR (commit): <'"$ARTIFACTS_URL"'>"}' \
+              -d '{"body":"* Status: $badge\r\n* [Build log]('"$CIRCLE_BUILD_URL)\r\n"'* Preview build with this PR (commit): <'"$ARTIFACTS_URL"'>"}' \
               "$pr_comment_url"
           fi
           echo "PR_RESPONSE='$PR_RESPONSE'" >> $BASH_ENV
@@ -78,7 +82,9 @@ jobs:
           else
             pr_url=$(echo "$PR_RESPONSE" | jq -r ".[]._links.html.href")
             # eval is needed for the CIRCLE_WORKING_DIRECTORY variable as it contains a non-expanded '~'
-            eval ${CIRCLE_WORKING_DIRECTORY}/tools/circleci/NotifyLine.hs --pr-url "$pr_url" --artifacts-url "$ARTIFACTS_URL"
+            eval ${CIRCLE_WORKING_DIRECTORY}/tools/circleci/NotifyLine.hs \
+              --pr-url "$pr_url" \
+              --artifacts-url "$ARTIFACTS_URL"
           fi
     - save_cache:
         key: v1-notify-line-{{ checksum "tools/circleci/NotifyLine.hs" }}
