@@ -63,6 +63,12 @@ jobs:
       run: |
         stack --local-bin-path . install --flag hakyll:-previewServer --flag hakyll:-watchServer
         ./site --version
+    - name: Docs cache
+      uses: actions/cache@v3
+      id: docs-cache
+      with:
+        path: './docs'
+        key: docs-v1-${{ runner.os }}
     - name: Build and validate roki.dev
       run: |
         ./site build
