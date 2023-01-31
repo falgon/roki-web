@@ -13,10 +13,8 @@ jobs:
         uses: actions/checkout@v3
       - name: Cleanup
         run: |
-          gh extension install actions/gh-actions-cache         
+          gh extension install actions/gh-actions-cache
           readonly cache_keys=$(gh actions-cache list -R $REPO -B $BRANCH | cut -f1)
-
-          ## Setting this to not fail the workflow while deleting cache keys. 
           set +e
           for key in $cache_keys; do
               gh actions-cache delete $key -R $REPO -B $BRANCH --confirm
