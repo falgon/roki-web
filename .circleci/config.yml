@@ -55,9 +55,9 @@ jobs:
     - run:
         name: Add comment
         command: |
-          PR_RESPONSE=$(curl -s --location --request GET \
+          PR_RESPONSE="$(curl -s --location --request GET \
             -H "Authorization: token $YBGH_TOKEN" \
-            "https://api.github.com/repos/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/pulls?head=$CIRCLE_PROJECT_USERNAME:$CIRCLE_BRANCH&state=open")
+            "https://api.github.com/repos/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/pulls?head=$CIRCLE_PROJECT_USERNAME:$CIRCLE_BRANCH&state=open")"
           if [ -z "$PR_RESPONSE" ]; then
             echo "No PR found to update"
           else
@@ -66,12 +66,11 @@ jobs:
             readonly badge="[![CircleCI]($status_badge_endpoint/img/gh/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/tree/$CIRCLE_BRANCH.svg?style=svg)]($status_badge_endpoint/redirect/gh/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/tree/$CIRCLE_BRANCH)"
             readonly details="\r\n<hr /><details><summary>more info</summary><p><ul><li>:cloud: Storage $(skicka df | grep 'Free space')</li><li>:open_file_folder: $(skicka du ${ARTIFACTS_GDRIVE_PATH%/*} | sed 's/^[ \t]*//')</li></ul></p></details>"
             readonly data='{"body":"*'" $badge\r\n"'* [Build log]('"$CIRCLE_BUILD_URL)\r\n"'* [Preview build]('"$ARTIFACTS_URL"') with this PR ([commit]('"$CIRCLE_SHA1"'))'"$details"'"}'
-            readonly post_result="$(curl -X POST \
+            curl -X POST \
               -H "Authorization: token $YBGH_TOKEN" \
               -H 'Content-Type:application/json' \
               -d "$data" \
-              "$pr_comment_url")"
-            echo "$post_result" | jq -r '.html_url'
+              "$pr_comment_url" | jq -r '.html_url'
           fi
           echo "PR_RESPONSE='$PR_RESPONSE'" >> $BASH_ENV
           source "$BASH_ENV"
