@@ -12,13 +12,21 @@ jobs:
       uses: actions/checkout@v2
       with:
         submodules: true
+    - name: Site generator cache
+      uses: actions/cache@v3
+      id: site-gen-cache
+      with:
+        path: ./site
+        key: site-gen-v1-${{ runner.os }}-${{ hashFiles('stack.yaml') }}-${{ hashFiles('stack.yaml.lock') }}-${{ hashFiles('package.yaml') }}-${{ hashFiles('src/**') }}-${{ hashFiles('app/**') }}
     - name: Stack cache
+      if: steps.site-gen-cache.outputs.cache-hit != 'true'
       uses: actions/cache@v2
       id: stack-cache
       with:
         path: ~/.stack
         key: stack-v2-${{ runner.os }}-${{ hashFiles('stack.yaml') }}
     - name: Setup GHC
+      if: steps.site-gen-cache.outputs.cache-hit != 'true'
       uses: haskell/actions/setup@v1
       with:
         ghc-version: '8.8.3'
@@ -30,7 +38,7 @@ jobs:
         packages: libxml2-utils
         version: 1.0
     - name: Setup Stack
-      if: steps.stack-cache.outputs.cache-hit != 'true'
+      if: steps.site-gen-cache.outputs.cache-hit != 'true' && steps.stack-cache.outputs.cache-hit != 'true'
       run: |
         stack config set system-ghc --global true
         stack config set install-ghc --global false
@@ -51,9 +59,16 @@ jobs:
       if: steps.node-cache.outputs.cache-hit != 'true'
       run: npm ci
     - name: Build the roki.dev generator
+      if: steps.site-gen-cache.outputs.cache-hit != 'true'
       run: |
         stack --local-bin-path . install --flag hakyll:-previewServer --flag hakyll:-watchServer
         ./site --version
+    - name: Docs cache
+      uses: actions/cache@v3
+      id: docs-cache
+      with:
+        path: './docs'
+        key: docs-v1-${{ runner.os }}
     - name: Build and validate roki.dev
       run: |
         ./site build
