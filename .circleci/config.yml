@@ -55,7 +55,7 @@ jobs:
     - run:
         name: Add comment
         command: |
-          echo "PR_RESPONSE_TMP=$(mktemp)" >> $BASH_ENV
+          echo "export PR_RESPONSE_TMP=$(mktemp)" >> $BASH_ENV
           source "$BASH_ENV"
           curl -s --location --request GET \
             -H "Authorization: token $YBGH_TOKEN" \
