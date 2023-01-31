@@ -14,11 +14,34 @@
         </picture>
     </figure>
 
-    <div style="width: 200px; margin: 0 auto;">
-        <div class="mb-3"><p class="title" id="my_name">$author-name$</p></div>
-        $partial("contents/templates/site/author-info/listed.html")$
+    <div class="mb-5" style="width: 200px; margin: 0 auto; display: flex; align-items: stretch;">
+        <p class="title mb-0" id="my_name">$author-name$</p>
+        <ul class="is-unstyled social-links">
+            <li class="mt-0 mr-1">
+                <a class="social-icon-github" href="https://github.com/$author-github$">
+                    <i class="fab fa-github fa-fw"></i>
+                </a>
+            </li>
+            <li class="mt-0 mr-1">
+                <a class="social-icon-twitter" href="https://twitter.com/$author-twitter$">
+                    <i class="fab fa-twitter fa-fw"></i>
+                </a>
+            </li>
+            <li class="mt-0 mr-1">
+                <a class="social-icon-zenn" href="https://zenn.dev/roki">
+                <!-- TODO: out the settings -->
+                    <i class="fas fa-wave-square fa-fw"></i>
+                </a>
+            </li>
+            <li class="mt-0 mr-1">
+                <a class="social-icon-note" href="https://note.com/$author-note$/">
+                    <i class="fas fa-sticky-note fa-fw"></i>
+                </a>
+            </li>
+        </ul>
         <div class="is-clearfix"></div>
     </div>
+    $partial("contents/templates/site/author-info/listed.html")$
 
 </div>
 </div>

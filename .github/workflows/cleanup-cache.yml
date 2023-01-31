@@ -1,0 +1,26 @@
+name: CI-cleanup-caches
+on:
+  pull_request:
+    types:
+      - closed
+  workflow_dispatch:
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Cleanup
+        run: |
+          gh extension install actions/gh-actions-cache
+          readonly cache_keys=$(gh actions-cache list -R $REPO -B $BRANCH | cut -f1)
+          set +e
+          for key in $cache_keys; do
+              gh actions-cache delete $key -R $REPO -B $BRANCH --confirm
+          done
+          set -e
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          BRANCH: ${{ github.ref }}

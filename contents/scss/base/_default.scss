@@ -206,6 +206,9 @@ span.both-lined:after {
     border-right: 0;
     border-top: 0;
     border-left: 0;
+    @extend .is-flex;
+    @extend .is-align-items-center;
+    @extend .is-justify-content-space-between;
 }
 
 .katex-display > .katex {
@@ -215,3 +218,27 @@ span.both-lined:after {
     text-align: center;
 }
 
+.social-links {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    list-style: none;
+    margin: 0 0 0 auto !important;
+    li {
+        a {
+            color: $grey-darker;
+        }
+        .social-icon-github:hover {
+            color: #C4C4C4;
+        }
+        .social-icon-twitter:hover {
+            color: $twitter-color;
+        }
+        .social-icon-zenn:hover {
+            color: $zenn-color;
+        }
+        .social-icon-note:hover {
+            color: $note-color;
+        }
+    }
+}

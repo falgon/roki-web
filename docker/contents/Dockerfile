@@ -1,6 +1,9 @@
 FROM ubuntu:20.04 as bin
 SHELL ["/bin/bash", "-c"]
-LABEL maintainer="Roki <falgon53@gmail.com>"
+LABEL maintainer="Roki <falgon53@yahoo.co.jp>"
+LABEL org.opencontainers.image.authors="Roki <falgon53@yahoo.co.jp>"
+LABEL org.opencontainers.image.description="Preview image from the website roki.dev"
+
 ENV DEBIAN_FRONTEND=noninteractive \
     DEBCONF_NOWARNINGS=yes
 RUN apt-get -qq update \

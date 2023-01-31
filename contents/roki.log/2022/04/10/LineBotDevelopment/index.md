@@ -20,7 +20,7 @@ LINE 株式会社 (以下 LINE 社) が提供する LINE というメッセン�
 
 ## 基本構成
 
-今回は個人利用/小規模であり, 特別な費用を発生させたくなかったので
+今回は個人利用/小規模であり特別な費用を発生させたくなかったので,
 [Oracle Cloud Infrastructure](https://www.oracle.com/cloud/) (以下 OCI)
 の Always Free 枠である Ubuntu インスタンス上にサーバを構成した[^7].
 同インスタンス上では Jitsi Meet[^1] という別のウェブサービスを nginx

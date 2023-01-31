@@ -2,44 +2,43 @@ name: CI-pr
 
 on:
   pull_request:
-    branches: [develop, master]
+    branches: [develop, master, release, draft]
     types: [synchronize, opened, reopened, ready_for_review]
 jobs:
   build:
     runs-on: ubuntu-20.04
-    if: github.repository == 'falgon/roki-web'
     steps:
-    - name: Set doc hash value
-      shell: bash
-      run: echo "::set-output name=hash::${GITHUB_SHA}"
-      id: myhash
-    - name: Check variables
-      run: |
-        echo "${{ steps.myref.outputs.branch }}"
-        echo "${{ steps.myhash.outputs.hash }}"
     - name: Checkout
       uses: actions/checkout@v2
       with:
         submodules: true
+    - name: Site generator cache
+      uses: actions/cache@v3
+      id: site-gen-cache
+      with:
+        path: ./site
+        key: site-gen-v1-${{ runner.os }}-${{ hashFiles('stack.yaml') }}-${{ hashFiles('stack.yaml.lock') }}-${{ hashFiles('package.yaml') }}-${{ hashFiles('src/**') }}-${{ hashFiles('app/**') }}
     - name: Stack cache
+      if: steps.site-gen-cache.outputs.cache-hit != 'true'
       uses: actions/cache@v2
       id: stack-cache
       with:
         path: ~/.stack
         key: stack-v2-${{ runner.os }}-${{ hashFiles('stack.yaml') }}
     - name: Setup GHC
+      if: steps.site-gen-cache.outputs.cache-hit != 'true'
       uses: haskell/actions/setup@v1
       with:
         ghc-version: '8.8.3'
         enable-stack: true
         stack-version: '2.7.3'
     - name: Setup XMLlint
-      run: |
-        sudo apt-get -qq -o=Dpkg::Use-Pty=0 update
-        sudo apt-get -qq -o=Dpkg::Use-Pty=0 install -y --no-install-recommends libxml2-utils
-        xmllint --version
+      uses: awalsh128/cache-apt-pkgs-action@v1.2.2
+      with:
+        packages: libxml2-utils
+        version: 1.0
     - name: Setup Stack
-      if: steps.stack-cache.outputs.cache-hit != 'true'
+      if: steps.site-gen-cache.outputs.cache-hit != 'true' && steps.stack-cache.outputs.cache-hit != 'true'
       run: |
         stack config set system-ghc --global true
         stack config set install-ghc --global false
@@ -50,11 +49,26 @@ jobs:
       uses: actions/setup-node@v2
       with:
         node-version: '${{ steps.nvmrc.outputs.node_version }}'
-    - name: Install dependencies and build the roki.dev generator
+    - name: Node module cache
+      uses: actions/cache@v3
+      id: node-cache
+      with:
+        path: '**/node_modules'
+        key: node-v1-${{ runner.os }}-${{ hashFiles('.nvmrc') }}-${{ hashFiles('package.json') }}-${{ hashFiles('package-lock.json') }}
+    - name: Install Node dependencies
+      if: steps.node-cache.outputs.cache-hit != 'true'
+      run: npm ci
+    - name: Build the roki.dev generator
+      if: steps.site-gen-cache.outputs.cache-hit != 'true'
       run: |
         stack --local-bin-path . install --flag hakyll:-previewServer --flag hakyll:-watchServer
         ./site --version
-        npm ci
+    - name: Docs cache
+      uses: actions/cache@v3
+      id: docs-cache
+      with:
+        path: './docs'
+        key: docs-v1-${{ runner.os }}
     - name: Build and validate roki.dev
       run: |
         ./site build
@@ -86,6 +100,7 @@ jobs:
           ~/.cache/go-build
           ~/.skicka.tokencache.json
           ~/.skicka.config
+          ~/.skicka.metadata.cache
         key: go-v2-${{ runner.os }}
     - name: Setup Go Path
       run: |
@@ -111,22 +126,22 @@ jobs:
       run: |
         skicka -no-browser-auth upload -ignore-times \
           ./docs.tar.xz \
-          CI_WORK/GitHubActions/roki-web/${{ steps.myhash.outputs.hash }}-docs.tar.xz
+          CI_WORK/GitHubActions/${GITHUB_REPOSITORY#${GITHUB_REPOSITORY_OWNER}/}/${{ github.sha }}-docs.tar.xz
   boot-circle-ci:
     runs-on: ubuntu-latest
     needs: upload
     steps:
     - name: Boot CircleCI
       run: |
-          echo CIRCLE_RESP=$(curl -s -u ${{ secrets.CIRCLE_API_USER_TOKEN }}: \
-            -X POST \
+          echo CIRCLE_RESP=$(curl -s -X POST \
+            -H "Circle-Token: ${{ secrets.CIRCLE_API_USER_TOKEN }}" \
             -H "Content-Type: application/json" \
-            -d '{"branch":"${{ github.event.pull_request.head.ref }}","parameters":{"GITHUB_SHA":"${{ steps.myhash.outputs.hash }}"}}' \
-            https://circleci.com/api/v2/project/gh/falgon/roki-web/pipeline) >> $GITHUB_ENV
+            -d '{"branch":"${{ github.event.pull_request.head.ref }}","parameters":{"GITHUB_SHA":"${{ github.sha }}"}}' \
+            https://circleci.com/api/v2/project/gh/${{ github.repository }}/pipeline) >> $GITHUB_ENV
     - name: Set CircleCI variables
       id: cc
       run: |
           echo "CIRCLE_JOB_NUM=$(echo '${{ env.CIRCLE_RESP }}' | jq .number)" >> $GITHUB_ENV
           echo "CIRCLE_JOB_ID=$(echo '${{ env.CIRCLE_RESP }}' | jq .id)" >> $GITHUB_ENV
     - name: Out CircleCI URL
-      run: echo "https://app.circleci.com/pipelines/github/falgon/roki-web/${{ env.CIRCLE_JOB_NUM }}/workflows/${{ env.CIRCLE_JOB_ID }}/jobs/${{ env.CIRCLE_JOB_NUM }}/steps"
+      run: echo "https://app.circleci.com/pipelines/github/${{ github.repository }}/${{ env.CIRCLE_JOB_NUM }}/workflows/${{ env.CIRCLE_JOB_ID }}/jobs/${{ env.CIRCLE_JOB_NUM }}/steps"
