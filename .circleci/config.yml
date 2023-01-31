@@ -55,13 +55,15 @@ jobs:
     - run:
         name: Add comment
         command: |
-          PR_RESPONSE=$(curl -s --location --request GET \
+          echo "PR_RESPONSE_TMP=$(mktemp)" >> $BASH_ENV
+          source "$BASH_ENV"
+          curl -s --location --request GET \
             -H "Authorization: token $YBGH_TOKEN" \
-            "https://api.github.com/repos/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/pulls?head=$CIRCLE_PROJECT_USERNAME:$CIRCLE_BRANCH&state=open")
-          if [ -z "$PR_RESPONSE" ]; then
+            "https://api.github.com/repos/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/pulls?head=$CIRCLE_PROJECT_USERNAME:$CIRCLE_BRANCH&state=open" > $PR_RESPONSE_TMP
+          if [ -z "$(cat $PR_RESPONSE_TMP)" ]; then
             echo "No PR found to update"
           else
-            readonly pr_comment_url=$(echo "$PR_RESPONSE" | jq -r ".[]._links.comments.href")
+            readonly pr_comment_url=$(jq -r ".[]._links.comments.href" "$PR_RESPONSE_TMP")
             readonly status_badge_endpoint='https://dl.circleci.com/status-badge'
             readonly badge="[![CircleCI]($status_badge_endpoint/img/gh/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/tree/$CIRCLE_BRANCH.svg?style=svg)]($status_badge_endpoint/redirect/gh/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/tree/$CIRCLE_BRANCH)"
             readonly details="\r\n<hr /><details><summary>more info</summary><p><ul><li>:cloud: Storage $(skicka df | grep 'Free space')</li><li>:open_file_folder: $(skicka du ${ARTIFACTS_GDRIVE_PATH%/*} | sed 's/^[ \t]*//')</li></ul></p></details>"
@@ -73,17 +75,15 @@ jobs:
               "$pr_comment_url")
             echo "$post_result" | jq -r '.html_url'
           fi
-          echo "PR_RESPONSE='$PR_RESPONSE'" >> $BASH_ENV
-          source "$BASH_ENV"
     - restore_cache:
         key: v1-notify-line-{{ checksum "tools/circleci/NotifyLine.hs" }}
     - run:
         name: Notify LINE
         command: |
-          if [ -z "$PR_RESPONSE" ]; then
+          if [ -z "$(cat $PR_RESPONSE_TMP)" ]; then
             echo "No PR found to update"
           else
-            pr_url=$(echo "$PR_RESPONSE" | jq -r ".[]._links.html.href")
+            pr_url=$(jq -r ".[]._links.html.href" "$PR_RESPONSE_TMP")
             # eval is needed for the CIRCLE_WORKING_DIRECTORY variable as it contains a non-expanded '~'
             eval ${CIRCLE_WORKING_DIRECTORY}/tools/circleci/NotifyLine.hs \
               --pr-url "$pr_url" \
