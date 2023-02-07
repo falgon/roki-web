@@ -73,10 +73,12 @@ jobs:
     - name: Build and validate roki.dev
       run: |
         for i in `seq 0 ${{ env.RETRY_MAX }}`; do
-          set +e
-          site_out=$(./site build 2>&1 | tee /dev/tty)
-          result=$?
-          set -e
+          set +e -o pipefail
+            exec 3>&1
+              site_out=$(./site build 2>&1 | tee /dev/fd/3)
+              result=$?
+            exec 3>&-
+          set -e +o pipefail
           if [ $result -eq 0 ]; then
             break;
           elif [ -n "$(echo "$result" | grep "code: 'EAGAIN'")" ]; then
