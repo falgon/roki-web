@@ -33,11 +33,11 @@ jobs:
         ghc-version: '8.8.3'
         enable-stack: true
         stack-version: '2.7.3'
-    - name: Setup XMLlint
+    - name: Setup Tools
       uses: awalsh128/cache-apt-pkgs-action@v1.2.2
       with:
-        packages: libxml2-utils
-        version: 1.0
+        packages: libxml2-utils parallel
+        version: 2.0
     - name: Setup Stack
       if: steps.site-gen-cache.outputs.cache-hit != 'true' && steps.stack-cache.outputs.cache-hit != 'true'
       run: |
@@ -72,12 +72,23 @@ jobs:
         key: docs-v1-${{ runner.os }}
     - name: Build and validate roki.dev
       run: |
-        ./site build
+        for i in `seq 0 ${{ env.RETRY_MAX }}`; do
+          set +e
+          site_out=$(./site build 2>&1 | tee /dev/tty)
+          result=$?
+          set -e
+          if [ $result -eq 0 ]; then
+            break;
+          elif [ -n "$(echo "$result" | grep "code: 'EAGAIN'")" ]; then
+            echo "EAGAIN detected, try to run again (next count: $((i+1)))"
+            continue;
+          else
+            exit 1
+          fi
+        done
         ./site check --internal-links
-        xmllint docs/roki.log/sitemap.xml --noout
-        xmllint docs/roki.log/feed/roki.log.xml --noout
-        xmllint docs/roki.diary/sitemap.xml --noout
-        xmllint docs/roki.diary/feed/roki.diary.xml --noout
+        parallel -I% --no-notice -j+0 --progress \
+          xmllint docs/%/sitemap.xml docs/%/feed/%.xml --noout ::: roki.log roki.diary
         tar cvf docs.tar.xz docs
     - name: Upload artifact
       uses: actions/upload-artifact@v2
