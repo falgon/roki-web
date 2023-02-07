@@ -4,6 +4,7 @@ on:
   pull_request:
     branches: [develop, master, release, draft]
     types: [synchronize, opened, reopened, ready_for_review]
+  workflow_dispatch:
 jobs:
   build:
     runs-on: ubuntu-20.04
@@ -133,10 +134,11 @@ jobs:
     steps:
     - name: Boot CircleCI
       run: |
+          readonly ENABLE_COMMENT=$(test ${{ github.event_name }} = workflow_dispatch && echo true || echo false)
           echo CIRCLE_RESP=$(curl -s -X POST \
             -H "Circle-Token: ${{ secrets.CIRCLE_API_USER_TOKEN }}" \
             -H "Content-Type: application/json" \
-            -d '{"branch":"${{ github.event.pull_request.head.ref }}","parameters":{"GITHUB_SHA":"${{ github.sha }}"}}' \
+            -d '{"branch":"${{ github.event.pull_request.head.ref }}","parameters":{"GITHUB_SHA":"${{ github.sha }}","ENABLE_PR_COMMENT":$ENABLE_COMMENT}}' \
             https://circleci.com/api/v2/project/gh/${{ github.repository }}/pipeline) >> $GITHUB_ENV
     - name: Set CircleCI variables
       id: cc
