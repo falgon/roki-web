@@ -140,9 +140,12 @@ jobs:
         GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
     - name: Upload to Google Drive
       run: |
+        echo DOCS_PREFIX=${{ env.DOCS_PREFIX }} >> $GITHUB_ENV
         skicka -no-browser-auth upload -ignore-times \
           ./docs.tar.xz \
-          CI_WORK/GitHubActions/${GITHUB_REPOSITORY#${GITHUB_REPOSITORY_OWNER}/}/${{ github.sha }}-docs.tar.xz
+          CI_WORK/GitHubActions/${GITHUB_REPOSITORY#${GITHUB_REPOSITORY_OWNER}/}/${{ env.DOCS_PREFIX }}-docs.tar.xz
+      env:
+        DOCS_PREFIX: ${{ github.sha }}-${{ github.run_number }}
   boot-circle-ci:
     runs-on: ubuntu-latest
     needs: upload
@@ -153,7 +156,7 @@ jobs:
           echo CIRCLE_RESP=$(curl -s -X POST \
             -H "Circle-Token: ${{ secrets.CIRCLE_API_USER_TOKEN }}" \
             -H "Content-Type: application/json" \
-            -d "{\"branch\":\"${{ github.event.pull_request.head.ref }}\",\"parameters\":{\"GITHUB_SHA\":\"${{ github.sha }}\",\"ENABLE_PR_COMMENT\":$ENABLE_COMMENT}}" \
+            -d "{\"branch\":\"${{ github.event.pull_request.head.ref }}\",\"parameters\":{\"DOCS_PREFIX\":\"${{ env.DOCS_PREFIX }}\",\"ENABLE_PR_COMMENT\":$ENABLE_COMMENT}}" \
             https://circleci.com/api/v2/project/gh/${{ github.repository }}/pipeline) >> $GITHUB_ENV
     - name: Set CircleCI variables
       id: cc

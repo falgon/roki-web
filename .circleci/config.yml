@@ -1,6 +1,6 @@
 version: 2.1
 parameters:
-  GITHUB_SHA:
+  DOCS_PREFIX:
     type: string
     default: ""
   ENABLE_PR_COMMENT:
@@ -19,7 +19,7 @@ jobs:
     - run:
         name: Set variables
         command: |
-          echo 'export FN=<< pipeline.parameters.GITHUB_SHA >>-docs.tar.xz' >> $BASH_ENV
+          echo 'export FN=<< pipeline.parameters.DOCS_PREFIX >>-docs.tar.xz' >> $BASH_ENV
           echo 'export GOPATH="$HOME/.go"' >> $BASH_ENV
           echo 'export PATH="$HOME/.go/bin:$PATH"' >> $BASH_ENV
           echo "export ARTIFACTS_URL=\"https://output.circle-artifacts.com/output/job/$CIRCLE_WORKFLOW_JOB_ID/artifacts/$CIRCLE_NODE_INDEX/index.html\"" >> $BASH_ENV
