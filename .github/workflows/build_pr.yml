@@ -4,6 +4,7 @@ on:
   pull_request:
     branches: [develop, master, release, draft]
     types: [synchronize, opened, reopened, ready_for_review]
+  workflow_dispatch:
 jobs:
   build:
     runs-on: ubuntu-20.04
@@ -32,11 +33,11 @@ jobs:
         ghc-version: '8.8.3'
         enable-stack: true
         stack-version: '2.7.3'
-    - name: Setup XMLlint
+    - name: Setup Tools
       uses: awalsh128/cache-apt-pkgs-action@v1.2.2
       with:
-        packages: libxml2-utils
-        version: 1.0
+        packages: libxml2-utils parallel
+        version: 2.0
     - name: Setup Stack
       if: steps.site-gen-cache.outputs.cache-hit != 'true' && steps.stack-cache.outputs.cache-hit != 'true'
       run: |
@@ -71,13 +72,28 @@ jobs:
         key: docs-v1-${{ runner.os }}
     - name: Build and validate roki.dev
       run: |
-        ./site build
+        for i in `seq 0 ${{ env.RETRY_MAX }}`; do
+          set +e -o pipefail
+            exec 3>&1
+              site_out=$(./site build 2>&1 | tee /dev/fd/3)
+              result=$?
+            exec 3>&-
+          set -e +o pipefail
+          if [ $result -eq 0 ]; then
+            break;
+          elif [ -n "$(echo "$result" | grep "code: 'EAGAIN'")" ]; then
+            echo "EAGAIN detected, try to run again (next count: $((i+1)))"
+            continue;
+          else
+            exit 1
+          fi
+        done
         ./site check --internal-links
-        xmllint docs/roki.log/sitemap.xml --noout
-        xmllint docs/roki.log/feed/roki.log.xml --noout
-        xmllint docs/roki.diary/sitemap.xml --noout
-        xmllint docs/roki.diary/feed/roki.diary.xml --noout
+        parallel -I% --no-notice -j+0 --progress \
+          xmllint docs/%/sitemap.xml docs/%/feed/%.xml --noout ::: roki.log roki.diary
         tar cvf docs.tar.xz docs
+      env:
+        RETRY_MAX: 3
     - name: Upload artifact
       uses: actions/upload-artifact@v2
       with:
@@ -86,6 +102,8 @@ jobs:
   upload:
     runs-on: ubuntu-latest
     needs: build
+    outputs:
+      docs_prefix: ${{ steps.upload.outputs.docs_prefix }}
     steps:
     - name: Fetch archive
       uses: actions/download-artifact@v2
@@ -123,21 +141,28 @@ jobs:
         GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
         GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
     - name: Upload to Google Drive
+      id: upload
       run: |
+        echo "docs_prefix=${{ env.DOCS_PREFIX }}" >> $GITHUB_OUTPUT
         skicka -no-browser-auth upload -ignore-times \
           ./docs.tar.xz \
-          CI_WORK/GitHubActions/${GITHUB_REPOSITORY#${GITHUB_REPOSITORY_OWNER}/}/${{ github.sha }}-docs.tar.xz
+          CI_WORK/GitHubActions/${GITHUB_REPOSITORY#${GITHUB_REPOSITORY_OWNER}/}/${{ env.DOCS_PREFIX }}-docs.tar.xz
+      env:
+        DOCS_PREFIX: ${{ github.sha }}-${{ github.run_number }}
   boot-circle-ci:
     runs-on: ubuntu-latest
     needs: upload
     steps:
     - name: Boot CircleCI
       run: |
+          readonly ENABLE_COMMENT=$(test ${{ github.event_name }} = pull_request && echo true || echo false)
           echo CIRCLE_RESP=$(curl -s -X POST \
             -H "Circle-Token: ${{ secrets.CIRCLE_API_USER_TOKEN }}" \
             -H "Content-Type: application/json" \
-            -d '{"branch":"${{ github.event.pull_request.head.ref }}","parameters":{"GITHUB_SHA":"${{ github.sha }}"}}' \
+            -d "{\"branch\":\"${{ github.event.pull_request.head.ref }}\",\"parameters\":{\"DOCS_PREFIX\":\"${{ env.DOCS_PREFIX }}\",\"ENABLE_PR_COMMENT\":$ENABLE_COMMENT}}" \
             https://circleci.com/api/v2/project/gh/${{ github.repository }}/pipeline) >> $GITHUB_ENV
+      env:
+        DOCS_PREFIX: ${{ needs.upload.outputs.docs_prefix }}
     - name: Set CircleCI variables
       id: cc
       run: |
