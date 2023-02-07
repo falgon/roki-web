@@ -149,7 +149,7 @@ jobs:
     steps:
     - name: Boot CircleCI
       run: |
-          readonly ENABLE_COMMENT=$(test ${{ github.event_name }} = workflow_dispatch && echo true || echo false)
+          readonly ENABLE_COMMENT=$(test ${{ github.event_name }} = pull_request && echo true || echo false)
           echo CIRCLE_RESP=$(curl -s -X POST \
             -H "Circle-Token: ${{ secrets.CIRCLE_API_USER_TOKEN }}" \
             -H "Content-Type: application/json" \

@@ -5,7 +5,7 @@ parameters:
     default: ""
   ENABLE_PR_COMMENT:
     type: boolean
-    default: true
+    default: false
 
 jobs:
   build:
