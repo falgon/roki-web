@@ -138,7 +138,7 @@ jobs:
           echo CIRCLE_RESP=$(curl -s -X POST \
             -H "Circle-Token: ${{ secrets.CIRCLE_API_USER_TOKEN }}" \
             -H "Content-Type: application/json" \
-            -d '{"branch":"${{ github.event.pull_request.head.ref }}","parameters":{"GITHUB_SHA":"${{ github.sha }}","ENABLE_PR_COMMENT":$ENABLE_COMMENT}}' \
+            -d "{\"branch\":\"${{ github.event.pull_request.head.ref }}\",\"parameters\":{\"GITHUB_SHA\":\"${{ github.sha }}\",\"ENABLE_PR_COMMENT\":$ENABLE_COMMENT}}" \
             https://circleci.com/api/v2/project/gh/${{ github.repository }}/pipeline) >> $GITHUB_ENV
     - name: Set CircleCI variables
       id: cc
