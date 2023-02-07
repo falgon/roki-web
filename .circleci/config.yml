@@ -55,7 +55,8 @@ jobs:
     - store_artifacts:
         path: ./docs/
         destination: .
-    - when: << pipeline.parameters.ENABLE_PR_COMMENT >>
+    - when: 
+        condition: << pipeline.parameters.ENABLE_PR_COMMENT >>
         steps:
           - run:
               name: Add comment
