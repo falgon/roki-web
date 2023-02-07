@@ -153,5 +153,6 @@ jobs:
         echo "${{ secrets.KIIROTORI_GH_CONFIG_CONFIG }}" > $GH_CONFIG_DIR/config.yml
         readonly workflow_id=$(gh workflow list | grep manually-PSI | cut -f3)
         gh workflow run $workflow_id \
+          -r ${{ github.ref_name }} \
           -f sp_threshold=${{ env.SP_THRESHOLD }} pc_threshold=${{ env.PC_THRESHOLD }} locale=${{ env.LOCALE }}
         gh run list --workflow psi.yml
