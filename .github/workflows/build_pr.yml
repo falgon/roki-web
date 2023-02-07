@@ -90,6 +90,8 @@ jobs:
         parallel -I% --no-notice -j+0 --progress \
           xmllint docs/%/sitemap.xml docs/%/feed/%.xml --noout ::: roki.log roki.diary
         tar cvf docs.tar.xz docs
+      env:
+        RETRY_MAX: 3
     - name: Upload artifact
       uses: actions/upload-artifact@v2
       with:
