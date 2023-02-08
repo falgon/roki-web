@@ -84,7 +84,7 @@ jobs:
                   readonly badge="[![CircleCI]($status_badge_endpoint/img/gh/$encoded_user/$encoded_repo/tree/$encoded_branch.svg?style=svg)]($status_badge_endpoint/redirect/gh/$encoded_user/$encoded_repo/tree/$encoded_branch)"
                   readonly details="\r\n<hr /><details><summary>more info</summary><p><ul><li>:cloud: Storage $(skicka df | grep 'Free space')</li><li>:open_file_folder: $(skicka du ${ARTIFACTS_GDRIVE_PATH%/*} | sed 's/^[ \t]*//')</li></ul></p></details>"
                   readonly data='{"body":"*'" $badge\r\n"'* [Build log]('"$CIRCLE_BUILD_URL)\r\n"'* [Preview build]('"$ARTIFACTS_URL"') with this PR ([commit]('"$CIRCLE_SHA1"'))'"$details"'"}'
-                  readonly post_result=$(curl -X POST \
+                  readonly post_result=$(curl -s -X POST \
                     -H "Authorization: token $YBGH_TOKEN" \
                     -H 'Content-Type:application/json' \
                     -d "$data" \
