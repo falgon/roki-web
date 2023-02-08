@@ -171,7 +171,7 @@ jobs:
       env:
         DOCS_PREFIX: ${{ needs.upload.outputs.docs_prefix }}
         TARGET_REF: ${{ needs.build.outputs.target_ref }}
-    - name: Out CircleCI variables
+    - name: Show CircleCI URL
       run: |
           curl -s -H 'Circle-Token: ${{ secrets.CIRCLE_API_USER_TOKEN }}' \
             ${{ env.ENDPOINT }} | jq -r .web_url
