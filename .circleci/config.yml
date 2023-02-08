@@ -1,5 +1,8 @@
 version: 2.1
 parameters:
+  TARGET_REF:
+    type: string
+    default: ""
   DOCS_PREFIX:
     type: string
     default: ""
@@ -17,8 +20,9 @@ jobs:
     steps:
     - checkout
     - run:
-        name: Set variables
+        name: Set up environments
         command: |
+          git reset --hard << pipeline.parameters.TARGET_REF >>
           echo 'export FN=<< pipeline.parameters.DOCS_PREFIX >>-docs.tar.xz' >> $BASH_ENV
           echo 'export GOPATH="$HOME/.go"' >> $BASH_ENV
           echo 'export PATH="$HOME/.go/bin:$PATH"' >> $BASH_ENV
