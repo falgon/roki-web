@@ -12,9 +12,10 @@ jobs:
       target_ref: ${{ steps.build.outputs.target_ref }}
     steps:
     - name: Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         submodules: true
+        ref: ${{ github.head_ref }}
     - name: Site generator cache
       uses: actions/cache@v3
       id: site-gen-cache
@@ -160,17 +161,18 @@ jobs:
     - name: Boot CircleCI
       run: |
           readonly ENABLE_COMMENT=$(test ${{ github.event_name }} = pull_request && echo true || echo false)
-          readonly TARGET_BRANCH=$(test ${{ github.event_name }} = pull_request && echo ${{ github.head_ref }} || echo ${{ github.ref_name }})
+          #readonly TARGET_BRANCH=$(test ${{ github.event_name }} = pull_request && echo ${{ github.head_ref }} || echo ${{ github.ref_name }})
           readonly CIRCLE_RESP=$(curl -s -X POST \
             -H "Circle-Token: ${{ secrets.CIRCLE_API_USER_TOKEN }}" \
             -H "Content-Type: application/json" \
-            -d "{\"branch\":\"$TARGET_BRANCH\",\"parameters\":{\"TARGET_REF\":\"${{ env.TARGET_REF }}\",\"DOCS_PREFIX\":\"${{ env.DOCS_PREFIX }}\",\"ENABLE_PR_COMMENT\":$ENABLE_COMMENT}}" \
-            https://circleci.com/api/v2/project/gh/${{ github.repository }}/pipeline)
+            -d "{\"branch\":\"$TARGET_REF\",\"parameters\":{\"TARGET_REF\":\"${{ env.TARGET_REF }}\",\"DOCS_PREFIX\":\"${{ env.DOCS_PREFIX }}\",\"ENABLE_PR_COMMENT\":$ENABLE_COMMENT}}" \
+            ${{ env.ENDPOINT }})
           echo "created at: $(jq -r .created_at <<< "$CIRCLE_RESP")"
           echo "CIRCLE_JOB_NUM=$(jq -r .number <<< "$CIRCLE_RESP")" >> $GITHUB_ENV
       env:
         DOCS_PREFIX: ${{ needs.upload.outputs.docs_prefix }}
         TARGET_REF: ${{ needs.build.outputs.target_ref }}
+        ENDPOINT: https://circleci.com/api/v2/project/gh/${{ github.repository }}/pipeline
     - name: Show CircleCI URL
       run: |
           curl -s -H 'Circle-Token: ${{ secrets.CIRCLE_API_USER_TOKEN }}' \
