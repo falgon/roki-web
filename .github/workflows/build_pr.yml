@@ -8,11 +8,14 @@ on:
 jobs:
   build:
     runs-on: ubuntu-20.04
+    outputs:
+      target_ref: ${{ steps.build.outputs.target_ref }}
     steps:
     - name: Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         submodules: true
+        ref: ${{ github.head_ref }}
     - name: Site generator cache
       uses: actions/cache@v3
       id: site-gen-cache
@@ -71,6 +74,7 @@ jobs:
         path: './docs'
         key: docs-v1-${{ runner.os }}
     - name: Build and validate roki.dev
+      id: build
       run: |
         for i in `seq 0 ${{ env.RETRY_MAX }}`; do
           set +e -o pipefail
@@ -92,6 +96,7 @@ jobs:
         parallel -I% --no-notice -j+0 --progress \
           xmllint docs/%/sitemap.xml docs/%/feed/%.xml --noout ::: roki.log roki.diary
         tar cvf docs.tar.xz docs
+        echo "target_ref=$(git show --format='%H' --no-patch)" >> $GITHUB_OUTPUT
       env:
         RETRY_MAX: 3
     - name: Upload artifact
@@ -148,25 +153,27 @@ jobs:
           ./docs.tar.xz \
           CI_WORK/GitHubActions/${GITHUB_REPOSITORY#${GITHUB_REPOSITORY_OWNER}/}/${{ env.DOCS_PREFIX }}-docs.tar.xz
       env:
-        DOCS_PREFIX: ${{ github.sha }}-${{ github.run_number }}
+        DOCS_PREFIX: ${{ needs.build.outputs.target_ref }}-${{ github.run_number }}
   boot-circle-ci:
     runs-on: ubuntu-latest
-    needs: upload
+    needs: [build, upload]
     steps:
     - name: Boot CircleCI
       run: |
           readonly ENABLE_COMMENT=$(test ${{ github.event_name }} = pull_request && echo true || echo false)
-          echo CIRCLE_RESP=$(curl -s -X POST \
+          readonly TARGET_BRANCH=$(test ${{ github.event_name }} = pull_request && echo ${{ github.head_ref }} || echo ${{ github.ref_name }})
+          readonly CIRCLE_RESP=$(curl -s -X POST \
             -H "Circle-Token: ${{ secrets.CIRCLE_API_USER_TOKEN }}" \
             -H "Content-Type: application/json" \
-            -d "{\"branch\":\"${{ github.event.pull_request.head.ref }}\",\"parameters\":{\"DOCS_PREFIX\":\"${{ env.DOCS_PREFIX }}\",\"ENABLE_PR_COMMENT\":$ENABLE_COMMENT}}" \
-            https://circleci.com/api/v2/project/gh/${{ github.repository }}/pipeline) >> $GITHUB_ENV
+            -d "{\"branch\":\"$TARGET_BRANCH\",\"parameters\":{\"TARGET_REF\":\"${{ env.TARGET_REF }}\",\"DOCS_PREFIX\":\"${{ env.DOCS_PREFIX }}\",\"ENABLE_PR_COMMENT\":$ENABLE_COMMENT}}" \
+            ${{ env.ENDPOINT }})
+          echo "created at: $(jq -r .created_at <<< "$CIRCLE_RESP")"
+          echo "CIRCLE_JOB_NUM=$(jq -r .number <<< "$CIRCLE_RESP")" >> $GITHUB_ENV
       env:
         DOCS_PREFIX: ${{ needs.upload.outputs.docs_prefix }}
-    - name: Set CircleCI variables
-      id: cc
-      run: |
-          echo "CIRCLE_JOB_NUM=$(echo '${{ env.CIRCLE_RESP }}' | jq .number)" >> $GITHUB_ENV
-          echo "CIRCLE_JOB_ID=$(echo '${{ env.CIRCLE_RESP }}' | jq .id)" >> $GITHUB_ENV
-    - name: Out CircleCI URL
-      run: echo "https://app.circleci.com/pipelines/github/${{ github.repository }}/${{ env.CIRCLE_JOB_NUM }}/workflows/${{ env.CIRCLE_JOB_ID }}/jobs/${{ env.CIRCLE_JOB_NUM }}/steps"
+        TARGET_REF: ${{ needs.build.outputs.target_ref }}
+        ENDPOINT: https://circleci.com/api/v2/project/gh/${{ github.repository }}/pipeline
+    - name: Show CircleCI URL
+      run: echo ${{ env.CIRCLECI_URL }}
+      env:
+        CIRCLECI_URL: https://app.circleci.com/pipelines/github/${{ github.repository }}/${{ env.CIRCLE_JOB_NUM }}
