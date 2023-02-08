@@ -8,6 +8,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-20.04
+    outputs:
+      target_ref: ${{ steps.build.outputs.target_ref }}
     steps:
     - name: Checkout
       uses: actions/checkout@v2
@@ -71,6 +73,7 @@ jobs:
         path: './docs'
         key: docs-v1-${{ runner.os }}
     - name: Build and validate roki.dev
+      id: build
       run: |
         for i in `seq 0 ${{ env.RETRY_MAX }}`; do
           set +e -o pipefail
@@ -92,6 +95,7 @@ jobs:
         parallel -I% --no-notice -j+0 --progress \
           xmllint docs/%/sitemap.xml docs/%/feed/%.xml --noout ::: roki.log roki.diary
         tar cvf docs.tar.xz docs
+        echo "target_ref=$(git show --format='%H' --no-patch)" >> $GITHUB_OUTPUT
       env:
         RETRY_MAX: 3
     - name: Upload artifact
@@ -148,22 +152,22 @@ jobs:
           ./docs.tar.xz \
           CI_WORK/GitHubActions/${GITHUB_REPOSITORY#${GITHUB_REPOSITORY_OWNER}/}/${{ env.DOCS_PREFIX }}-docs.tar.xz
       env:
-        DOCS_PREFIX: ${{ github.sha }}-${{ github.run_number }}
+        DOCS_PREFIX: ${{ needs.build.outputs.target_ref }}-${{ github.run_number }}
   boot-circle-ci:
     runs-on: ubuntu-latest
-    needs: upload
+    needs: [build, upload]
     steps:
     - name: Boot CircleCI
       run: |
-          readonly TARGET_REF=$(test ${{ github.event_name }} = pull_request && echo ${{ github.sha }} || echo ${{ github.ref_name }})
           readonly ENABLE_COMMENT=$(test ${{ github.event_name }} = pull_request && echo true || echo false)
           echo CIRCLE_RESP=$(curl -s -X POST \
             -H "Circle-Token: ${{ secrets.CIRCLE_API_USER_TOKEN }}" \
             -H "Content-Type: application/json" \
-            -d "{\"branch\":\"$TARGET_REF\",\"parameters\":{\"DOCS_PREFIX\":\"${{ env.DOCS_PREFIX }}\",\"ENABLE_PR_COMMENT\":$ENABLE_COMMENT}}" \
+            -d "{\"branch\":\"${{ env.TARGET_REF }}\",\"parameters\":{\"DOCS_PREFIX\":\"${{ env.DOCS_PREFIX }}\",\"ENABLE_PR_COMMENT\":$ENABLE_COMMENT}}" \
             https://circleci.com/api/v2/project/gh/${{ github.repository }}/pipeline) >> $GITHUB_ENV
       env:
         DOCS_PREFIX: ${{ needs.upload.outputs.docs_prefix }}
+        TARGET_REF: ${{ needs.build.outputs.target_ref }}
     - name: Set CircleCI variables
       id: cc
       run: |
