@@ -1,8 +1,14 @@
 version: 2.1
 parameters:
-  GITHUB_SHA:
+  TARGET_REF:
     type: string
     default: ""
+  DOCS_PREFIX:
+    type: string
+    default: ""
+  ENABLE_PR_COMMENT:
+    type: boolean
+    default: false
 
 jobs:
   build:
@@ -14,9 +20,10 @@ jobs:
     steps:
     - checkout
     - run:
-        name: Set variables
+        name: Set up environments
         command: |
-          echo 'export FN=<< pipeline.parameters.GITHUB_SHA >>-docs.tar.xz' >> $BASH_ENV
+          git -c advice.detachedHead=false checkout << pipeline.parameters.TARGET_REF >>
+          echo 'export FN=<< pipeline.parameters.DOCS_PREFIX >>-docs.tar.xz' >> $BASH_ENV
           echo 'export GOPATH="$HOME/.go"' >> $BASH_ENV
           echo 'export PATH="$HOME/.go/bin:$PATH"' >> $BASH_ENV
           echo "export ARTIFACTS_URL=\"https://output.circle-artifacts.com/output/job/$CIRCLE_WORKFLOW_JOB_ID/artifacts/$CIRCLE_NODE_INDEX/index.html\"" >> $BASH_ENV
@@ -52,49 +59,57 @@ jobs:
     - store_artifacts:
         path: ./docs/
         destination: .
-    - run:
-        name: Add comment
-        command: |
-          echo "export PR_RESPONSE_TMP=$(mktemp)" >> $BASH_ENV
-          source "$BASH_ENV"
-          curl -s --location --request GET \
-            -H "Authorization: token $YBGH_TOKEN" \
-            "https://api.github.com/repos/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/pulls?head=$CIRCLE_PROJECT_USERNAME:$CIRCLE_BRANCH&state=open" > $PR_RESPONSE_TMP
-          if [ -z "$(cat $PR_RESPONSE_TMP)" ]; then
-            echo "No PR found to update"
-          else
-            readonly pr_comment_url=$(jq -r ".[]._links.comments.href" "$PR_RESPONSE_TMP")
-            readonly status_badge_endpoint='https://dl.circleci.com/status-badge'
-            function urlencode {
-                echo "$1" | nkf -WwMQ | sed 's/=$//g' | tr = % | tr -d '\n'
-            }
-            readonly encoded_user="$(urlencode "$CIRCLE_PROJECT_USERNAME")"
-            readonly encoded_repo="$(urlencode "$CIRCLE_PROJECT_REPONAME")"
-            readonly encoded_branch="$(urlencode "$CIRCLE_BRANCH")"
-            readonly badge="[![CircleCI]($status_badge_endpoint/img/gh/$encoded_user/$encoded_repo/tree/$encoded_branch.svg?style=svg)]($status_badge_endpoint/redirect/gh/$encoded_user/$encoded_repo/tree/$encoded_branch)"
-            readonly details="\r\n<hr /><details><summary>more info</summary><p><ul><li>:cloud: Storage $(skicka df | grep 'Free space')</li><li>:open_file_folder: $(skicka du ${ARTIFACTS_GDRIVE_PATH%/*} | sed 's/^[ \t]*//')</li></ul></p></details>"
-            readonly data='{"body":"*'" $badge\r\n"'* [Build log]('"$CIRCLE_BUILD_URL)\r\n"'* [Preview build]('"$ARTIFACTS_URL"') with this PR ([commit]('"$CIRCLE_SHA1"'))'"$details"'"}'
-            readonly post_result=$(curl -X POST \
-              -H "Authorization: token $YBGH_TOKEN" \
-              -H 'Content-Type:application/json' \
-              -d "$data" \
-              "$pr_comment_url")
-            echo "$post_result" | jq -r '.html_url'
-          fi
+    - when:
+        condition: << pipeline.parameters.ENABLE_PR_COMMENT >>
+        steps:
+          - run:
+              name: Add comment
+              command: |
+                echo "export PR_RESPONSE_TMP=$(mktemp)" >> $BASH_ENV
+                source "$BASH_ENV"
+                curl -s --location --request GET \
+                  -H "Authorization: token $YBGH_TOKEN" \
+                  "https://api.github.com/repos/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/pulls?head=$CIRCLE_PROJECT_USERNAME:$CIRCLE_BRANCH&state=open" > $PR_RESPONSE_TMP
+                if [ -z "$(cat $PR_RESPONSE_TMP)" ]; then
+                  echo "No PR found to update"
+                else
+                  readonly pr_comment_url=$(jq -r ".[]._links.comments.href" "$PR_RESPONSE_TMP")
+                  readonly status_badge_endpoint='https://dl.circleci.com/status-badge'
+                  function urlencode {
+                    echo "$1" | nkf -WwMQ | sed 's/=$//g' | tr = % | tr -d '\n'
+                  }
+                  readonly encoded_user="$(urlencode "$CIRCLE_PROJECT_USERNAME")"
+                  readonly encoded_repo="$(urlencode "$CIRCLE_PROJECT_REPONAME")"
+                  readonly encoded_branch="$(urlencode "$CIRCLE_BRANCH")"
+                  readonly badge="[![CircleCI]($status_badge_endpoint/img/gh/$encoded_user/$encoded_repo/tree/$encoded_branch.svg?style=svg)]($status_badge_endpoint/redirect/gh/$encoded_user/$encoded_repo/tree/$encoded_branch)"
+                  readonly details="\r\n<hr /><details><summary>more info</summary><p><ul><li>:cloud: Storage $(skicka df | grep 'Free space')</li><li>:open_file_folder: $(skicka du ${ARTIFACTS_GDRIVE_PATH%/*} | sed 's/^[ \t]*//')</li></ul></p></details>"
+                  readonly data='{"body":"*'" $badge\r\n"'* [Build log]('"$CIRCLE_BUILD_URL)\r\n"'* [Preview build]('"$ARTIFACTS_URL"') with this PR ([commit]('"$CIRCLE_SHA1"'))'"$details"'"}'
+                  readonly post_result=$(curl -s -X POST \
+                    -H "Authorization: token $YBGH_TOKEN" \
+                    -H 'Content-Type:application/json' \
+                    -d "$data" \
+                    "$pr_comment_url")
+                  echo "$post_result" | jq -r '.html_url'
+                fi
     - restore_cache:
         key: v1-notify-line-{{ checksum "tools/circleci/NotifyLine.hs" }}
     - run:
         name: Notify LINE
         command: |
-          if [ -z "$(cat $PR_RESPONSE_TMP)" ]; then
-            echo "No PR found to update"
+          if << pipeline.parameters.ENABLE_PR_COMMENT >>; then
+            if [ -z "$(cat $PR_RESPONSE_TMP)" ]; then
+              echo "No PR found to update"
+              circleci-agent step halt
+            else
+              readonly pr_url=$(jq -r ".[]._links.html.href" "$PR_RESPONSE_TMP")
+            fi
           else
-            readonly pr_url=$(jq -r ".[]._links.html.href" "$PR_RESPONSE_TMP")
-            # eval is needed for the CIRCLE_WORKING_DIRECTORY variable as it contains a non-expanded '~'
-            eval ${CIRCLE_WORKING_DIRECTORY}/tools/circleci/NotifyLine.hs \
-              --pr-url "$pr_url" \
-              --artifacts-url "$ARTIFACTS_URL"
+            readonly pr_url="none"
           fi
+          # eval is needed for the CIRCLE_WORKING_DIRECTORY variable as it contains a non-expanded '~'
+          eval ${CIRCLE_WORKING_DIRECTORY}/tools/circleci/NotifyLine.hs \
+            --pr-url "$pr_url" \
+            --artifacts-url "$ARTIFACTS_URL"
     - save_cache:
         key: v1-notify-line-{{ checksum "tools/circleci/NotifyLine.hs" }}
         paths:
