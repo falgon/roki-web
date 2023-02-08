@@ -174,8 +174,6 @@ jobs:
         TARGET_REF: ${{ needs.build.outputs.target_ref }}
         ENDPOINT: https://circleci.com/api/v2/project/gh/${{ github.repository }}/pipeline
     - name: Show CircleCI URL
-      run: |
-          curl -s -H 'Circle-Token: ${{ secrets.CIRCLE_API_USER_TOKEN }}' \
-            ${{ env.ENDPOINT }} | jq -r .web_url
+      run: echo ${{ env.CIRCLECI_URL }}
       env:
-        ENDPOINT: https://circleci.com/api/v2/project/gh/${{ github.repository }}/job/${{ env.CIRCLE_JOB_NUM }}
+        CIRCLECI_URL: https://app.circleci.com/pipelines/github/${{ github.repository }}/${{ env.CIRCLE_JOB_NUM }}
