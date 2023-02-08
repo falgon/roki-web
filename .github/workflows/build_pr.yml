@@ -176,4 +176,4 @@ jobs:
           curl -s -H 'Circle-Token: ${{ secrets.CIRCLE_API_USER_TOKEN }}' \
             ${{ env.ENDPOINT }} | jq -r .web_url
       env:
-        ENDPOINT: https://circleci.com/api/v2/project/gh/${{ github.repository }}/job/${{ emv.CIRCLE_JOB_NUM }}
+        ENDPOINT: https://circleci.com/api/v2/project/gh/${{ github.repository }}/job/${{ env.CIRCLE_JOB_NUM }}
