@@ -160,19 +160,20 @@ jobs:
     - name: Boot CircleCI
       run: |
           readonly ENABLE_COMMENT=$(test ${{ github.event_name }} = pull_request && echo true || echo false)
-          readonly TARGET_BRANCH=$(test ${{ github.event.name }} = pull_request && echo ${{ github.head_ref }} || echo ${{ github.ref_name }})
-          echo CIRCLE_RESP=$(curl -s -X POST \
+          readonly TARGET_BRANCH=$(test ${{ github.event_name }} = pull_request && echo ${{ github.head_ref }} || echo ${{ github.ref_name }})
+          readonly CIRCLE_RESP=$(curl -s -X POST \
             -H "Circle-Token: ${{ secrets.CIRCLE_API_USER_TOKEN }}" \
             -H "Content-Type: application/json" \
             -d "{\"branch\":\"$TARGET_BRANCH\",\"parameters\":{\"TARGET_REF\":\"${{ env.TARGET_REF }}\",\"DOCS_PREFIX\":\"${{ env.DOCS_PREFIX }}\",\"ENABLE_PR_COMMENT\":$ENABLE_COMMENT}}" \
-            https://circleci.com/api/v2/project/gh/${{ github.repository }}/pipeline) >> $GITHUB_ENV
+            https://circleci.com/api/v2/project/gh/${{ github.repository }}/pipeline)
+          echo "created at: $(jq .created_at "$CIRCLE_RESP")"
+          echo "CIRCLE_JOB_NUM=$(jq .number "$CIRCLE_RESP")" >> $GITHUB_ENV
       env:
         DOCS_PREFIX: ${{ needs.upload.outputs.docs_prefix }}
         TARGET_REF: ${{ needs.build.outputs.target_ref }}
-    - name: Set CircleCI variables
-      id: cc
+    - name: Out CircleCI variables
       run: |
-          echo "CIRCLE_JOB_NUM=$(echo '${{ env.CIRCLE_RESP }}' | jq .number)" >> $GITHUB_ENV
-          echo "CIRCLE_JOB_ID=$(echo '${{ env.CIRCLE_RESP }}' | jq .id)" >> $GITHUB_ENV
-    - name: Out CircleCI URL
-      run: echo "https://app.circleci.com/pipelines/github/${{ github.repository }}/${{ env.CIRCLE_JOB_NUM }}/workflows/${{ env.CIRCLE_JOB_ID }}/jobs/${{ env.CIRCLE_JOB_NUM }}/steps"
+          curl -s -H 'Circle-Token: ${{ secrets.CIRCLE_API_USER_TOKEN }}' \
+            ${{ env.ENDPOINT }} | jq -r .web_url
+      env:
+        ENDPOINT: https://circleci.com/api/v2/project/gh/${{ github.repository }}/job/${{ emv.CIRCLE_JOB_NUM }}
