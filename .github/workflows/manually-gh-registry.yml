@@ -54,29 +54,29 @@ jobs:
         echo "ENABLE_NOTIFY=$ENABLE_NOTIFY" >> $GITHUB_ENV
     - name: Set the image tag outputs
       id: img_tag_step
-      run: echo "::set-output name=name::$IMAGE_TAG"
+      run: echo "name=$IMAGE_TAG" >> $GITHUB_OUTPUT
     - name: Set env image outputs
       if: ${{ env.TO_PUSH == 'true' }}
       id: env_img_step
-      run: echo "::set-output name=name::$ENV_IMAGE_NAME"
+      run: echo "name=$ENV_IMAGE_NAME" >> $GITHUB_OUTPUT
     - name: Set dev image outputs
       if: ${{ env.TO_PUSH == 'true' }}
       id: dev_img_step
-      run: echo "::set-output name=name::$DEV_IMAGE_NAME"
+      run: echo "name=$DEV_IMAGE_NAME" >> $GITHUB_OUTPUT
     - name: Set env registry outputs
       if: ${{ env.TO_PUSH == 'true' }}
       id: env_registry_step
-      run: echo "::set-output name=name::$ENV_GH_REGISTRY"
+      run: echo "name=$ENV_GH_REGISTRY" >> $GITHUB_OUTPUT
     - name: Set dev registry outputs
       if: ${{ env.TO_PUSH == 'true' }}
       id: dev_registry_step
-      run: echo "::set-output name=name::$DEV_GH_REGISTRY"
+      run: echo "name=$DEV_GH_REGISTRY" >> $GITHUB_OUTPUT
     - name: Set to_push flag outputs
       id: to_push_step
-      run: echo "::set-output name=flag::$TO_PUSH"
+      run: echo "flag=$TO_PUSH" >> $GITHUB_OUTPUT
     - name: Set enable_notify flag outputs
       id: enable_notify_step
-      run: echo "::set-output name=flag::$ENABLE_NOTIFY"
+      run: echo "flag=$ENABLE_NOTIFY" >> $GITHUB_OUTPUT
   build-env-image:
     runs-on: ubuntu-20.04
     needs: setup
