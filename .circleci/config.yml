@@ -22,7 +22,7 @@ jobs:
     - run:
         name: Set up environments
         command: |
-          git reset --hard << pipeline.parameters.TARGET_REF >>
+          git -c advice.detachedHead=false checkout << pipeline.parameters.TARGET_REF >>
           echo 'export FN=<< pipeline.parameters.DOCS_PREFIX >>-docs.tar.xz' >> $BASH_ENV
           echo 'export GOPATH="$HOME/.go"' >> $BASH_ENV
           echo 'export PATH="$HOME/.go/bin:$PATH"' >> $BASH_ENV
