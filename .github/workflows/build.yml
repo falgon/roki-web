@@ -147,6 +147,12 @@ jobs:
         PC_THRESHOLD: 90
         LOCALE: ja_JP
       run: |
-        npm ci
-        npx psi https://$(cat CNAME) --strategy=mobile --locale=${{ env.LOCALE }} --threshold=${{ env.SP_THRESHOLD }} 2>&1 || true
-        npx psi https://$(cat CNAME) --strategy=desktop --locale=${{ env.LOCALE }} --threshold=${{ env.PC_THRESHOLD }} 2>&1 || true
+        export GH_CONFIG_DIR=$PWD/.config
+        mkdir $GH_CONFIG_DIR
+        echo "${{ secrets.KIIROTORI_GH_CONFIG_HOSTS }}" > $GH_CONFIG_DIR/hosts.yml
+        echo "${{ secrets.KIIROTORI_GH_CONFIG_CONFIG }}" > $GH_CONFIG_DIR/config.yml
+        readonly workflow_id=$(gh workflow list | grep manually-PSI | cut -f3)
+        gh workflow run $workflow_id \
+          -r ${{ github.ref_name }} \
+          -f sp_threshold=${{ env.SP_THRESHOLD }} pc_threshold=${{ env.PC_THRESHOLD }} locale=${{ env.LOCALE }}
+        gh run list --workflow psi.yml
