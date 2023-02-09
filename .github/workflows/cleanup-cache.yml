@@ -1,0 +1,25 @@
+name: CI-cleanup-caches
+on:
+  pull_request:
+    types:
+      - closed
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Cleanup
+        run: |
+          gh extension install actions/gh-actions-cache
+          readonly cache_keys=$(gh actions-cache list -R $REPO -B $REF | cut -f1)
+          set +e
+          for key in $cache_keys; do
+              gh actions-cache delete $key -R $REPO -B $REF --confirm
+          done
+          set -e
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          REF: refs/pull/${{ github.event.number }}/merge
