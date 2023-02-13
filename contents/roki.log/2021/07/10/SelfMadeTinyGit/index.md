@@ -11,7 +11,7 @@ tags: Haskell, Git
 <article class="message is-info">
 <div class="message-body has-text-centered">
 <i class="fas fa-info-circle"></i>
-※追記：加筆・調整版を新規にリリースしました 👉 <a href=https://note.com/_roki/n/n1e17f077c2eb>https://note.com/_roki/n/n1e17f077c2eb</a>
+※追記：加筆・調整版を新規にリリースしました 👉 <a href="https://note.com/_roki/n/n1e17f077c2eb">https://note.com/_roki/n/n1e17f077c2eb</a>
 </div>
 </article>
 
