@@ -33,10 +33,11 @@ jobs:
         path: ~/.stack
         key: stack-v2-${{ runner.os }}-${{ hashFiles('stack.yaml') }}
     - name: Setup Tools
-      uses: awalsh128/cache-apt-pkgs-action@v1.2.2
-      with:
-        packages: libxml2-utils
-        version: 1.0
+      run: |
+        export DEBIAN_FRONTEND=noninteractive
+        sudo apt-get -qq update
+        sudo apt-get install -y --no-install-recommends \
+          libxml2-utils
     - name: Setup Stack
       if: steps.site-gen-cache.outputs.cache-hit != 'true' && steps.stack-cache.outputs.cache-hit != 'true'
       run: |
