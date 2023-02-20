@@ -3,7 +3,7 @@ on:
   workflow_run:
     types:
       - completed
-    workflows: [build, build_pr]
+    workflows: [CI-pr, CI-push]
 
 jobs:
   on-success:
