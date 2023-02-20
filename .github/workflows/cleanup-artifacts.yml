@@ -1,4 +1,4 @@
-name: 'artifacts cleanup'
+name: 'CI-cleanup-artifacts'
 on:
   schedule:
     - cron: '0 20 * * *' # UTC
@@ -16,7 +16,7 @@ jobs:
         id: status_check
         run: |
           acc=0
-          for w in "$(find ./${{ env.WORKFLOWS_PATH }} -type f -name '*.yml' -not -name '${{ env.THIS }}'| xargs -n1 basename)"; do
+          for w in $(find ./${{ env.WORKFLOWS_PATH }} -type f -name '*.yml' -not -name '${{ env.THIS }}'| xargs -n1 basename); do
             status="$(gh run list -w $w -L 1 --json status | jq -r '.[].status')"
             val=$(test "$status" = "in_progress" && echo 1 || echo 0)
             acc=$((acc+val))
