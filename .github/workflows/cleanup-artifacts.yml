@@ -1,38 +1,27 @@
 name: 'CI-cleanup-artifacts'
 on:
-  schedule:
-    - cron: '0 20 * * *' # UTC
-  workflow_dispatch:
+  workflow_run:
+    types:
+      - completed
+    workflows: [build, build_pr]
 
 jobs:
-  check-another-workflows:
+  on-success:
+    delete-artifacts:
+      runs-on: ubuntu-latest
+      steps:
+        - name: Login
+          run: |
+            export GH_CONFIG_DIR=$PWD/.config
+            mkdir $GH_CONFIG_DIR
+            echo "${{ secrets.KIIROTORI_GH_CONFIG_HOSTS }}" > $GH_CONFIG_DIR/hosts.yml
+            echo "${{ secrets.KIIROTORI_GH_CONFIG_CONFIG }}" > $GH_CONFIG_DIR/config.yml
+        - name: Get ID
+          run:  echo "ARTIFACT_ID=$(gh api -H 'Accept: application/vnd.github+json' ${{ github.event.workflow_run.artifacts_url }} --jq .artifacts[].id)" >> $GITHUB_ENV
+        - name: Cleanup
+          run: gh api --method DELETE -H 'Accept: application/vnd.github+json' /repos/${{ github.repository }}/actions/artifacts/${{ env.ARTIFACT_ID }}
+  on-failure:
     runs-on: ubuntu-latest
-    outputs:
-      is-another-workflows-running: ${{ steps.status_check.outputs.status }}
+    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: Check another workflows status
-        id: status_check
-        run: |
-          acc=0
-          for w in $(find ./${{ env.WORKFLOWS_PATH }} -type f -name '*.yml' -not -name '${{ env.THIS }}'| xargs -n1 basename); do
-            status="$(gh run list -w $w -L 1 --json status | jq -r '.[].status')"
-            val=$(test "$status" = "in_progress" && echo 1 || echo 0)
-            acc=$((acc+val))
-          done
-          echo "status=$acc" >> $GITHUB_OUTPUT
-    env:
-      WORKFLOWS_PATH: .github/workflows
-      THIS: cleanup-artifacts.yml
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  delete-artifacts:
-    needs: check-another-workflows
-    if: ${{ needs.check-another-workflows.outputs.i-another-workflows-running }} = "0"
-    runs-on: ubuntu-latest
-    steps:
-      - uses: kolpav/purge-artifacts-action@v1
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          expire-in: 30 minutes
+      - run: echo 'The triggering workflow failed'
