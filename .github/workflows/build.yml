@@ -37,7 +37,7 @@ jobs:
         export DEBIAN_FRONTEND=noninteractive
         sudo apt-get -qq update
         sudo apt-get install -y --no-install-recommends \
-          libxml2-utils parallel
+          libxml2-utils
     - name: Setup Stack
       if: steps.site-gen-cache.outputs.cache-hit != 'true' && steps.stack-cache.outputs.cache-hit != 'true'
       run: |
