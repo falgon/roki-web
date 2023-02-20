@@ -13,6 +13,7 @@ jobs:
       - name: Login
         run: |
           export GH_CONFIG_DIR=$PWD/.config
+          echo "GH_CONFIG_DIR=$GH_CONFIG_DIR" >> $GITHUB_ENV
           mkdir $GH_CONFIG_DIR
           echo "${{ secrets.KIIROTORI_GH_CONFIG_HOSTS }}" > $GH_CONFIG_DIR/hosts.yml
           echo "${{ secrets.KIIROTORI_GH_CONFIG_CONFIG }}" > $GH_CONFIG_DIR/config.yml
