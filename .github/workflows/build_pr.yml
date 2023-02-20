@@ -37,10 +37,11 @@ jobs:
         enable-stack: true
         stack-version: '2.7.3'
     - name: Setup Tools
-      uses: awalsh128/cache-apt-pkgs-action@v1.2.2
-      with:
-        packages: libxml2-utils parallel
-        version: 2.0
+      run: |
+        export DEBIAN_FRONTEND=noninteractive
+        sudo apt-get -qq update
+        sudo apt-get install -y --no-install-recommends \
+          libxml2-utils parallel
     - name: Setup Stack
       if: steps.site-gen-cache.outputs.cache-hit != 'true' && steps.stack-cache.outputs.cache-hit != 'true'
       run: |
