@@ -25,6 +25,7 @@ jobs:
     env:
       WORKFLOWS_PATH: .github/workflows
       THIS: cleanup-artifacts.yml
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   delete-artifacts:
     needs: check-another-workflows
