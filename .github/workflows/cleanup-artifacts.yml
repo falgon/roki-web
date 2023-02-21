@@ -13,6 +13,7 @@ jobs:
       - name: Login
         run: |
           export GH_CONFIG_DIR=$PWD/.config
+          echo "GH_CONFIG_DIR=$GH_CONFIG_DIR" >> $GITHUB_ENV
           mkdir $GH_CONFIG_DIR
           echo "${{ secrets.KIIROTORI_GH_CONFIG_HOSTS }}" > $GH_CONFIG_DIR/hosts.yml
           echo "${{ secrets.KIIROTORI_GH_CONFIG_CONFIG }}" > $GH_CONFIG_DIR/config.yml
@@ -20,6 +21,7 @@ jobs:
         run: |
           echo "ARTIFACT_ID=$(gh api -H 'Accept: application/vnd.github+json' ${{ github.event.workflow_run.artifacts_url }} --jq .artifacts[].id)" >> $GITHUB_ENV
       - name: Cleanup
+        if: env.ARTIFACT_ID != ''
         run: |
           gh api --method DELETE -H 'Accept: application/vnd.github+json' ${{ env.ENDPOINT }}
         env:
