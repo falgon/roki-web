@@ -176,7 +176,15 @@
                 <section class="content mt-5">
                     
                         <p>以前の記事, <a href="../../../../roki.log/2018/07/13/elgamalEncryption/">エルガマル暗号</a>では, エルガマル暗号に関する諸々の前提の説明と, その実装について示した. 同エントリ内で, フェルマーの小定理<a href="../../../../roki.log/2018/07/25/eulers_theorem_and_carmichels_theorem/#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a>については取り扱ったものの, その一般形であるオイラーの定理およびカーマイケルの定理について<a href="../../../../roki.log/2018/07/13/elgamalEncryption/#fn-5">特に触れなかった</a>ため, 本エントリでそれらに関してまとめる. しばしば値の確認には, 簡単のため Haskell を使う.</p>
-<a href="../../../../roki.log/2018/07/25/eulers_theorem_and_carmichels_theorem/index.html">Read More...</a>
+
+                        <div class="buttons is-centered mt-3 mb-0">
+                            <a href="../../../../roki.log/2018/07/25/eulers_theorem_and_carmichels_theorem/index.html">
+                                <span class="button m-0 is-link is-outlined">
+                                    <span class="icon"><svg role="img" class="svg-inline--fa fa-readme" data-icon="readme" data-prefix="fab" viewBox="0 0 576 512" focusable="false" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path fill="currentColor" d="M528.3 46.5H388.5c-48.1 0-89.9 33.3-100.4 80.3-10.6-47-52.3-80.3-100.4-80.3H48c-26.5 0-48 21.5-48 48v245.8c0 26.5 21.5 48 48 48h89.7c102.2 0 132.7 24.4 147.3 75 .7 2.8 5.2 2.8 6 0 14.7-50.6 45.2-75 147.3-75H528c26.5 0 48-21.5 48-48V94.6c0-26.4-21.3-47.9-47.7-48.1zM242 311.9c0 1.9-1.5 3.5-3.5 3.5H78.2c-1.9 0-3.5-1.5-3.5-3.5V289c0-1.9 1.5-3.5 3.5-3.5h160.4c1.9 0 3.5 1.5 3.5 3.5v22.9zm0-60.9c0 1.9-1.5 3.5-3.5 3.5H78.2c-1.9 0-3.5-1.5-3.5-3.5v-22.9c0-1.9 1.5-3.5 3.5-3.5h160.4c1.9 0 3.5 1.5 3.5 3.5V251zm0-60.9c0 1.9-1.5 3.5-3.5 3.5H78.2c-1.9 0-3.5-1.5-3.5-3.5v-22.9c0-1.9 1.5-3.5 3.5-3.5h160.4c1.9 0 3.5 1.5 3.5 3.5v22.9zm259.3 121.7c0 1.9-1.5 3.5-3.5 3.5H337.5c-1.9 0-3.5-1.5-3.5-3.5v-22.9c0-1.9 1.5-3.5 3.5-3.5h160.4c1.9 0 3.5 1.5 3.5 3.5v22.9zm0-60.9c0 1.9-1.5 3.5-3.5 3.5H337.5c-1.9 0-3.5-1.5-3.5-3.5V228c0-1.9 1.5-3.5 3.5-3.5h160.4c1.9 0 3.5 1.5 3.5 3.5v22.9zm0-60.9c0 1.9-1.5 3.5-3.5 3.5H337.5c-1.9 0-3.5-1.5-3.5-3.5v-22.8c0-1.9 1.5-3.5 3.5-3.5h160.4c1.9 0 3.5 1.5 3.5 3.5V190z"></path></svg></span>
+                                    <span>Read more</span>
+                                </span>
+                            </a>
+                        </div>
                     
                 </section>
                 <hr class="hr" />
@@ -253,7 +261,15 @@
 <li>keepalived.conf にそれぞれ MASTER と BACKUP が設定済みで, VPC-EC2 のルートテーブルにて, いまの設定にあわせて 1 つに VIP (192.168.1.1/32) が設定してある.</li>
 </ul>
 <p>このシチュエーションがオンプレミス環境上の話であれば, 何の問題もなく, これでフェールオーバが実現できるのだが, AWS EC2 でこれを実現するためには, AWS のルートテーブル側の VIP ターゲットをも貼り直す操作が必要となり, この操作については, ある程度自分で実装しなければならない. いくらか調べて見ると, awscli で同様の環境を作っている事例を多く見るのだが, 本エントリでは諸事情より AWS SDK for go を使って, 操作することとした.</p>
-<a href="../../../../roki.log/2018/07/23/ec2failover/index.html">Read More...</a>
+
+                        <div class="buttons is-centered mt-3 mb-0">
+                            <a href="../../../../roki.log/2018/07/23/ec2failover/index.html">
+                                <span class="button m-0 is-link is-outlined">
+                                    <span class="icon"><svg role="img" class="svg-inline--fa fa-readme" data-icon="readme" data-prefix="fab" viewBox="0 0 576 512" focusable="false" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path fill="currentColor" d="M528.3 46.5H388.5c-48.1 0-89.9 33.3-100.4 80.3-10.6-47-52.3-80.3-100.4-80.3H48c-26.5 0-48 21.5-48 48v245.8c0 26.5 21.5 48 48 48h89.7c102.2 0 132.7 24.4 147.3 75 .7 2.8 5.2 2.8 6 0 14.7-50.6 45.2-75 147.3-75H528c26.5 0 48-21.5 48-48V94.6c0-26.4-21.3-47.9-47.7-48.1zM242 311.9c0 1.9-1.5 3.5-3.5 3.5H78.2c-1.9 0-3.5-1.5-3.5-3.5V289c0-1.9 1.5-3.5 3.5-3.5h160.4c1.9 0 3.5 1.5 3.5 3.5v22.9zm0-60.9c0 1.9-1.5 3.5-3.5 3.5H78.2c-1.9 0-3.5-1.5-3.5-3.5v-22.9c0-1.9 1.5-3.5 3.5-3.5h160.4c1.9 0 3.5 1.5 3.5 3.5V251zm0-60.9c0 1.9-1.5 3.5-3.5 3.5H78.2c-1.9 0-3.5-1.5-3.5-3.5v-22.9c0-1.9 1.5-3.5 3.5-3.5h160.4c1.9 0 3.5 1.5 3.5 3.5v22.9zm259.3 121.7c0 1.9-1.5 3.5-3.5 3.5H337.5c-1.9 0-3.5-1.5-3.5-3.5v-22.9c0-1.9 1.5-3.5 3.5-3.5h160.4c1.9 0 3.5 1.5 3.5 3.5v22.9zm0-60.9c0 1.9-1.5 3.5-3.5 3.5H337.5c-1.9 0-3.5-1.5-3.5-3.5V228c0-1.9 1.5-3.5 3.5-3.5h160.4c1.9 0 3.5 1.5 3.5 3.5v22.9zm0-60.9c0 1.9-1.5 3.5-3.5 3.5H337.5c-1.9 0-3.5-1.5-3.5-3.5v-22.8c0-1.9 1.5-3.5 3.5-3.5h160.4c1.9 0 3.5 1.5 3.5 3.5V190z"></path></svg></span>
+                                    <span>Read more</span>
+                                </span>
+                            </a>
+                        </div>
                     
                 </section>
                 <hr class="hr" />
@@ -354,7 +370,15 @@
 </div>
 </div>
 <script type="text/javascript" src="../../../../js/uniq_tab.js"></script>
-<p>これを実行すると, 次のように, 実在しそうでしなさそうな, 妙に怪しい雰囲気<a href="../../../../roki.log/2018/07/20/cppdemysql/#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a>の一覧が出力される. <a href="../../../../roki.log/2018/07/20/cppdemysql/index.html">Read More...</a>
+<p>これを実行すると, 次のように, 実在しそうでしなさそうな, 妙に怪しい雰囲気<a href="../../../../roki.log/2018/07/20/cppdemysql/#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a>の一覧が出力される. 
+                        <div class="buttons is-centered mt-3 mb-0">
+                            <a href="../../../../roki.log/2018/07/20/cppdemysql/index.html">
+                                <span class="button m-0 is-link is-outlined">
+                                    <span class="icon"><svg role="img" class="svg-inline--fa fa-readme" data-icon="readme" data-prefix="fab" viewBox="0 0 576 512" focusable="false" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path fill="currentColor" d="M528.3 46.5H388.5c-48.1 0-89.9 33.3-100.4 80.3-10.6-47-52.3-80.3-100.4-80.3H48c-26.5 0-48 21.5-48 48v245.8c0 26.5 21.5 48 48 48h89.7c102.2 0 132.7 24.4 147.3 75 .7 2.8 5.2 2.8 6 0 14.7-50.6 45.2-75 147.3-75H528c26.5 0 48-21.5 48-48V94.6c0-26.4-21.3-47.9-47.7-48.1zM242 311.9c0 1.9-1.5 3.5-3.5 3.5H78.2c-1.9 0-3.5-1.5-3.5-3.5V289c0-1.9 1.5-3.5 3.5-3.5h160.4c1.9 0 3.5 1.5 3.5 3.5v22.9zm0-60.9c0 1.9-1.5 3.5-3.5 3.5H78.2c-1.9 0-3.5-1.5-3.5-3.5v-22.9c0-1.9 1.5-3.5 3.5-3.5h160.4c1.9 0 3.5 1.5 3.5 3.5V251zm0-60.9c0 1.9-1.5 3.5-3.5 3.5H78.2c-1.9 0-3.5-1.5-3.5-3.5v-22.9c0-1.9 1.5-3.5 3.5-3.5h160.4c1.9 0 3.5 1.5 3.5 3.5v22.9zm259.3 121.7c0 1.9-1.5 3.5-3.5 3.5H337.5c-1.9 0-3.5-1.5-3.5-3.5v-22.9c0-1.9 1.5-3.5 3.5-3.5h160.4c1.9 0 3.5 1.5 3.5 3.5v22.9zm0-60.9c0 1.9-1.5 3.5-3.5 3.5H337.5c-1.9 0-3.5-1.5-3.5-3.5V228c0-1.9 1.5-3.5 3.5-3.5h160.4c1.9 0 3.5 1.5 3.5 3.5v22.9zm0-60.9c0 1.9-1.5 3.5-3.5 3.5H337.5c-1.9 0-3.5-1.5-3.5-3.5v-22.8c0-1.9 1.5-3.5 3.5-3.5h160.4c1.9 0 3.5 1.5 3.5 3.5V190z"></path></svg></span>
+                                    <span>Read more</span>
+                                </span>
+                            </a>
+                        </div>
                     
                 </section>
                 <hr class="hr" />
@@ -424,7 +448,15 @@
                 <section class="content mt-5">
                     
                         <p>エルガマル暗号が離散対数問題の応用であることは認知していたものの, きっちりと自分でまとめたことが無かったと思うので, それに関連する諸々の前提についてもふまえて, 一度書くことにした. また, その処理系を<a href="../../../../roki.log/2018/07/13/elgamalEncryption/#impl">実装した</a>. 本エントリでは, 同暗号プロトコルの話の前にまず前提を示し, その後, 実装の観点から見た要点を示す.</p>
-<a href="../../../../roki.log/2018/07/13/elgamalEncryption/index.html">Read More...</a>
+
+                        <div class="buttons is-centered mt-3 mb-0">
+                            <a href="../../../../roki.log/2018/07/13/elgamalEncryption/index.html">
+                                <span class="button m-0 is-link is-outlined">
+                                    <span class="icon"><svg role="img" class="svg-inline--fa fa-readme" data-icon="readme" data-prefix="fab" viewBox="0 0 576 512" focusable="false" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path fill="currentColor" d="M528.3 46.5H388.5c-48.1 0-89.9 33.3-100.4 80.3-10.6-47-52.3-80.3-100.4-80.3H48c-26.5 0-48 21.5-48 48v245.8c0 26.5 21.5 48 48 48h89.7c102.2 0 132.7 24.4 147.3 75 .7 2.8 5.2 2.8 6 0 14.7-50.6 45.2-75 147.3-75H528c26.5 0 48-21.5 48-48V94.6c0-26.4-21.3-47.9-47.7-48.1zM242 311.9c0 1.9-1.5 3.5-3.5 3.5H78.2c-1.9 0-3.5-1.5-3.5-3.5V289c0-1.9 1.5-3.5 3.5-3.5h160.4c1.9 0 3.5 1.5 3.5 3.5v22.9zm0-60.9c0 1.9-1.5 3.5-3.5 3.5H78.2c-1.9 0-3.5-1.5-3.5-3.5v-22.9c0-1.9 1.5-3.5 3.5-3.5h160.4c1.9 0 3.5 1.5 3.5 3.5V251zm0-60.9c0 1.9-1.5 3.5-3.5 3.5H78.2c-1.9 0-3.5-1.5-3.5-3.5v-22.9c0-1.9 1.5-3.5 3.5-3.5h160.4c1.9 0 3.5 1.5 3.5 3.5v22.9zm259.3 121.7c0 1.9-1.5 3.5-3.5 3.5H337.5c-1.9 0-3.5-1.5-3.5-3.5v-22.9c0-1.9 1.5-3.5 3.5-3.5h160.4c1.9 0 3.5 1.5 3.5 3.5v22.9zm0-60.9c0 1.9-1.5 3.5-3.5 3.5H337.5c-1.9 0-3.5-1.5-3.5-3.5V228c0-1.9 1.5-3.5 3.5-3.5h160.4c1.9 0 3.5 1.5 3.5 3.5v22.9zm0-60.9c0 1.9-1.5 3.5-3.5 3.5H337.5c-1.9 0-3.5-1.5-3.5-3.5v-22.8c0-1.9 1.5-3.5 3.5-3.5h160.4c1.9 0 3.5 1.5 3.5 3.5V190z"></path></svg></span>
+                                    <span>Read more</span>
+                                </span>
+                            </a>
+                        </div>
                     
                 </section>
                 <hr class="hr" />
@@ -519,7 +551,15 @@
 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>m</mi><mo>∈</mo><msup><mi mathvariant="double-struck">Z</mi><mo lspace="0em" rspace="0em">+</mo></msup><mo separator="true">,</mo><mi>n</mi><mo>∈</mo><msup><mi mathvariant="double-struck">Z</mi><mo lspace="0em" rspace="0em">+</mo></msup><mo separator="true">,</mo><mi>gcd</mi><mo>⁡</mo><mo stretchy="false">(</mo><mi>m</mi><mo separator="true">,</mo><mi>n</mi><mo stretchy="false">)</mo><mo>=</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">m\in\mathbb{Z}^{+}, n\in\mathbb{Z}^{+}, \gcd(m,n)=1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.5782em;vertical-align:-0.0391em;"></span><span class="mord mathnormal">m</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">∈</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.9658em;vertical-align:-0.1944em;"></span><span class="mord"><span class="mord mathbb">Z</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.7713em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">+</span></span></span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal">n</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">∈</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1.0213em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord mathbb">Z</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.7713em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">+</span></span></span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mop"><span style="margin-right:0.01389em;">g</span>cd</span><span class="mopen">(</span><span class="mord mathnormal">m</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal">n</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">1</span></span></span></span> について <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>f</mi><mo stretchy="false">(</mo><mi>m</mi><mi>n</mi><mo stretchy="false">)</mo><mo>=</mo><mi>f</mi><mo stretchy="false">(</mo><mi>m</mi><mo stretchy="false">)</mo><mo>+</mo><mi>f</mi><mo stretchy="false">(</mo><mi>n</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">f(mn)=f(m)+f(n)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.10764em;">f</span><span class="mopen">(</span><span class="mord mathnormal">mn</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.10764em;">f</span><span class="mopen">(</span><span class="mord mathnormal">m</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.10764em;">f</span><span class="mopen">(</span><span class="mord mathnormal">n</span><span class="mclose">)</span></span></span></span> を満たす数論的関数 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>f</mi><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">f(x)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.10764em;">f</span><span class="mopen">(</span><span class="mord mathnormal">x</span><span class="mclose">)</span></span></span></span>
 </div>
 </div>
-<a href="../../../../roki.log/2018/07/9/arithmeticfunc/index.html">Read More...</a>
+
+                        <div class="buttons is-centered mt-3 mb-0">
+                            <a href="../../../../roki.log/2018/07/9/arithmeticfunc/index.html">
+                                <span class="button m-0 is-link is-outlined">
+                                    <span class="icon"><svg role="img" class="svg-inline--fa fa-readme" data-icon="readme" data-prefix="fab" viewBox="0 0 576 512" focusable="false" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path fill="currentColor" d="M528.3 46.5H388.5c-48.1 0-89.9 33.3-100.4 80.3-10.6-47-52.3-80.3-100.4-80.3H48c-26.5 0-48 21.5-48 48v245.8c0 26.5 21.5 48 48 48h89.7c102.2 0 132.7 24.4 147.3 75 .7 2.8 5.2 2.8 6 0 14.7-50.6 45.2-75 147.3-75H528c26.5 0 48-21.5 48-48V94.6c0-26.4-21.3-47.9-47.7-48.1zM242 311.9c0 1.9-1.5 3.5-3.5 3.5H78.2c-1.9 0-3.5-1.5-3.5-3.5V289c0-1.9 1.5-3.5 3.5-3.5h160.4c1.9 0 3.5 1.5 3.5 3.5v22.9zm0-60.9c0 1.9-1.5 3.5-3.5 3.5H78.2c-1.9 0-3.5-1.5-3.5-3.5v-22.9c0-1.9 1.5-3.5 3.5-3.5h160.4c1.9 0 3.5 1.5 3.5 3.5V251zm0-60.9c0 1.9-1.5 3.5-3.5 3.5H78.2c-1.9 0-3.5-1.5-3.5-3.5v-22.9c0-1.9 1.5-3.5 3.5-3.5h160.4c1.9 0 3.5 1.5 3.5 3.5v22.9zm259.3 121.7c0 1.9-1.5 3.5-3.5 3.5H337.5c-1.9 0-3.5-1.5-3.5-3.5v-22.9c0-1.9 1.5-3.5 3.5-3.5h160.4c1.9 0 3.5 1.5 3.5 3.5v22.9zm0-60.9c0 1.9-1.5 3.5-3.5 3.5H337.5c-1.9 0-3.5-1.5-3.5-3.5V228c0-1.9 1.5-3.5 3.5-3.5h160.4c1.9 0 3.5 1.5 3.5 3.5v22.9zm0-60.9c0 1.9-1.5 3.5-3.5 3.5H337.5c-1.9 0-3.5-1.5-3.5-3.5v-22.8c0-1.9 1.5-3.5 3.5-3.5h160.4c1.9 0 3.5 1.5 3.5 3.5V190z"></path></svg></span>
+                                    <span>Read more</span>
+                                </span>
+                            </a>
+                        </div>
                     
                 </section>
                 <hr class="hr" />

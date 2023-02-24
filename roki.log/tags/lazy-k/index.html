@@ -181,7 +181,15 @@
 </figure>
 <h2 id="はじめに">はじめに</h2>
 <p>この記事の公開日の 1 日前<a href="../../../roki.log/2020/12/16/CompileTimeLazyKWithCXXTemplateMetaProgramming/#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a>に, プログラミング言語 C++ の新バージョン ISO/IEC 14882:2020, 通称 C++20 が国際標準として公開されました. これにより, いくつかの新しい言語機能や標準ライブラリが追加されます. その中でも, とくにコンセプトという言語機能は, テンプレートメタプログラミングが話題として盛んであった時代<a href="../../../roki.log/2020/12/16/CompileTimeLazyKWithCXXTemplateMetaProgramming/#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a>から待望されていた言語機能のうちの 1 つなのではないでしょうか. この標準化によって, C++17 までで行う必要のあった多くの型制約のためのテンプレートメタプログラミングは, よりそれ専用の言語機能であるコンセプトを使う形に置き換えられるであろうと思われます. そのようなわけで, 今後徐々に出番を失っていくであろうテンプレートメタプログラミングを将来懐かしめるよう (?), テンプレートメタプログラミングによってコンパイル時に Lazy K ソースコードをパースして評価するインタプリタのようなものを書いてみました. 本記事では, これに関する実装と理論について紹介します. (型無し <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>λ</mi></mrow><annotation encoding="application/x-tex">\lambda</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal">λ</span></span></span></span> 計算について既知のものとします)</p>
-<a href="../../../roki.log/2020/12/16/CompileTimeLazyKWithCXXTemplateMetaProgramming/index.html">Read More...</a>
+
+                        <div class="buttons is-centered mt-3 mb-0">
+                            <a href="../../../roki.log/2020/12/16/CompileTimeLazyKWithCXXTemplateMetaProgramming/index.html">
+                                <span class="button m-0 is-link is-outlined">
+                                    <span class="icon"><svg role="img" class="svg-inline--fa fa-readme" data-icon="readme" data-prefix="fab" viewBox="0 0 576 512" focusable="false" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path fill="currentColor" d="M528.3 46.5H388.5c-48.1 0-89.9 33.3-100.4 80.3-10.6-47-52.3-80.3-100.4-80.3H48c-26.5 0-48 21.5-48 48v245.8c0 26.5 21.5 48 48 48h89.7c102.2 0 132.7 24.4 147.3 75 .7 2.8 5.2 2.8 6 0 14.7-50.6 45.2-75 147.3-75H528c26.5 0 48-21.5 48-48V94.6c0-26.4-21.3-47.9-47.7-48.1zM242 311.9c0 1.9-1.5 3.5-3.5 3.5H78.2c-1.9 0-3.5-1.5-3.5-3.5V289c0-1.9 1.5-3.5 3.5-3.5h160.4c1.9 0 3.5 1.5 3.5 3.5v22.9zm0-60.9c0 1.9-1.5 3.5-3.5 3.5H78.2c-1.9 0-3.5-1.5-3.5-3.5v-22.9c0-1.9 1.5-3.5 3.5-3.5h160.4c1.9 0 3.5 1.5 3.5 3.5V251zm0-60.9c0 1.9-1.5 3.5-3.5 3.5H78.2c-1.9 0-3.5-1.5-3.5-3.5v-22.9c0-1.9 1.5-3.5 3.5-3.5h160.4c1.9 0 3.5 1.5 3.5 3.5v22.9zm259.3 121.7c0 1.9-1.5 3.5-3.5 3.5H337.5c-1.9 0-3.5-1.5-3.5-3.5v-22.9c0-1.9 1.5-3.5 3.5-3.5h160.4c1.9 0 3.5 1.5 3.5 3.5v22.9zm0-60.9c0 1.9-1.5 3.5-3.5 3.5H337.5c-1.9 0-3.5-1.5-3.5-3.5V228c0-1.9 1.5-3.5 3.5-3.5h160.4c1.9 0 3.5 1.5 3.5 3.5v22.9zm0-60.9c0 1.9-1.5 3.5-3.5 3.5H337.5c-1.9 0-3.5-1.5-3.5-3.5v-22.8c0-1.9 1.5-3.5 3.5-3.5h160.4c1.9 0 3.5 1.5 3.5 3.5V190z"></path></svg></span>
+                                    <span>Read more</span>
+                                </span>
+                            </a>
+                        </div>
                     
                 </section>
                 <hr class="hr" />

@@ -181,7 +181,15 @@
 </div>
 <h2 id="基本構成">基本構成</h2>
 <p>今回は個人利用/小規模であり特別な費用を発生させたくなかったので, <a href="https://www.oracle.com/cloud/" target="_blank" rel="nofollow noopener">Oracle Cloud Infrastructure</a> (以下 OCI) の Always Free 枠である Ubuntu インスタンス上にサーバを構成した<a href="../../roki.log/2022/04/10/LineBotDevelopment/#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a>. 同インスタンス上では Jitsi Meet<a href="../../roki.log/2022/04/10/LineBotDevelopment/#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a> という別のウェブサービスを nginx を用いて運用していたので, それをそのままリバースプロキシとしても利用し, Bot サーバへの通信を HTTPS 化した. これらはサブドメインに従ってリクエストを振り分けているが, それぞれの SSL 証明書を作成するのは手間がかかるので, 今回は (let’s encrypt の) ワイルドカード証明書で管理することとした. ドメイン管理には Google Domains を使っているが, TXT レコードを随時更新する API が用意されておらず, 現状手動更新が必須となっている. これは追々なんとかしたい<a href="../../roki.log/2022/04/10/LineBotDevelopment/#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a>.</p>
-<a href="../../roki.log/2022/04/10/LineBotDevelopment/index.html">Read More...</a>
+
+                        <div class="buttons is-centered mt-3 mb-0">
+                            <a href="../../roki.log/2022/04/10/LineBotDevelopment/index.html">
+                                <span class="button m-0 is-link is-outlined">
+                                    <span class="icon"><svg role="img" class="svg-inline--fa fa-readme" data-icon="readme" data-prefix="fab" viewBox="0 0 576 512" focusable="false" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path fill="currentColor" d="M528.3 46.5H388.5c-48.1 0-89.9 33.3-100.4 80.3-10.6-47-52.3-80.3-100.4-80.3H48c-26.5 0-48 21.5-48 48v245.8c0 26.5 21.5 48 48 48h89.7c102.2 0 132.7 24.4 147.3 75 .7 2.8 5.2 2.8 6 0 14.7-50.6 45.2-75 147.3-75H528c26.5 0 48-21.5 48-48V94.6c0-26.4-21.3-47.9-47.7-48.1zM242 311.9c0 1.9-1.5 3.5-3.5 3.5H78.2c-1.9 0-3.5-1.5-3.5-3.5V289c0-1.9 1.5-3.5 3.5-3.5h160.4c1.9 0 3.5 1.5 3.5 3.5v22.9zm0-60.9c0 1.9-1.5 3.5-3.5 3.5H78.2c-1.9 0-3.5-1.5-3.5-3.5v-22.9c0-1.9 1.5-3.5 3.5-3.5h160.4c1.9 0 3.5 1.5 3.5 3.5V251zm0-60.9c0 1.9-1.5 3.5-3.5 3.5H78.2c-1.9 0-3.5-1.5-3.5-3.5v-22.9c0-1.9 1.5-3.5 3.5-3.5h160.4c1.9 0 3.5 1.5 3.5 3.5v22.9zm259.3 121.7c0 1.9-1.5 3.5-3.5 3.5H337.5c-1.9 0-3.5-1.5-3.5-3.5v-22.9c0-1.9 1.5-3.5 3.5-3.5h160.4c1.9 0 3.5 1.5 3.5 3.5v22.9zm0-60.9c0 1.9-1.5 3.5-3.5 3.5H337.5c-1.9 0-3.5-1.5-3.5-3.5V228c0-1.9 1.5-3.5 3.5-3.5h160.4c1.9 0 3.5 1.5 3.5 3.5v22.9zm0-60.9c0 1.9-1.5 3.5-3.5 3.5H337.5c-1.9 0-3.5-1.5-3.5-3.5v-22.8c0-1.9 1.5-3.5 3.5-3.5h160.4c1.9 0 3.5 1.5 3.5 3.5V190z"></path></svg></span>
+                                    <span>Read more</span>
+                                </span>
+                            </a>
+                        </div>
                     
                 </section>
                 <hr class="hr" />
