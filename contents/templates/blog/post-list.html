@@ -39,7 +39,15 @@ $endif$
 
                 <section class="content mt-5">
                     $if(teaser)$
-                        $teaser$<a href="$url$">Read More...</a>
+                        $teaser$
+                        <div class="buttons is-centered mt-3 mb-0">
+                            <a href="$url$">
+                                <span class="button m-0 is-link is-outlined">
+                                    <span class="icon"><i class="fab fa-readme"></i></span>
+                                    <span>Read more</span>
+                                </span>
+                            </a>
+                        </div>
                     $else$
                         $body$
                     $endif$
