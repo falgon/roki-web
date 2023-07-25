@@ -1,7 +1,7 @@
 ---
 title: キャメルゴルフ＆ホテルリゾートでグランピングしてきた
 date: 2023-02-18
-tags: vacation
+tags: vacation, diary
 ---
 
 少し時間が経ってしまったのですが,

@@ -1,7 +1,7 @@
 ---
 title: レビュー「Grand Seiko Heritage Collection SBGA439 スプリングドライブ」
 date: 2022-09-20 18:43:01
-tags: watch, other
+tags: watch
 ---
 
 [Grand Seiko Heritage Collection SBGA439](https://www.grand-seiko.com/jp-ja/collections/sbga439)
