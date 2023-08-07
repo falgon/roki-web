@@ -3,6 +3,7 @@
 .navbar {
     background: transparent;
     @extend .is-warning;
+    font-family: 'Ubuntu Mono', 'Noto Sans JP', sans-serif !important;
 }
 
 .navbar-brand a:hover {
@@ -10,5 +11,5 @@
 }
 
 body {
-    font-family: 'Zen Kaku Gothic New', sans-serif !important;
+    font-family: 'Noto Sans JP', sans-serif !important;
 }

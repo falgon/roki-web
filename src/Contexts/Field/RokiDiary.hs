@@ -13,6 +13,6 @@ import           Lucid.Html5
 -- https://fonts.google.com/share?selection.family=Klee%2BOne
 font :: Html ()
 font = link_ [
-    href_ "https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New&display=swap"
+    href_ "https://fonts.googleapis.com/css2?family=Noto+Sans+JP&family=Ubuntu+Mono&display=swap"
   , rel_ "stylesheet"
   ]
