@@ -10,7 +10,7 @@ import qualified Data.Text.Lazy                    as TL
 import           Lucid.Base                        (Html)
 import           Lucid.Html5
 
--- c.f. 
+-- c.f.
 -- https://fonts.google.com/share?selection.family=Klee%2BOne
 font :: Html ()
 font = link_ [
