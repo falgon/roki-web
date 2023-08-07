@@ -46,16 +46,17 @@ html {
 }
 
 body {
-    font-family:
-        'Ubuntu Mono',
-        'Sawarabi Mincho',
-        sans-serif;
+    font-family: 'Noto Serif JP', serif;
     display: flex;
     min-height: 100vh;
     flex-direction: column;
     overflow-x: hidden;
     overflow-y: auto;
     @extend .adjust100;
+}
+
+.sourceCode {
+    font-family: 'Ubuntu Mono', monospace;
 }
 
 a {
@@ -197,7 +198,12 @@ span.both-lined:after {
     margin-right: 5px;
 }
 
+.site-top-title {
+    font-family: 'Ubuntu Mono', sans-serif;
+}
+
 .blog-intro {
+    font-family: 'Ubuntu Mono', sans-serif;
     width: 100%;
     padding-bottom: 5px;
     border-bottom: solid 1px $grey-lighter;
