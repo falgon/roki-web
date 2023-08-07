@@ -15,7 +15,7 @@ import           Lucid.Html5
 footerAdditionalComponent :: Html ()
 footerAdditionalComponent = gAdSenseFooter <> haskellJpLogo
 
--- c.f. 
+-- c.f.
 -- https://fonts.google.com/share?selection.family=Sawarabi%2BGothic%7CSawarabi%2BMincho
 font :: Html ()
 font = link_ [
