@@ -1,7 +1,7 @@
 ---
 title: 教育者としての中村憲剛元プロサッカー選手
 date: 2021-07-03 21:37:02
-tags: soccer, other
+tags: soccer
 ---
 
 ふと, 下記の動画を見ました.
