@@ -156,6 +156,7 @@ techBlogConf :: B.BlogConfig Rules
 techBlogConf = B.BlogConfig {
     B.blogName = TB.blogName
   , B.blogDescription = TB.blogDesc
+  , B.blogFont = RokiLog.font
   , B.blogHeaderAdditional = mempty
   , B.blogBeforeContentBodyAdditional = TL.unpack $ renderText RokiLog.gAdSenseBeforeContentBody
   , B.blogFooterAdditional = TL.unpack $ renderText RokiLog.footerAdditionalComponent
@@ -177,6 +178,7 @@ diaryConf :: B.BlogConfig Rules
 diaryConf = B.BlogConfig {
     B.blogName = AB.blogName
   , B.blogDescription = AB.blogDesc
+  , B.blogFont = RokiDiary.font
   , B.blogHeaderAdditional = TL.unpack $ renderText RokiDiary.gAdSenseHeader
   , B.blogBeforeContentBodyAdditional = TL.unpack $ renderText RokiDiary.gAdSenseBeforeContentBody
   , B.blogFooterAdditional = TL.unpack $ renderText RokiDiary.gAdSenseFooter

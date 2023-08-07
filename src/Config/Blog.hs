@@ -3,14 +3,17 @@ module Config.Blog (
 ) where
 
 import           Archives
+
 import           Hakyll                hiding (FeedConfiguration (..),
                                         renderAtom)
 import           Hakyll.Web.Feed.Extra (FeedConfiguration)
+import           Lucid.Base            (Html)
 import           Text.Pandoc.Options   (WriterOptions)
 
 data BlogConfig m = BlogConfig {
     blogName                        :: String
   , blogDescription                 :: String
+  , blogFont                        :: Html ()
   , blogHeaderAdditional            :: String
   , blogBeforeContentBodyAdditional :: String
   , blogFooterAdditional            :: String
