@@ -8,7 +8,6 @@ module Contexts.Field.RokiLog (
 import           Contexts.Field.RokiLog.GAdsense
 import           Contexts.Field.RokiLog.PowertedBy
 
-import qualified Data.Text.Lazy                    as TL
 import           Lucid.Base                        (Html)
 import           Lucid.Html5
 

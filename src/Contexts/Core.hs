@@ -37,7 +37,7 @@ blogTitleCtx :: String -> Context String
 blogTitleCtx = constField "blog-title"
 
 blogFontCtx :: Html () -> Context String
-blogFontCtx = constField "blog-font-html" . TL.unpack . renderText
+blogFontCtx = constField "blog-font-html" . show
 
 techBlogCtx :: Context String
 techBlogCtx = constField "tech-blog-title" TB.blogName

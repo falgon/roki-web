@@ -6,7 +6,6 @@ module Contexts.Field.RokiDiary (
 
 import           Contexts.Field.RokiDiary.GAdsense
 
-import qualified Data.Text.Lazy                    as TL
 import           Lucid.Base                        (Html)
 import           Lucid.Html5
 
