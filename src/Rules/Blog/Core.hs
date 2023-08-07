@@ -120,7 +120,7 @@ blogRules isPreview bc faIcons = do
     let postCtx' = postCtx isPreview tags
             <> tagCloudField' "tag-cloud" tags
             <> blogTitleCtx (blogName bc)
-            <> blogFontCtx (blogName bc)
+            <> blogFontCtx (blogFont bc)
             <> constField "header-additional-component" (blogHeaderAdditional bc)
             <> constField "before-content-body-additional-component" (blogBeforeContentBodyAdditional bc)
             <> constField "blog-description" (blogDescription bc)
