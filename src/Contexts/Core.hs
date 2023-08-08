@@ -2,6 +2,7 @@
 module Contexts.Core (
     siteMapDateCtx
   , blogTitleCtx
+  , blogFontCtx
   , siteCtx
   , postCtx
   , listCtx
@@ -13,7 +14,7 @@ import           Data.List.Extra          (dropPrefix)
 import           Data.String              (fromString)
 import qualified Data.Text.Lazy           as TL
 import           Hakyll
-import           Lucid.Base               (renderText)
+import           Lucid.Base               (Html, renderText)
 import           Lucid.Html5
 import           System.FilePath          (takeDirectory, (</>))
 
@@ -34,6 +35,9 @@ siteMapDateCtx = localDateField defaultTimeLocale' timeZoneJST "date" "%Y-%m-%d"
 
 blogTitleCtx :: String -> Context String
 blogTitleCtx = constField "blog-title"
+
+blogFontCtx :: Html () -> Context String
+blogFontCtx = constField "blog-font-html" . show
 
 techBlogCtx :: Context String
 techBlogCtx = constField "tech-blog-title" TB.blogName
@@ -105,7 +109,6 @@ katexJsCtx :: Context String
 katexJsCtx = constField "katex-script" $ TL.unpack $ renderText $ do
     script_ [defer_ "", type_ "text/javascript", src_ "/vendor/katex/katex.min.js"] TL.empty
     script_ [defer_ "", type_ "text/javascript", src_ "/vendor/katex/auto-render.min.js"] TL.empty
-
 
 jsPathCtx :: Context String
 jsPathCtx = listFieldWith "js" ctx $ \item -> do

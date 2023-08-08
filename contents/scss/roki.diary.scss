@@ -3,10 +3,13 @@
 .navbar {
     background: transparent;
     @extend .is-warning;
+    font-family: 'Ubuntu Mono', 'Noto Sans JP', sans-serif !important;
 }
 
 .navbar-brand a:hover {
     color: #4a4a4a;
 }
 
-
+body {
+    font-family: 'Noto Sans JP', sans-serif !important;
+}

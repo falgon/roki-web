@@ -20,8 +20,8 @@ import           Archives
 import           Config
 import           Config.Blog
 import           Config.RegexUtils     (intercalateDir)
-import           Contexts              (blogTitleCtx, gSuiteCtx, katexJsCtx,
-                                        listCtx, postCtx, siteCtx,
+import           Contexts              (blogFontCtx, blogTitleCtx, gSuiteCtx,
+                                        katexJsCtx, listCtx, postCtx, siteCtx,
                                         siteMapDateCtx)
 import           Contexts.Field        (searchBoxResultField, tagCloudField',
                                         yearMonthArchiveField)
@@ -96,6 +96,7 @@ listPageRules isPreview title faIcons tags bc pgs = paginateRules pgs $ \pn pat 
                 <> listCtx isPreview
                 <> tagCloudField' "tag-cloud" tags
                 <> blogTitleCtx (blogName bc)
+                <> blogFontCtx (blogFont bc)
                 <> constField "blog-description" (blogDescription bc)
                 <> constField "before-content-body-additional-component" (blogBeforeContentBodyAdditional bc)
                 <> constField "header-additional-component" (blogHeaderAdditional bc)
@@ -119,6 +120,7 @@ blogRules isPreview bc faIcons = do
     let postCtx' = postCtx isPreview tags
             <> tagCloudField' "tag-cloud" tags
             <> blogTitleCtx (blogName bc)
+            <> blogFontCtx (blogFont bc)
             <> constField "header-additional-component" (blogHeaderAdditional bc)
             <> constField "before-content-body-additional-component" (blogBeforeContentBodyAdditional bc)
             <> constField "blog-description" (blogDescription bc)
