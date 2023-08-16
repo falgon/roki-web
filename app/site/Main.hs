@@ -20,10 +20,10 @@ import qualified Contexts.Field.RokiDiary as RokiDiary
 import qualified Contexts.Field.RokiLog   as RokiLog
 import           Lucid.Base               (renderText)
 import qualified Rules.Blog               as B
-import qualified Rules.IndexPage          as IP
 import qualified Rules.Media              as Media
 import qualified Rules.Src.JavaScript     as Js
 import qualified Rules.Src.Style          as Style
+import qualified Rules.TopPage            as TopPage
 import qualified Rules.Vendor             as Vendor
 import qualified Vendor.FontAwesome       as FA
 
@@ -145,10 +145,10 @@ versionOption = OA.infoOption vopt $ mconcat [OA.long "version", OA.help "Show v
 optsParser :: OA.ParserInfo Opts
 optsParser = OA.info (OA.helper <*> versionOption <*> programOptions) $ mconcat [
     OA.fullDesc
-  , OA.progDesc $ concat [
-        "The static site roki.dev compiler version "
+  , OA.progDesc $ unwords [
+        "The static site roki.dev compiler version"
       , showVersion P.version
-      , " powerted by Hakyll"
+      , "powerted by Hakyll"
       ]
   ]
 
@@ -216,8 +216,10 @@ main = do
             *> Js.rules
         faIcons <- fold <$> preprocess FA.loadFontAwesome
         mapM_ (flip (B.blogRules (optPreviewFlag opts)) faIcons) blogConfs
-        IP.rules blogConfs faIcons
+        TopPage.rules blogConfs faIcons
 
+        match "CNAME" $ route idRoute >> compile copyFileCompiler
+        match "ads.txt" $ route idRoute >> compile copyFileCompiler
         match (fromString $ intercalateDir ["contents", "templates", "**"]) $
             compile templateBodyCompiler
     where
