@@ -78,4 +78,3 @@ monthlyPagePath = BU.monthlyPagePath blogName
 buildMonthlyArchives :: (H.MonadMetadata m, MonadFail m) => m A.MonthlyArchives
 buildMonthlyArchives = BU.buildMonthlyArchives blogName
 
-

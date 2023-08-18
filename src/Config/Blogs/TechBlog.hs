@@ -33,9 +33,10 @@ blogName = "roki.log"
 blogDesc :: String
 blogDesc = TL.unpack $ renderText $ do
     a_ [href_ $ T.pack $ "/" <> blogName] $ fromString blogName
-    p_ [class_ "is-inline"] $
+    p_ [class_ "is-inline"] $ mconcat [
         " is a blog written about efforts and learning related to technology, mathematics, "
-            <> "etc (Most of the content of the article is written in Japanese)."
+      , "etc (Most of the content of the article is written in Japanese)."
+      ]
 
 -- contents/roki.log/year/month/day/title/index.md
 entryPattern :: H.Pattern
