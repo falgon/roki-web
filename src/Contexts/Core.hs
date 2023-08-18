@@ -1,4 +1,4 @@
-{-# LANGUAGE LambdaCase, OverloadedStrings #-}
+{-# LANGUAGE OverloadedStrings #-}
 module Contexts.Core (
     siteMapDateCtx
   , blogTitleCtx
@@ -10,6 +10,7 @@ module Contexts.Core (
   , gSuiteCtx
 ) where
 
+import Data.Functor ((<&>))
 import           Data.List.Extra          (dropPrefix, mconcatMap)
 import           Data.String              (fromString)
 import qualified Data.Text.Lazy           as TL
@@ -122,18 +123,19 @@ katexJsCtx = constField "katex-script" $ TL.unpack $ renderText $ do
     script_ [defer_ "", type_ "text/javascript", src_ "/vendor/katex/auto-render.min.js"] TL.empty
 
 jsPathCtx :: Context String
-jsPathCtx = listFieldWith "js" ctx $ \item -> do
-    getMetadataField (itemIdentifier item) "js" >>= \case
-        Just xs -> pure $ map (itemize item . trim) $ splitAll "," xs
-        Nothing -> pure []
+jsPathCtx = listFieldWith "js" ctx $ \item -> 
+    getMetadataField (itemIdentifier item) "js" <&>
+        maybe mempty (map (itemize item . trim) . splitAll ",")
     where
         ctx = field "src-script" (return . itemBody)
         itemize item md = Item {
             itemIdentifier = fromString md
           , itemBody = jsDirPath item </> md
-        }
-        jsDirPath s = dropPrefix contentsRoot $ takeDirectory $
-            toFilePath (itemIdentifier s)
+          }
+        jsDirPath = dropPrefix contentsRoot 
+            . takeDirectory 
+            . toFilePath 
+            . itemIdentifier
 
 gSuiteCtx :: BlogConfig m -> Context String
 gSuiteCtx bc = constField "google-cx" (gCxPrefix gSuiteConf <> ":" <> blogGoogleCx bc)
