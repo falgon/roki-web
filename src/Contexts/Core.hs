@@ -10,7 +10,7 @@ module Contexts.Core (
   , gSuiteCtx
 ) where
 
-import Data.Functor ((<&>))
+import           Data.Functor             ((<&>))
 import           Data.List.Extra          (dropPrefix, mconcatMap)
 import           Data.String              (fromString)
 import qualified Data.Text.Lazy           as TL
@@ -123,7 +123,7 @@ katexJsCtx = constField "katex-script" $ TL.unpack $ renderText $ do
     script_ [defer_ "", type_ "text/javascript", src_ "/vendor/katex/auto-render.min.js"] TL.empty
 
 jsPathCtx :: Context String
-jsPathCtx = listFieldWith "js" ctx $ \item -> 
+jsPathCtx = listFieldWith "js" ctx $ \item ->
     getMetadataField (itemIdentifier item) "js" <&>
         maybe mempty (map (itemize item . trim) . splitAll ",")
     where
@@ -132,9 +132,9 @@ jsPathCtx = listFieldWith "js" ctx $ \item ->
             itemIdentifier = fromString md
           , itemBody = jsDirPath item </> md
           }
-        jsDirPath = dropPrefix contentsRoot 
-            . takeDirectory 
-            . toFilePath 
+        jsDirPath = dropPrefix contentsRoot
+            . takeDirectory
+            . toFilePath
             . itemIdentifier
 
 gSuiteCtx :: BlogConfig m -> Context String
