@@ -1,3 +1,4 @@
+{-# LANGUAGE LambdaCase #-}
 module Utils (
     absolutizeUrls
   , modifyExternalLinkAttr
@@ -8,7 +9,7 @@ module Utils (
 ) where
 
 import           Control.Monad     (liftM2)
-import           Data.Char         (isAlphaNum, toLower)
+import           Data.Char         (isAlphaNum, isSpace, toLower)
 import           Hakyll
 import           System.FilePath   (isRelative, normalise, takeDirectory,
                                     takeFileName, (</>))
@@ -32,21 +33,19 @@ modifyExternalLinkAttr = return . fmap (withTags f)
         extraAttributes = [("target", "_blank"), ("rel", "nofollow noopener")]
 
 sanitizeTagName :: String -> String
-sanitizeTagName = map (\x -> if x == ' ' then '-' else toLower x) .
-    filter (liftM2 (||) isAlphaNum (`elem` [' ', '-', '_']))
+sanitizeTagName = map (\x -> if isSpace x then '-' else toLower x) .
+    filter (liftM2 (||) isSpace (liftM2 (||) isAlphaNum (`elem` ['-', '_'])))
 
 makePageIdentifier :: FilePath -> PageNumber -> Identifier
 makePageIdentifier p 1 = fromFilePath p
 makePageIdentifier p n = fromFilePath $ takeDirectory' p </> "page" </> show n </> takeFileName p
     where
-        takeDirectory' x = let x' = takeDirectory x in if x' == "." then "" else x'
+        takeDirectory' x = let x' = takeDirectory x in if x' == "." then mempty else x'
 
 getStringField :: String -> Context String -> Compiler (Maybe String)
-getStringField key cs = do
-    s <- unContext cs key [] (Item (fromFilePath "") "")
-    return $ case s of
-        StringField x -> Just x
-        _             -> Nothing
+getStringField key cs = unContext cs key mempty (Item (fromFilePath mempty) mempty) >>= \case
+    StringField x -> pure $ Just x
+    _             -> pure Nothing
 
 sanitizeDisqusName :: String -> String
 sanitizeDisqusName = map (\x -> if x == '.' then '-' else x)
