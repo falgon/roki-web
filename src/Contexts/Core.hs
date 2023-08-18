@@ -56,7 +56,7 @@ blogCtx :: Context String
 blogCtx = techBlogCtx <> privBlogCtx
 
 authorCtx :: Context String
-authorCtx = mconcatMap (uncurry constField) $ [
+authorCtx = mconcatMap (uncurry constField) [
     ("author-name", "Roki")
   , ("author-avator", "/images/avator/prof1000x1000.png")
   , ("author-sex", "Male")
