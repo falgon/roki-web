@@ -23,13 +23,15 @@ lastUpdate (x:_) = formatTime defaultTimeLocale' (postDateFormat topPageConfig)
 mkBlogCtx :: BlogConfig m -> Compiler (Context String)
 mkBlogCtx obs = do
     posts <- fmap (take $ maxTitleNum topPageConfig) . recentFirst =<< loadAllSnapshots (blogEntryPattern obs) (blogContentSnapshot obs)
-    lu <- lastUpdate posts
-    return $ listField (blogName obs <> "-posts") (siteCtx <> defaultContext) (pure posts)
-        <> constField "blog-title" (blogName obs)
-        <> constField "blog-description" (blogDescription obs)
-        <> constField (blogName obs <> "-intro-date") lu
-        <> siteCtx
-        <> defaultContext
+    introDateCtx <- constField (blogName obs <> "-intro-date") <$> lastUpdate posts
+    pure $ mconcat [
+        listField (blogName obs <> "-posts") (siteCtx <> defaultContext) (pure posts)
+      , constField "blog-title" (blogName obs)
+      , constField "blog-description" (blogDescription obs)
+      , introDateCtx
+      , siteCtx
+      , defaultContext
+      ]
 
 rules :: [BlogConfig m] -> FA.FontAwesomeIcons -> Rules ()
 rules bcs faIcons = do
