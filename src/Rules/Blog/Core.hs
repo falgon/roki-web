@@ -23,6 +23,7 @@ import           Config.RegexUtils     (intercalateDir)
 import           Contexts              (blogFontCtx, blogTitleCtx, gSuiteCtx,
                                         katexJsCtx, listCtx, postCtx, siteCtx,
                                         siteMapDateCtx)
+import qualified Contexts.Blog         as BlogCtx
 import           Contexts.Field        (searchBoxResultField, tagCloudField',
                                         yearMonthArchiveField)
 import           Utils                 (absolutizeUrls, makePageIdentifier,
@@ -97,9 +98,9 @@ listPageRules isPreview title faIcons tags bc pgs = paginateRules pgs $ \pn pat 
                 <> tagCloudField' "tag-cloud" tags
                 <> blogTitleCtx (blogName bc)
                 <> blogFontCtx (blogFont bc)
-                <> constField "blog-description" (blogDescription bc)
-                <> constField "before-content-body-additional-component" (blogBeforeContentBodyAdditional bc)
-                <> constField "header-additional-component" (blogHeaderAdditional bc)
+                <> BlogCtx.description bc
+                <> BlogCtx.beforeContentBodyAdditionalComponent bc
+                <> BlogCtx.headerAdditionalComponent bc
                 <> gSuiteCtx bc
             postCtx' = teaserField "teaser" (blogContentSnapshot bc)
                 <> postCtx isPreview tags
@@ -121,9 +122,9 @@ blogRules isPreview bc faIcons = do
             <> tagCloudField' "tag-cloud" tags
             <> blogTitleCtx (blogName bc)
             <> blogFontCtx (blogFont bc)
-            <> constField "header-additional-component" (blogHeaderAdditional bc)
-            <> constField "before-content-body-additional-component" (blogBeforeContentBodyAdditional bc)
-            <> constField "blog-description" (blogDescription bc)
+            <> BlogCtx.headerAdditionalComponent bc
+            <> BlogCtx.beforeContentBodyAdditionalComponent bc
+            <> BlogCtx.description bc
             <> gSuiteCtx bc
             <> if isPreview then katexJsCtx else mempty
         feedContent = blogName bc <> "-feed-content"
@@ -199,7 +200,7 @@ blogRules isPreview bc faIcons = do
                         <> tagCloudField' "tag-cloud" tags
                         <> yearMonthArchiveField "archives" yearlyArchives monthlyArchives year
                         <> siteCtx
-                        <> constField "footer-additional-component" (blogFooterAdditional bc)
+                        <> BlogCtx.footerAdditionalComponent bc
                 makeItem ""
                     >>= loadAndApplyTemplate footerPath ctx
                     >>= relativizeUrls

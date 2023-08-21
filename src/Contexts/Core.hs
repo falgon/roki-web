@@ -138,5 +138,7 @@ jsPathCtx = listFieldWith "js" ctx $ \item ->
             . itemIdentifier
 
 gSuiteCtx :: BlogConfig m -> Context String
-gSuiteCtx bc = constField "google-cx" (gCxPrefix gSuiteConf <> ":" <> blogGoogleCx bc)
-    <> constField "google-site-verification" (gSiteVerifyKey gSuiteConf)
+gSuiteCtx bc = mconcat [
+    constField "google-cx" (gCxPrefix gSuiteConf <> ":" <> blogGoogleCx bc)
+  , constField "google-site-verification" (gSiteVerifyKey gSuiteConf)
+  ]

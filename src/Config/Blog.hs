@@ -14,9 +14,9 @@ data BlogConfig m = BlogConfig {
     blogName                        :: String
   , blogDescription                 :: String
   , blogFont                        :: Html ()
-  , blogHeaderAdditional            :: String
-  , blogBeforeContentBodyAdditional :: String
-  , blogFooterAdditional            :: String
+  , blogHeaderAdditional            :: Html ()
+  , blogBeforeContentBodyAdditional :: Html ()
+  , blogFooterAdditional            :: Html ()
   , blogTagBuilder                  :: m Tags
   , blogTagPagesPath                :: FilePath -> FilePath
   , blogEntryPattern                :: Pattern

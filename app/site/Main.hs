@@ -3,7 +3,6 @@ module Main (main) where
 
 import           Data.Foldable            (fold)
 import           Data.String              (fromString)
-import qualified Data.Text.Lazy           as TL
 import           Data.Version             (showVersion)
 import           Development.GitRev       (gitHash)
 import           Hakyll
@@ -18,7 +17,6 @@ import qualified Config.Blogs.TechBlog    as TB
 import           Config.RegexUtils        (intercalateDir)
 import qualified Contexts.Field.RokiDiary as RokiDiary
 import qualified Contexts.Field.RokiLog   as RokiLog
-import           Lucid.Base               (renderText)
 import qualified Rules.Blog               as B
 import qualified Rules.Media              as Media
 import qualified Rules.Src.JavaScript     as Js
@@ -158,8 +156,8 @@ techBlogConf = B.BlogConfig {
   , B.blogDescription = TB.blogDesc
   , B.blogFont = RokiLog.font
   , B.blogHeaderAdditional = mempty
-  , B.blogBeforeContentBodyAdditional = TL.unpack $ renderText RokiLog.gAdSenseBeforeContentBody
-  , B.blogFooterAdditional = TL.unpack $ renderText RokiLog.footerAdditionalComponent
+  , B.blogBeforeContentBodyAdditional = RokiLog.gAdSenseBeforeContentBody
+  , B.blogFooterAdditional = RokiLog.footerAdditionalComponent
   , B.blogTagBuilder = TB.buildTags
   , B.blogTagPagesPath = TB.tagPagesPath
   , B.blogEntryPattern = TB.entryPattern
@@ -179,9 +177,9 @@ diaryConf = B.BlogConfig {
     B.blogName = AB.blogName
   , B.blogDescription = AB.blogDesc
   , B.blogFont = RokiDiary.font
-  , B.blogHeaderAdditional = TL.unpack $ renderText RokiDiary.gAdSenseHeader
-  , B.blogBeforeContentBodyAdditional = TL.unpack $ renderText RokiDiary.gAdSenseBeforeContentBody
-  , B.blogFooterAdditional = TL.unpack $ renderText RokiDiary.gAdSenseFooter
+  , B.blogHeaderAdditional = RokiDiary.gAdSenseHeader
+  , B.blogBeforeContentBodyAdditional = RokiDiary.gAdSenseBeforeContentBody
+  , B.blogFooterAdditional = RokiDiary.gAdSenseFooter
   , B.blogTagBuilder = AB.buildTags
   , B.blogTagPagesPath = AB.tagPagesPath
   , B.blogEntryPattern = AB.entryPattern

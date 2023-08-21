@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 33a266495e56529411add4055271b5d3fc9372099fdb558d2d684527b9e03c63
+-- hash: bac0c4562432de1e1e34b6e2b2e6461e4aef4e022add684b020fa21c86ffd874
 
 name:           roki-web
 version:        1.0.0.0
@@ -38,6 +38,7 @@ library
       Config.Site
       Config.TopPage
       Contexts
+      Contexts.Blog
       Contexts.Core
       Contexts.Field
       Contexts.Field.RokiDiary
@@ -52,6 +53,7 @@ library
       Media.SVG
       Rules.Blog
       Rules.Blog.Core
+      Rules.Blog.Type
       Rules.Media
       Rules.Src.JavaScript
       Rules.Src.Style
