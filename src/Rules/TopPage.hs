@@ -4,6 +4,7 @@ module Rules.TopPage (rules) where
 import           Control.Monad.Extra  (mconcatMapM)
 import           Control.Monad.Reader (ReaderT (..), asks)
 import           Control.Monad.Trans  (MonadTrans (..))
+import           Data.List.Extra      (mconcatMap)
 import           Data.Time.Format     (formatTime)
 import           Hakyll
 import           System.FilePath      (joinPath, (</>))
@@ -52,24 +53,23 @@ rules :: [BlogConfig m] -> FA.FontAwesomeIcons -> Rules ()
 rules bcs faIcons = do
     projs <- preprocess renderProjectsList
     conts <- preprocess renderContributionsTable
+    let baseCtx = mconcatMap (uncurry constField) [
+            ("title", siteName)
+          , ("projs", projs)
+          , ("contable", conts)
+          ]
     match indexPath $ do
         route $ gsubRoute (contentsRoot </> "pages/") (const mempty)
         compile $ do
-            blogs <- mconcat <$> mapM (runReaderT mkBlogCtx) bcs
-            let aBlogCtx = mconcat [
-                    constField "title" siteName
-                  , constField "projs" projs
-                  , constField "contable" conts
-                  , blogs
-                  ]
-
+            topCtx <- mappend baseCtx <$> mconcatMapM (runReaderT mkBlogCtx) bcs
             getResourceBody
-                >>= applyAsTemplate aBlogCtx
-                >>= loadAndApplyTemplate rootTemplate aBlogCtx
+                >>= applyAsTemplate topCtx
+                >>= loadAndApplyTemplate rootTemplate topCtx
                 >>= modifyExternalLinkAttr
                 >>= relativizeUrls
                 >>= FA.render faIcons
     where
         indexPath = fromGlob $ joinPath [contentsRoot, "pages", "index.html"]
         rootTemplate = fromFilePath $ joinPath [contentsRoot, "templates", "site", "default.html"]
+
 
