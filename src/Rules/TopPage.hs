@@ -3,13 +3,12 @@ module Rules.TopPage (rules) where
 
 import           Data.Time.Format     (formatTime)
 import           Hakyll
-import           System.FilePath      ((</>))
+import           System.FilePath      (joinPath, (</>))
 
 import           Config               (contentsRoot, defaultTimeLocale',
                                        siteName)
 import           Config.Blog
 import           Config.Contributions
-import           Config.RegexUtils    (intercalateDir)
 import           Config.TopPage
 import           Contexts             (siteCtx)
 import           Utils                (modifyExternalLinkAttr)
@@ -55,6 +54,6 @@ rules bcs faIcons = do
                 >>= relativizeUrls
                 >>= FA.render faIcons
     where
-        indexPath = fromGlob $ intercalateDir [contentsRoot, "pages", "index.html"]
-        rootTemplate = fromFilePath $ intercalateDir [contentsRoot, "templates", "site", "default.html"]
+        indexPath = fromGlob $ joinPath [contentsRoot, "pages", "index.html"]
+        rootTemplate = fromFilePath $ joinPath [contentsRoot, "templates", "site", "default.html"]
 

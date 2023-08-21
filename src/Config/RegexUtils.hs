@@ -2,8 +2,7 @@
 module Config.RegexUtils (
     yyyy,
     mm,
-    dd,
-    intercalateDir
+    dd
 ) where
 
 import           BasicPrelude (intercalate)
@@ -25,7 +24,3 @@ mm = "(0?[1-9]|1[012])"
 {-# INLINE dd #-}
 dd :: FilePath
 dd = "(0?[1-9]|[12][0-9]|3[01])"
-
-intercalateDir :: (Monoid w, IsString w) => [w] -> w
-intercalateDir = intercalate "/"
-

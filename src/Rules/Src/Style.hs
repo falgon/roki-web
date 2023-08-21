@@ -4,9 +4,9 @@ module Rules.Src.Style (
 
 import           Hakyll
 import           Hakyll.Web.Sass
+import           System.FilePath (joinPath)
 
-import           Config            (contentsRoot)
-import           Config.RegexUtils (intercalateDir)
+import           Config          (contentsRoot)
 
 rules :: Rules ()
 rules = do
@@ -23,6 +23,6 @@ rules = do
                     setExtension "css"
             compile (fmap compressCss <$> sassCompiler)
     where
-        css = fromGlob $ intercalateDir [contentsRoot, "css", "**"]
-        scssDep = fromGlob $ intercalateDir [contentsRoot, "scss", "*", "**.scss"]
-        scss = fromGlob $ intercalateDir [contentsRoot, "scss", "*.scss"]
+        css = fromGlob $ joinPath [contentsRoot, "css", "**"]
+        scssDep = fromGlob $ joinPath [contentsRoot, "scss", "*", "**.scss"]
+        scss = fromGlob $ joinPath [contentsRoot, "scss", "*.scss"]

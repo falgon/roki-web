@@ -8,13 +8,13 @@ import           Development.GitRev       (gitHash)
 import           Hakyll
 import qualified Options.Applicative      as OA
 import qualified Paths_roki_web           as P
+import           System.FilePath          (joinPath)
 
 import           Config                   (hakyllConfig, siteName,
                                            writerOptions, writerPreviewOptions)
 import qualified Config.Blog              as B
 import qualified Config.Blogs.AnotherBlog as AB
 import qualified Config.Blogs.TechBlog    as TB
-import           Config.RegexUtils        (intercalateDir)
 import qualified Contexts.Field.RokiDiary as RokiDiary
 import qualified Contexts.Field.RokiLog   as RokiLog
 import qualified Rules.Blog               as B
@@ -220,7 +220,7 @@ main = do
 
         match "CNAME" $ route idRoute >> compile copyFileCompiler
         match "ads.txt" $ route idRoute >> compile copyFileCompiler
-        match (fromString $ intercalateDir ["contents", "templates", "**"]) $
+        match (fromString $ joinPath ["contents", "templates", "**"]) $
             compile templateBodyCompiler
     where
         mapIL b (Check _) = Check b

@@ -14,12 +14,11 @@ import           Data.Typeable         (Typeable)
 import           Hakyll                hiding (FeedConfiguration (..),
                                         renderAtom, renderRss)
 import           Hakyll.Web.Feed.Extra
-import           System.FilePath       ((</>))
+import           System.FilePath       (joinPath, (</>))
 
 import           Archives
 import           Config
 import           Config.Blog
-import           Config.RegexUtils     (intercalateDir)
 import           Contexts              (blogFontCtx, blogTitleCtx, gSuiteCtx,
                                         katexJsCtx, listCtx, postCtx, siteCtx,
                                         siteMapDateCtx)
@@ -223,7 +222,7 @@ blogRules isPreview bc faIcons = do
 
     -- Search result page
     let rootTemplate = fromFilePath $
-            intercalateDir [contentsRoot, "templates", "blog", "default.html"]
+            joinPath [contentsRoot, "templates", "blog", "default.html"]
     create [fromFilePath (blogName bc </> "search.html")] $ do
         route idRoute
         compile $
@@ -246,5 +245,5 @@ blogRules isPreview bc faIcons = do
                     <> listField "pages" (siteMapDateCtx <> hostCtx <> defaultContext) (return posts)
             makeItem ""
                 >>= loadAndApplyTemplate
-                    (fromFilePath $ intercalateDir [contentsRoot, "templates", "blog", "sitemap.xml"])
+                    (fromFilePath $ joinPath [contentsRoot, "templates", "blog", "sitemap.xml"])
                         sitemapCtx
