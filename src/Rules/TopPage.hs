@@ -1,6 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Rules.TopPage (rules) where
 
+import           Control.Monad.Reader (ReaderT (..), asks)
+import           Control.Monad.Trans  (MonadTrans (..))
 import           Data.Time.Format     (formatTime)
 import           Hakyll
 import           System.FilePath      (joinPath, (</>))
@@ -11,6 +13,7 @@ import           Config.Blog
 import           Config.Contributions
 import           Config.TopPage
 import           Contexts             (siteCtx)
+import           Rules.Blog.Type
 import           Utils                (modifyExternalLinkAttr)
 import qualified Vendor.FontAwesome   as FA
 
@@ -19,14 +22,18 @@ lastUpdate [] = pure $ noPostsAlt topPageConfig
 lastUpdate (x:_) = formatTime defaultTimeLocale' (postDateFormat topPageConfig)
     <$> getItemUTC defaultTimeLocale' (itemIdentifier x)
 
-mkBlogCtx :: BlogConfig m -> Compiler (Context String)
-mkBlogCtx obs = do
-    posts <- fmap (take $ maxTitleNum topPageConfig) . recentFirst =<< loadAllSnapshots (blogEntryPattern obs) (blogContentSnapshot obs)
-    introDateCtx <- constField (blogName obs <> "-intro-date") <$> lastUpdate posts
+mkBlogCtx :: BlogConfReader m Compiler (Context String)
+mkBlogCtx = do
+    ep <- asks blogEntryPattern
+    cs <- asks blogContentSnapshot
+    posts <- lift $ fmap (take $ maxTitleNum topPageConfig) . recentFirst =<< loadAllSnapshots ep cs
+    name <- asks blogName
+    introDateCtx <- lift (constField (name <> "-intro-date") <$> lastUpdate posts)
+    description <- asks blogDescription
     pure $ mconcat [
-        listField (blogName obs <> "-posts") (siteCtx <> defaultContext) (pure posts)
-      , constField "blog-title" (blogName obs)
-      , constField "blog-description" (blogDescription obs)
+        listField (name <> "-posts") (siteCtx <> defaultContext) (pure posts)
+      , constField "blog-title" name
+      , constField "blog-description" description
       , introDateCtx
       , siteCtx
       , defaultContext
@@ -39,7 +46,7 @@ rules bcs faIcons = do
     match indexPath $ do
         route $ gsubRoute (contentsRoot </> "pages/") (const mempty)
         compile $ do
-            blogs <- mconcat <$> mapM mkBlogCtx bcs
+            blogs <- mconcat <$> mapM (runReaderT mkBlogCtx) bcs
             let aBlogCtx = mconcat [
                     constField "title" siteName
                   , constField "projs" projs
