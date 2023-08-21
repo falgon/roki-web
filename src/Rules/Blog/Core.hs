@@ -194,7 +194,7 @@ blogRules isPreview bc faIcons = do
     forM_ (Nothing:map (Just . fst) (archivesMap yearlyArchives)) $ \year -> maybe id version year $
         create [fromFilePath $ blogName bc <> "-footer.html"] $
             compile $ do
-                recent <- fmap (take 5) . recentFirst =<<
+                recent <- fmap (take (blogPageEntriesNum bc)) . recentFirst =<<
                     loadAllSnapshots (blogEntryPattern bc) (blogContentSnapshot bc)
                 let ctx = listField "recent-posts" (postCtx isPreview tags) (return recent)
                         <> tagCloudField' "tag-cloud" tags

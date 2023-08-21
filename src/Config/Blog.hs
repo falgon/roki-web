@@ -17,6 +17,7 @@ data BlogConfig m = BlogConfig {
   , blogHeaderAdditional            :: Html ()
   , blogBeforeContentBodyAdditional :: Html ()
   , blogFooterAdditional            :: Html ()
+  , blogPageEntriesNum              :: Int
   , blogTagBuilder                  :: m Tags
   , blogTagPagesPath                :: FilePath -> FilePath
   , blogEntryPattern                :: Pattern
