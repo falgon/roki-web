@@ -9,6 +9,7 @@ module Contexts.Blog (
   , footerAdditionalComponent
   , tagCloud
   , gSuite
+  , disqus
 ) where
 
 import           Control.Monad.Reader (asks, lift)
@@ -21,6 +22,7 @@ import           Lucid.Html5
 import           Config.Blog          (BlogConfig (..))
 import           Config.Site          (GSuite (..), gSuiteConf)
 import           Rules.Blog.Type
+import           Utils                (sanitizeDisqusName)
 
 {-# INLINE toLink #-}
 toLink :: String -> String -> Html ()
@@ -70,3 +72,7 @@ gSuite :: Monad m
 gSuite = (<>)
     <$> asks (constField "google-cx" . ((gCxPrefix gSuiteConf <> ":") <>) . blogGoogleCx)
     <*> pure (constField "google-site-verification" (gSiteVerifyKey gSuiteConf))
+
+disqus :: Monad m
+    => BlogConfReader m m (Context String)
+disqus = asks (constField "disqus" . sanitizeDisqusName . blogName)

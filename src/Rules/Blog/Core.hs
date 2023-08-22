@@ -4,7 +4,7 @@ module Rules.Blog.Core (
   , blogRules
 ) where
 
-import           Control.Monad         (forM_)
+import           Control.Monad         (forM_, (>=>))
 import           Control.Monad.Except  (MonadError (..))
 import           Control.Monad.Extra   (findM, ifM, mconcatMapM)
 import           Control.Monad.Reader  (ask, asks)
@@ -30,8 +30,7 @@ import           Contexts.Field        (searchBoxResultField, tagCloudField',
                                         yearMonthArchiveField)
 import           Rules.Blog.Type
 import           Utils                 (absolutizeUrls, makePageIdentifier,
-                                        modifyExternalLinkAttr,
-                                        sanitizeDisqusName)
+                                        modifyExternalLinkAttr)
 import qualified Vendor.FontAwesome    as FA
 import qualified Vendor.KaTeX          as KaTeX
 
@@ -50,9 +49,10 @@ appendFooter bc locale zone item = do
             footer <- loadBody $ setVersion y $ fromFilePath (blogName bc <> "-footer.html")
             withItemBody (return . (<> footer)) item'
 
-eachPostsSeries :: [Identifier] -> (Context String -> Rules ()) -> Rules ()
-eachPostsSeries postIDs rules =
-    forM_ (zip3 postIDs nextPosts prevPosts) $ \(pID, np, pp) -> create [pID] $
+eachPostsSeries :: (Context String -> Rules ()) -> BlogConfReader m Rules ()
+eachPostsSeries rules = do
+    postIDs <- asks blogEntryPattern >>= lift . (getMatches >=> sortChronological)
+    lift $ forM_ (zip3 postIDs (nextPosts postIDs) (prevPosts postIDs)) $ \(pID, np, pp) -> create [pID] $
         rules $ mconcat $ catMaybes [
             field "previousPageUrl" . pageUrlOf <$> pp
           , field "previousPageTitle" . pageTitleOf <$> pp
@@ -62,13 +62,10 @@ eachPostsSeries postIDs rules =
           , field "nextPageDate" . pageDateOf <$> np
           ]
     where
-        nextPosts = tail $ map Just postIDs ++ [Nothing]
-        prevPosts = Nothing : map Just postIDs
-        pageTitleOf i = const $ do
-            t <- getMetadataField i "title"
-            case t of
-                Nothing -> fail "no 'title' field"
-                Just t' -> return $ if length t' > 6 then take 6 t' <> "..." else t'
+        nextPosts postIDs = tail $ map Just postIDs ++ [Nothing]
+        prevPosts postIDs = Nothing : map Just postIDs
+        pageTitleOf i = const $ getMetadataField i "title"
+            >>= maybe (fail "no 'title' field") (\t -> return $ if length t > 6 then take 6 t <> "..." else t)
         pageUrlOf i = const (getRoute i >>= maybe (fail "no route") (return . toUrl))
         pageDateOf i = const $
             getMetadataField i "date"
@@ -123,7 +120,8 @@ blogRules isPreview faIcons = do
     bc <- ask
     tags <- asks blogTagBuilder >>= lift
     postCtx' <- mconcatMapM id [
-        BlogCtx.tagCloud
+        pure $ postCtx isPreview tags
+      , BlogCtx.tagCloud
       , BlogCtx.title
       , BlogCtx.font
       , pure $ BlogCtx.headerAdditionalComponent bc
@@ -137,16 +135,22 @@ blogRules isPreview faIcons = do
         templatesRoot = contentsRoot </> "templates"
 
     -- each posts
-    postIDs <- lift $ sortChronological =<< getMatches (blogEntryPattern bc)
-    lift $ eachPostsSeries postIDs $ \s -> do
+    disqusCtx <- mconcatMapM id [
+        pure postCtx'
+      , BlogCtx.disqus
+      ]
+    wOptions <- asks blogWriterOptions
+    bcs <- asks blogContentSnapshot
+
+    eachPostsSeries $ \s -> do
         route $ gsubRoute (contentsRoot <> "/") (const mempty) `composeRoutes` setExtension "html"
-        compile $ pandocCompilerWith readerOptions (blogWriterOptions bc)
+        compile $ pandocCompilerWith readerOptions wOptions
             >>= absolutizeUrls
             >>= saveSnapshot feedContent
             >>= (if isPreview then return else KaTeX.render)
-            >>= saveSnapshot (blogContentSnapshot bc)
+            >>= saveSnapshot bcs
             >>= loadAndApplyTemplate (fromFilePath $ joinPath [templatesRoot, "blog", "post.html"])
-                (mconcat [s, postCtx', constField "disqus" (sanitizeDisqusName (blogName bc))])
+                (s <> disqusCtx)
             >>= appendFooter bc defaultTimeLocale' timeZoneJST
             >>= loadAndApplyTemplate (fromFilePath $ joinPath [templatesRoot, "blog", "default.html"]) postCtx'
             >>= modifyExternalLinkAttr
@@ -204,7 +208,7 @@ blogRules isPreview faIcons = do
         create [fromFilePath $ blogName bc <> "-footer.html"] $
             compile $ do
                 recent <- fmap (take (blogPageEntriesNum bc)) . recentFirst =<<
-                    loadAllSnapshots (blogEntryPattern bc) (blogContentSnapshot bc)
+                    loadAllSnapshots (blogEntryPattern bc) bcs
                 let ctx = listField "recent-posts" (postCtx isPreview tags) (return recent)
                         <> tagCloudField' "tag-cloud" tags
                         <> yearMonthArchiveField "archives" yearlyArchives monthlyArchives year
