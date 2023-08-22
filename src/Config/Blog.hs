@@ -14,6 +14,7 @@ data BlogConfig m = BlogConfig {
     blogName                        :: String
   , blogDescription                 :: String
   , blogFont                        :: Html ()
+  , blogFeedRecentNum               :: Int
   , blogHeaderAdditional            :: Html ()
   , blogBeforeContentBodyAdditional :: Html ()
   , blogFooterAdditional            :: Html ()

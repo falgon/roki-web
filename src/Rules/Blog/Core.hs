@@ -3,9 +3,12 @@ module Rules.Blog.Core (
     BlogConfig (..)
   , blogRules
 ) where
+
 import           Control.Monad         (forM_)
 import           Control.Monad.Except  (MonadError (..))
 import           Control.Monad.Extra   (findM, ifM, mconcatMapM)
+import           Control.Monad.Reader  (ask, asks)
+import           Control.Monad.Trans   (MonadTrans (..))
 import           Data.Binary           (Binary)
 import           Data.Maybe            (catMaybes, isJust)
 import           Data.Time.Format      (TimeLocale, formatTime)
@@ -25,6 +28,7 @@ import           Contexts              (blogFontCtx, blogTitleCtx, gSuiteCtx,
 import qualified Contexts.Blog         as BlogCtx
 import           Contexts.Field        (searchBoxResultField, tagCloudField',
                                         yearMonthArchiveField)
+import           Rules.Blog.Type
 import           Utils                 (absolutizeUrls, makePageIdentifier,
                                         modifyExternalLinkAttr,
                                         sanitizeDisqusName)
@@ -114,83 +118,89 @@ listPageRules isPreview title faIcons tags bc pgs = paginateRules pgs $ \pn pat 
             >>= relativizeUrls
             >>= FA.render faIcons
 
-blogRules :: Bool -> BlogConfig Rules -> FA.FontAwesomeIcons -> Rules ()
-blogRules isPreview bc faIcons = do
-    tags <- blogTagBuilder bc
-    let postCtx' = postCtx isPreview tags
-            <> tagCloudField' "tag-cloud" tags
-            <> blogTitleCtx (blogName bc)
-            <> blogFontCtx (blogFont bc)
-            <> BlogCtx.headerAdditionalComponent bc
-            <> BlogCtx.beforeContentBodyAdditionalComponent bc
-            <> BlogCtx.description bc
-            <> gSuiteCtx bc
-            <> if isPreview then katexJsCtx else mempty
-        feedContent = blogName bc <> "-feed-content"
+blogRules :: Bool -> FA.FontAwesomeIcons -> BlogConfReader Rules Rules ()
+blogRules isPreview faIcons = do
+    bc <- ask
+    tags <- asks blogTagBuilder >>= lift
+    postCtx' <- mconcatMapM id [
+        BlogCtx.tagCloud
+      , BlogCtx.title
+      , BlogCtx.font
+      , pure $ BlogCtx.headerAdditionalComponent bc
+      , pure $ BlogCtx.beforeContentBodyAdditionalComponent bc
+      , pure $ BlogCtx.description bc
+      , BlogCtx.gSuite
+      , pure $ if isPreview then katexJsCtx else mempty
+      ]
+
+    let feedContent = blogName bc <> "-feed-content"
+        templatesRoot = contentsRoot </> "templates"
 
     -- each posts
-    postIDs <- sortChronological =<< getMatches (blogEntryPattern bc)
-    eachPostsSeries postIDs $ \s -> do
-        route $ gsubRoute "contents/" (const "") `composeRoutes` setExtension "html"
+    postIDs <- lift $ sortChronological =<< getMatches (blogEntryPattern bc)
+    lift $ eachPostsSeries postIDs $ \s -> do
+        route $ gsubRoute (contentsRoot <> "/") (const mempty) `composeRoutes` setExtension "html"
         compile $ pandocCompilerWith readerOptions (blogWriterOptions bc)
             >>= absolutizeUrls
             >>= saveSnapshot feedContent
             >>= (if isPreview then return else KaTeX.render)
             >>= saveSnapshot (blogContentSnapshot bc)
-            >>= loadAndApplyTemplate "contents/templates/blog/post.html"
-                (s <> postCtx' <> constField "disqus" (sanitizeDisqusName (blogName bc)))
+            >>= loadAndApplyTemplate (fromFilePath $ joinPath [templatesRoot, "blog", "post.html"])
+                (mconcat [s, postCtx', constField "disqus" (sanitizeDisqusName (blogName bc))])
             >>= appendFooter bc defaultTimeLocale' timeZoneJST
-            >>= loadAndApplyTemplate "contents/templates/blog/default.html" postCtx'
+            >>= loadAndApplyTemplate (fromFilePath $ joinPath [templatesRoot, "blog", "default.html"]) postCtx'
             >>= modifyExternalLinkAttr
             >>= relativizeUrls
             >>= FA.render faIcons
 
-    match (blogEntryFilesPattern bc) $ do
-        route $ gsubRoute "contents/" (const "")
+    lift $ match (blogEntryFilesPattern bc) $ do
+        route $ gsubRoute (contentsRoot <> "/") (const mempty)
         compile copyFileCompiler
 
+    peNum <- asks blogPageEntriesNum
+
     -- tag rules
-    tagsRules tags $ \tag pat ->
-        let grouper = fmap (paginateEvery 5) . sortRecentFirst
+    lift $ tagsRules tags $ \tag pat ->
+        let grouper = fmap (paginateEvery peNum) . sortRecentFirst
             makeId = makePageIdentifier $ blogTagPagesPath bc tag
             title = "Tagged posts: " <> tag
         in buildPaginateWith grouper pat makeId
             >>= listPageRules isPreview (Just title) faIcons tags bc
 
     -- yearly paginate
-    yearlyArchives <- blogYearlyArchivesBuilder bc
-    archivesRules yearlyArchives $ \year pat ->
-        let grouper = fmap (paginateEvery 5) . sortRecentFirst
+    yearlyArchives <- lift $ blogYearlyArchivesBuilder bc
+    lift $ archivesRules yearlyArchives $ \year pat ->
+        let grouper = fmap (paginateEvery peNum) . sortRecentFirst
             makeId = makePageIdentifier $ blogYearlyPagePath bc year
             title = "Yearly posts: " <> year
         in buildPaginateWith grouper pat makeId
             >>= listPageRules isPreview (Just title) faIcons tags bc
 
     -- monthly paginate
-    monthlyArchives <- blogMonthlyArchivesBuilder bc
-    archivesRules monthlyArchives $ \key@(year, month) pat ->
-        let grouper = fmap (paginateEvery 5) . sortRecentFirst
+    monthlyArchives <- lift $ blogMonthlyArchivesBuilder bc
+    lift $ archivesRules monthlyArchives $ \key@(year, month) pat ->
+        let grouper = fmap (paginateEvery peNum) . sortRecentFirst
             makeId = makePageIdentifier $ blogMonthlyPagePath bc key
             title = "Monthly posts: " <> year </> month
         in buildPaginateWith grouper pat makeId
             >>= listPageRules isPreview (Just title) faIcons tags bc
 
     -- all tags
-    let allTagsPagePath = blogName bc </> "tags" </> "index.html"
-    listPageRules isPreview (Just "tags") faIcons tags bc =<<
-        let grouper = fmap (paginateEvery 5) . sortRecentFirst
+    let allTagsPagePath = joinPath [blogName bc, "tags", "index.html"]
+    lift $ listPageRules isPreview (Just "tags") faIcons tags bc =<<
+        let grouper = fmap (paginateEvery peNum) . sortRecentFirst
             makeId = makePageIdentifier allTagsPagePath
         in buildPaginateWith grouper (blogEntryPattern bc) makeId
 
-    -- the index page of tech blog
-    listPageRules isPreview Nothing faIcons tags bc =<<
-        let grouper = fmap (paginateEvery 5) . sortRecentFirst
+    -- the index page of blog
+    lift $ listPageRules isPreview Nothing faIcons tags bc =<<
+        let grouper = fmap (paginateEvery peNum) . sortRecentFirst
             makeId = makePageIdentifier (blogName bc </> "index.html")
         in buildPaginateWith grouper (blogEntryPattern bc) makeId
 
     -- footer
-    let footerPath = fromFilePath (contentsRoot </> "templates" </> "blog" </> "footer.html")
-    forM_ (Nothing:map (Just . fst) (archivesMap yearlyArchives)) $ \year -> maybe id version year $
+    let footerPath = fromFilePath (joinPath [templatesRoot, "blog", "footer.html"])
+    lift $ forM_ (Nothing:map (Just . fst) (archivesMap yearlyArchives)) $ \year -> maybe id version year $
         create [fromFilePath $ blogName bc <> "-footer.html"] $
             compile $ do
                 recent <- fmap (take (blogPageEntriesNum bc)) . recentFirst =<<
@@ -204,26 +214,28 @@ blogRules isPreview bc faIcons = do
                     >>= loadAndApplyTemplate footerPath ctx
                     >>= relativizeUrls
 
+    feedRecentNum <- asks blogFeedRecentNum
+
     -- Atom Feed
-    create [fromFilePath (blogName bc </> "feed" </> blogName bc <> ".xml")] $ do
+    lift $ create [fromFilePath (joinPath [blogName bc, "feed", blogName bc <> ".xml"])] $ do
         route idRoute
         compile $
             loadAllSnapshots (blogEntryPattern bc) feedContent
-                >>= fmap (take 20) . recentFirst
+                >>= fmap (take feedRecentNum) . recentFirst
                 >>= renderAtom (blogAtomConfig bc) (bodyField "description" <> postCtx')
 
     -- RSS Feed
-    create [fromFilePath (blogName bc </> "feed" </> blogName bc <> "-rss.xml")] $ do
+    lift $ create [fromFilePath (joinPath [blogName bc, "feed", blogName bc <> "-rss.xml"])] $ do
         route idRoute
         compile $
             loadAllSnapshots (blogEntryPattern bc) feedContent
-                >>= fmap (take 20) . recentFirst
+                >>= fmap (take feedRecentNum) . recentFirst
                 >>= renderRss (blogAtomConfig bc) (bodyField "description" <> postCtx')
 
     -- Search result page
     let rootTemplate = fromFilePath $
-            joinPath [contentsRoot, "templates", "blog", "default.html"]
-    create [fromFilePath (blogName bc </> "search.html")] $ do
+            joinPath [templatesRoot, "blog", "default.html"]
+    lift $ create [fromFilePath (blogName bc </> "search.html")] $ do
         route idRoute
         compile $
             makeItem ""
@@ -235,15 +247,17 @@ blogRules isPreview bc faIcons = do
                 >>= FA.render faIcons
 
     -- Site map
-    create [fromFilePath (blogName bc </> "sitemap.xml")] $ do
+    lift $ create [fromFilePath (blogName bc </> "sitemap.xml")] $ do
         route idRoute
         compile $ do
             posts <- recentFirst =<< loadAllSnapshots (blogEntryPattern bc) feedContent
             let hostCtx = constField "webroot" ("https://" <> siteName)
-                sitemapCtx = hostCtx
-                    <> blogTitleCtx (blogName bc)
-                    <> listField "pages" (siteMapDateCtx <> hostCtx <> defaultContext) (return posts)
+                sitemapCtx = mconcat [
+                    hostCtx
+                  , blogTitleCtx (blogName bc)
+                  , listField "pages" (siteMapDateCtx <> hostCtx <> defaultContext) (return posts)
+                  ]
             makeItem ""
                 >>= loadAndApplyTemplate
-                    (fromFilePath $ joinPath [contentsRoot, "templates", "blog", "sitemap.xml"])
+                    (fromFilePath $ joinPath [templatesRoot, "blog", "sitemap.xml"])
                         sitemapCtx

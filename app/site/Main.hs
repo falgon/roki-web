@@ -1,6 +1,7 @@
 {-# LANGUAGE OverloadedStrings, TemplateHaskell #-}
 module Main (main) where
 
+import           Control.Monad.Reader     (ReaderT (..))
 import           Data.Foldable            (fold)
 import           Data.String              (fromString)
 import           Data.Version             (showVersion)
@@ -156,6 +157,7 @@ techBlogConf = B.BlogConfig {
   , B.blogDescription = TB.blogDesc
   , B.blogFont = RokiLog.font
   , B.blogPageEntriesNum = 5
+  , B.blogFeedRecentNum = 20
   , B.blogHeaderAdditional = mempty
   , B.blogBeforeContentBodyAdditional = RokiLog.gAdSenseBeforeContentBody
   , B.blogFooterAdditional = RokiLog.footerAdditionalComponent
@@ -179,6 +181,7 @@ diaryConf = B.BlogConfig {
   , B.blogDescription = AB.blogDesc
   , B.blogFont = RokiDiary.font
   , B.blogPageEntriesNum = 5
+  , B.blogFeedRecentNum = 20
   , B.blogHeaderAdditional = RokiDiary.gAdSenseHeader
   , B.blogBeforeContentBodyAdditional = RokiDiary.gAdSenseBeforeContentBody
   , B.blogFooterAdditional = RokiDiary.gAdSenseFooter
@@ -215,7 +218,7 @@ main = do
             *> Style.rules
             *> Js.rules
         faIcons <- fold <$> preprocess FA.loadFontAwesome
-        mapM_ (flip (B.blogRules (optPreviewFlag opts)) faIcons) blogConfs
+        mapM_ (runReaderT $ B.blogRules (optPreviewFlag opts) faIcons) blogConfs
         TopPage.rules blogConfs faIcons
 
         match "CNAME" $ route idRoute >> compile copyFileCompiler
