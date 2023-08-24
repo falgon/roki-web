@@ -75,4 +75,5 @@ gSuite = (<>)
 
 disqus :: Monad m
     => BlogConfReader m m (Context String)
-disqus = asks (constField "disqus" . sanitizeDisqusName . blogName)
+disqus = asks $ constField "disqus" . sanitizeDisqusName . blogName
+

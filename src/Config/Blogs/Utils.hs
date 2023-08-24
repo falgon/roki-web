@@ -12,7 +12,7 @@ module Config.Blogs.Utils (
 ) where
 
 import qualified Hakyll            as H
-import           System.FilePath   (joinPath, (</>))
+import           System.FilePath   (joinPath)
 
 import qualified Archives          as A
 import           Config.Program    (contentsRoot)

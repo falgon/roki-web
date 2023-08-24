@@ -52,20 +52,23 @@ appendFooter bc locale zone item = do
 eachPostsSeries :: (Context String -> Rules ()) -> BlogConfReader m Rules ()
 eachPostsSeries rules = do
     postIDs <- asks blogEntryPattern >>= lift . (getMatches >=> sortChronological)
-    lift $ forM_ (zip3 postIDs (nextPosts postIDs) (prevPosts postIDs)) $ \(pID, np, pp) -> create [pID] $
-        rules $ mconcat $ catMaybes [
-            field "previousPageUrl" . pageUrlOf <$> pp
-          , field "previousPageTitle" . pageTitleOf <$> pp
-          , field "previousPageDate" . pageDateOf <$> pp
-          , field "nextPageUrl" . pageUrlOf <$> np
-          , field "nextPageTitle" . pageTitleOf <$> np
-          , field "nextPageDate" . pageDateOf <$> np
-          ]
+    forM_ (zip3 postIDs (nextPosts postIDs) (prevPosts postIDs)) $ \(pID, np, pp) -> do
+        pageTitleOf' <- asks $ pageTitleOf . blogPrevNextTitleMaxNum
+        lift $ create [pID] $
+            rules $ mconcat $ catMaybes [
+                field "previousPageUrl" . pageUrlOf <$> pp
+              , field "previousPageTitle" . pageTitleOf' <$> pp
+              , field "previousPageDate" . pageDateOf <$> pp
+              , field "nextPageUrl" . pageUrlOf <$> np
+              , field "nextPageTitle" . pageTitleOf' <$> np
+              , field "nextPageDate" . pageDateOf <$> np
+              ]
     where
         nextPosts postIDs = tail $ map Just postIDs ++ [Nothing]
         prevPosts postIDs = Nothing : map Just postIDs
-        pageTitleOf i = const $ getMetadataField i "title"
-            >>= maybe (fail "no 'title' field") (\t -> return $ if length t > 6 then take 6 t <> "..." else t)
+        pageTitleOf titleMax i = const $ getMetadataField i "title"
+            >>= maybe (fail "no 'title' field")
+                (\t -> return $ if length t > titleMax then take titleMax t <> "..." else t)
         pageUrlOf i = const (getRoute i >>= maybe (fail "no route") (return . toUrl))
         pageDateOf i = const $
             getMetadataField i "date"
@@ -78,39 +81,43 @@ pluginCtx posts pluginName = ifM
     (return $ boolField pluginName (const True))
     (return mempty)
 
-listPageRules :: Bool
-    -> Maybe String
+-- MEMO: 専用の構造をつくって利用するコンテキストをそれ経由で渡す
+listPageRules :: Maybe String
     -> FA.FontAwesomeIcons
     -> Tags
     -> BlogConfig m
     -> Paginate
     -> Rules ()
-listPageRules isPreview title faIcons tags bc pgs = paginateRules pgs $ \pn pat -> do
+listPageRules title faIcons tags bc pgs = paginateRules pgs $ \pn pat -> do
     route idRoute
     compile $ do
         posts <- recentFirst =<< loadAllSnapshots pat (blogContentSnapshot bc)
         pCtx <- mconcatMapM (pluginCtx posts) ["d3", "mathjs"]
-        let blogCtx = listField "posts" postCtx' (return posts)
-                <> pCtx
-                <> paginateContext pgs pn
-                <> maybe missingField (constField "title") title
-                <> listCtx isPreview
-                <> tagCloudField' "tag-cloud" tags
-                <> blogTitleCtx (blogName bc)
-                <> blogFontCtx (blogFont bc)
-                <> BlogCtx.description bc
-                <> BlogCtx.beforeContentBodyAdditionalComponent bc
-                <> BlogCtx.headerAdditionalComponent bc
-                <> gSuiteCtx bc
-            postCtx' = teaserField "teaser" (blogContentSnapshot bc)
-                <> postCtx isPreview tags
-                <> blogTitleCtx (blogName bc)
-                <> pCtx
+        let blogCtx = mconcat [
+                listField "posts" postCtx' (return posts)
+              , pCtx
+              , paginateContext pgs pn
+              , maybe missingField (constField "title") title
+              , listCtx $ blogIsPreview bc
+              , tagCloudField' "tag-cloud" tags
+              , blogTitleCtx $ blogName bc
+              , blogFontCtx $ blogFont bc
+              , BlogCtx.description bc
+              , BlogCtx.beforeContentBodyAdditionalComponent bc
+              , BlogCtx.headerAdditionalComponent bc
+              , gSuiteCtx bc
+              ]
+            postCtx' = mconcat [
+                teaserField "teaser" (blogContentSnapshot bc)
+              , postCtx (blogIsPreview bc) tags
+              , blogTitleCtx (blogName bc)
+              , pCtx
+              ]
 
         makeItem ""
-            >>= loadAndApplyTemplate "contents/templates/blog/post-list.html" blogCtx
+            >>= loadAndApplyTemplate (fromFilePath $ joinPath [templatesRoot, "blog", "post-list.html"]) blogCtx
             >>= appendFooter bc defaultTimeLocale' timeZoneJST
-            >>= loadAndApplyTemplate "contents/templates/blog/default.html" blogCtx
+            >>= loadAndApplyTemplate (fromFilePath $ joinPath [templatesRoot, "blog", "default.html"]) blogCtx
             >>= modifyExternalLinkAttr
             >>= relativizeUrls
             >>= FA.render faIcons
@@ -130,9 +137,7 @@ blogRules isPreview faIcons = do
       , BlogCtx.gSuite
       , pure $ if isPreview then katexJsCtx else mempty
       ]
-
-    let feedContent = blogName bc <> "-feed-content"
-        templatesRoot = contentsRoot </> "templates"
+    feedContent <- asks $ (<> "-feed-content") . blogName
 
     -- each posts
     disqusCtx <- mconcatMapM id [
@@ -140,7 +145,7 @@ blogRules isPreview faIcons = do
       , BlogCtx.disqus
       ]
     wOptions <- asks blogWriterOptions
-    bcs <- asks blogContentSnapshot
+    cs <- asks blogContentSnapshot
 
     eachPostsSeries $ \s -> do
         route $ gsubRoute (contentsRoot <> "/") (const mempty) `composeRoutes` setExtension "html"
@@ -148,7 +153,7 @@ blogRules isPreview faIcons = do
             >>= absolutizeUrls
             >>= saveSnapshot feedContent
             >>= (if isPreview then return else KaTeX.render)
-            >>= saveSnapshot bcs
+            >>= saveSnapshot cs
             >>= loadAndApplyTemplate (fromFilePath $ joinPath [templatesRoot, "blog", "post.html"])
                 (s <> disqusCtx)
             >>= appendFooter bc defaultTimeLocale' timeZoneJST
@@ -169,7 +174,7 @@ blogRules isPreview faIcons = do
             makeId = makePageIdentifier $ blogTagPagesPath bc tag
             title = "Tagged posts: " <> tag
         in buildPaginateWith grouper pat makeId
-            >>= listPageRules isPreview (Just title) faIcons tags bc
+            >>= listPageRules (Just title) faIcons tags bc
 
     -- yearly paginate
     yearlyArchives <- lift $ blogYearlyArchivesBuilder bc
@@ -178,7 +183,7 @@ blogRules isPreview faIcons = do
             makeId = makePageIdentifier $ blogYearlyPagePath bc year
             title = "Yearly posts: " <> year
         in buildPaginateWith grouper pat makeId
-            >>= listPageRules isPreview (Just title) faIcons tags bc
+            >>= listPageRules (Just title) faIcons tags bc
 
     -- monthly paginate
     monthlyArchives <- lift $ blogMonthlyArchivesBuilder bc
@@ -187,17 +192,17 @@ blogRules isPreview faIcons = do
             makeId = makePageIdentifier $ blogMonthlyPagePath bc key
             title = "Monthly posts: " <> year </> month
         in buildPaginateWith grouper pat makeId
-            >>= listPageRules isPreview (Just title) faIcons tags bc
+            >>= listPageRules (Just title) faIcons tags bc
 
     -- all tags
     let allTagsPagePath = joinPath [blogName bc, "tags", "index.html"]
-    lift $ listPageRules isPreview (Just "tags") faIcons tags bc =<<
+    lift $ listPageRules (Just "tags") faIcons tags bc =<<
         let grouper = fmap (paginateEvery peNum) . sortRecentFirst
             makeId = makePageIdentifier allTagsPagePath
         in buildPaginateWith grouper (blogEntryPattern bc) makeId
 
     -- the index page of blog
-    lift $ listPageRules isPreview Nothing faIcons tags bc =<<
+    lift $ listPageRules Nothing faIcons tags bc =<<
         let grouper = fmap (paginateEvery peNum) . sortRecentFirst
             makeId = makePageIdentifier (blogName bc </> "index.html")
         in buildPaginateWith grouper (blogEntryPattern bc) makeId
@@ -208,7 +213,7 @@ blogRules isPreview faIcons = do
         create [fromFilePath $ blogName bc <> "-footer.html"] $
             compile $ do
                 recent <- fmap (take (blogPageEntriesNum bc)) . recentFirst =<<
-                    loadAllSnapshots (blogEntryPattern bc) bcs
+                    loadAllSnapshots (blogEntryPattern bc) cs
                 let ctx = listField "recent-posts" (postCtx isPreview tags) (return recent)
                         <> tagCloudField' "tag-cloud" tags
                         <> yearMonthArchiveField "archives" yearlyArchives monthlyArchives year

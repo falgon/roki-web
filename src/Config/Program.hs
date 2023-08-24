@@ -1,6 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Config.Program (
     contentsRoot
+  , templatesRoot
   , hakyllConfig
   , readerOptions
   , writerOptions
@@ -12,7 +13,7 @@ import           Control.Monad       (liftM2)
 import           Data.Char           (toLower)
 import           Data.List           (isPrefixOf, isSuffixOf)
 import           Hakyll
-import           System.FilePath     (takeFileName)
+import           System.FilePath     (takeFileName, (</>))
 import qualified Text.HTML.TagSoup   as T
 import           Text.Pandoc.Options (Extension (..),
                                       HTMLMathMethod (KaTeX, MathJax),
@@ -21,6 +22,9 @@ import           Text.Pandoc.Options (Extension (..),
 
 contentsRoot :: FilePath
 contentsRoot = "contents"
+
+templatesRoot :: FilePath
+templatesRoot = contentsRoot </> "templates"
 
 hakyllConfig :: Configuration
 hakyllConfig = defaultConfiguration {
