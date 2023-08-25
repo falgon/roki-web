@@ -9,8 +9,13 @@ module Contexts.Blog (
   , tagCloud
   , gSuite
   , disqus
+  , katexJsCtx
+  , postCtx
+  , listCtx
 ) where
 
+import           Contexts.Field       (descriptionField, imageField)
+import           Control.Monad.Extra  (ifM, mconcatMapM)
 import           Control.Monad.Reader (asks, lift)
 import qualified Data.Text            as T
 import qualified Data.Text.Lazy       as TL
@@ -20,6 +25,8 @@ import           Lucid.Html5
 
 import           Config.Blog          (BlogConfig (..))
 import           Config.Site          (GSuite (..), gSuiteConf)
+import           Contexts.Core
+import           Contexts.Field       (tagsField')
 import           Rules.Blog.Type
 import           Utils                (sanitizeDisqusName)
 
@@ -61,12 +68,43 @@ tagCloud = do
                 span_ [class_ "tag is-dark"] $ toLink tag path
 
 gSuite :: Monad m
-    => BlogConfReader m m (Context String)
+    => BlogConfReader n m (Context String)
 gSuite = (<>)
     <$> asks (constField "google-cx" . ((gCxPrefix gSuiteConf <> ":") <>) . blogGoogleCx)
     <*> pure (constField "google-site-verification" (gSiteVerifyKey gSuiteConf))
 
 disqus :: Monad m
-    => BlogConfReader m m (Context String)
+    => BlogConfReader n m (Context String)
 disqus = asks $ constField "disqus" . sanitizeDisqusName . blogName
 
+katexJsCtx :: Monad m
+    => BlogConfReader n m (Context String)
+katexJsCtx = ifM (asks $ not . blogIsPreview) (pure mempty) $ pure $
+    constField "katex-script" $ TL.unpack $ renderText $ do
+        script_ [defer_ "", type_ "text/javascript", src_ "/vendor/katex/katex.min.js"] TL.empty
+        script_ [defer_ "", type_ "text/javascript", src_ "/vendor/katex/auto-render.min.js"] TL.empty
+
+postCtx :: Monad m
+    => Tags
+    -> BlogConfReader n m (Context String)
+postCtx tags = mconcatMapM id [
+    pure $ dateCtx
+  , pure $ tagsField' "tags" tags
+  , pure $ descriptionField "description" 150
+  , pure $ imageField "image"
+  , pure $ siteCtx
+  , pure $ jsPathCtx
+  , pure $ defaultContext
+  , katexJsCtx
+  ]
+
+listCtx :: Monad m
+    => BlogConfReader n m (Context String)
+listCtx = mconcatMapM id [
+    pure $ siteCtx
+  , pure $ bodyField "body"
+  , pure $ metadataField
+  , pure $ pathField "path"
+  , pure $ urlField "url"
+  , katexJsCtx
+  ]

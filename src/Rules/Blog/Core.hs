@@ -15,8 +15,7 @@ import           System.FilePath           (joinPath, (</>))
 
 import           Archives
 import           Config
-import           Contexts                  (katexJsCtx, postCtx, siteCtx,
-                                            siteMapDateCtx)
+import           Contexts                  (postCtx, siteCtx, siteMapDateCtx)
 import qualified Contexts.Blog             as BlogCtx
 import           Contexts.Field            (searchBoxResultField,
                                             tagCloudField',
@@ -36,7 +35,7 @@ blogRules faIcons = do
     tags <- asks blogTagBuilder >>= lift
     isPreview <- asks blogIsPreview
     postCtx' <- mconcatMapM id [
-        pure $ postCtx isPreview tags
+        BlogCtx.postCtx tags
       , BlogCtx.tagCloud
       , BlogCtx.title
       , BlogCtx.font
@@ -44,7 +43,7 @@ blogRules faIcons = do
       , BlogCtx.beforeContentBodyAdditionalComponent
       , BlogCtx.description
       , BlogCtx.gSuite
-      , pure $ if isPreview then katexJsCtx else mempty
+      -- , BlogCtx.katexJsCtx ... ?
       ]
     feedContent <- asks $ (<> "-feed-content") . blogName
 
@@ -86,7 +85,8 @@ blogRules faIcons = do
         <*> BlogCtx.headerAdditionalComponent
         <*> asks blogContentSnapshot
         <*> BlogCtx.gSuite
-        <*> asks blogIsPreview
+        <*> BlogCtx.listCtx
+        <*> BlogCtx.postCtx tags
 
     -- tag rules
     lift $ tagsRules tags $ \tag pat ->
@@ -128,6 +128,7 @@ blogRules faIcons = do
         in buildPaginateWith grouper (blogEntryPattern bc) makeId
 
     -- footer
+    pCtxForFooter <- postCtx tags
     footerCtx <- mconcatMapM id [
         pure $ tagCloudField' "tag-cloud" tags
       , pure $ siteCtx
@@ -140,7 +141,7 @@ blogRules faIcons = do
                 recent <- fmap (take (blogPageEntriesNum bc)) . recentFirst =<<
                     loadAllSnapshots (blogEntryPattern bc) cs
                 let ctx = mconcat [
-                        listField "recent-posts" (postCtx isPreview tags) (return recent)
+                        listField "recent-posts" pCtxForFooter (return recent)
                       , yearMonthArchiveField "archives" yearlyArchives monthlyArchives year
                       , footerCtx
                       ]

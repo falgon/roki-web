@@ -11,8 +11,6 @@ import           System.FilePath     ((</>))
 import           Config              (defaultTimeLocale', timeZoneJST,
                                       tmBlogRoot)
 -- TODO: remove
-import           Contexts            (listCtx, postCtx)
--- TODO: remove
 import           Contexts.Field      (tagCloudField')
 import           Rules.Blog.Footer   (appendFooter)
 import           Utils               (modifyExternalLinkAttr)
@@ -34,10 +32,10 @@ data ListPageOpts = ListPageOpts {
   , lpHeaderAdditionalComponent            :: Context String
   , lpContentSnapshot                      :: Snapshot
   , lpGSuite                               :: Context String
-  , lpIsPreview                            :: Bool
+  , lpList                                 :: Context String
+  , lpPost                                 :: Context String
   }
 
--- MEMO: 専用の構造をつくって利用するコンテキストをそれ経由で渡す
 listPage :: Maybe String
     -> FA.FontAwesomeIcons
     -> Tags
@@ -54,7 +52,7 @@ listPage title faIcons tags bc pgs = paginateRules pgs $ \pn pat -> do
               , pCtx
               , paginateContext pgs pn
               , maybe missingField (constField "title") title
-              , listCtx $ lpIsPreview bc
+              , lpList bc
               , tagCloudField' "tag-cloud" tags
               , lpName bc
               , lpFont bc
@@ -65,7 +63,7 @@ listPage title faIcons tags bc pgs = paginateRules pgs $ \pn pat -> do
               ]
             postCtx' = mconcat [
                 teaserField "teaser" (lpContentSnapshot bc)
-              , postCtx (lpIsPreview bc) tags
+              , lpPost bc
               , lpName bc
               , pCtx
               ]

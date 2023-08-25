@@ -1,10 +1,9 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Contexts.Core (
-    siteMapDateCtx
+    dateCtx
+  , jsPathCtx
+  , siteMapDateCtx
   , siteCtx
-  , postCtx
-  , listCtx
-  , katexJsCtx
 ) where
 
 import           Data.Functor             ((<&>))
@@ -12,30 +11,21 @@ import           Data.List.Extra          (dropPrefix, mconcatMap)
 import           Data.String              (fromString)
 import qualified Data.Text.Lazy           as TL
 import           Hakyll
-import           Lucid.Base               (Html, renderText)
+import           Lucid.Base               (renderText)
 import           Lucid.Html5
 import           System.FilePath          (takeDirectory, (</>))
 
-import           Config                   (GSuite (..), contentsRoot,
-                                           defaultTimeLocale', gSuiteConf,
+import           Config                   (contentsRoot, defaultTimeLocale',
                                            siteName, timeZoneJST)
-import           Config.Blog
 import qualified Config.Blogs.AnotherBlog as BA
 import qualified Config.Blogs.TechBlog    as TB
-import           Contexts.Field           (descriptionField, imageField,
-                                           localDateField, tagsField')
+import           Contexts.Field           (localDateField)
 
 dateCtx :: Context String
 dateCtx = localDateField defaultTimeLocale' timeZoneJST "date" "%Y/%m/%d %R"
 
 siteMapDateCtx :: Context String
 siteMapDateCtx = localDateField defaultTimeLocale' timeZoneJST "date" "%Y-%m-%d"
-
-blogTitleCtx :: String -> Context String
-blogTitleCtx = constField "blog-title"
-
-blogFontCtx :: Html () -> Context String
-blogFontCtx = constField "blog-font-html" . show
 
 techBlogCtx :: Context String
 techBlogCtx = mconcatMap (uncurry constField) [
@@ -91,33 +81,6 @@ siteCtx = mconcat [
   , blogCtx
   , authorCtx
   ]
-
-postCtx :: Bool -> Tags -> Context String
-postCtx isPreview tags = mconcat [
-    dateCtx
-  , tagsField' "tags" tags
-  , descriptionField "description" 150
-  , imageField "image"
-  , siteCtx
-  , jsPathCtx
-  , defaultContext
-  , if isPreview then katexJsCtx else mempty
-  ]
-
-listCtx :: Bool -> Context String
-listCtx isPreview = mconcat [
-    siteCtx
-  , bodyField "body"
-  , metadataField
-  , pathField "path"
-  , urlField "url"
-  , if isPreview then katexJsCtx else mempty
-  ]
-
-katexJsCtx :: Context String
-katexJsCtx = constField "katex-script" $ TL.unpack $ renderText $ do
-    script_ [defer_ "", type_ "text/javascript", src_ "/vendor/katex/katex.min.js"] TL.empty
-    script_ [defer_ "", type_ "text/javascript", src_ "/vendor/katex/auto-render.min.js"] TL.empty
 
 jsPathCtx :: Context String
 jsPathCtx = listFieldWith "js" ctx $ \item ->
