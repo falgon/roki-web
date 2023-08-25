@@ -157,7 +157,9 @@ techBlogConf = B.BlogConfig {
   , B.blogDescription = TB.blogDesc
   , B.blogFont = RokiLog.font
   , B.blogPageEntriesNum = 5
+  , B.blogPrevNextTitleMaxNum = 6
   , B.blogFeedRecentNum = 20
+  , B.blogIsPreview = False
   , B.blogHeaderAdditional = mempty
   , B.blogBeforeContentBodyAdditional = RokiLog.gAdSenseBeforeContentBody
   , B.blogFooterAdditional = RokiLog.footerAdditionalComponent
@@ -181,7 +183,9 @@ diaryConf = B.BlogConfig {
   , B.blogDescription = AB.blogDesc
   , B.blogFont = RokiDiary.font
   , B.blogPageEntriesNum = 5
+  , B.blogPrevNextTitleMaxNum = 6
   , B.blogFeedRecentNum = 20
+  , B.blogIsPreview = False
   , B.blogHeaderAdditional = RokiDiary.gAdSenseHeader
   , B.blogBeforeContentBodyAdditional = RokiDiary.gAdSenseBeforeContentBody
   , B.blogFooterAdditional = RokiDiary.gAdSenseFooter
@@ -208,8 +212,14 @@ main = do
       }
         writer = if optPreviewFlag opts then writerPreviewOptions else writerOptions
         blogConfs = [
-            techBlogConf { B.blogWriterOptions = writer }
-          , diaryConf { B.blogWriterOptions = writer }
+            techBlogConf {
+                B.blogIsPreview = optPreviewFlag opts
+              , B.blogWriterOptions = writer
+              }
+          , diaryConf {
+                B.blogIsPreview = optPreviewFlag opts
+              , B.blogWriterOptions = writer
+              }
           ]
 
     hakyllWithArgs conf (Options (optVerbose opts) $ mapIL (optInternalLinks opts) $ optCmd opts $ conf) $ do
@@ -218,7 +228,7 @@ main = do
             *> Style.rules
             *> Js.rules
         faIcons <- fold <$> preprocess FA.loadFontAwesome
-        mapM_ (runReaderT $ B.blogRules (optPreviewFlag opts) faIcons) blogConfs
+        mapM_ (runReaderT $ B.blogRules faIcons) blogConfs
         TopPage.rules blogConfs faIcons
 
         match "CNAME" $ route idRoute >> compile copyFileCompiler

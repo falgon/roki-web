@@ -122,10 +122,11 @@ listPageRules title faIcons tags bc pgs = paginateRules pgs $ \pn pat -> do
             >>= relativizeUrls
             >>= FA.render faIcons
 
-blogRules :: Bool -> FA.FontAwesomeIcons -> BlogConfReader Rules Rules ()
-blogRules isPreview faIcons = do
+blogRules :: FA.FontAwesomeIcons -> BlogConfReader Rules Rules ()
+blogRules faIcons = do
     bc <- ask
     tags <- asks blogTagBuilder >>= lift
+    isPreview <- asks blogIsPreview
     postCtx' <- mconcatMapM id [
         pure $ postCtx isPreview tags
       , BlogCtx.tagCloud
