@@ -1,13 +1,10 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Contexts.Core (
     siteMapDateCtx
-  , blogTitleCtx
-  , blogFontCtx
   , siteCtx
   , postCtx
   , listCtx
   , katexJsCtx
-  , gSuiteCtx
 ) where
 
 import           Data.Functor             ((<&>))
@@ -137,8 +134,3 @@ jsPathCtx = listFieldWith "js" ctx $ \item ->
             . toFilePath
             . itemIdentifier
 
-gSuiteCtx :: BlogConfig m -> Context String
-gSuiteCtx bc = mconcat [
-    constField "google-cx" (gCxPrefix gSuiteConf <> ":" <> blogGoogleCx bc)
-  , constField "google-site-verification" (gSiteVerifyKey gSuiteConf)
-  ]

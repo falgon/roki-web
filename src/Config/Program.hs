@@ -2,6 +2,7 @@
 module Config.Program (
     contentsRoot
   , templatesRoot
+  , tmBlogRoot
   , hakyllConfig
   , readerOptions
   , writerOptions
@@ -25,6 +26,9 @@ contentsRoot = "contents"
 
 templatesRoot :: FilePath
 templatesRoot = contentsRoot </> "templates"
+
+tmBlogRoot :: FilePath
+tmBlogRoot = templatesRoot </> "blog"
 
 hakyllConfig :: Configuration
 hakyllConfig = defaultConfiguration {

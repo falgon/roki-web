@@ -5,9 +5,6 @@ module Config.RegexUtils (
     dd
 ) where
 
-import           BasicPrelude (intercalate)
-import           Data.String  (IsString)
-
 -- NOTE:
 --  Hakyll uses the regex-tdfa library, which supports POSIX extended regular expressions
 --  Ref. https://github.com/jaspervdj/hakyll/issues/524#issuecomment-282253949

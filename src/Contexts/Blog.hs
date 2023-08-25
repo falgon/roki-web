@@ -3,7 +3,6 @@ module Contexts.Blog (
     title
   , font
   , description
-  , description'
   , beforeContentBodyAdditionalComponent
   , headerAdditionalComponent
   , footerAdditionalComponent
@@ -34,26 +33,20 @@ title = constField "blog-title" <$> asks blogName
 font :: Monad m => BlogConfReader n m (Context String)
 font = constField "blog-font-html" <$> asks (show . blogFont)
 
-description :: BlogConfig m -> Context String
-description = constField "blog-description" . blogDescription
+description :: Monad m => BlogConfReader n m (Context String)
+description = constField "blog-description" <$> asks blogDescription
 
-description' :: BlogConfReader m Compiler (Context String)
-description' = constField "blog-description" <$> asks blogDescription
-
-beforeContentBodyAdditionalComponent :: BlogConfig m -> Context String
+beforeContentBodyAdditionalComponent :: Monad m => BlogConfReader n m (Context String)
 beforeContentBodyAdditionalComponent = constField "before-content-body-additional-component"
-    . show
-    . blogBeforeContentBodyAdditional
+    <$> asks (show . blogBeforeContentBodyAdditional)
 
-headerAdditionalComponent :: BlogConfig m -> Context String
+headerAdditionalComponent :: Monad m => BlogConfReader n m (Context String)
 headerAdditionalComponent = constField "header-additional-component"
-    . show
-    . blogHeaderAdditional
+    <$> asks (show . blogHeaderAdditional)
 
-footerAdditionalComponent :: BlogConfig m -> Context String
+footerAdditionalComponent :: Monad m => BlogConfReader n m (Context String)
 footerAdditionalComponent = constField "footer-additional-component"
-    . show
-    . blogFooterAdditional
+    <$> asks (show . blogFooterAdditional)
 
 tagCloud :: Monad m
     => BlogConfReader m m (Context a)

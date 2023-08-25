@@ -43,7 +43,7 @@ mkBlogCtx = do
     mconcatMapM id [
         listPostsCtx posts
       , CtxBlog.title
-      , CtxBlog.description'
+      , CtxBlog.description
       , introDateCtx posts
       , pure siteCtx
       , pure defaultContext
