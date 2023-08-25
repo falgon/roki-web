@@ -128,18 +128,22 @@ blogRules faIcons = do
         in buildPaginateWith grouper (blogEntryPattern bc) makeId
 
     -- footer
-    fac <- BlogCtx.footerAdditionalComponent
+    footerCtx <- mconcatMapM id [
+        pure $ tagCloudField' "tag-cloud" tags
+      , pure $ siteCtx
+      , BlogCtx.footerAdditionalComponent
+      ]
     let footerPath = fromFilePath $ tmBlogRoot </> "footer.html"
     lift $ forM_ (Nothing:map (Just . fst) (archivesMap yearlyArchives)) $ \year -> maybe id version year $
         create [fromFilePath $ blogName bc <> "-footer.html"] $
             compile $ do
                 recent <- fmap (take (blogPageEntriesNum bc)) . recentFirst =<<
                     loadAllSnapshots (blogEntryPattern bc) cs
-                let ctx = listField "recent-posts" (postCtx isPreview tags) (return recent)
-                        <> tagCloudField' "tag-cloud" tags
-                        <> yearMonthArchiveField "archives" yearlyArchives monthlyArchives year
-                        <> siteCtx
-                        <> fac
+                let ctx = mconcat [
+                        listField "recent-posts" (postCtx isPreview tags) (return recent)
+                      , yearMonthArchiveField "archives" yearlyArchives monthlyArchives year
+                      , footerCtx
+                      ]
                 makeItem ""
                     >>= loadAndApplyTemplate footerPath ctx
                     >>= relativizeUrls
