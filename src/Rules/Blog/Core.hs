@@ -34,6 +34,9 @@ import           Utils                 (absolutizeUrls, makePageIdentifier,
 import qualified Vendor.FontAwesome    as FA
 import qualified Vendor.KaTeX          as KaTeX
 
+tmBlogRoot :: FilePath
+tmBlogRoot = templatesRoot </> "blog"
+
 appendFooter :: (Binary a, Typeable a, Semigroup a)
     => BlogConfig m
     -> TimeLocale
@@ -115,9 +118,9 @@ listPageRules title faIcons tags bc pgs = paginateRules pgs $ \pn pat -> do
               ]
 
         makeItem ""
-            >>= loadAndApplyTemplate (fromFilePath $ joinPath [templatesRoot, "blog", "post-list.html"]) blogCtx
+            >>= loadAndApplyTemplate (fromFilePath $ tmBlogRoot </> "post-list.html") blogCtx
             >>= appendFooter bc defaultTimeLocale' timeZoneJST
-            >>= loadAndApplyTemplate (fromFilePath $ joinPath [templatesRoot, "blog", "default.html"]) blogCtx
+            >>= loadAndApplyTemplate (fromFilePath $ tmBlogRoot </> "default.html") blogCtx
             >>= modifyExternalLinkAttr
             >>= relativizeUrls
             >>= FA.render faIcons
@@ -155,10 +158,10 @@ blogRules faIcons = do
             >>= saveSnapshot feedContent
             >>= (if isPreview then return else KaTeX.render)
             >>= saveSnapshot cs
-            >>= loadAndApplyTemplate (fromFilePath $ joinPath [templatesRoot, "blog", "post.html"])
+            >>= loadAndApplyTemplate (fromFilePath $ tmBlogRoot </> "post.html")
                 (s <> disqusCtx)
             >>= appendFooter bc defaultTimeLocale' timeZoneJST
-            >>= loadAndApplyTemplate (fromFilePath $ joinPath [templatesRoot, "blog", "default.html"]) postCtx'
+            >>= loadAndApplyTemplate (fromFilePath $ tmBlogRoot </> "default.html") postCtx'
             >>= modifyExternalLinkAttr
             >>= relativizeUrls
             >>= FA.render faIcons
@@ -209,7 +212,7 @@ blogRules faIcons = do
         in buildPaginateWith grouper (blogEntryPattern bc) makeId
 
     -- footer
-    let footerPath = fromFilePath (joinPath [templatesRoot, "blog", "footer.html"])
+    let footerPath = fromFilePath $ tmBlogRoot </> "footer.html"
     lift $ forM_ (Nothing:map (Just . fst) (archivesMap yearlyArchives)) $ \year -> maybe id version year $
         create [fromFilePath $ blogName bc <> "-footer.html"] $
             compile $ do
@@ -243,13 +246,11 @@ blogRules faIcons = do
                 >>= renderRss (blogAtomConfig bc) (bodyField "description" <> postCtx')
 
     -- Search result page
-    let rootTemplate = fromFilePath $
-            joinPath [templatesRoot, "blog", "default.html"]
     lift $ create [fromFilePath (blogName bc </> "search.html")] $ do
         route idRoute
         compile $
             makeItem ""
-                >>= loadAndApplyTemplate rootTemplate (searchBoxResultField <> postCtx')
+                >>= loadAndApplyTemplate (fromFilePath $ tmBlogRoot </> "default.html") (searchBoxResultField <> postCtx')
                 >>= absolutizeUrls
                 >>= appendFooter bc defaultTimeLocale' timeZoneJST
                 >>= modifyExternalLinkAttr
@@ -269,5 +270,5 @@ blogRules faIcons = do
                   ]
             makeItem ""
                 >>= loadAndApplyTemplate
-                    (fromFilePath $ joinPath [templatesRoot, "blog", "sitemap.xml"])
+                    (fromFilePath $ tmBlogRoot </> "sitemap.xml")
                         sitemapCtx

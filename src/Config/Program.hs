@@ -42,12 +42,12 @@ hakyllConfig = defaultConfiguration {
 
 writerOptions :: WriterOptions
 writerOptions = defaultHakyllWriterOptions {
-    writerHTMLMathMethod = KaTeX ""
+    writerHTMLMathMethod = KaTeX mempty
   }
 
 writerPreviewOptions :: WriterOptions
 writerPreviewOptions = defaultHakyllWriterOptions {
-    writerHTMLMathMethod = MathJax ""
+    writerHTMLMathMethod = MathJax mempty
  }
 
 readerOptions :: ReaderOptions
