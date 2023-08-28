@@ -9,7 +9,7 @@ import           Control.Monad.Extra              (mconcatMapM)
 import           Control.Monad.Reader             (ask, asks)
 import           Control.Monad.Trans              (MonadTrans (..))
 import           Hakyll                           hiding
-                                                   (FeedConfiguration (..),
+                                                  (FeedConfiguration (..),
                                                    renderAtom, renderRss)
 import           Hakyll.Web.Feed.Extra
 import           System.FilePath                  (joinPath, (</>))
