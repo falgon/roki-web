@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: b657f503318d19e5b4a8ffa3095ebb17086cc8d7feb482b6725669626acc43cf
+-- hash: 0afa1ee1ccbc6fa88537c19179c01db3824dfe4a936020244904874027af2f50
 
 name:           roki-web
 version:        1.0.0.0
@@ -56,6 +56,10 @@ library
       Rules.Blog.EachPostSeries
       Rules.Blog.Footer
       Rules.Blog.ListPage
+      Rules.Blog.Paginate.MonthlyPosts
+      Rules.Blog.Paginate.TaggedPosts
+      Rules.Blog.Paginate.Utils
+      Rules.Blog.Paginate.YearlyPosts
       Rules.Blog.Type
       Rules.Media
       Rules.Src.JavaScript

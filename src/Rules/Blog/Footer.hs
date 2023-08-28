@@ -9,8 +9,6 @@ import           Data.Time.LocalTime  (TimeZone, utcToLocalTime)
 import           Data.Typeable        (Typeable)
 import           Hakyll
 
-import           Config.Blog          (BlogConfig (..))
-
 appendFooter :: (Binary a, Typeable a, Semigroup a)
     => String
     -> TimeLocale

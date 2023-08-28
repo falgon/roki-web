@@ -4,30 +4,36 @@ module Rules.Blog.Core (
   , blogRules
 ) where
 
-import           Control.Monad             (forM_)
-import           Control.Monad.Extra       (mconcatMapM)
-import           Control.Monad.Reader      (ask, asks)
-import           Control.Monad.Trans       (MonadTrans (..))
-import           Hakyll                    hiding (FeedConfiguration (..),
-                                            renderAtom, renderRss)
+import           Control.Monad                    (forM_)
+import           Control.Monad.Extra              (mconcatMapM)
+import           Control.Monad.Reader             (ask, asks)
+import           Control.Monad.Trans              (MonadTrans (..))
+import           Hakyll                           hiding
+                                                   (FeedConfiguration (..),
+                                                   renderAtom, renderRss)
 import           Hakyll.Web.Feed.Extra
-import           System.FilePath           (joinPath, (</>))
+import           System.FilePath                  (joinPath, (</>))
 
 import           Archives
 import           Config
-import           Contexts                  (postCtx, siteCtx, siteMapDateCtx)
-import qualified Contexts.Blog             as BlogCtx
-import           Contexts.Field            (searchBoxResultField,
-                                            tagCloudField',
-                                            yearMonthArchiveField)
+import           Contexts                         (postCtx, siteCtx,
+                                                   siteMapDateCtx)
+import qualified Contexts.Blog                    as BlogCtx
+import           Contexts.Field                   (searchBoxResultField,
+                                                   tagCloudField',
+                                                   yearMonthArchiveField)
 import           Rules.Blog.EachPostSeries
-import           Rules.Blog.Footer         (appendFooter)
-import           Rules.Blog.ListPage       (ListPageOpts (..), listPage)
+import           Rules.Blog.Footer                (appendFooter)
+import           Rules.Blog.ListPage              (ListPageOpts (..), listPage)
+import qualified Rules.Blog.Paginate.MonthlyPosts as MonthlyPosts
+import qualified Rules.Blog.Paginate.TaggedPosts  as TaggedPosts
+import qualified Rules.Blog.Paginate.YearlyPosts  as YearlyPosts
 import           Rules.Blog.Type
-import           Utils                     (absolutizeUrls, makePageIdentifier,
-                                            modifyExternalLinkAttr)
-import qualified Vendor.FontAwesome        as FA
-import qualified Vendor.KaTeX              as KaTeX
+import           Utils                            (absolutizeUrls,
+                                                   makePageIdentifier,
+                                                   modifyExternalLinkAttr)
+import qualified Vendor.FontAwesome               as FA
+import qualified Vendor.KaTeX                     as KaTeX
 
 blogRules :: FA.FontAwesomeIcons -> BlogConfReader Rules Rules ()
 blogRules faIcons = do
@@ -43,7 +49,6 @@ blogRules faIcons = do
       , BlogCtx.beforeContentBodyAdditionalComponent
       , BlogCtx.description
       , BlogCtx.gSuite
-      -- , BlogCtx.katexJsCtx ... ?
       ]
     feedContent <- asks $ (<> "-feed-content") . blogName
 
@@ -88,34 +93,17 @@ blogRules faIcons = do
         <*> BlogCtx.listCtx
         <*> BlogCtx.postCtx tags
 
-    -- tag rules
-    lift $ tagsRules tags $ \tag pat ->
-        let grouper = fmap (paginateEvery peNum) . sortRecentFirst
-            makeId = makePageIdentifier $ blogTagPagesPath bc tag
-            title = "Tagged posts: " <> tag
-        in buildPaginateWith grouper pat makeId
-            >>= listPage (Just title) faIcons tags listPageOpts
+    -- tagged paginate
+    TaggedPosts.build faIcons tags listPageOpts
 
     -- yearly paginate
-    yearlyArchives <- lift $ blogYearlyArchivesBuilder bc
-    lift $ archivesRules yearlyArchives $ \year pat ->
-        let grouper = fmap (paginateEvery peNum) . sortRecentFirst
-            makeId = makePageIdentifier $ blogYearlyPagePath bc year
-            title = "Yearly posts: " <> year
-        in buildPaginateWith grouper pat makeId
-            >>= listPage (Just title) faIcons tags listPageOpts
+    yearlyArchives <- YearlyPosts.build faIcons tags listPageOpts
 
     -- monthly paginate
-    monthlyArchives <- lift $ blogMonthlyArchivesBuilder bc
-    lift $ archivesRules monthlyArchives $ \key@(year, month) pat ->
-        let grouper = fmap (paginateEvery peNum) . sortRecentFirst
-            makeId = makePageIdentifier $ blogMonthlyPagePath bc key
-            title = "Monthly posts: " <> year </> month
-        in buildPaginateWith grouper pat makeId
-            >>= listPage (Just title) faIcons tags listPageOpts
+    monthlyArchives <- MonthlyPosts.build faIcons tags listPageOpts
 
     -- all tags
-    let allTagsPagePath = joinPath [blogName bc, "tags", "index.html"]
+    let allTagsPagePath = joinPath [blogTitle, "tags", "index.html"]
     lift $ listPage (Just "tags") faIcons tags listPageOpts =<<
         let grouper = fmap (paginateEvery peNum) . sortRecentFirst
             makeId = makePageIdentifier allTagsPagePath
