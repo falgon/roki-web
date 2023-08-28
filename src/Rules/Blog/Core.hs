@@ -102,13 +102,6 @@ blogRules faIcons = do
     -- monthly paginate
     monthlyArchives <- MonthlyPosts.build faIcons tags listPageOpts
 
-    -- all tags
-    let allTagsPagePath = joinPath [blogTitle, "tags", "index.html"]
-    lift $ listPage (Just "tags") faIcons tags listPageOpts =<<
-        let grouper = fmap (paginateEvery peNum) . sortRecentFirst
-            makeId = makePageIdentifier allTagsPagePath
-        in buildPaginateWith grouper (blogEntryPattern bc) makeId
-
     -- the index page of blog
     lift $ listPage Nothing faIcons tags listPageOpts =<<
         let grouper = fmap (paginateEvery peNum) . sortRecentFirst
