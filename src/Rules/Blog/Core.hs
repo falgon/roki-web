@@ -9,10 +9,9 @@ import           Control.Monad.Extra              (mconcatMapM)
 import           Control.Monad.Reader             (ask, asks)
 import           Control.Monad.Trans              (MonadTrans (..))
 import           Hakyll                           hiding
-                                                  (FeedConfiguration (..),
+                                                   (FeedConfiguration (..),
                                                    renderAtom, renderRss)
-import           Hakyll.Web.Feed.Extra
-import           System.FilePath                  (joinPath, (</>))
+import           System.FilePath                  ((</>))
 
 import           Archives
 import           Config
@@ -23,6 +22,8 @@ import           Contexts.Field                   (searchBoxResultField,
                                                    tagCloudField',
                                                    yearMonthArchiveField)
 import           Rules.Blog.EachPostSeries
+import qualified Rules.Blog.Feed.Atom             as Atom
+import qualified Rules.Blog.Feed.RSS              as RSS
 import           Rules.Blog.Footer                (appendFooter)
 import           Rules.Blog.ListPage              (ListPageOpts (..), listPage)
 import qualified Rules.Blog.Paginate.MonthlyPosts as MonthlyPosts
@@ -130,23 +131,8 @@ blogRules faIcons = do
                     >>= loadAndApplyTemplate footerPath ctx
                     >>= relativizeUrls
 
-    feedRecentNum <- asks blogFeedRecentNum
-
-    -- Atom Feed
-    lift $ create [fromFilePath (joinPath [blogTitle, "feed", blogTitle <> ".xml"])] $ do
-        route idRoute
-        compile $
-            loadAllSnapshots (blogEntryPattern bc) feedContent
-                >>= fmap (take feedRecentNum) . recentFirst
-                >>= renderAtom (blogAtomConfig bc) (bodyField "description" <> postCtx')
-
-    -- RSS Feed
-    lift $ create [fromFilePath (joinPath [blogTitle, "feed", blogTitle <> "-rss.xml"])] $ do
-        route idRoute
-        compile $
-            loadAllSnapshots (blogEntryPattern bc) feedContent
-                >>= fmap (take feedRecentNum) . recentFirst
-                >>= renderRss (blogAtomConfig bc) (bodyField "description" <> postCtx')
+    -- Atom and RSS Feed
+    mapM_ (flip id postCtx' . flip id feedContent) [Atom.build, RSS.build]
 
     -- Search result page
     lift $ create [fromFilePath (blogTitle </> "search.html")] $ do

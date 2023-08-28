@@ -4,7 +4,7 @@ module Config.Blogs.AnotherBlog (
   , blogDesc
   , entryPattern
   , entryFilesPattern
-  , atomConfig
+  , feedConfig
   , contentSnapshot
   , tagPagesPath
   , buildTags
@@ -44,8 +44,8 @@ entryPattern = BU.entryPattern blogName
 entryFilesPattern :: H.Pattern
 entryFilesPattern = BU.entryFilesPattern blogName
 
-atomConfig :: FeedConfiguration
-atomConfig = FeedConfiguration {
+feedConfig :: FeedConfiguration
+feedConfig = FeedConfiguration {
     feedTitle = blogName
   , feedWebRoot = "https://" <> siteName
   , feedBlogName = blogName

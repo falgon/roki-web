@@ -25,7 +25,7 @@ data BlogConfig m = BlogConfig {
   , blogTagPagesPath                :: FilePath -> FilePath
   , blogEntryPattern                :: Pattern
   , blogEntryFilesPattern           :: Pattern
-  , blogAtomConfig                  :: FeedConfiguration
+  , blogFeedConfig                  :: FeedConfiguration
   , blogContentSnapshot             :: String
   , blogYearlyArchivesBuilder       :: m YearlyArchives
   , blogMonthlyArchivesBuilder      :: m MonthlyArchives
