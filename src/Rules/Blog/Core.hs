@@ -18,8 +18,7 @@ import           Config
 import           Contexts                         (postCtx, siteCtx,
                                                    siteMapDateCtx)
 import qualified Contexts.Blog                    as BlogCtx
-import           Contexts.Field                   (searchBoxResultField,
-                                                   tagCloudField',
+import           Contexts.Field                   (tagCloudField',
                                                    yearMonthArchiveField)
 import           Rules.Blog.EachPostSeries
 import qualified Rules.Blog.Feed.Atom             as Atom
@@ -29,6 +28,7 @@ import           Rules.Blog.ListPage              (ListPageOpts (..), listPage)
 import qualified Rules.Blog.Paginate.MonthlyPosts as MonthlyPosts
 import qualified Rules.Blog.Paginate.TaggedPosts  as TaggedPosts
 import qualified Rules.Blog.Paginate.YearlyPosts  as YearlyPosts
+import qualified Rules.Blog.Search                as Search
 import           Rules.Blog.Type
 import           Utils                            (absolutizeUrls,
                                                    makePageIdentifier,
@@ -135,16 +135,7 @@ blogRules faIcons = do
     mapM_ (flip id postCtx' . flip id feedContent) [Atom.build, RSS.build]
 
     -- Search result page
-    lift $ create [fromFilePath (blogTitle </> "search.html")] $ do
-        route idRoute
-        compile $
-            makeItem ""
-                >>= loadAndApplyTemplate (fromFilePath $ tmBlogRoot </> "default.html") (searchBoxResultField <> postCtx')
-                >>= absolutizeUrls
-                >>= appendFooter blogTitle defaultTimeLocale' timeZoneJST
-                >>= modifyExternalLinkAttr
-                >>= relativizeUrls
-                >>= FA.render faIcons
+    Search.build faIcons postCtx'
 
     -- Site map
     bTitleCtx <- BlogCtx.title
