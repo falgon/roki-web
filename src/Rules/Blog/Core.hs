@@ -9,7 +9,7 @@ import           Control.Monad.Extra              (mconcatMapM)
 import           Control.Monad.Reader             (ask, asks)
 import           Control.Monad.Trans              (MonadTrans (..))
 import           Hakyll                           hiding
-                                                  (FeedConfiguration (..),
+                                                   (FeedConfiguration (..),
                                                    renderAtom, renderRss)
 import           System.FilePath                  ((</>))
 
@@ -24,14 +24,14 @@ import           Rules.Blog.EachPostSeries
 import qualified Rules.Blog.Feed.Atom             as Atom
 import qualified Rules.Blog.Feed.RSS              as RSS
 import           Rules.Blog.Footer                (appendFooter)
-import           Rules.Blog.ListPage              (ListPageOpts (..), listPage)
+import qualified Rules.Blog.Index                 as Index
+import           Rules.Blog.ListPage              (ListPageOpts (..))
 import qualified Rules.Blog.Paginate.MonthlyPosts as MonthlyPosts
 import qualified Rules.Blog.Paginate.TaggedPosts  as TaggedPosts
 import qualified Rules.Blog.Paginate.YearlyPosts  as YearlyPosts
 import qualified Rules.Blog.Search                as Search
 import           Rules.Blog.Type
 import           Utils                            (absolutizeUrls,
-                                                   makePageIdentifier,
                                                    modifyExternalLinkAttr)
 import qualified Vendor.FontAwesome               as FA
 import qualified Vendor.KaTeX                     as KaTeX
@@ -81,7 +81,6 @@ blogRules faIcons = do
         route $ gsubRoute (contentsRoot <> "/") (const mempty)
         compile copyFileCompiler
 
-    peNum <- asks blogPageEntriesNum
     listPageOpts <- ListPageOpts
         <$> BlogCtx.title
         <*> asks blogName
@@ -104,10 +103,7 @@ blogRules faIcons = do
     monthlyArchives <- MonthlyPosts.build faIcons tags listPageOpts
 
     -- the index page of blog
-    lift $ listPage Nothing faIcons tags listPageOpts =<<
-        let grouper = fmap (paginateEvery peNum) . sortRecentFirst
-            makeId = makePageIdentifier (blogTitle </> "index.html")
-        in buildPaginateWith grouper (blogEntryPattern bc) makeId
+    Index.build faIcons tags listPageOpts
 
     -- footer
     pCtxForFooter <- postCtx tags
