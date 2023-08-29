@@ -14,8 +14,7 @@ import           Config.Blog          (BlogConfig (..))
 import           Config.Program       (tmBlogRoot)
 import           Contexts             (siteCtx)
 import qualified Contexts.Blog        as BlogCtx
-import           Contexts.Field       (yearMonthArchiveField)
-import           Contexts.Field       (tagCloudField')
+import           Contexts.Field       (tagCloudField', yearMonthArchiveField)
 import           Rules.Blog.Type
 
 build :: Tags
