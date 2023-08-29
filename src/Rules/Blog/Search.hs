@@ -10,8 +10,8 @@ import           Config.Blog          (BlogConfig (..))
 import           Config.Program       (tmBlogRoot)
 import           Config.Site          (defaultTimeLocale', timeZoneJST)
 import           Contexts.Field       (searchBoxResultField)
-import           Rules.Blog.Footer    (appendFooter)
 import           Rules.Blog.Type
+import           Rules.Blog.Utils     (appendFooter)
 import           Utils                (absolutizeUrls, modifyExternalLinkAttr)
 import qualified Vendor.FontAwesome   as FA
 

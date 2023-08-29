@@ -12,7 +12,7 @@ import           Config              (defaultTimeLocale', timeZoneJST,
                                       tmBlogRoot)
 -- TODO: remove
 import           Contexts.Field      (tagCloudField')
-import           Rules.Blog.Footer   (appendFooter)
+import           Rules.Blog.Utils    (appendFooter)
 import           Utils               (modifyExternalLinkAttr)
 import qualified Vendor.FontAwesome  as FA
 

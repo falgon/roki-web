@@ -18,7 +18,7 @@ import qualified Config.Blogs.AnotherBlog as AB
 import qualified Config.Blogs.TechBlog    as TB
 import qualified Contexts.Field.RokiDiary as RokiDiary
 import qualified Contexts.Field.RokiLog   as RokiLog
-import qualified Rules.Blog               as B
+import qualified Rules.Blog               as Blog
 import qualified Rules.Media              as Media
 import qualified Rules.Src.JavaScript     as Js
 import qualified Rules.Src.Style          as Style
@@ -228,7 +228,7 @@ main = do
             *> Style.rules
             *> Js.rules
         faIcons <- fold <$> preprocess FA.loadFontAwesome
-        mapM_ (runReaderT $ B.blogRules faIcons) blogConfs
+        mapM_ (runReaderT $ Blog.rules faIcons) blogConfs
         TopPage.rules blogConfs faIcons
 
         match "CNAME" $ route idRoute >> compile copyFileCompiler

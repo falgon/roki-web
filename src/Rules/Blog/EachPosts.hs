@@ -4,6 +4,7 @@ module Rules.Blog.EachPosts (
 
 import           Control.Monad.Extra        (mconcatMapM)
 import           Control.Monad.Reader       (asks)
+import           Control.Monad.Trans        (MonadTrans (..))
 import           Data.Bool                  (bool)
 import           Hakyll
 import           System.FilePath            ((</>))
@@ -14,8 +15,8 @@ import           Config.Blog                (BlogConfig (..))
 import           Config.Site                (defaultTimeLocale', timeZoneJST)
 import qualified Contexts.Blog              as BlogCtx
 import           Rules.Blog.EachPosts.Utils
-import           Rules.Blog.Footer          (appendFooter)
 import           Rules.Blog.Type
+import           Rules.Blog.Utils           (appendFooter)
 import           Utils                      (absolutizeUrls,
                                              modifyExternalLinkAttr)
 import qualified Vendor.FontAwesome         as FA
@@ -48,5 +49,10 @@ build faIcons ctx = do
             >>= modifyExternalLinkAttr
             >>= relativizeUrls
             >>= FA.render faIcons
+
+    ep <- asks blogEntryFilesPattern
+    lift $ match ep $ do
+        route $ gsubRoute (contentsRoot <> "/") (const mempty)
+        compile copyFileCompiler
 
     pure feedContent
