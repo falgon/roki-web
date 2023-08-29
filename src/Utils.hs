@@ -6,14 +6,21 @@ module Utils (
   , sanitizeDisqusName
   , makePageIdentifier
   , getStringField
+  , mconcatM
 ) where
 
-import           Control.Monad     (liftM2)
-import           Data.Char         (isAlphaNum, isSpace, toLower)
+import           Control.Monad       (liftM2)
+import           Control.Monad.Extra (mconcatMapM)
+import           Data.Char           (isAlphaNum, isSpace, toLower)
 import           Hakyll
-import           System.FilePath   (isRelative, normalise, takeDirectory,
-                                    takeFileName, (</>))
-import qualified Text.HTML.TagSoup as TS
+import           System.FilePath     (isRelative, normalise, takeDirectory,
+                                      takeFileName, (</>))
+import qualified Text.HTML.TagSoup   as TS
+
+mconcatM :: (Monad m, Monoid b)
+    => [m b]
+    -> m b
+mconcatM = mconcatMapM id
 
 absolutizeUrls :: Item String -> Compiler (Item String)
 absolutizeUrls item = getUnderlying >>= fmap (maybe item (flip fmap item . withUrls . f)) . getRoute

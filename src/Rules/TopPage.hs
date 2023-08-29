@@ -17,7 +17,7 @@ import           Config.TopPage
 import           Contexts             (siteCtx)
 import qualified Contexts.Blog        as CtxBlog
 import           Rules.Blog.Type
-import           Utils                (modifyExternalLinkAttr)
+import           Utils                (mconcatM, modifyExternalLinkAttr)
 import qualified Vendor.FontAwesome   as FA
 
 lastUpdate :: (MonadMetadata m, MonadFail m) => [Item a] -> m String
@@ -40,7 +40,7 @@ mkBlogCtx = do
     ep <- asks blogEntryPattern
     cs <- asks blogContentSnapshot
     posts <- lift $ fmap (take $ maxTitleNum topPageConfig) . recentFirst =<< loadAllSnapshots ep cs
-    mconcatMapM id [
+    mconcatM [
         listPostsCtx posts
       , CtxBlog.title
       , CtxBlog.description

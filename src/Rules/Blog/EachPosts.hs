@@ -2,7 +2,6 @@ module Rules.Blog.EachPosts (
     build
 ) where
 
-import           Control.Monad.Extra        (mconcatMapM)
 import           Control.Monad.Reader       (asks)
 import           Control.Monad.Trans        (MonadTrans (..))
 import           Data.Bool                  (bool)
@@ -19,6 +18,7 @@ import           Rules.Blog.Type
 import           Rules.Blog.Utils           (appendFooter)
 import           Utils                      (absolutizeUrls,
                                              modifyExternalLinkAttr)
+import           Utils                      (mconcatM)
 import qualified Vendor.FontAwesome         as FA
 import qualified Vendor.KaTeX               as KaTeX
 
@@ -26,7 +26,7 @@ build :: FA.FontAwesomeIcons
     -> Context String
     -> BlogConfReader m Rules Snapshot
 build faIcons ctx = do
-    disqusCtx <- mconcatMapM id [
+    disqusCtx <- mconcatM [
         pure ctx
       , BlogCtx.disqus
       ]

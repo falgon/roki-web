@@ -3,7 +3,6 @@ module Rules.Blog.Footer (
 ) where
 
 import           Control.Monad        (forM_)
-import           Control.Monad.Extra  (mconcatMapM)
 import           Control.Monad.Reader (asks, lift)
 import           Hakyll
 import           System.FilePath      ((</>))
@@ -16,6 +15,7 @@ import           Contexts             (siteCtx)
 import qualified Contexts.Blog        as BlogCtx
 import           Contexts.Field       (tagCloudField', yearMonthArchiveField)
 import           Rules.Blog.Type
+import           Utils                (mconcatM)
 
 build :: Tags
     -> YearlyArchives
@@ -27,7 +27,7 @@ build tags y m = do
     ep <- asks blogEntryPattern
     cs <- asks blogContentSnapshot
     pCtxForFooter <- BlogCtx.postCtx tags
-    footerCtx <- mconcatMapM id [
+    footerCtx <- mconcatM [
         pure $ tagCloudField' "tag-cloud" tags
       , pure $ siteCtx
       , BlogCtx.footerAdditionalComponent

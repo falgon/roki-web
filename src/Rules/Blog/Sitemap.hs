@@ -2,7 +2,6 @@ module Rules.Blog.Sitemap (
     build
 ) where
 
-import           Control.Monad.Extra  (mconcatMapM)
 import           Control.Monad.Reader (asks, lift)
 import           Hakyll
 import           System.FilePath      ((</>))
@@ -13,13 +12,14 @@ import           Config.Site          (siteName)
 import           Contexts             (siteMapDateCtx)
 import qualified Contexts.Blog        as BlogCtx
 import           Rules.Blog.Type
+import           Utils                (mconcatM)
 
 build :: Snapshot
     -> BlogConfReader m Rules ()
 build feedSS = do
     sitemapXML <- asks $ fromFilePath . (</> xml) . blogName
     ep <- asks blogEntryPattern
-    ctx <- mconcatMapM id [
+    ctx <- mconcatM [
         BlogCtx.title
       , pure hostCtx
       ]

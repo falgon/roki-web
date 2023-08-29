@@ -10,7 +10,6 @@ import           System.FilePath     ((</>))
 
 import           Config              (defaultTimeLocale', timeZoneJST,
                                       tmBlogRoot)
--- TODO: remove
 import           Contexts.Field      (tagCloudField')
 import           Rules.Blog.Utils    (appendFooter)
 import           Utils               (modifyExternalLinkAttr)

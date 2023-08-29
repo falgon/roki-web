@@ -4,7 +4,6 @@ module Rules.Blog.Core (
   , rules
 ) where
 
-import           Control.Monad.Extra              (mconcatMapM)
 import           Control.Monad.Reader             (asks)
 import           Control.Monad.Trans              (MonadTrans (..))
 import           Hakyll                           hiding
@@ -25,12 +24,13 @@ import qualified Rules.Blog.Paginate.YearlyPosts  as YearlyPosts
 import qualified Rules.Blog.Search                as Search
 import           Rules.Blog.Sitemap               as Sitemap
 import           Rules.Blog.Type
+import           Utils                            (mconcatM)
 import qualified Vendor.FontAwesome               as FA
 
 rules :: FA.FontAwesomeIcons -> BlogConfReader Rules Rules ()
 rules faIcons = do
     tags <- asks blogTagBuilder >>= lift
-    postCtx' <- mconcatMapM id [
+    postCtx' <- mconcatM [
         BlogCtx.postCtx tags
       , BlogCtx.tagCloud
       , BlogCtx.title

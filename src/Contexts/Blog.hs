@@ -15,7 +15,7 @@ module Contexts.Blog (
 ) where
 
 import           Contexts.Field       (descriptionField, imageField)
-import           Control.Monad.Extra  (ifM, mconcatMapM)
+import           Control.Monad.Extra  (ifM)
 import           Control.Monad.Reader (asks, lift)
 import qualified Data.Text            as T
 import qualified Data.Text.Lazy       as TL
@@ -28,7 +28,7 @@ import           Config.Site          (GSuite (..), gSuiteConf)
 import           Contexts.Core
 import           Contexts.Field       (tagsField')
 import           Rules.Blog.Type
-import           Utils                (sanitizeDisqusName)
+import           Utils                (mconcatM, sanitizeDisqusName)
 
 {-# INLINE toLink #-}
 toLink :: String -> String -> Html ()
@@ -87,7 +87,7 @@ katexJsCtx = ifM (asks $ not . blogIsPreview) (pure mempty) $ pure $
 postCtx :: Monad m
     => Tags
     -> BlogConfReader n m (Context String)
-postCtx tags = mconcatMapM id [
+postCtx tags = mconcatM [
     pure $ dateCtx
   , pure $ tagsField' "tags" tags
   , pure $ descriptionField "description" 150
@@ -100,7 +100,7 @@ postCtx tags = mconcatMapM id [
 
 listCtx :: Monad m
     => BlogConfReader n m (Context String)
-listCtx = mconcatMapM id [
+listCtx = mconcatM [
     pure $ siteCtx
   , pure $ bodyField "body"
   , pure $ metadataField
