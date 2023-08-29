@@ -16,9 +16,8 @@ import qualified Contexts.Blog              as BlogCtx
 import           Rules.Blog.EachPosts.Utils
 import           Rules.Blog.Type
 import           Rules.Blog.Utils           (appendFooter)
-import           Utils                      (absolutizeUrls,
+import           Utils                      (absolutizeUrls, mconcatM,
                                              modifyExternalLinkAttr)
-import           Utils                      (mconcatM)
 import qualified Vendor.FontAwesome         as FA
 import qualified Vendor.KaTeX               as KaTeX
 
