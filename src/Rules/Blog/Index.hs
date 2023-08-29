@@ -21,6 +21,5 @@ build faIcons tags opts = do
     f <- asks $ fmap . paginateEvery . blogPageEntriesNum
     ep <- asks blogEntryPattern
     lift $ listPage Nothing faIcons tags opts =<<
-        let grouper = f . sortRecentFirst
-        in buildPaginateWith grouper ep makeId
+        buildPaginateWith (f . sortRecentFirst) ep makeId
 
