@@ -3,13 +3,13 @@ module Rules.Src.JavaScript (
 ) where
 
 import           Hakyll
+import           System.FilePath (joinPath)
 
-import           Config.RegexUtils (intercalateDir)
-import           Media             (compressJsCompiler)
+import           Media           (compressJsCompiler)
 
 rules :: Rules ()
 rules = match jsPath $ do
-    route $ gsubRoute "contents/" $ const ""
+    route $ gsubRoute "contents/" $ const mempty
     compile compressJsCompiler
     where
-        jsPath = fromGlob $ intercalateDir ["contents", "js", "**"]
+        jsPath = fromGlob $ joinPath ["contents", "js", "**"]

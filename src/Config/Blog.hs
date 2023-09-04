@@ -11,17 +11,21 @@ import           Lucid.Base            (Html)
 import           Text.Pandoc.Options   (WriterOptions)
 
 data BlogConfig m = BlogConfig {
-    blogName                        :: String
+    blogIsPreview                   :: Bool
+  , blogName                        :: String
   , blogDescription                 :: String
   , blogFont                        :: Html ()
-  , blogHeaderAdditional            :: String
-  , blogBeforeContentBodyAdditional :: String
-  , blogFooterAdditional            :: String
+  , blogPageEntriesNum              :: Int
+  , blogPrevNextTitleMaxNum         :: Int
+  , blogFeedRecentNum               :: Int
+  , blogHeaderAdditional            :: Html ()
+  , blogBeforeContentBodyAdditional :: Html ()
+  , blogFooterAdditional            :: Html ()
   , blogTagBuilder                  :: m Tags
   , blogTagPagesPath                :: FilePath -> FilePath
   , blogEntryPattern                :: Pattern
   , blogEntryFilesPattern           :: Pattern
-  , blogAtomConfig                  :: FeedConfiguration
+  , blogFeedConfig                  :: FeedConfiguration
   , blogContentSnapshot             :: String
   , blogYearlyArchivesBuilder       :: m YearlyArchives
   , blogMonthlyArchivesBuilder      :: m MonthlyArchives

@@ -1,29 +1,28 @@
 {-# LANGUAGE OverloadedStrings, TemplateHaskell #-}
 module Main (main) where
 
+import           Control.Monad.Reader     (ReaderT (..))
 import           Data.Foldable            (fold)
 import           Data.String              (fromString)
-import qualified Data.Text.Lazy           as TL
 import           Data.Version             (showVersion)
 import           Development.GitRev       (gitHash)
 import           Hakyll
 import qualified Options.Applicative      as OA
 import qualified Paths_roki_web           as P
+import           System.FilePath          (joinPath)
 
 import           Config                   (hakyllConfig, siteName,
                                            writerOptions, writerPreviewOptions)
 import qualified Config.Blog              as B
 import qualified Config.Blogs.AnotherBlog as AB
 import qualified Config.Blogs.TechBlog    as TB
-import           Config.RegexUtils        (intercalateDir)
 import qualified Contexts.Field.RokiDiary as RokiDiary
 import qualified Contexts.Field.RokiLog   as RokiLog
-import           Lucid.Base               (renderText)
-import qualified Rules.Blog               as B
-import qualified Rules.IndexPage          as IP
+import qualified Rules.Blog               as Blog
 import qualified Rules.Media              as Media
 import qualified Rules.Src.JavaScript     as Js
 import qualified Rules.Src.Style          as Style
+import qualified Rules.TopPage            as TopPage
 import qualified Rules.Vendor             as Vendor
 import qualified Vendor.FontAwesome       as FA
 
@@ -145,10 +144,10 @@ versionOption = OA.infoOption vopt $ mconcat [OA.long "version", OA.help "Show v
 optsParser :: OA.ParserInfo Opts
 optsParser = OA.info (OA.helper <*> versionOption <*> programOptions) $ mconcat [
     OA.fullDesc
-  , OA.progDesc $ concat [
-        "The static site roki.dev compiler version "
+  , OA.progDesc $ unwords [
+        "The static site roki.dev compiler version"
       , showVersion P.version
-      , " powerted by Hakyll"
+      , "powerted by Hakyll"
       ]
   ]
 
@@ -157,14 +156,18 @@ techBlogConf = B.BlogConfig {
     B.blogName = TB.blogName
   , B.blogDescription = TB.blogDesc
   , B.blogFont = RokiLog.font
+  , B.blogPageEntriesNum = 5
+  , B.blogPrevNextTitleMaxNum = 6
+  , B.blogFeedRecentNum = 20
+  , B.blogIsPreview = False
   , B.blogHeaderAdditional = mempty
-  , B.blogBeforeContentBodyAdditional = TL.unpack $ renderText RokiLog.gAdSenseBeforeContentBody
-  , B.blogFooterAdditional = TL.unpack $ renderText RokiLog.footerAdditionalComponent
+  , B.blogBeforeContentBodyAdditional = RokiLog.gAdSenseBeforeContentBody
+  , B.blogFooterAdditional = RokiLog.footerAdditionalComponent
   , B.blogTagBuilder = TB.buildTags
   , B.blogTagPagesPath = TB.tagPagesPath
   , B.blogEntryPattern = TB.entryPattern
   , B.blogEntryFilesPattern = TB.entryFilesPattern
-  , B.blogAtomConfig = TB.atomConfig
+  , B.blogFeedConfig = TB.feedConfig
   , B.blogContentSnapshot = TB.contentSnapshot
   , B.blogYearlyArchivesBuilder = TB.buildYearlyArchives
   , B.blogMonthlyArchivesBuilder = TB.buildMonthlyArchives
@@ -179,14 +182,18 @@ diaryConf = B.BlogConfig {
     B.blogName = AB.blogName
   , B.blogDescription = AB.blogDesc
   , B.blogFont = RokiDiary.font
-  , B.blogHeaderAdditional = TL.unpack $ renderText RokiDiary.gAdSenseHeader
-  , B.blogBeforeContentBodyAdditional = TL.unpack $ renderText RokiDiary.gAdSenseBeforeContentBody
-  , B.blogFooterAdditional = TL.unpack $ renderText RokiDiary.gAdSenseFooter
+  , B.blogPageEntriesNum = 5
+  , B.blogPrevNextTitleMaxNum = 6
+  , B.blogFeedRecentNum = 20
+  , B.blogIsPreview = False
+  , B.blogHeaderAdditional = RokiDiary.gAdSenseHeader
+  , B.blogBeforeContentBodyAdditional = RokiDiary.gAdSenseBeforeContentBody
+  , B.blogFooterAdditional = RokiDiary.gAdSenseFooter
   , B.blogTagBuilder = AB.buildTags
   , B.blogTagPagesPath = AB.tagPagesPath
   , B.blogEntryPattern = AB.entryPattern
   , B.blogEntryFilesPattern = AB.entryFilesPattern
-  , B.blogAtomConfig = AB.atomConfig
+  , B.blogFeedConfig = AB.feedConfig
   , B.blogContentSnapshot = AB.contentSnapshot
   , B.blogYearlyArchivesBuilder = AB.buildYearlyArchives
   , B.blogMonthlyArchivesBuilder = AB.buildMonthlyArchives
@@ -205,8 +212,14 @@ main = do
       }
         writer = if optPreviewFlag opts then writerPreviewOptions else writerOptions
         blogConfs = [
-            techBlogConf { B.blogWriterOptions = writer }
-          , diaryConf { B.blogWriterOptions = writer }
+            techBlogConf {
+                B.blogIsPreview = optPreviewFlag opts
+              , B.blogWriterOptions = writer
+              }
+          , diaryConf {
+                B.blogIsPreview = optPreviewFlag opts
+              , B.blogWriterOptions = writer
+              }
           ]
 
     hakyllWithArgs conf (Options (optVerbose opts) $ mapIL (optInternalLinks opts) $ optCmd opts $ conf) $ do
@@ -215,10 +228,12 @@ main = do
             *> Style.rules
             *> Js.rules
         faIcons <- fold <$> preprocess FA.loadFontAwesome
-        mapM_ (flip (B.blogRules (optPreviewFlag opts)) faIcons) blogConfs
-        IP.rules blogConfs faIcons
+        mapM_ (runReaderT $ Blog.rules faIcons) blogConfs
+        TopPage.rules blogConfs faIcons
 
-        match (fromString $ intercalateDir ["contents", "templates", "**"]) $
+        match "CNAME" $ route idRoute >> compile copyFileCompiler
+        match "ads.txt" $ route idRoute >> compile copyFileCompiler
+        match (fromString $ joinPath ["contents", "templates", "**"]) $
             compile templateBodyCompiler
     where
         mapIL b (Check _) = Check b
