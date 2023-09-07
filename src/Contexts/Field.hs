@@ -14,6 +14,7 @@ import           Control.Monad.Trans (lift)
 import           Data.Function       (on)
 import           Data.Functor        ((<&>))
 import           Data.List           (isSuffixOf, sortBy)
+import           Data.List.Extra     (mconcatMap)
 import           Data.Maybe          (catMaybes, fromMaybe)
 import qualified Data.Text           as T
 import qualified Data.Text.Lazy      as TL
@@ -58,7 +59,7 @@ tagsField' key tags = field key $ \item -> do
         <&> catMaybes
     if null links
         then noResult ("Field " ++ key ++ ": tag not set (" ++ show (itemIdentifier item) ++ ")")
-        else return $ TL.unpack $ renderText $ mconcat $ map (span_ [class_ "tag is-dark"]) links
+        else return $ TL.unpack $ renderText $ mconcatMap (span_ [class_ "tag is-dark"]) links
     where
         toLink' tag = fmap (toLink tag)
 
@@ -71,7 +72,10 @@ tagCloudField' key tags = field key $ const $
 
 
 {-# INLINE buildYearMonthArchiveField #-}
-buildYearMonthArchiveField :: YearlyArchives -> MonthlyArchives -> Maybe String -> Compiler String
+buildYearMonthArchiveField :: YearlyArchives
+    -> MonthlyArchives
+    -> Maybe String
+    -> Compiler String
 buildYearMonthArchiveField ya ma pageYear = fmap TL.unpack $ renderTextT $
     ul_ [class_ "archive-tree"] $ do
         let yearMap = sortBy (flip compare `on` (read :: String -> Int) . fst) $ archivesMap ya
@@ -100,7 +104,11 @@ buildYearMonthArchiveField ya ma pageYear = fmap TL.unpack $ renderTextT $
                             a_ [href_ (T.pack murl)] $
                                 toHtml $ year ++ "/" ++ month ++  " (" ++ show (length mids) ++ ")"
 
-yearMonthArchiveField :: String -> YearlyArchives -> MonthlyArchives -> Maybe String -> Context a
+yearMonthArchiveField :: String
+    -> YearlyArchives
+    -> MonthlyArchives
+    -> Maybe String
+    -> Context a
 yearMonthArchiveField key ya ma s = field key
     $ const
     $ buildYearMonthArchiveField ya ma s

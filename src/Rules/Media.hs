@@ -3,10 +3,10 @@ module Rules.Media (
 ) where
 
 import           Hakyll
+import           System.FilePath (joinPath)
 
-import           Config            (contentsRoot)
-import           Config.RegexUtils (intercalateDir)
-import           Media             (optimizeSVGCompiler)
+import           Config          (contentsRoot)
+import           Media           (optimizeSVGCompiler)
 
 rules :: Rules ()
 rules = do
@@ -18,5 +18,5 @@ rules = do
         route $ gsubRoute "contents/" $ const ""
         compile copyFileCompiler
     where
-        svg = fromGlob $ intercalateDir [contentsRoot, "images", "**", "*.svg"]
-        oth = fromGlob $ intercalateDir [contentsRoot, "images", "**"]
+        svg = fromGlob $ joinPath [contentsRoot, "images", "**", "*.svg"]
+        oth = fromGlob $ joinPath [contentsRoot, "images", "**"]
