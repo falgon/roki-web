@@ -13,7 +13,7 @@ parameters:
 jobs:
   build:
     docker:
-    - image: circleci/golang:1.17.2
+    - image: circleci/golang:1.21.3
     resource_class: large
     environment:
       TZ: /usr/share/zoneinfo/Asia/Tokyo
@@ -30,7 +30,7 @@ jobs:
           echo 'export ARTIFACTS_GDRIVE_PATH="CI_WORK/GitHubActions/$CIRCLE_PROJECT_REPONAME/$FN"' >> $BASH_ENV
           source "$BASH_ENV"
     - restore_cache:
-        key: skicka-2021-11-06-latest
+        key: skicka-2023-10-11-latest
     - run:
         name: Setup tools
         command: |
@@ -44,7 +44,7 @@ jobs:
           fi
           curl -sSL https://get.haskellstack.org/ | sh
     - save_cache:
-        key: skicka-2021-11-06-latest
+        key: skicka-2023-10-11-latest
         paths:
           - ~/.go/bin
           - ~/.cache/go-build

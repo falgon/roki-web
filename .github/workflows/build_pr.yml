@@ -1,5 +1,7 @@
 name: CI-pr
 
+env:
+  GO_VERSION: 1.21.3
 on:
   pull_request:
     branches: [develop, master, release, draft]
@@ -125,7 +127,7 @@ jobs:
           ~/.skicka.tokencache.json
           ~/.skicka.config
           ~/.skicka.metadata.cache
-        key: go-v2-${{ runner.os }}
+        key: go-${{ env.GO_VERSION }}-v2-${{ runner.os }}
     - name: Setup Go Path
       run: |
         echo "GOPATH=$HOME/.go" >> $GITHUB_ENV
@@ -134,8 +136,8 @@ jobs:
       if: steps.skicka-cache.outputs.cache-hit != 'true'
       shell: bash
       run: |
-        wget -q https://dl.google.com/go/go1.17.9.linux-amd64.tar.gz
-        tar -C "$HOME" -xzf go1.17.9.linux-amd64.tar.gz
+        wget -q "https://dl.google.com/go/go${{ env.GO_VERSION }}.linux-amd64.tar.gz"
+        tar -C "$HOME" -xzf "go${{ env.GO_VERSION }}.linux-amd64.tar.gz"
         mv "$HOME/go" "$HOME/.go"
         go install github.com/google/skicka@latest
         skicka init
