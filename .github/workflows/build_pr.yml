@@ -158,7 +158,7 @@ jobs:
       run: |
         echo "docs_prefix=${{ env.DOCS_PREFIX }}" >> "$GITHUB_OUTPUT"
         skicka -no-browser-auth upload -ignore-times \
-          ./${{ DOCS_TARXZ }} \
+          ./${{ env.DOCS_TARXZ }} \
           CI_WORK/GitHubActions/${GITHUB_REPOSITORY#${GITHUB_REPOSITORY_OWNER}/}/${{ env.DOCS_PREFIX }}-${{ env.DOCS_TARXZ }}
       env:
         DOCS_PREFIX: ${{ needs.build.outputs.target_ref }}-${{ github.run_number }}
