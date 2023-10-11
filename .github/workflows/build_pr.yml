@@ -193,9 +193,9 @@ jobs:
         DOCS_PREFIX: ${{ needs.upload.outputs.docs_prefix }}
         TARGET_REF: ${{ needs.build.outputs.target_ref }}
         ENDPOINT: https://circleci.com/api/v2/project/gh/${{ github.repository }}/pipeline
-        HEADER_CIRCLE_TOKEN: Circle-Token: ${{ secrets.CIRCLE_API_USER_TOKEN }}
-        HEADER_CONTENT_TYPE: Content-Type: application/json
-        DATA: {"branch":"${{ steps.parameters.outputs.target_branch }}", "parameters":{"TARGET_REF":"${{ needs.build.outputs.target_ref }}", "DOCS_PREFIX":"${{ needs.upload.outputs.docs_prefix }}","ENABLE_PR_COMMENT":"${{ steps.parameters.outputs.enable_comment }}"}}
+        HEADER_CIRCLE_TOKEN: "Circle-Token: ${{ secrets.CIRCLE_API_USER_TOKEN }}"
+        HEADER_CONTENT_TYPE: "Content-Type: application/json"
+        DATA: '{"branch":"${{ steps.parameters.outputs.target_branch }}", "parameters":{"TARGET_REF":"${{ needs.build.outputs.target_ref }}", "DOCS_PREFIX":"${{ needs.upload.outputs.docs_prefix }}","ENABLE_PR_COMMENT":"${{ steps.parameters.outputs.enable_comment }}"}}'
     - name: Show CircleCI URL
       run: echo ${{ env.CIRCLECI_URL }}
       env:
