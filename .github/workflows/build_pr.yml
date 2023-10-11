@@ -79,17 +79,17 @@ jobs:
     - name: Build and validate roki.dev
       id: build
       run: |
-        for i in `seq 0 ${{ env.RETRY_MAX }}`; do
+        for i in $(seq 0 ${{ env.RETRY_MAX }}); do
           set +e -o pipefail
             exec 3>&1
-              site_out=$(./site build 2>&1 | tee /dev/fd/3)
+              site_out="$(./site build 2>&1 | tee /dev/fd/3)"
               result=$?
             exec 3>&-
           set -e +o pipefail
           if [ $result -eq 0 ]; then
             break;
-          elif [ -n "$(echo "$result" | grep "code: 'EAGAIN'")" ]; then
-            echo "EAGAIN detected, try to run again (next count: $((i+1)))"
+          elif [ -n "$(grep "code: 'EAGAIN'" <<<"$site_out")" ]; then
+            echo "EAGAIN detected, try to run again (next count: $((i+1)))" >&2
             continue;
           else
             exit 1
@@ -136,8 +136,8 @@ jobs:
       if: steps.skicka-cache.outputs.cache-hit != 'true'
       shell: bash
       run: |
-        wget -q "https://dl.google.com/go/go${{ env.GO_VERSION }}.linux-amd64.tar.gz"
-        tar -C "$HOME" -xzf "go${{ env.GO_VERSION }}.linux-amd64.tar.gz"
+        wget -q "https://dl.google.com/go/${{ env.GO_TARGZ }}"
+        tar -C "$HOME" -xzf ${{ env.GO_TARGZ }}
         mv "$HOME/go" "$HOME/.go"
         go install github.com/google/skicka@latest
         skicka init
@@ -148,6 +148,7 @@ jobs:
         SKICKA_TOKENCACHE_JSON: ${{ secrets.SKICKA_TOKENCACHE_JSON }}
         GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
         GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+        GO_TARGZ: go${{ env.GO_VERSION }}.linux-amd64.tar.gz
     - name: Upload to Google Drive
       id: upload
       run: |
@@ -165,11 +166,12 @@ jobs:
       run: |
           readonly ENABLE_COMMENT=$(test ${{ github.event_name }} = pull_request && echo true || echo false)
           readonly TARGET_BRANCH=$(test ${{ github.event_name }} = pull_request && echo ${{ github.head_ref }} || echo ${{ github.ref_name }})
-          readonly CIRCLE_RESP=$(curl -s -X POST \
+          CIRCLE_RESP=$(curl -f -s -X POST \
             -H "Circle-Token: ${{ secrets.CIRCLE_API_USER_TOKEN }}" \
             -H "Content-Type: application/json" \
             -d "{\"branch\":\"$TARGET_BRANCH\",\"parameters\":{\"TARGET_REF\":\"${{ env.TARGET_REF }}\",\"DOCS_PREFIX\":\"${{ env.DOCS_PREFIX }}\",\"ENABLE_PR_COMMENT\":$ENABLE_COMMENT}}" \
             ${{ env.ENDPOINT }})
+          readonly CIRCLE_RESP
           echo "created at: $(jq -r .created_at <<< "$CIRCLE_RESP")"
           echo "CIRCLE_JOB_NUM=$(jq -r .number <<< "$CIRCLE_RESP")" >> $GITHUB_ENV
       env:
