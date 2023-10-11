@@ -13,7 +13,7 @@ parameters:
 jobs:
   build:
     docker:
-    - image: circleci/golang:1.21.3
+    - image: cimg/go:1.21.3
     resource_class: large
     environment:
       TZ: /usr/share/zoneinfo/Asia/Tokyo
