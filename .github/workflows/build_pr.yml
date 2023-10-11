@@ -2,6 +2,7 @@ name: CI-pr
 
 env:
   GO_VERSION: 1.21.3
+  DEBIAN_FRONTEND: noninteractive
 on:
   pull_request:
     branches: [develop, master, release, draft]
@@ -40,7 +41,6 @@ jobs:
         stack-version: '2.7.3'
     - name: Setup Tools
       run: |
-        export DEBIAN_FRONTEND=noninteractive
         sudo apt-get -qq update
         sudo apt-get install -y --no-install-recommends \
           libxml2-utils parallel
@@ -127,7 +127,7 @@ jobs:
           ~/.skicka.tokencache.json
           ~/.skicka.config
           ~/.skicka.metadata.cache
-        key: go-${{ env.GO_VERSION }}-v2-${{ runner.os }}
+        key: go-${{ env.GO_VERSION }}-v3-${{ runner.os }}
     - name: Setup Go Path
       run: |
         echo "GOPATH=$HOME/.go" >> $GITHUB_ENV
