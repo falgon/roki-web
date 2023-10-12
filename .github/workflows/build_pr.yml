@@ -163,7 +163,7 @@ jobs:
         echo "gdrive_path=${{ env.UPLOAD_GDRIVE_PATH }}" >> "$GITHUB_OUTPUT"
         skicka -no-browser-auth upload -ignore-times "./${{ env.DOCS_TARXZ }}" "${{ env.UPLOAD_GDRIVE_PATH }}"
       env:
-        UPLOAD_GDRIVE_PATH: CI_WORK/GitHubActions/${{ steps.setup-skicka.outputs.repository_name }}/${{ step.setup-skicka.outputs.docs_prefix }}-${{ env.DOCS_TARXZ }}
+        UPLOAD_GDRIVE_PATH: CI_WORK/GitHubActions/${{ steps.setup-skicka.outputs.repository_name }}/${{ steps.setup-skicka.outputs.docs_prefix }}-${{ env.DOCS_TARXZ }}
   boot-circle-ci:
     runs-on: ubuntu-latest
     needs: [build, upload]
