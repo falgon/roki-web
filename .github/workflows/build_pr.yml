@@ -187,7 +187,7 @@ jobs:
           CIRCLE_RESP="$(curl -fsX POST -H "${{ env.CIRCLE_TOKEN }}" -H "${{ env.CONTENT_TYPE }}" -d '${{ env.DATA }}' "${{ env.ENDPOINT }}")"
           readonly CIRCLE_RESP
           echo "circle_job_num=$(jq -r .number <<< "$CIRCLE_RESP")" >> "$GITHUB_OUTPUT"
-          echo "created at: $(date -d "$(jq -r .created_at <<< "$CIRCLE_RESP")")"
+          echo "created at: $(date -d "$(jq -r .created_at <<< "$CIRCLE_RESP")" +'%Y/%m/%d (%a) %T')"
       env:
         ENDPOINT: https://circleci.com/api/v2/project/gh/${{ github.repository }}/pipeline
         CIRCLE_TOKEN: "Circle-Token: ${{ secrets.CIRCLE_API_USER_TOKEN }}"
