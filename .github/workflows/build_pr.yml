@@ -115,7 +115,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     outputs:
-      docs_prefix: ${{ steps.upload.outputs.docs_prefix }}
+      gdrive_path: ${{ steps.upload.outputs.gdrive_path }}
     steps:
     - name: Fetch archive
       uses: actions/download-artifact@v2
@@ -150,19 +150,20 @@ jobs:
         sed -i -e "s/;clientid=YOUR_GOOGLE_APP_CLIENT_ID/clientid=$GOOGLE_CLIENT_ID/g" "$HOME/.skicka.config"
         sed -i -e "s/;clientsecret=YOUR_GOOGLE_APP_SECRET/clientsecret=$GOOGLE_CLIENT_SECRET/g" "$HOME/.skicka.config"
         echo "repository_name=${GITHUB_REPOSITORY#${GITHUB_REPOSITORY_OWNER}/}" >> "$GITHUB_OUTPUT"
+        echo "docs_prefix=${{ env.DOCS_PREFIX }}" >> "$GITHUB_OUTPUT"
       env:
         SKICKA_TOKENCACHE_JSON: ${{ secrets.SKICKA_TOKENCACHE_JSON }}
         GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
         GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
         GO_TARGZ: go${{ env.GO_VERSION }}.linux-amd64.tar.gz
+        DOCS_PREFIX: ${{ needs.build.outputs.target_ref }}-${{ github.run_number }}
     - name: Upload to Google Drive
       id: upload
       run: |
-        echo "docs_prefix=${{ env.DOCS_PREFIX }}" >> "$GITHUB_OUTPUT"
+        echo "gdrive_path=${{ env.UPLOAD_GDRIVE_PATH }}" >> "$GITHUB_OUTPUT"
         skicka -no-browser-auth upload -ignore-times "./${{ env.DOCS_TARXZ }}" "${{ env.UPLOAD_GDRIVE_PATH }}"
       env:
-        DOCS_PREFIX: ${{ needs.build.outputs.target_ref }}-${{ github.run_number }}
-        UPLOAD_GDRIVE_PATH: CI_WORK/GitHubActions/${{ steps.setup-skicka.outputs.repository_name }}/${{ env.DOCS_PREFIX }}-${{ env.DOCS_TARXZ }}
+        UPLOAD_GDRIVE_PATH: CI_WORK/GitHubActions/${{ steps.setup-skicka.outputs.repository_name }}/${{ step.setup-skicka.outputs.docs_prefix }}-${{ env.DOCS_TARXZ }}
   boot-circle-ci:
     runs-on: ubuntu-latest
     needs: [build, upload]
@@ -188,7 +189,7 @@ jobs:
         ENDPOINT: https://circleci.com/api/v2/project/gh/${{ github.repository }}/pipeline
         CIRCLE_TOKEN: "Circle-Token: ${{ secrets.CIRCLE_API_USER_TOKEN }}"
         CONTENT_TYPE: "Content-Type: application/json"
-        DATA: '{"branch":"${{ steps.parameters.outputs.target_branch }}", "parameters":{"TARGET_REF":"${{ needs.build.outputs.target_ref }}", "DOCS_PREFIX":"${{ needs.upload.outputs.docs_prefix }}","ENABLE_PR_COMMENT":"${{ steps.parameters.outputs.enable_comment }}"}}'
+        DATA: '{"branch":"${{ steps.parameters.outputs.target_branch }}", "parameters":{"TARGET_REF":"${{ needs.build.outputs.target_ref }}", "GDRIVE_PATH":"${{ needs.upload.outputs.gdrive_path }}","ENABLE_PR_COMMENT":"${{ steps.parameters.outputs.enable_comment }}"}}'
     - name: Show CircleCI URL
       run: echo ${{ env.CIRCLECI_URL }}
       env:

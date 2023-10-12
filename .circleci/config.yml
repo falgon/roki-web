@@ -23,11 +23,10 @@ jobs:
         name: Set up environments
         command: |
           git -c advice.detachedHead=false checkout << pipeline.parameters.TARGET_REF >>
-          echo 'export FN=<< pipeline.parameters.DOCS_PREFIX >>-docs.tar.xz' >> $BASH_ENV
           echo 'export GOPATH="$HOME/.go"' >> $BASH_ENV
           echo 'export PATH="$HOME/.go/bin:$PATH"' >> $BASH_ENV
           echo "export ARTIFACTS_URL=\"https://output.circle-artifacts.com/output/job/$CIRCLE_WORKFLOW_JOB_ID/artifacts/$CIRCLE_NODE_INDEX/index.html\"" >> $BASH_ENV
-          echo 'export ARTIFACTS_GDRIVE_PATH="CI_WORK/GitHubActions/$CIRCLE_PROJECT_REPONAME/$FN"' >> $BASH_ENV
+          echo 'export ARTIFACTS_GDRIVE_PATH="<< pipeline.parameters.GDRIVE_PATH >>"' >> $BASH_ENV
           source "$BASH_ENV"
     - restore_cache:
         key: skicka-2023-10-11-latest
@@ -84,7 +83,7 @@ jobs:
                   readonly badge="[![CircleCI]($status_badge_endpoint/img/gh/$encoded_user/$encoded_repo/tree/$encoded_branch.svg?style=svg)]($status_badge_endpoint/redirect/gh/$encoded_user/$encoded_repo/tree/$encoded_branch)"
                   readonly details="\r\n<hr /><details><summary>more info</summary><p><ul><li>:cloud: Storage $(skicka df | grep 'Free space')</li><li>:open_file_folder: $(skicka du ${ARTIFACTS_GDRIVE_PATH%/*} | sed 's/^[ \t]*//')</li></ul></p></details>"
                   readonly data='{"body":"*'" $badge\r\n"'* [Build log]('"$CIRCLE_BUILD_URL)\r\n"'* [Preview build]('"$ARTIFACTS_URL"') with this PR (<< pipeline.parameters.TARGET_REF >>)'"$details"'"}'
-                  readonly post_result=$(curl -s -X POST \
+                  readonly post_result=$(curl -fsX POST \
                     -H "Authorization: token $YBGH_TOKEN" \
                     -H 'Content-Type:application/json' \
                     -d "$data" \
