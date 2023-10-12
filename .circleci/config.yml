@@ -3,7 +3,7 @@ parameters:
   TARGET_REF:
     type: string
     default: ""
-  DOCS_PREFIX:
+  GDRIVE_PATH:
     type: string
     default: ""
   ENABLE_PR_COMMENT:
