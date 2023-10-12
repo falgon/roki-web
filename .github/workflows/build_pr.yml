@@ -137,6 +137,7 @@ jobs:
         echo "GOPATH=$HOME/.go" >> "$GITHUB_ENV"
         echo "$HOME/.go/bin:$PATH" >> "$GITHUB_PATH"
     - name: Setup Skicka
+      id: setup-skicka
       if: steps.skicka-cache.outputs.cache-hit != 'true'
       shell: bash
       run: |
@@ -148,6 +149,7 @@ jobs:
         echo -n "$SKICKA_TOKENCACHE_JSON" > "$HOME/.skicka.tokencache.json"
         sed -i -e "s/;clientid=YOUR_GOOGLE_APP_CLIENT_ID/clientid=$GOOGLE_CLIENT_ID/g" "$HOME/.skicka.config"
         sed -i -e "s/;clientsecret=YOUR_GOOGLE_APP_SECRET/clientsecret=$GOOGLE_CLIENT_SECRET/g" "$HOME/.skicka.config"
+        echo "repository_name=${GITHUB_REPOSITORY#${GITHUB_REPOSITORY_OWNER}/}" >> "$GITHUB_OUTPUT"
       env:
         SKICKA_TOKENCACHE_JSON: ${{ secrets.SKICKA_TOKENCACHE_JSON }}
         GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
@@ -157,11 +159,10 @@ jobs:
       id: upload
       run: |
         echo "docs_prefix=${{ env.DOCS_PREFIX }}" >> "$GITHUB_OUTPUT"
-        skicka -no-browser-auth upload -ignore-times \
-          ./${{ env.DOCS_TARXZ }} \
-          CI_WORK/GitHubActions/${GITHUB_REPOSITORY#${GITHUB_REPOSITORY_OWNER}/}/${{ env.DOCS_PREFIX }}-${{ env.DOCS_TARXZ }}
+        skicka -no-browser-auth upload -ignore-times "./${{ env.DOCS_TARXZ }}" "${{ env.UPLOAD_GDRIVE_PATH }}"
       env:
         DOCS_PREFIX: ${{ needs.build.outputs.target_ref }}-${{ github.run_number }}
+        UPLOAD_GDRIVE_PATH: CI_WORK/GitHubActions/${{ steps.setup-skicka.outputs.repository_name }}/${{ env.DOCS_PREFIX }}-${{ env.DOCS_TARXZ }}
   boot-circle-ci:
     runs-on: ubuntu-latest
     needs: [build, upload]
@@ -178,10 +179,11 @@ jobs:
     - name: Boot CircleCI
       id: boot-circleci
       run: |
-          CIRCLE_RESP="$(curl -f -s -X POST -H "${{ env.CIRCLE_TOKEN }}" -H "${{ env.CONTENT_TYPE }}" -d "${{ env.DATA }}" ${{ env.ENDPOINT }})"
+          CIRCLE_RESP="$(curl -fsX POST -H "${{ env.CIRCLE_TOKEN }}" -H "${{ env.CONTENT_TYPE }}" -d '${{ env.DATA }}' "${{ env.ENDPOINT }}")"
           readonly CIRCLE_RESP
-          echo "created at: $(jq -r .created_at <<< "$CIRCLE_RESP")"
           echo "circle_job_num=$(jq -r .number <<< "$CIRCLE_RESP")" >> "$GITHUB_OUTPUT"
+          echo "created at: $(jq -r .created_at <<< "$CIRCLE_RESP")"
+          echo "$CIRCLE_RESP"
       env:
         ENDPOINT: https://circleci.com/api/v2/project/gh/${{ github.repository }}/pipeline
         CIRCLE_TOKEN: "Circle-Token: ${{ secrets.CIRCLE_API_USER_TOKEN }}"
