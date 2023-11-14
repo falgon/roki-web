@@ -92,6 +92,7 @@ jobs:
             break;
           elif [ -n "$(grep "code: 'EAGAIN'" <<<"$site_out")" ]; then
             echo "EAGAIN detected, try to run again (next count: $((i+1)))" >&2
+            ./site clean
             continue;
           else
             exit 1
