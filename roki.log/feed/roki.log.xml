@@ -8,8 +8,100 @@
         <name>Roki</name>
         <email>falgon53@yahoo.co.jp</email>
     </author>
-    <updated>2022-04-10T09:05:34Z</updated>
+    <updated>2023-11-09T09:05:34Z</updated>
     <entry>
+    <title>東京ガスの請求通知を自作 LINE Bot に喋らせる</title>
+    <link href="https://roki.dev/roki.log/2023/11/09/add-new-web-api-send-plain-text/index.html" />
+    <id>https://roki.dev/roki.log/2023/11/09/add-new-web-api-send-plain-text/index.html</id>
+    <published>2023-11-09T09:05:34Z</published>
+    <updated>2023-11-09T09:05:34Z</updated>
+    <summary type="html"><![CDATA[<p>以前つくった <a href="https://roki.dev/roki.log/2022/04/10/LineBotDevelopment/index.html">Haskell 製の LINE Bot</a> を家族の所属するグループ LINE に参加させて日常的に活用している. ごみ出しの項目確認や買い物リストのメモなど, 家族間のコミュニケーションや生活の流れの中でぱっと済ませたい諸々の事柄を LINE という定常的に利用するツールの中で自動化することで, 当初よりも細かい点で便利になった感触がある. これは <a href="https://notify-bot.line.me/ja/">LINE Notify</a> のみでは実現できない双方向のやりとりや LINE というプラットフォームを最大限活用できる拡張性によるものだ.<br> ところで, 我が家のインフラの一部は東京ガスに依存しているわけだが, 東京ガスは, その毎月の請求額の確認通知を指定のメールアドレスあるいは <a href="https://members.tokyo-gas.co.jp/contents/public/line/information.html">myTOKYOGAS と連携の LINE へ送信する</a>サービスを提供している. 私は以前からどちらのサービスも利用していたが</p>
+<ol type="1">
+<li>メールに気付かず, 請求額の把握が遅れる</li>
+<li>LINE への通知が自分宛てのみとなるので, 自分を経由して家族と情報共有する必要がある</li>
+</ol>
+<p>という問題があった. 2 については, 家族全員がそれぞれの LINE アカウント上で myTOKYOGAS と連携すれば良いのでは？と思うかもしれないが, これはサービスの仕様上単一のアカウントのみ連携ができるようになっているので不可能である. 別の方法としては, LINE Notify をグループ LINE に招待しその API を叩くようにすれば, わざわざ LINE Bot に機能追加をしなくても済むが</p>
+<ul>
+<li>情報によって異なる発信源からメッセージが飛んでくるのは統一感がなく“気持ち悪い”</li>
+<li>別口の API を一度実装してしまえばこの用途以外でも様々な目的に対して流用できる</li>
+</ul>
+<p>という点から LINE Notify を利用して実現しようとはせず, 自分で実装することとした<a href="/roki.log/2023/11/09/add-new-web-api-send-plain-text/#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a>. 本エントリの扱う機能追加についての差分は下記の PR のとおりである.</p>
+<div class="has-text-centered mt-2 mb-2">
+<p><i class="fab fa-github fa-fw"></i> <a href="https://github.com/falgon/line-bot-kiirotori/pull/19">Add send message api - Pull Request #19 - falgon/line-bot-kiirotori</a></p>
+</div>
+一言で言ってしまえば, LINE Messaging API とのやりとりで受け取るエンドポイントとは別口の API を実装し, それを Google Apps Script (以下 GAS) で叩くという“普通の” Web API のやりとりの構造をつくっただけではあるのだが,
+<p class="is-size-7">
+最近ブログを更新していないことに気づいたのと
+</p>
+<p>日本語で Haskell Servant の具体的な活用例を示すことにはそれなりの価値があるかもということ, 同じようなことを実現して生活を楽にしたい方がいるかもということ, など文章生成 AI に尋ねてもどうもはっきりとした解答が得られなかったときのために, あるいは文章生成 AI にこのエントリが食われるために？備忘録を兼ねて綴ることとした.</p>
+<!--more-->
+<h2 id="概観">概観</h2>
+<p>仕組みとしては至って単純である. まず myTOKYOGAS が毎月の請求額決定通知を指定のメールアドレスに飛ばしてくるので, これを GAS で定期的にチェックするために GMail のメールアドレスを指定する. 該当のメールが存在しかつラベルが貼られていなければ, Bot に喋らせたいテキストを載せて今回実装の Bot API を叩く. 情報源などを検証の上そのリクエストが有効であれば, Bot が Messaging API を叩き, あとは LINE 側がよしなに指定ユーザ/グループ/ルームに送信してくれるという流れである. 特に難しいこともないが, 例のごとく全体像を表す謎の図を作ってみた.</p>
+<figure>
+<img src="/roki.log/2023/11/09/add-new-web-api-send-plain-text/overview.png" width="450" alt /><figcaption>東京ガスの請求通知が指定ユーザ/グループ/ルームに転送されるまでの概観</figcaption>
+</figure>
+<p>今回作成した独自の API は LINE Messaging API に習って, また既に実装済みのロジックを流用するため, HMAC<a href="/roki.log/2023/11/09/add-new-web-api-send-plain-text/#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a>-SHA256 で送信元の検証を行うこととした.</p>
+<h2 id="api-の実装">API の実装</h2>
+<p>以前つくった <a href="https://roki.dev/roki.log/2022/04/10/LineBotDevelopment/index.html">Haskell 製の LINE Bot</a> に新しいエンドポイントを追加する. その内部では, Servant という API に対応した型を定義することでウェブアプリの仕様を明記する DSL のようなライブラリを使用しており, その型単体でルーティングと渡されるパラメータ, 返されるレスポンス等を表現できる. 今回のような新規の API を追加して複数のエンドポイントを持つような設計では, 型演算子 <code>:&lt;|&gt;</code> を用いてそれを定義する.</p>
+<div class="mb-2 mt-2" style="max-height: 400px; overflow-y: scroll;">
+<script src="https://emgithub.com/embed-v2.js?target=https%3A%2F%2Fgithub.com%2Ffalgon%2Fline-bot-kiirotori%2Fblob%2Fbfd4b5654bb9f26351d9b8a4cb7b7b595c707a07%2Fsrc%2FLBKiirotori%2FWebhook%2FCore.hs%23L110-L121&style=github&type=code&showBorder=on&showLineNumbers=on&showFileMeta=on&showFullPath=on&showCopy=on&fetchFromJsDelivr=on"></script>
+<script src="https://emgithub.com/embed-v2.js?target=https%3A%2F%2Fgithub.com%2Ffalgon%2Fline-bot-kiirotori%2Fblob%2Fbfd4b5654bb9f26351d9b8a4cb7b7b595c707a07%2Fsrc%2FLBKiirotori%2FWebhook%2FCore.hs%23L161&style=github&type=code&showBorder=on&showLineNumbers=on&showFileMeta=on&showFullPath=on&showCopy=on&fetchFromJsDelivr=on"></script>
+<script src="https://emgithub.com/embed-v2.js?target=https%3A%2F%2Fgithub.com%2Ffalgon%2Fline-bot-kiirotori%2Fblob%2Fbfd4b5654bb9f26351d9b8a4cb7b7b595c707a07%2Fsrc%2FLBKiirotori%2FWebhook%2FCore.hs%23L170-187&style=github&type=code&showBorder=on&showLineNumbers=on&showFileMeta=on&showFullPath=on&showCopy=on&fetchFromJsDelivr=on"></script>
+</div>
+<p>実際の運用においてはログ出力が必要不可欠であるのと設定を色々と持ち回りたい都合上, モナド変換子を組み合わせているので型としては少し複雑になっているが, ここで重要なのは幽霊型を渡して実際の処理を実行する関数と関連付けることによりウェブアプリの実装が実現できている点である. また LINE Messaging API の仕様に合わせて HMAC-SHA256 で認証を行い <code>Content-Type: application/json</code> で受け取ることとしたので, JSON デコードの型を指定すること以外を共通の実装に任せることができる.</p>
+<div class="mb-2 mt-2" style="max-height: 400px; overflow-y: scroll;">
+<script src="https://emgithub.com/embed-v2.js?target=https%3A%2F%2Fgithub.com%2Ffalgon%2Fline-bot-kiirotori%2Fblob%2Fbfd4b5654bb9f26351d9b8a4cb7b7b595c707a07%2Fsrc%2FLBKiirotori%2FWebhook%2FCore.hs%23L123-159&style=github&type=code&showBorder=on&showLineNumbers=on&showFileMeta=on&showFullPath=on&showCopy=on&fetchFromJsDelivr=on"></script>
+<script src="https://emgithub.com/embed-v2.js?target=https%3A%2F%2Fgithub.com%2Ffalgon%2Fline-bot-kiirotori%2Fblob%2Fbfd4b5654bb9f26351d9b8a4cb7b7b595c707a07%2Fsrc%2FLBKiirotori%2FWebhook%2FEventHandlers%2FClass.hs%23L7-8&style=github&type=code&showBorder=on&showLineNumbers=on&showFileMeta=on&showFullPath=on&showCopy=on&fetchFromJsDelivr=on"></script>
+</div>
+<p>API のリソースメディア種別の仕様を <code>Content-Type: application/json</code> と定めてしまえば, 本来最も力を注ぎたい箇所である受け取ったリクエストボディから成る処理の実装 — 即ち <code>EventHandler</code> クラスの <code>handle</code> の定義 — に集中することができ, 追々新しい API をさらに追加したくなったとしても余計な部分を触らずに済む.</p>
+<h2 id="gas-から-api-を叩く">GAS から API を叩く</h2>
+<p>あとは対象の GMail を Polling して, 末チェックの東京ガスの請求メールがあったときに API を叩くようにすればよい. この「未チェック」の条件を GMail 上の「未読」にしてしまうと, たまたまメールを開いたタイミングでプログラムが実行された場合に通知されなくなってしまうので, スレッドに何らかのラベルをつけることで今回は判定することとした. GMail の階層的ラベルは親のラベルが存在したときに <code>/</code> で区切られた子ラベルを作成できる仕様となっているため, 階層ごとに 1 つ 1 つ分解して必要に応じてラベルを作成, 最終的にほしいラベルが得られるようにする.</p>
+<div class="mb-2 mt-2" style="max-height: 400px; overflow-y: scroll;">
+<script src="https://emgithub.com/embed-v2.js?target=https%3A%2F%2Fgithub.com%2Ffalgon%2Fline-bot-kiirotori%2Fblob%2F8a9926634095c7a186bd4aaa57ebf757d4536122%2Fclient%2Fgas%2Fgmail.js%23L1-12&style=github&type=code&showBorder=on&showLineNumbers=on&showFileMeta=on&showFullPath=on&showCopy=on&fetchFromJsDelivr=on"></script>
+</div>
+<p>GMail 上の検索クエリで該当するメールを検索し, そのメールからほしい情報をコールバック関数に渡す形として, 処理終わりに上記で得たラベルを付与し, 対象メールをチェック済状態とする.</p>
+<div class="mb-2 mt-2" style="max-height: 400px; overflow-y: scroll;">
+<script src="https://emgithub.com/embed-v2.js?target=https%3A%2F%2Fgithub.com%2Ffalgon%2Fline-bot-kiirotori%2Fblob%2F8a9926634095c7a186bd4aaa57ebf757d4536122%2Fclient%2Fgas%2Fgmail.js%23L14-32&style=github&type=code&showBorder=on&showLineNumbers=on&showFileMeta=on&showFullPath=on&showCopy=on&fetchFromJsDelivr=on"></script>
+</div>
+<p>あとは, この <code>getUnreadBillingMailsWith</code> のコールバック関数内で API を叩けばよい. このときに利用する諸々の値は, GAS のプロパティとして別途保持させておき, 下記のようにしてリクエストを送信する<a href="/roki.log/2023/11/09/add-new-web-api-send-plain-text/#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a>.</p>
+<div class="mb-2 mt-2" style="max-height: 400px; overflow-y: scroll;">
+<script src="https://emgithub.com/embed-v2.js?target=https%3A%2F%2Fgithub.com%2Ffalgon%2Fline-bot-kiirotori%2Fblob%2F8a9926634095c7a186bd4aaa57ebf757d4536122%2Fclient%2Fgas%2Fmain.js%23L1&style=github&type=code&showBorder=on&showLineNumbers=on&showFileMeta=on&showFullPath=on&showCopy=on&fetchFromJsDelivr=on"></script>
+<script src="https://emgithub.com/embed-v2.js?target=https%3A%2F%2Fgithub.com%2Ffalgon%2Fline-bot-kiirotori%2Fblob%2F8a9926634095c7a186bd4aaa57ebf757d4536122%2Fclient%2Fgas%2Fmain.js%23L14-25&style=github&type=code&showBorder=on&showLineNumbers=on&showFileMeta=on&showFullPath=on&showCopy=on&fetchFromJsDelivr=on"></script>
+</div>
+<p>リクエストヘッダーにのせる送信元認証用の HMAC-SHA256 シグネチャ <code>secretKey</code> を計算する必要があるが, GAS には <code>computeHmacSha256Signature</code> という便利な関数があるのでこれを使用する.</p>
+<div class="mb-2 mt-2" style="max-height: 400px; overflow-y: scroll;">
+<script src="https://emgithub.com/embed-v2.js?target=https%3A%2F%2Fgithub.com%2Ffalgon%2Fline-bot-kiirotori%2Fblob%2F8a9926634095c7a186bd4aaa57ebf757d4536122%2Fclient%2Fgas%2Fmain.js%23L3-12&style=github&type=code&showBorder=on&showLineNumbers=on&showFileMeta=on&showFullPath=on&showCopy=on&fetchFromJsDelivr=on"></script>
+</div>
+<p>リクエストボディの仕様は, 下記のようになっている.</p>
+<div class="mb-2 mt-2" style="max-height: 400px; overflow-y: scroll;">
+<script src="https://emgithub.com/embed-v2.js?target=https%3A%2F%2Fgithub.com%2Ffalgon%2Fline-bot-kiirotori%2Fblob%2Fbfd4b5654bb9f26351d9b8a4cb7b7b595c707a07%2Fsrc%2FLBKiirotori%2FWebhook%2FEventObject%2FCore.hs%23L62-82&style=github&type=code&showBorder=on&showLineNumbers=on&showFileMeta=on&showFullPath=on&showCopy=on&fetchFromJsDelivr=on"></script>
+</div>
+<p>主に <code>messages</code> フィールドに実際に送りたいテキスト, <code>target</code> フィールドに目的のユーザー/グループ/ルームの ID をのせて送りつければよい.</p>
+<div class="mb-2 mt-2" style="max-height: 400px; overflow-y: scroll;">
+<script src="https://emgithub.com/embed-v2.js?target=https%3A%2F%2Fgithub.com%2Ffalgon%2Fline-bot-kiirotori%2Fblob%2F8a9926634095c7a186bd4aaa57ebf757d4536122%2Fclient%2Fgas%2Fmain.js%23L41-67&style=github&type=code&showBorder=on&showLineNumbers=on&showFileMeta=on&showFullPath=on&showCopy=on&fetchFromJsDelivr=on"></script>
+</div>
+<p>あとは下記のように呼び出して時間ベースイベントとして登録し, 定期的に実行させれば完成である.</p>
+<div class="mb-2 mt-2" style="max-height: 400px; overflow-y: scroll;">
+<script src="https://emgithub.com/embed-v2.js?target=https%3A%2F%2Fgithub.com%2Ffalgon%2Fline-bot-kiirotori%2Fblob%2F8a9926634095c7a186bd4aaa57ebf757d4536122%2Fclient%2Fgas%2Fmain.js%23L69-76&style=github&type=code&showBorder=on&showLineNumbers=on&showFileMeta=on&showFullPath=on&showCopy=on&fetchFromJsDelivr=on"></script>
+</div>
+<p>なおこれらの js ファイルは <a href="https://github.com/google/clasp">clasp</a> を用いて管理している.</p>
+<h2 id="総括">総括</h2>
+<p>LINE Messaging API 用の Bot 実装を元々済ませてあったこともあり, それを出来る限り流用して型定義により挙動を分岐する設計としたことで, Haskell の持つ型の表現力とそれを活かした Servant ライブラリの恩恵を受け, 予期せぬ実装が行われてしまうことを出来る限り静的に回避しつつも, 保守性と拡張性を保った非常に使い勝手の良いウェブアプリとして実装ができたのではないかと考えている.<br><br> クライアント側としては, なにか更に色々としたくなった場合, 生の javascript を書くのをやめて TypeScript で書き webpack + babel かなにかでバンドル/トランスパイルしたものを clasp でアップロードしても良いかもしれない. いや, サーバ側を Haskell で実装しているのだから, クライアント側は <a href="https://www.purescript.org/">Purescript</a><a href="/roki.log/2023/11/09/add-new-web-api-send-plain-text/#fn4" class="footnote-ref" id="fnref4" role="doc-noteref"><sup>4</sup></a> で書くと良いかもしれない…等, この辺りは考え出せばキリがないが, 単なるやりすぎは手段と目的の履き違いに他ならないので, その状況に応じた適切な管理方法を採用したいところである.</p>
+<figure>
+<img src="/roki.log/2023/11/09/add-new-web-api-send-plain-text/message_from_bot.jpg" width="400" alt /><figcaption>請求額の確定通知</figcaption>
+</figure>
+<p>さて, これで請求額通知を見逃すこともなくなり家族とも共有されるようになり万事解決…だが, そもそも請求額を抑えたい…昨今の情勢や電気・ガス料金の政府支援半減も厳しい…あれ…日本円の価値<span class="emoji" data-emoji="thinking">🤔</span>…というのはまた別の話である.</p>
+<section class="footnotes" role="doc-endnotes">
+<hr />
+<ol>
+<li id="fn1" role="doc-endnote"><p>ただし, 一部自作 Bot のエラーハンドリング/フォールバック的な通知用途として LINE Notify を活用している<a href="/roki.log/2023/11/09/add-new-web-api-send-plain-text/#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn2" role="doc-endnote"><p>RFC2104 として公開されている<a href="/roki.log/2023/11/09/add-new-web-api-send-plain-text/#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn3" role="doc-endnote"><p>実をいうと Servant の関連ライブラリとして <a href="https://hackage.haskell.org/package/servant-js">servant-js</a> というものがあり, これは Servant による API の型定義から有名な javascript ライブラリ (AngularJS, axios, jQuery など) や生の javascript クライアントコードを生成することができ非常に便利なのだが, 今回は実装する API の仕様上と GAS をクライアントとする都合上そこまでの利便性を感じなかったため自分で書くこととした<a href="/roki.log/2023/11/09/add-new-web-api-send-plain-text/#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn4" role="doc-endnote"><p>Purescript 用の <a href="https://pursuit.purescript.org/packages/purescript-google-apps/0.0.3">GAS ライブラリ</a>も存在する<a href="/roki.log/2023/11/09/add-new-web-api-send-plain-text/#fnref4" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section>]]></summary>
+</entry>
+<entry>
     <title>簡易認証, 指定時間実行可能な LINE Bot の自作</title>
     <link href="https://roki.dev/roki.log/2022/04/10/LineBotDevelopment/index.html" />
     <id>https://roki.dev/roki.log/2022/04/10/LineBotDevelopment/index.html</id>
@@ -5768,114 +5860,6 @@ f'(x)&amp;=&amp;\lim_{h\to 0}\frac{\cos(x+h)-\cos x}{h}\\
 <p><i class="fab fa-github mr-2"></i> <a href="https://github.com/falgon/tinyGoWebServer">falgon/tinyGoWebServer - Tiny Go Web Server. AWS SNS + S3 + EC2 + Nginx Fast-CGI technology automatically synchronizes content on S3 bucket.</a></p>
 </div>
 <p>なお, S3 バケットとの同期処理が失敗した場合, 別の SNS トピックを用いて, 失敗の旨のメールを管理者に送信するようにしてある. リポジトリ内の README にも記してあるが, 同期を実行するスクリプト, およびウェブサーバの実行ファイルは, systemd で管理することを前提として, <a href="http://www.pathname.com/fhs/">Filesystem Hierarchy Standard</a> に従い, 配置することとした.</p>]]></summary>
-</entry>
-<entry>
-    <title>ベイズの定理</title>
-    <link href="https://roki.dev/roki.log/2018/07/26/bayestheorem/index.html" />
-    <id>https://roki.dev/roki.log/2018/07/26/bayestheorem/index.html</id>
-    <published>2018-07-26T00:32:00Z</published>
-    <updated>2018-07-26T00:32:00Z</updated>
-    <summary type="html"><![CDATA[<p>ベイズの定理の導出から, モンティ・ホール問題への応用まで.</p>
-<h2 id="ベイズの定理の導出">ベイズの定理の導出</h2>
-<p>事象 <span class="math inline">A</span> が発生する確率を「<span class="math inline">P(A) = A</span> が発生する確率 <span class="math inline">\div</span> すべての事象の数」と書くとき, ベイズの定理は</p>
-<div class="m-thm">
-<header class="m-thm-title">
-<p>
-<span id="baysestheorem">ベイズの定理</span>
-</p>
-</header>
-<div class="m-thm-content">
-事象 <span class="math inline">B</span> のもとで事象 <span class="math inline">A</span> が発生する確率 <span class="math display">P(A\mid B)=\dfrac{P(B\mid A)P(A)}{P(B)}\ (P(B)\gt 0)</span>
-</div>
-</div>
-<p>と定義される. 以下ベイズの定理を導出する. 例として, 起こり得る全ての事象の数を <span class="math inline">200</span>, 事象 <span class="math inline">A</span>, 事象 <span class="math inline">B</span>(以下単に <span class="math inline">A</span>, <span class="math inline">B</span> と書く)が発生した回数をそれぞれ <span class="math inline">60,\ 40</span> とし, <span class="math inline">A</span> および <span class="math inline">B</span> が発生した確率を <span class="math inline">10</span> とする. 簡単のために, この事象関係を表すベン図を次に示す<a href="/roki.log/2018/07/26/bayestheorem/#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a>.</p>
-<figure>
-<img src="/roki.log/2018/07/26/bayestheorem/bayes_venn.png" title="ある事象を表したベン図" alt /><figcaption>ある事象を表したベン図</figcaption>
-</figure>
-<!--more-->
-<p>まず, <span class="math inline">A</span> および <span class="math inline">B</span> が発生する確率 <span class="math inline">P(A\cap B) = P(B\cap A)</span> を求める. <span class="math inline">A,\ B</span> がそれぞれ発生する確率は, <span class="math display">\begin{array}{lcl}
-P(A)&amp;=&amp;\dfrac{60}{200}=\dfrac{3}{10}\\ P(B)&amp;=&amp;\dfrac{40}{200}=\dfrac{1}{5}
-\end{array}</span> である<a href="/roki.log/2018/07/26/bayestheorem/#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a>. <span class="math inline">B</span> の下で <span class="math inline">A</span> が発生する確率と, <span class="math inline">A</span> の下で <span class="math inline">B</span> が発生する確率は,</p>
-<p><span class="math display">\begin{array}{lclcl}
-P(A\mid B)&amp;=&amp;\dfrac{10}{40}&amp;=&amp;\dfrac{1}{4}\\
-P(B\mid A)&amp;=&amp;\dfrac{10}{60}&amp;=&amp;\dfrac{1}{6}
-\end{array}
-</span></p>
-<p>である. そもそも, <span class="math inline">B</span> が発生しなければ, <span class="math inline">A</span> および <span class="math inline">B</span> が発生するということはないし, <span class="math inline">A</span> が発生しなければ, <span class="math inline">B</span> および <span class="math inline">A</span> が発生するということはないので,</p>
-<p><span class="math display">\begin{array}{lclclcl}
-P(A\cap B)&amp;=&amp;P(A\mid B)P(B)&amp;=&amp;\dfrac{1}{4}\cdot\dfrac{1}{5}&amp;=&amp;\dfrac{1}{20}\\
-P(B\cap A)&amp;=&amp;P(B\mid A)P(A)&amp;=&amp;\dfrac{1}{6}\cdot\dfrac{3}{10}&amp;=&amp;\dfrac{1}{20}
-\end{array}</span></p>
-<p>である. あとは変形すれば良いだけで,</p>
-<p><span class="math display">\begin{array}{lcl}
-P(A\mid B)P(B)&amp;=&amp;P(A\cap B)\\
-P(A\mid B)&amp;=&amp;\dfrac{P(A\cap B)}{P(B)}\\
-P(A\mid B)&amp;=&amp;\dfrac{P(B\mid A)P(A)}{P(B)}
-\end{array}</span></p>
-<h2 id="モンティホール問題">モンティ・ホール問題</h2>
-<p>確率論的な話となるとよく挙げられる有名な問題, モンティ・ホール問題をベイズの定理で解く. モンティ・ホール問題とは, 以下の通りである.</p>
-<blockquote>
-<p>(snip)プレーヤーの前に閉まった3つのドアがあって、1つのドアの後ろには景品の新車が、2つのドアの後ろには、はずれを意味するヤギがいる。プレーヤーは新車のドアを当てると新車がもらえる。プレーヤーが1つのドアを選択した後、司会のモンティが残りのドアのうちヤギがいるドアを開けてヤギを見せる。</p>
-ここでプレーヤーは、最初に選んだドアを、残っている開けられていないドアに変更してもよいと言われる。プレーヤーはドアを変更すべきだろうか？(snip)<br> <strong>ゲームのルール:</strong>
-<ol>
-<li>
-3つのドア (A, B, C) に（景品、ヤギ、ヤギ）がランダムに入っている。
-</li>
-<li>
-プレーヤーはドアを1つ選ぶ。
-</li>
-<li>
-モンティは残りのドアのうち1つを必ず開ける。
-</li>
-<li>
-モンティの開けるドアは、必ずヤギの入っているドアである。
-</li>
-<li>
-モンティはプレーヤーにドアを選びなおしてよいと必ず言う。
-</li>
-</ol>
-– <a href="https://ja.wikipedia.org/w/index.php?title=%E3%83%A2%E3%83%B3%E3%83%86%E3%82%A3%E3%83%BB%E3%83%9B%E3%83%BC%E3%83%AB%E5%95%8F%E9%A1%8C&oldid=69027845"><i>モンティ・ホール問題 - wikipedia</i></a>
-</blockquote>
-<p>いま, この問題をモンティがヤギのドアを開けた後に, プレーヤーが景品のドアを開ける条件付き確率問題とし, プレーヤーが初手で <span class="math inline">A</span> を選択, それに対しモンティが <span class="math inline">B</span> を選択したとする<a href="/roki.log/2018/07/26/bayestheorem/#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a>. モンティが <span class="math inline">B</span> を選択したということは, 景品のドアは <span class="math inline">A</span> または <span class="math inline">C</span> である. すなわち, プレーヤーが <span class="math inline">A</span> を選択し, この選択を変えずに <span class="math inline">A</span> が景品のドアである確率は <span class="math inline">P(A\mid B)</span>, 選択を変え <span class="math inline">C</span> が景品のドアである確率は <span class="math inline">P(C\mid B)</span> と書ける. このそれぞれの条件付き確率を, 上で導出したベイズの定理の式に当てはめて求めればよい<a href="/roki.log/2018/07/26/bayestheorem/#fn4" class="footnote-ref" id="fnref4" role="doc-noteref"><sup>4</sup></a>.</p>
-<ul>
-<li>モンティは, プレーヤーが選択した <span class="math inline">2</span> つのドア以外のどちらかを選択するから, <span class="math inline">P(B)=\dfrac{1}{2}</span> である.</li>
-<li>プレーヤーが初手で選ぶ段階では, 景品のドアを選ぶ確率は均等であるから, <span class="math inline">P(A)=P(C)=\dfrac{1}{3}</span> である.</li>
-</ul>
-<p>これらを基に, まず <span class="math inline">P(A\mid B)</span> について式にすると,</p>
-<p><span class="math display">
-\begin{array}{lclclcl}
-P(A\mid B) &amp;=&amp; \dfrac{P(B\mid A)P(A)}{P(B)} &amp;=&amp; \dfrac{\dfrac{1}{2}\cdot\dfrac{1}{3}}{\dfrac{1}{2}}&amp;=&amp;\dfrac{1}{3}
-\end{array}
-</span></p>
-<p><span class="math inline">P(A\mid B)</span> とは先も述べたように, <span class="math inline">A</span> が景品のドアであると踏んだときに, それが景品のドアである確率である. よって,</p>
-<ul>
-<li><span class="math inline">A</span> が景品のドアであれば, モンティは <span class="math inline">B</span> と <span class="math inline">C</span> どちらを選択しても良いことになるので, <span class="math inline">P(B\mid A)=\dfrac{1}{2}</span> である.</li>
-</ul>
-<p>から上式のようになる. 次に, <span class="math inline">P(C\mid B)</span> について式にすると,</p>
-<p><span class="math display">
-\begin{array}{lclclcl}
-P(C\mid B) &amp;=&amp; \dfrac{P(B\mid C)P(C)}{P(B)}&amp;=&amp;\dfrac{1\cdot \dfrac{1}{3}}{\dfrac{1}{2}}&amp;=&amp;\dfrac{2}{3}
-\end{array}
-</span></p>
-<p><span class="math inline">P(C\mid B)</span> とは先も述べたように, <span class="math inline">C</span> が景品のドアであると踏んだときに, それが景品のドアである確率である. よって,</p>
-<ul>
-<li><span class="math inline">C</span> が景品のドアであれば, モンティは <span class="math inline">B</span> しか選ぶことができないから, <span class="math inline">P(B\mid C)=1</span> である.</li>
-</ul>
-<p>から上式のようになる. よって, ドアの選択を変えるべきであるという解が導かれる. Wikipedia にも似たような図があるが, 折角なので, <span class="math inline">1000</span> 回モンティ・ホール問題を試行した場合において, 選択を変えて景品のドアを当てた回数と, 選択を変えずに景品のドアを当てた回数をプロットしてみた<a href="/roki.log/2018/07/26/bayestheorem/#fn5" class="footnote-ref" id="fnref5" role="doc-noteref"><sup>5</sup></a>.</p>
-<figure>
-<img src="/roki.log/2018/07/26/bayestheorem/montyhalll.png" title="モンティ・ホール問題の視覚化" alt /><figcaption>モンティ・ホール問題の視覚化</figcaption>
-</figure>
-<p>当たり前ではあるのだが, この図からも, <span class="math inline">C</span> に変えた方が当たる回数が多くなっていることを確認できる.</p>
-<section class="footnotes" role="doc-endnotes">
-<hr />
-<ol>
-<li id="fn1" role="doc-endnote"><p>図は matplotlib_venn 他で<a href="https://gist.github.com/falgon/d88e3c0d7d691ab9d97b453e2cec918b">生成</a>.<a href="/roki.log/2018/07/26/bayestheorem/#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-<li id="fn2" role="doc-endnote"><p>自明であるが, これを <span class="math inline">P(A)=P(A\mid\Omega), P(B)=P(B\mid\Omega)</span> と書くこともできる.<a href="/roki.log/2018/07/26/bayestheorem/#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-<li id="fn3" role="doc-endnote"><p>他のどのようなドアの組み合わせをとっても, プレーヤーが <span class="math inline">1</span> つドアを選択し, モンティが <span class="math inline">1</span> つヤギのドアを選択するという規則には影響しないから, この前提による一般性の欠如を懸念する必要はない.<a href="/roki.log/2018/07/26/bayestheorem/#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-<li id="fn4" role="doc-endnote"><p>注: 一応述べておくと, ベイズの定理で使われている変数 <span class="math inline">A, B, C</span> は, このドア <span class="math inline">A, B, C</span> とは無関係である.<a href="/roki.log/2018/07/26/bayestheorem/#fnref4" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-<li id="fn5" role="doc-endnote"><p>図は matplotlib で<a href="https://gist.github.com/falgon/5deb211abce5ac715257f55402a22307">生成</a>.<a href="/roki.log/2018/07/26/bayestheorem/#fnref5" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-</ol>
-</section>]]></summary>
 </entry>
 
 </feed>
