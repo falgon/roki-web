@@ -69,7 +69,7 @@ execYaml' H.Build opts = let utc = parseJSTTime =<< optSchedulingDate opts in do
         lift $ do
             unless (optIsForceYes opts) $ do
                 putStrLn $ "current branch name is: " <> $(gitBranch)
-                putStr "Are you sure you want to continue connecting? (y/N)" >> hFlush stdout
+                putStr "Are you sure you want to continue? (y/N)" >> hFlush stdout
                 unlessM (uncurry (||) . first (=='y') . second (=='Y') . dupe <$> getChar) $ putStrLn "Canceled" >> exitSuccess
             execHakyllFromCmd H.Build $ do
                 H.create [H.fromFilePath fName] $ do
