@@ -11,7 +11,7 @@
         "@creativebulma/bulma-tooltip": "^1.2.0",
         "@fortawesome/fontawesome-svg-core": "^6.4.2",
         "@fortawesome/free-brands-svg-icons": "^6.4.2",
-        "@fortawesome/free-solid-svg-icons": "^6.4.2",
+        "@fortawesome/free-solid-svg-icons": "^6.5.0",
         "bulma": "^0.9.4",
         "katex": "^0.16.9",
         "psi": "^4.1.0",
