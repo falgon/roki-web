@@ -6,8 +6,105 @@
         <link>https://roki.dev/roki.log</link>
         <description><![CDATA[Roki tech blog]]></description>
         <atom:link href="https://roki.dev/roki.log/feed/roki.log-rss.xml" rel="self" type="application/rss+xml" />
-        <lastBuildDate>Thu, 09 Nov 2023 09:05:34 UT</lastBuildDate>
+        <lastBuildDate>Wed, 06 Dec 2023 00:00:00 UT</lastBuildDate>
         <item>
+    <title>東京ガスの請求通知を自作 LINE Bot に喋らせる</title>
+    <link>https://roki.dev/roki.log/2023/12/06/add-new-web-api-send-plain-text/index.html</link>
+    <description><![CDATA[<p>※1. この記事は「<a href="https://qiita.com/advent-calendar/2023/klab">KLab Engineer Advent Calendar 2023</a>」の 6 日目にエントリしています</p>
+<figure>
+<img src="/roki.log/2023/12/06/add-new-web-api-send-plain-text/8306214630_1a6a1c5413_w.jpg" alt /><figcaption>Happy Holidays! - <a href="https://www.flickr.com/photos/shutterfotos/">Shutter Fotos</a>, <a href="https://creativecommons.org/licenses/by/2.0/">Attribution-NonCommercial 2.0 Generic (CC BY-NC 2.0 DEED)</a></figcaption>
+</figure>
+<p>以前つくった <a href="https://roki.dev/roki.log/2022/04/10/LineBotDevelopment/index.html">Haskell 製の LINE Bot</a> を家族の所属するグループ LINE に参加させて日常的に活用している. ごみ出しの項目確認や買い物リストのメモなど, 家族間のコミュニケーションや生活の流れの中でぱっと済ませたい諸々の事柄を LINE という定常的に利用するツールの中で自動化することで, 当初よりも細かい点で便利になった感触がある. これは <a href="https://notify-bot.line.me/ja/">LINE Notify</a> のみでは実現できない双方向のやりとりや LINE というプラットフォームを最大限活用できる拡張性によるものだ.<br> ところで, 我が家のインフラの一部は東京ガスに依存しているわけだが, 東京ガスは, その毎月の請求額の確認通知を指定のメールアドレスあるいは <a href="https://members.tokyo-gas.co.jp/contents/public/line/information.html">myTOKYOGAS と連携の LINE へ送信する</a>サービスを提供している. 私は以前からどちらのサービスも利用していたが</p>
+<ol type="1">
+<li>メールに気付かず, 請求額の把握が遅れる</li>
+<li>LINE への通知が自分宛てのみとなるので, 自分を経由して家族と情報共有する必要がある</li>
+</ol>
+<p>という問題があった. 2 については, 家族全員がそれぞれの LINE アカウント上で myTOKYOGAS と連携すれば良いのでは？と思うかもしれないが, これはサービスの仕様上単一のアカウントのみ連携ができるようになっているので不可能である. 別の方法としては, LINE Notify をグループ LINE に招待しその API を叩くようにすれば, わざわざ LINE Bot に機能追加をしなくても済むが</p>
+<ul>
+<li>情報によって異なる発信源からメッセージが飛んでくるのは統一感がなく“気持ち悪い”</li>
+<li>別口の API を一度実装してしまえばこの用途以外でも様々な目的に対して流用できる</li>
+</ul>
+<p>という点から LINE Notify を利用して実現しようとはせず, 自分で実装することとした<a href="/roki.log/2023/12/06/add-new-web-api-send-plain-text/#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a>. 本エントリの扱う機能追加についての差分は下記の PR のとおりである.</p>
+<div class="has-text-centered mt-2 mb-2">
+<p><i class="fab fa-github fa-fw"></i> <a href="https://github.com/falgon/line-bot-kiirotori/pull/19">Add send message api - Pull Request #19 - falgon/line-bot-kiirotori</a></p>
+</div>
+一言で言ってしまえば, LINE Messaging API とのやりとりで受け取るエンドポイントとは別口の API を実装し, それを Google Apps Script (以下 GAS) で叩くという“普通の” Web API のやりとりの構造をつくっただけではあるのだが,
+<p class="is-size-7">
+最近ブログを更新していないことに気づいたのと
+</p>
+<p>日本語で Haskell Servant の具体的な活用例を示すことにはそれなりの価値があるかもということ, 同じようなことを実現して生活を楽にしたい方がいるかもということ, など文章生成 AI に尋ねてもどうもはっきりとした解答が得られなかったときのために, あるいは文章生成 AI にこのエントリが食われるために？備忘録を兼ねて綴ることとした.</p>
+<!--more-->
+<h2 id="概観">概観</h2>
+<p>仕組みとしては至って単純である. まず myTOKYOGAS が毎月の請求額決定通知を指定のメールアドレスに飛ばしてくるので, これを GAS で定期的にチェックするために GMail のメールアドレスを指定する. 該当のメールが存在しかつラベルが貼られていなければ, Bot に喋らせたいテキストを載せて今回実装の Bot API を叩く. 情報源などを検証の上そのリクエストが有効であれば, Bot が Messaging API を叩き, あとは LINE 側がよしなに指定ユーザ/グループ/ルームに送信してくれるという流れである. 特に難しいこともないが, 例のごとく全体像を表す謎の図を作ってみた.</p>
+<figure>
+<img src="/roki.log/2023/12/06/add-new-web-api-send-plain-text/overview.png" width="450" alt /><figcaption>東京ガスの請求通知が指定ユーザ/グループ/ルームに転送されるまでの概観</figcaption>
+</figure>
+<p>今回作成した独自の API は LINE Messaging API に習って, また既に実装済みのロジックを流用するため, HMAC<a href="/roki.log/2023/12/06/add-new-web-api-send-plain-text/#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a>-SHA256 で送信元の検証を行うこととした.</p>
+<h2 id="api-の実装">API の実装</h2>
+<p>以前つくった <a href="https://roki.dev/roki.log/2022/04/10/LineBotDevelopment/index.html">Haskell 製の LINE Bot</a> に新しいエンドポイントを追加する. その内部では, Servant という API に対応した型を定義することでウェブアプリの仕様を明記する DSL のようなライブラリを使用しており, その型単体でルーティングと渡されるパラメータ, 返されるレスポンス等を表現できる. 今回のような新規の API を追加して複数のエンドポイントを持つような設計では, 型演算子 <code>:&lt;|&gt;</code> を用いてそれを定義する.</p>
+<div class="mb-2 mt-2" style="max-height: 400px; overflow-y: scroll;">
+<script src="https://emgithub.com/embed-v2.js?target=https%3A%2F%2Fgithub.com%2Ffalgon%2Fline-bot-kiirotori%2Fblob%2Fbfd4b5654bb9f26351d9b8a4cb7b7b595c707a07%2Fsrc%2FLBKiirotori%2FWebhook%2FCore.hs%23L110-L121&style=github&type=code&showBorder=on&showLineNumbers=on&showFileMeta=on&showFullPath=on&showCopy=on&fetchFromJsDelivr=on"></script>
+<script src="https://emgithub.com/embed-v2.js?target=https%3A%2F%2Fgithub.com%2Ffalgon%2Fline-bot-kiirotori%2Fblob%2Fbfd4b5654bb9f26351d9b8a4cb7b7b595c707a07%2Fsrc%2FLBKiirotori%2FWebhook%2FCore.hs%23L161&style=github&type=code&showBorder=on&showLineNumbers=on&showFileMeta=on&showFullPath=on&showCopy=on&fetchFromJsDelivr=on"></script>
+<script src="https://emgithub.com/embed-v2.js?target=https%3A%2F%2Fgithub.com%2Ffalgon%2Fline-bot-kiirotori%2Fblob%2Fbfd4b5654bb9f26351d9b8a4cb7b7b595c707a07%2Fsrc%2FLBKiirotori%2FWebhook%2FCore.hs%23L170-187&style=github&type=code&showBorder=on&showLineNumbers=on&showFileMeta=on&showFullPath=on&showCopy=on&fetchFromJsDelivr=on"></script>
+</div>
+<p>実際の運用においてはログ出力が必要不可欠であるのと設定を色々と持ち回りたい都合上, モナド変換子を組み合わせているので型としては少し複雑になっているが, ここで重要なのは幽霊型を渡して実際の処理を実行する関数と関連付けることによりウェブアプリの実装が実現できている点である. また LINE Messaging API の仕様に合わせて HMAC-SHA256 で認証を行い <code>Content-Type: application/json</code> で受け取ることとしたので, JSON デコードの型を指定すること以外を共通の実装に任せることができる.</p>
+<div class="mb-2 mt-2" style="max-height: 400px; overflow-y: scroll;">
+<script src="https://emgithub.com/embed-v2.js?target=https%3A%2F%2Fgithub.com%2Ffalgon%2Fline-bot-kiirotori%2Fblob%2Fbfd4b5654bb9f26351d9b8a4cb7b7b595c707a07%2Fsrc%2FLBKiirotori%2FWebhook%2FCore.hs%23L123-159&style=github&type=code&showBorder=on&showLineNumbers=on&showFileMeta=on&showFullPath=on&showCopy=on&fetchFromJsDelivr=on"></script>
+<script src="https://emgithub.com/embed-v2.js?target=https%3A%2F%2Fgithub.com%2Ffalgon%2Fline-bot-kiirotori%2Fblob%2Fbfd4b5654bb9f26351d9b8a4cb7b7b595c707a07%2Fsrc%2FLBKiirotori%2FWebhook%2FEventHandlers%2FClass.hs%23L7-8&style=github&type=code&showBorder=on&showLineNumbers=on&showFileMeta=on&showFullPath=on&showCopy=on&fetchFromJsDelivr=on"></script>
+</div>
+<p>API のリソースメディア種別の仕様を <code>Content-Type: application/json</code> と定めてしまえば, 本来最も力を注ぎたい箇所である受け取ったリクエストボディから成る処理の実装 — 即ち <code>EventHandler</code> クラスの <code>handle</code> の定義 — に集中することができ, 追々新しい API をさらに追加したくなったとしても余計な部分を触らずに済む.</p>
+<h2 id="gas-から-api-を叩く">GAS から API を叩く</h2>
+<p>あとは対象の GMail を Polling して, 末チェックの東京ガスの請求メールがあったときに API を叩くようにすればよい. この「未チェック」の条件を GMail 上の「未読」にしてしまうと, たまたまメールを開いたタイミングでプログラムが実行された場合に通知されなくなってしまうので, スレッドに何らかのラベルをつけることで今回は判定することとした. GMail の階層的ラベルは親のラベルが存在したときに <code>/</code> で区切られた子ラベルを作成できる仕様となっているため, 階層ごとに 1 つ 1 つ分解して必要に応じてラベルを作成, 最終的にほしいラベルが得られるようにする.</p>
+<div class="mb-2 mt-2" style="max-height: 400px; overflow-y: scroll;">
+<script src="https://emgithub.com/embed-v2.js?target=https%3A%2F%2Fgithub.com%2Ffalgon%2Fline-bot-kiirotori%2Fblob%2F8a9926634095c7a186bd4aaa57ebf757d4536122%2Fclient%2Fgas%2Fgmail.js%23L1-12&style=github&type=code&showBorder=on&showLineNumbers=on&showFileMeta=on&showFullPath=on&showCopy=on&fetchFromJsDelivr=on"></script>
+</div>
+<p>GMail 上の検索クエリで該当するメールを検索し, そのメールからほしい情報をコールバック関数に渡す形として, 処理終わりに上記で得たラベルを付与し, 対象メールをチェック済状態とする.</p>
+<div class="mb-2 mt-2" style="max-height: 400px; overflow-y: scroll;">
+<script src="https://emgithub.com/embed-v2.js?target=https%3A%2F%2Fgithub.com%2Ffalgon%2Fline-bot-kiirotori%2Fblob%2F8a9926634095c7a186bd4aaa57ebf757d4536122%2Fclient%2Fgas%2Fgmail.js%23L14-32&style=github&type=code&showBorder=on&showLineNumbers=on&showFileMeta=on&showFullPath=on&showCopy=on&fetchFromJsDelivr=on"></script>
+</div>
+<p>あとは, この <code>getUnreadBillingMailsWith</code><a href="/roki.log/2023/12/06/add-new-web-api-send-plain-text/#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a> のコールバック関数内で API を叩けばよい. このときに利用する諸々の値は, GAS のプロパティとして別途保持させておき, 下記のようにしてリクエストを送信する<a href="/roki.log/2023/12/06/add-new-web-api-send-plain-text/#fn4" class="footnote-ref" id="fnref4" role="doc-noteref"><sup>4</sup></a>.</p>
+<div class="mb-2 mt-2" style="max-height: 400px; overflow-y: scroll;">
+<script src="https://emgithub.com/embed-v2.js?target=https%3A%2F%2Fgithub.com%2Ffalgon%2Fline-bot-kiirotori%2Fblob%2F8a9926634095c7a186bd4aaa57ebf757d4536122%2Fclient%2Fgas%2Fmain.js%23L1&style=github&type=code&showBorder=on&showLineNumbers=on&showFileMeta=on&showFullPath=on&showCopy=on&fetchFromJsDelivr=on"></script>
+<script src="https://emgithub.com/embed-v2.js?target=https%3A%2F%2Fgithub.com%2Ffalgon%2Fline-bot-kiirotori%2Fblob%2F8a9926634095c7a186bd4aaa57ebf757d4536122%2Fclient%2Fgas%2Fmain.js%23L14-25&style=github&type=code&showBorder=on&showLineNumbers=on&showFileMeta=on&showFullPath=on&showCopy=on&fetchFromJsDelivr=on"></script>
+</div>
+<p>リクエストヘッダーにのせる送信元認証用の HMAC-SHA256 シグネチャ <code>secretKey</code> を計算する必要があるが, GAS には <code>computeHmacSha256Signature</code> という便利な関数があるのでこれを使用する.</p>
+<div class="mb-2 mt-2" style="max-height: 400px; overflow-y: scroll;">
+<script src="https://emgithub.com/embed-v2.js?target=https%3A%2F%2Fgithub.com%2Ffalgon%2Fline-bot-kiirotori%2Fblob%2F8a9926634095c7a186bd4aaa57ebf757d4536122%2Fclient%2Fgas%2Fmain.js%23L3-12&style=github&type=code&showBorder=on&showLineNumbers=on&showFileMeta=on&showFullPath=on&showCopy=on&fetchFromJsDelivr=on"></script>
+</div>
+<p>リクエストボディの仕様は, 下記のようになっている.</p>
+<div class="mb-2 mt-2" style="max-height: 400px; overflow-y: scroll;">
+<script src="https://emgithub.com/embed-v2.js?target=https%3A%2F%2Fgithub.com%2Ffalgon%2Fline-bot-kiirotori%2Fblob%2Fbfd4b5654bb9f26351d9b8a4cb7b7b595c707a07%2Fsrc%2FLBKiirotori%2FWebhook%2FEventObject%2FCore.hs%23L62-82&style=github&type=code&showBorder=on&showLineNumbers=on&showFileMeta=on&showFullPath=on&showCopy=on&fetchFromJsDelivr=on"></script>
+</div>
+<p>主に <code>messages</code> フィールドに実際に送りたいテキスト, <code>target</code> フィールドに目的のユーザー/グループ/ルームの ID をのせて送りつければよい.</p>
+<div class="mb-2 mt-2" style="max-height: 400px; overflow-y: scroll;">
+<script src="https://emgithub.com/embed-v2.js?target=https%3A%2F%2Fgithub.com%2Ffalgon%2Fline-bot-kiirotori%2Fblob%2F8a9926634095c7a186bd4aaa57ebf757d4536122%2Fclient%2Fgas%2Fmain.js%23L41-67&style=github&type=code&showBorder=on&showLineNumbers=on&showFileMeta=on&showFullPath=on&showCopy=on&fetchFromJsDelivr=on"></script>
+</div>
+<p>あとは下記のように呼び出して時間ベースイベントとして登録し, 定期的に実行させれば完成である.</p>
+<div class="mb-2 mt-2" style="max-height: 400px; overflow-y: scroll;">
+<script src="https://emgithub.com/embed-v2.js?target=https%3A%2F%2Fgithub.com%2Ffalgon%2Fline-bot-kiirotori%2Fblob%2F8a9926634095c7a186bd4aaa57ebf757d4536122%2Fclient%2Fgas%2Fmain.js%23L69-76&style=github&type=code&showBorder=on&showLineNumbers=on&showFileMeta=on&showFullPath=on&showCopy=on&fetchFromJsDelivr=on"></script>
+</div>
+<p>なおこれらの js ファイルは <a href="https://github.com/google/clasp">clasp</a> を用いて管理している.</p>
+<h2 id="総括">総括</h2>
+<p>LINE Messaging API 用の Bot 実装を元々済ませてあったこともあり, それを出来る限り流用して型定義により挙動を分岐する設計としたことで, Haskell の持つ型の表現力とそれを活かした Servant ライブラリの恩恵を受け, 予期せぬ実装が行われてしまうことを出来る限り静的に回避しつつも, 保守性と拡張性を保った非常に使い勝手の良いウェブアプリとして実装ができたのではないかと考えている.<br><br> クライアント側としては, なにか更に色々としたくなった場合, 生の javascript を書くのをやめて TypeScript で書き webpack + babel かなにかでバンドル/トランスパイルしたものを clasp でアップロードしても良いかもしれない. いや, サーバ側を Haskell で実装しているのだから, クライアント側は <a href="https://www.purescript.org/">Purescript</a><a href="/roki.log/2023/12/06/add-new-web-api-send-plain-text/#fn5" class="footnote-ref" id="fnref5" role="doc-noteref"><sup>5</sup></a> で書くと良いかもしれない…等, この辺りは考え出せばキリがないが, 単なるやりすぎは手段と目的の履き違いに他ならないので, その状況に応じた適切な管理方法を採用したいところである.</p>
+<figure>
+<img src="/roki.log/2023/12/06/add-new-web-api-send-plain-text/message_from_bot.jpg" width="400" alt /><figcaption>請求額の確定通知</figcaption>
+</figure>
+<p>さて, これで請求額通知を見逃すこともなくなり家族とも共有されるようになり万事解決…だが, そもそも請求額を抑えたい…昨今の情勢や電気・ガス料金の政府支援半減も厳しい…あれ…日本円の価値<span class="emoji" data-emoji="thinking">🤔</span>…というのはまた別の話である.</p>
+<section class="footnotes" role="doc-endnotes">
+<hr />
+<ol>
+<li id="fn1" role="doc-endnote"><p>ただし, 一部自作 Bot のエラーハンドリング/フォールバック的な通知用途として LINE Notify を活用している<a href="/roki.log/2023/12/06/add-new-web-api-send-plain-text/#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn2" role="doc-endnote"><p>RFC2104 として公開されている<a href="/roki.log/2023/12/06/add-new-web-api-send-plain-text/#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn3" role="doc-endnote"><p>2023/11 に myTOKYOGAS の<a href="https://members.tokyo-gas.co.jp/contents/public/about/renewal.html">システムリニューアルがあった</a>ようで, その際にどうやら請求額通知を送信してくるメールアドレスが変更されたようだ. c.f. <a href="https://github.com/falgon/line-bot-kiirotori/pull/25" class="uri">https://github.com/falgon/line-bot-kiirotori/pull/25</a>)<a href="/roki.log/2023/12/06/add-new-web-api-send-plain-text/#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn4" role="doc-endnote"><p>実をいうと Servant の関連ライブラリとして <a href="https://hackage.haskell.org/package/servant-js">servant-js</a> というものがあり, これは Servant による API の型定義から有名な javascript ライブラリ (AngularJS, axios, jQuery など) や生の javascript クライアントコードを生成することができ非常に便利なのだが, 今回は実装する API の仕様上と GAS をクライアントとする都合上そこまでの利便性を感じなかったため自分で書くこととした<a href="/roki.log/2023/12/06/add-new-web-api-send-plain-text/#fnref4" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn5" role="doc-endnote"><p>Purescript 用の <a href="https://pursuit.purescript.org/packages/purescript-google-apps/0.0.3">GAS ライブラリ</a>も存在する<a href="/roki.log/2023/12/06/add-new-web-api-send-plain-text/#fnref5" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section>]]></description>
+    <pubDate>Wed, 06 Dec 2023 00:00:00 UT</pubDate>
+    <guid>https://roki.dev/roki.log/2023/12/06/add-new-web-api-send-plain-text/index.html</guid>
+    <dc:creator>Roki</dc:creator>
+</item>
+<item>
     <title>東京ガスの請求通知を自作 LINE Bot に喋らせる</title>
     <link>https://roki.dev/roki.log/2023/11/09/add-new-web-api-send-plain-text/index.html</link>
     <description><![CDATA[<p>以前つくった <a href="https://roki.dev/roki.log/2022/04/10/LineBotDevelopment/index.html">Haskell 製の LINE Bot</a> を家族の所属するグループ LINE に参加させて日常的に活用している. ごみ出しの項目確認や買い物リストのメモなど, 家族間のコミュニケーションや生活の流れの中でぱっと済ませたい諸々の事柄を LINE という定常的に利用するツールの中で自動化することで, 当初よりも細かい点で便利になった感触がある. これは <a href="https://notify-bot.line.me/ja/">LINE Notify</a> のみでは実現できない双方向のやりとりや LINE というプラットフォームを最大限活用できる拡張性によるものだ.<br> ところで, 我が家のインフラの一部は東京ガスに依存しているわけだが, 東京ガスは, その毎月の請求額の確認通知を指定のメールアドレスあるいは <a href="https://members.tokyo-gas.co.jp/contents/public/line/information.html">myTOKYOGAS と連携の LINE へ送信する</a>サービスを提供している. 私は以前からどちらのサービスも利用していたが</p>
@@ -5836,27 +5933,6 @@ f'(x)&amp;=&amp;\lim_{h\to 0}\frac{\cos(x+h)-\cos x}{h}\\
 </section>]]></description>
     <pubDate>Wed, 15 Aug 2018 00:00:00 UT</pubDate>
     <guid>https://roki.dev/roki.log/2018/08/15/aws_ec2_distcc/index.html</guid>
-    <dc:creator>Roki</dc:creator>
-</item>
-<item>
-    <title>AWS SNS + S3 でバケット内の状態を即座に EC2 に反映するまで</title>
-    <link>https://roki.dev/roki.log/2018/08/1/aws_sns_s3_ec2/index.html</link>
-    <description><![CDATA[<p>ウェブアプリケーションが EC2 上で動作していて, そのコンテンツ内容を S3 バケットによって管理しているシチュエーションにおいて, S3 バケットの状態を即座にそのウェブアプリケーションに反映させたいという事例はよくあると思う(ステージング云々は, 一旦置いておくとして). 本エントリは, AWS SNS による HTTP リクエストをトリガーに, S3 バケットの状態を EC2 上のコンテンツへ即座に反映するための構造と簡単な実装について取り上げる.</p>
-<!--more-->
-<h2 id="システムの全体構造">システムの全体構造</h2>
-<p>上記の要件を達成する方法はいくつかあるだろうが, 今回は次のような構造を取ることとした.</p>
-<figure>
-<img src="/roki.log/2018/08/1/aws_sns_s3_ec2/UD.png" title="全体図" width="400" alt /><figcaption>全体図</figcaption>
-</figure>
-<p>今回 EC2 インスタンス上では, Nginx および Go で実装したウェブアプリケーションサーバを Fast-CGI で動かすこととした. S3 にコンテンツをアップロードしたり削除等の操作をすると, SNS トピックに対して通知を発行する. SNS はこれに対して, 設定したエンドポイント(今回は EC2 インスタンス) へ HTTP POST リクエストを発行し, EC2 インスタンスはこれに応じて, S3 バケットと同期を実行する. 至ってシンプルな構造である.</p>
-<h2 id="実装">実装</h2>
-<p>EC2 インスタンスで稼働するシンプルなウェブサーバの実装, および各種設定ファイルは, 次のリポジトリの通りである.</p>
-<div class="box has-text-centered is-shadowless">
-<p><i class="fab fa-github mr-2"></i> <a href="https://github.com/falgon/tinyGoWebServer">falgon/tinyGoWebServer - Tiny Go Web Server. AWS SNS + S3 + EC2 + Nginx Fast-CGI technology automatically synchronizes content on S3 bucket.</a></p>
-</div>
-<p>なお, S3 バケットとの同期処理が失敗した場合, 別の SNS トピックを用いて, 失敗の旨のメールを管理者に送信するようにしてある. リポジトリ内の README にも記してあるが, 同期を実行するスクリプト, およびウェブサーバの実行ファイルは, systemd で管理することを前提として, <a href="http://www.pathname.com/fhs/">Filesystem Hierarchy Standard</a> に従い, 配置することとした.</p>]]></description>
-    <pubDate>Wed, 01 Aug 2018 00:00:00 UT</pubDate>
-    <guid>https://roki.dev/roki.log/2018/08/1/aws_sns_s3_ec2/index.html</guid>
     <dc:creator>Roki</dc:creator>
 </item>
 
