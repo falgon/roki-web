@@ -1,0 +1,3 @@
+[submodule "external/hakyll-css"]
+	path = external/hakyll-css
+	url = git@github.com:tejasbubane/hakyll-css.git

@@ -1,0 +1,51 @@
+name: manually-PSI
+on:
+  workflow_dispatch:
+    inputs:
+      sp_threshold:
+        description: 'Smart phone threshold'
+        required: true
+        default: 65
+      pc_threshold:
+        description: 'PC threshold'
+        required: true
+        default: 90
+      locale:
+        description: 'Locale'
+        required: true
+        default: 'ja_JP'
+jobs:
+  check_psi:
+    runs-on: ubuntu-latest
+    if: github.repository == 'falgon/roki-web'
+    steps:
+    - uses: actions/checkout@v2
+    - name: Read Node version
+      uses: browniebroke/read-nvmrc-action@v1
+      id: nvmrc
+    - name: Setup Node
+      uses: actions/setup-node@v2
+      with:
+        node-version: '${{ steps.nvmrc.outputs.node_version }}'
+    - name: PSI module cache
+      uses: actions/cache@v3
+      id: psi-cache
+      with:
+        path: '**/node_modules'
+        key: node-v1-${{ runner.os }}-${{ hashFiles('.nvmrc') }}-${{ hashFiles('package.json') }}-${{ hashFiles('package-lock.json') }}
+    - name: Setup psi
+      if: steps.psi-cache.outputs.cache-hit != 'true'
+      run: npm ci
+    - name: Get page insights
+      run: |
+        readonly TARGET_URL=https://$(cat CNAME)
+        set +e
+        npx psi $TARGET_URL \
+          --strategy=mobile \
+          --locale=${{ github.event.inputs.locale }} \
+          --threshold=${{ github.event.inputs.sp_threshold }}
+        npx psi $TARGET_URL \
+          --strategy=desktop \
+          --locale=${{ github.event.inputs.locale }} \
+          --threshold=${{ github.event.inputs.pc_threshold }}
+        set -e

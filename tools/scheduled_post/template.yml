@@ -1,0 +1,69 @@
+name: Scheduling post $date$ (UTC)
+on:
+  schedule:
+    - cron: '$cron-expr$'
+env:
+  CONTENTS_DIR: contents
+  PUBLISH_DIR: publish
+  SITE_SYSTEM_REPO: roki-web
+  SITE_SYSTEM_DEPLOY_POST_BRANCH: master
+  SITE_POST_MAIN_BRANCH: draft
+
+jobs:
+  post:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Start time
+        run: date
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          ref: $branch-name$
+      - name: $branch-name$ -> release
+        uses: devmasx/merge-branch@v1.3.1
+        with:
+          type: now
+          from_branch: $branch-name$
+          target_branch: release
+          github_token: $${{ github.token }}
+      - name: Setup deploy dir
+        run: |
+            mkdir -p "$${{ env.PUBLISH_DIR }}/$${{ env.CONTENTS_DIR }}"
+            mv "$${{ env.CONTENTS_DIR }}/roki.log" "$${{ env.PUBLISH_DIR }}/$${{ env.CONTENTS_DIR }}/"
+            mv "$${{ env.CONTENTS_DIR }}/roki.diary" "$${{ env.PUBLISH_DIR }}/$${{ env.CONTENTS_DIR }}/"
+      - name: Deploy to system repository
+        uses: peaceiris/actions-gh-pages@v3.7.3
+        with:
+          deploy_key: $${{ secrets.ACTIONS_DEPLOY_TO_SYSTEM_KEY }}
+          publish_dir: $${{ env.PUBLISH_DIR }}
+          publish_branch: $${{ env.SITE_SYSTEM_DEPLOY_POST_BRANCH }}
+          external_repository: "$${{ github.actor }}/$${{ env.SITE_SYSTEM_REPO }}"
+          keep_files: true
+          enable_jekyll: true
+          exclude_assets: ''
+      - name: Checkout draft
+        uses: actions/checkout@v2
+        with:
+          ref: $${{ env.SITE_POST_MAIN_BRANCH }}
+      - name: Create clean commits
+        run: rm .github/workflows/$branch-name$.yml
+      - name: Create PR
+        uses: peter-evans/create-pull-request@v3.5.0
+        with:
+          token: $${{ secrets.ACTIONS_PAT }}
+          commit-message: "delete the completed workflow file"
+          committer: Github <noreply@github.com>
+          author: $${{ github.actor }} <$${{ github.actor }}@users.noreply.github.com>
+          signoff: false
+          branch: cleanup-workflow-$branch-name$
+          delete-branch: true
+          title: "Delete the completed workflow file"
+          body: |
+            Delete the completed workflow file
+            - Delete .github/workflows/$branch-name$.yml
+            - This PR was auto generated
+          labels: spa-completed-pr
+          assignees: falgon
+          draft: false
+      - name: End time
+        run: date

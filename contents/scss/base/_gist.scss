@@ -1,0 +1,20 @@
+.gist {
+    .gist-file {
+        .gist-data {
+            .file-box {
+                .file {
+                    .Box-body {
+                        td {
+                            border: none;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+.emgithub-container table td, .emgithub-container table th {
+    padding: 0 0.7em !important;
+}
+

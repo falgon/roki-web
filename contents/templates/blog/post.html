@@ -1,0 +1,127 @@
+$if(js)$
+$for(js)$
+<script defer type="text/javascript" src="$src-script$"></script>
+$endfor$
+$endif$
+<main class="section main" role="main">
+    <article class="container">
+        <div class="card mb-1 is-shadowless">
+            <div class="card-content">
+                <header>
+                    <h2 class="title is-3">
+                        <a href="$url$">$title$</a>
+                    </h2>
+                    <ul>
+                        <li>
+                            <i class="fas fa-calendar-alt fa-fw"></i>
+                            $date$
+                        </li>
+                        $if(tags)$
+                            <li>
+                                <div class="is-inline-block is-valign-middle">
+                                    <i class="fas fa-tags fa-fw"></i>
+                                </div>
+                                <div class="is-inline-block is-valign-middle">
+                                    <div class="tags">
+                                        $tags$
+                                    </div>
+                                </div>
+                            </li>
+                        $endif$
+                    </ul>
+                </header>
+
+                $if(before-content-body-additional-component)$
+                <div class="content has-text-centered mt-5">
+                $before-content-body-additional-component$
+                </div>
+                $endif$
+
+                <section class="mt-5 content">
+                    $if(header-warn)$
+                    <article class="message is-warning">
+                        <div class="message-body">
+                            <i class="fas fa-info-circle mr-1"></i>
+                            $header-warn$
+                        </div>
+                    </article>
+                    $endif$
+                    $body$
+                </section>
+                <hr class="hr" />
+                $partial("contents/templates/blog/share-icons.html")$
+                <br />
+
+                <aside class="comments mt-4">
+                    <div id="disqus_thread"></div>
+                    <script>
+                    (function() { 
+                        var d = document, s = d.createElement('script');
+                        s.src = 'https://$disqus$.disqus.com/embed.js';
+                        s.setAttribute('data-timestamp', +new Date());
+                        (d.head || d.body).appendChild(s); 
+                    })();
+                    </script>
+                    <noscript>
+                        Please enable JavaScript to view the 
+                        <a href="https://$disqus$.disqus.com/?ref_noscript">
+                            comments powered by Disqus.
+                        </a>
+                    </noscript>
+                </aside>
+
+                <div class="container">
+                    <div class="card mb-1 is-shadowless" style="background-color: transparent;">
+                        <div class="card-content">
+                            <nav class="pagination is-centered" 
+                                 role="navigation" 
+                                 aria-label="pagination">
+                                $if(nextPageUrl)$
+				                <a href="$nextPageUrl$" class="pagination-previous">
+                                    <div class="is-inline-block is-valign-middle">
+                                        <i class="fas fa-angles-left mr-1"></i>
+                                    </div>
+                                    <div class="is-inline-block is-valign-middle">
+                                        <i class="fas fa-calendar-alt mr-1"></i>$nextPageDate$
+                                        <i class="fas fa-pencil ml-1 mr-1"></i>$nextPageTitle$
+                                    </div>
+                                </a>
+                                $else$
+                                <a href="/$blog-title$" class="pagination-previous">
+                                    <div class="is-inline-block is-valign-middle">
+                                        <i class="fas fa-house mr-1"></i>
+                                    </div>
+                                    <div class="is-inline-block is-valign-middle">
+                                        <p>Home</p>
+                                    </div>
+                                </a>
+                                $endif$
+
+                                $if(previousPageUrl)$
+				                <a href="$previousPageUrl$" class="pagination-next">
+                                    <div class="is-inline-block is-valign-middle">
+                                        <i class="fas fa-calendar-alt mr-1"></i>$previousPageDate$
+                                        <i class="fas fa-pencil ml-1 mr-1"></i>$previousPageTitle$
+                                    </div>
+                                    <div class="ml-1 is-inline-block is-valign-middle">
+                                        <i class="fas fa-angles-right"></i>
+                                    </div>
+                                </a>
+                                $else$
+                                <a href="/$blog-title$" class="pagination-next">
+                                    <div class="is-inline-block is-valign-middle">
+                                        <p>Home</p>
+                                    </div>
+                                    <div class="ml-1 is-inline-block is-valign-middle">
+                                        <i class="fas fa-house"></i>
+                                    </div>
+                                </a>
+                                $endif$
+                            </nav>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </article>
+</main>

@@ -1,0 +1,250 @@
+@font-face  {
+    font-family: 'Roboto';
+    src: local('Roboto Thin Italic'),
+        url(https://fonts.gstatic.com/s/roboto/v19/KFOiCnqEu92Fr1Mu51QrEz0dL-vwnYh2eg.woff2)
+        format('woff2');
+    font-display: swap;
+}
+
+.adjust100 {
+    -webkit-text-size-adjust: 100%;
+    -moz-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+    -o-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+}
+
+.columns,
+.columns:last-child {
+    margin: 0;
+}
+
+@media screen and (min-width: 768px) {
+    .columns {
+        margin-left: -0.75rem;
+        margin-right: -0.75rem;
+        margin-top: -0.75rem;
+    }
+}
+
+.auto-resp-table-hover {
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+}
+
+.table-responsive {
+    @extend .auto-resp-table-hover;
+}
+
+html {
+    height: 100%;
+    margin: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    @extend .adjust100;
+}
+
+body {
+    font-family: 'Noto Serif JP', serif;
+    display: flex;
+    min-height: 100vh;
+    flex-direction: column;
+    overflow-x: hidden;
+    overflow-y: auto;
+    @extend .adjust100;
+}
+
+.sourceCode {
+    font-family: 'Ubuntu Mono', monospace;
+}
+
+a {
+    -webkit-tap-highlight-color: rgba(0,0,0,0);
+    cursor: pointer;
+}
+
+caption {
+    caption-side: bottom;
+    margin-top: 0.5em;
+    font-size: 0.9em;
+}
+
+::selection {
+    background-color: #3297FD; /* Chrome default color */
+    color: #fff;
+}
+
+.gothic {
+    font-family:
+        'Ubuntu Mono',
+        'Avenir',
+        'Helvetica Neue',
+        'Arial',
+        'Sawarabi Gothic',
+        'Hiragino Sans',
+        'ヒラギノ角ゴシック',
+        'YuGothic',
+        'Yu Gothic',
+        'メイリオ',
+        'Meiryo',
+        'ＭＳ Ｐゴシック',
+        'MS PGothic',
+        sans-serif;
+}
+
+#my_name {
+    font-family:
+        'Avenir'
+        'Helvetica Neue',
+        'Arial',
+        sans-serif;
+}
+
+.main {
+    flex: 1;
+    margin: 0;
+    padding: 0;
+    padding-top: 1.5rem;
+}
+
+.container p, .container a {
+    display: inline;
+}
+
+ul.is-unstyled {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.blured-my-prof {
+    content: url(../images/avator/prof1000x1000.png);
+    margin-top: 27px;
+    border-radius: 10px;
+}
+
+.blured-my-prof-webp {
+    margin-top: 27px;
+    border-radius: 10px;
+}
+
+.footer {
+    width: 100%;
+    padding-top: 20px;
+    padding-bottom: 20px;
+    background-color: #fff;
+}
+
+.card {
+    border-radius: 10px;
+}
+
+span.both-lined {
+    display: flex;
+    flex-direction: row;
+}
+
+span.both-lined:before, span.both-lined:after {
+    content: "";
+    flex: 1 1;
+    border-bottom: 1px dashed #dedede;
+    margin: auto;
+}
+
+span.both-lined:before {
+    margin-right: 10px;
+}
+
+span.both-lined:after {
+    margin-left: 10px;
+}
+
+.no-cl-change {
+    padding: 0;
+    margin: 0;
+}
+
+.no-cl-change a {
+    padding: 0;
+    margin: 0;
+    color: $grey-darker;
+}
+
+.no-cl-change a:hover {
+    color: $grey-darker;
+}
+
+#contributions_table {
+    height: 250px;
+    width: 100%;
+    overflow-y: scroll;
+}
+
+.reverse-row-order {
+    flex-direction: row-reverse;
+}
+
+.footer-dec {
+    content: url(../images/footer_dec.svg);
+    max-width: 500px;
+}
+
+.tag a {
+    color: #fff;
+}
+
+.tags-ul li {
+    margin-right: 5px;
+}
+
+.site-top-title {
+    font-family: 'Ubuntu Mono', sans-serif;
+}
+
+.blog-intro {
+    font-family: 'Ubuntu Mono', sans-serif;
+    width: 100%;
+    padding-bottom: 5px;
+    border-bottom: solid 1px $grey-lighter;
+    border-image: linear-gradient(to right, $grey-light 0% 50%, transparent 100%);
+    border-image-slice: 1;
+    border-right: 0;
+    border-top: 0;
+    border-left: 0;
+    @extend .is-flex;
+    @extend .is-align-items-center;
+    @extend .is-justify-content-space-between;
+}
+
+.katex-display > .katex {
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    text-align: center;
+}
+
+.social-links {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    list-style: none;
+    margin: 0 0 0 auto !important;
+    li {
+        a {
+            color: $grey-darker;
+        }
+        .social-icon-github:hover {
+            color: #C4C4C4;
+        }
+        .social-icon-twitter:hover {
+            color: $twitter-color;
+        }
+        .social-icon-zenn:hover {
+            color: $zenn-color;
+        }
+        .social-icon-note:hover {
+            color: $note-color;
+        }
+    }
+}

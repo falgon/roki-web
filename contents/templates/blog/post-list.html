@@ -1,0 +1,104 @@
+$if(before-content-body-additional-component)$
+<div class="content has-text-centered mt-5">
+$before-content-body-additional-component$
+</div>
+$endif$
+<main class="section main" role="main">
+    <article class="container">
+        $for(posts)$
+        $if(js)$
+        $for(js)$
+        <script defer type="text/javascript" src="$src-script$"></script>
+        $endfor$
+        $endif$
+        <div class="card mb-1 is-shadowless">
+            <div class="card-content">
+                <header>
+                    <h2 class="title is-3">
+                        <a href="$url$">$title$</a>
+                    </h2>
+                    <ul>
+                        <li>
+                            <i class="fas fa-calendar-days fa-fw"></i>
+                            $date$
+                        </li>
+                        $if(tags)$
+                            <li>
+                                <div class="is-inline-block is-valign-middle">
+                                    <i class="fas fa-tags fa-fw"></i>
+                                </div>
+                                <div class="is-inline-block is-valign-middle">
+                                    <div class="tags">
+                                        $tags$
+                                    </div>
+                                </div>
+                            </li>
+                        $endif$
+                    </ul>
+                </header>
+
+                <section class="content mt-5">
+                    $if(teaser)$
+                        $teaser$
+                        <div class="buttons is-centered mt-3 mb-0">
+                            <a href="$url$">
+                                <span class="button m-0 is-link is-outlined">
+                                    <span class="icon"><i class="fab fa-readme"></i></span>
+                                    <span>Read more</span>
+                                </span>
+                            </a>
+                        </div>
+                    $else$
+                        $body$
+                    $endif$
+                </section>
+                <hr class="hr" />
+                $partial("contents/templates/blog/share-icons.html")$    
+            </div>
+        </div>
+        $endfor$
+
+    </article>
+
+    $if(currentPageNum)$
+    <div class="container">
+        <div class="card mb-1 is-shadowless">
+            <div class="card-content">
+                <nav class="pagination is-centered" role="navigation" aria-label="pagination">
+                    $if(previousPageUrl)$
+                    <a href="$previousPageUrl$" class="pagination-previous">
+                    $else$
+                    <a href="#" class="pagination-previous" disabled>
+                    $endif$
+                        <div class="is-inline-block is-valign-middle">
+                            <i class="fas fa-angles-left mr-1"></i>
+                        </div>
+                        <div class="is-inline-block is-valign-middle">
+                            <p>Prev</p>
+                        </div>
+                    </a>
+
+                    <div class="pagination-list ml-2 mr-2">
+                        $currentPageNum$ of $numPages$
+                    </div>
+
+                    $if(nextPageUrl)$
+                    <a href="$nextPageUrl$" class="pagination-next">
+                    $else$
+                    <a href="#" class="pagination-next" disabled>
+                    $endif$
+                        <div class="is-inline-block is-valign-middle">
+                            <p>Next</p>
+                        </div>
+                        <div class="is-inline-block is-valign-middle">
+                            <i class="fas fa-angles-right ml-1"></i>
+                        </div>
+                    </a>
+                </nav>
+            </div>
+        </div>
+    </div>
+    $endif$
+
+
+</main>

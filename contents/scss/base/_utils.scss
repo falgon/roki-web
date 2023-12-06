@@ -1,0 +1,53 @@
+.disabled {
+    color: $grey-darker;
+    pointer-events: none;
+}
+
+.comma-list {
+    @extend .is-inline, .ml-0;
+    list-style: none;
+    padding: 0;
+
+    & li {
+        display: inline;
+    }
+    & li::after {
+        content: ", ";
+    }
+    & li:last-child::after {
+        content: "";
+    }
+}
+
+#tab-content {
+    .acontent {
+        &.is-active {
+            @extend .is-block;
+        }
+        display: none;
+    }
+}
+
+/* for emgit css */
+.hljs-ln {
+    tbody {
+        tr {
+            td {
+                border: none !important;
+            }
+        }
+        background-color: #f8f8f8 !important;
+    }
+    margin: 0 !important;
+}
+
+.emgithub-container {
+    margin: 0 !important;
+    code {
+        .hljs {
+            margin: 0;
+            padding: 0;
+        }
+    }
+}
+/* for emgit css */

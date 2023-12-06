@@ -8,8 +8,7 @@ tags: watch
 
 ![今回の主役: [SBGY007](https://www.grand-seiko.com/jp-ja/collections/sbgy007)](./sbgy007_wrist.jpg){ width=500px }
 
-この度 Grand Seiko (以下 GS)
-Elegance Collection SBGY007
+この度 Grand Seiko (以下 GS) Elegance Collection SBGY007
 を手にしましたので,
 実際に使用しての所感等を紹介したいと思います.
 

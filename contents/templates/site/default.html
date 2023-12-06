@@ -1,0 +1,56 @@
+<!DOCTYPE HTML>
+<html lang="$lang$">
+    <head>
+        <meta charset="utf-8" />
+        <meta http-equiv="x-ua-compatible" content="ie=edge" />
+        <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no" />
+        <meta content="$author-name$" name="author" />
+        $if(description)$
+        <meta content="$description$" name="description" />
+        <meta property="og:description" content="$description$" />
+        $else$
+        <meta content="$site-description$" name="description" />
+        <meta property="og:description" content="$site-description$" />
+        $endif$
+        <meta content="Hakyll" name="generator" />
+        <meta property="twitter:card" content="summary" />
+        <meta property="twitter:site" content="@$author-twitter$" />
+        <meta property="twitter:creator" content="$author-twitter$" />
+        <meta property="og:type" content="website" />
+        <title>$title$</title>
+        <meta property="og:title" content="$title$" />
+        <meta property="og:site_name" content="$site-title$" />
+        <link rel="shortcut icon" href="/images/avator/favicon.ico" />
+        
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Sawarabi+Gothic&family=Sawarabi+Mincho&family=Ubuntu+Mono&display=swap" rel="stylesheet">
+
+        <link rel="stylesheet" href="/style/style.css" />
+        <script type="text/javascript" src="/js/components.js"></script>
+        <script type="text/javascript">
+            addEventModal();
+        </script>
+        <!-- Global site tag (gtag.js) - Google Analytics -->
+		<script async src="https://www.googletagmanager.com/gtag/js?id=$google-analytics$"></script>
+		<script>
+  		window.dataLayer = window.dataLayer || [];
+  		function gtag(){dataLayer.push(arguments);}
+  		gtag('js', new Date());
+  		gtag('config', '$google-analytics$');
+		</script>
+    </head>
+    <body>
+        <main class="section main" role="main">
+            <div class="container">
+                $body$
+            </div>
+        </main>
+
+        <footer class="footer">
+            $partial("contents/templates/footer/dec.html")$
+            $partial("contents/templates/footer/copyright.html")$
+        </footer>
+
+    </body>
+</html>

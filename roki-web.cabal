@@ -1,0 +1,180 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.35.1.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: 2770a89839ea340a18ab2d819e48d1c9b1dca82adca5edba282a46800f69d7cb
+
+name:           roki-web
+version:        1.0.0.0
+category:       Web
+homepage:       https://github.com/roki/roki-web#readme
+bug-reports:    https://github.com/roki/roki-web/issues
+author:         Roki
+maintainer:     falgon53@yahoo.co.jp
+copyright:      Copyright (c) 2020 Roki
+license:        BSD3
+license-file:   LICENSE
+build-type:     Simple
+extra-source-files:
+    README.md
+
+source-repository head
+  type: git
+  location: https://github.com/roki/roki-web
+
+library
+  exposed-modules:
+      Archives
+      Config
+      Config.Blog
+      Config.Blogs.AnotherBlog
+      Config.Blogs.TechBlog
+      Config.Blogs.Utils
+      Config.Contributions
+      Config.Program
+      Config.RegexUtils
+      Config.Site
+      Config.TopPage
+      Contexts
+      Contexts.Blog
+      Contexts.Core
+      Contexts.Field
+      Contexts.Field.RokiDiary
+      Contexts.Field.RokiDiary.GAdsense
+      Contexts.Field.RokiLog
+      Contexts.Field.RokiLog.GAdsense
+      Contexts.Field.RokiLog.PowertedBy
+      Contexts.Utils
+      Hakyll.Web.Feed.Extra
+      Media
+      Media.JS
+      Media.SVG
+      Rules.Blog
+      Rules.Blog.Core
+      Rules.Blog.EachPosts
+      Rules.Blog.EachPosts.Utils
+      Rules.Blog.EachPostSeries
+      Rules.Blog.Feed.Atom
+      Rules.Blog.Feed.RSS
+      Rules.Blog.Feed.Utils
+      Rules.Blog.Footer
+      Rules.Blog.Index
+      Rules.Blog.ListPage
+      Rules.Blog.Paginate.MonthlyPosts
+      Rules.Blog.Paginate.TaggedPosts
+      Rules.Blog.Paginate.Utils
+      Rules.Blog.Paginate.YearlyPosts
+      Rules.Blog.Search
+      Rules.Blog.Sitemap
+      Rules.Blog.Type
+      Rules.Blog.Utils
+      Rules.Media
+      Rules.Src.JavaScript
+      Rules.Src.Style
+      Rules.TopPage
+      Rules.Vendor
+      Utils
+      Vendor.FontAwesome
+      Vendor.FontAwesome.Compiler
+      Vendor.FontAwesome.Core
+      Vendor.KaTeX
+  other-modules:
+      Paths_roki_web
+  hs-source-dirs:
+      src
+  build-depends:
+      aeson
+    , base
+    , basic-prelude
+    , binary
+    , bytestring
+    , containers
+    , dhall
+    , extra
+    , file-embed
+    , filepath
+    , gitrev
+    , hakyll
+    , hakyll-sass
+    , hjsmin
+    , lucid
+    , mtl
+    , optparse-applicative
+    , pandoc
+    , process
+    , tagsoup
+    , text
+    , time
+    , unordered-containers
+  default-language: Haskell2010
+
+executable site
+  main-is: site/Main.hs
+  other-modules:
+      Paths_roki_web
+  hs-source-dirs:
+      app
+  ghc-options: -threaded -Wall -O2
+  build-depends:
+      aeson
+    , base
+    , basic-prelude
+    , binary
+    , bytestring
+    , containers
+    , dhall
+    , extra
+    , file-embed
+    , filepath
+    , gitrev
+    , hakyll
+    , hakyll-sass
+    , hjsmin
+    , lucid
+    , mtl
+    , optparse-applicative
+    , pandoc
+    , process
+    , roki-web
+    , tagsoup
+    , text
+    , time
+    , unordered-containers
+  default-language: Haskell2010
+
+executable spa
+  main-is: spa/Main.hs
+  other-modules:
+      Paths_roki_web
+  hs-source-dirs:
+      app
+  ghc-options: -threaded -Wall -O2
+  build-depends:
+      aeson
+    , base
+    , basic-prelude
+    , binary
+    , bytestring
+    , containers
+    , dhall
+    , extra
+    , file-embed
+    , filepath
+    , gitrev
+    , hakyll
+    , hakyll-sass
+    , hjsmin
+    , lucid
+    , mtl
+    , optparse-applicative
+    , pandoc
+    , process
+    , roki-web
+    , tagsoup
+    , text
+    , time
+    , transformers
+    , unordered-containers
+  default-language: Haskell2010
