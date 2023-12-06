@@ -1,7 +1,0 @@
-version = 1
-merge.automerge_label = "automerge"
-merge.require_automerge_label = true
-merge.delete_branch_on_merge = false
-merge.notify_on_conflict = true
-merge.optimistic_updates = true
-
