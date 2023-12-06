@@ -1,8 +1,12 @@
 ---
 title: 東京ガスの請求通知を自作 LINE Bot に喋らせる
-date: 2023-11-09 09:05:34
+date: 2023-12-06 00:00:00
 tags: Haskell, LINE, Bot, GoogleAppsScript
 ---
+
+※1. この記事は「[KLab Engineer Advent Calendar 2023](https://qiita.com/advent-calendar/2023/klab)」の 6 日目にエントリしています
+
+![Happy Holidays! - [Shutter Fotos](https://www.flickr.com/photos/shutterfotos/), [Attribution-NonCommercial 2.0 Generic (CC BY-NC 2.0 DEED)](https://creativecommons.org/licenses/by/2.0/)](./8306214630_1a6a1c5413_w.jpg)
 
 以前つくった
 [Haskell 製の LINE Bot](https://roki.dev/roki.log/2022/04/10/LineBotDevelopment/index.html)
@@ -127,9 +131,9 @@ GMail 上の検索クエリで該当するメールを検索し,
 <script src="https://emgithub.com/embed-v2.js?target=https%3A%2F%2Fgithub.com%2Ffalgon%2Fline-bot-kiirotori%2Fblob%2F8a9926634095c7a186bd4aaa57ebf757d4536122%2Fclient%2Fgas%2Fgmail.js%23L14-32&style=github&type=code&showBorder=on&showLineNumbers=on&showFileMeta=on&showFullPath=on&showCopy=on&fetchFromJsDelivr=on"></script>
 </div>
 
-あとは, この `getUnreadBillingMailsWith` のコールバック関数内で API を叩けばよい.
+あとは, この `getUnreadBillingMailsWith`[^3] のコールバック関数内で API を叩けばよい.
 このときに利用する諸々の値は, GAS のプロパティとして別途保持させておき,
-下記のようにしてリクエストを送信する[^3].
+下記のようにしてリクエストを送信する[^4].
 
 <div class="mb-2 mt-2" style="max-height: 400px; overflow-y: scroll;">
 <script src="https://emgithub.com/embed-v2.js?target=https%3A%2F%2Fgithub.com%2Ffalgon%2Fline-bot-kiirotori%2Fblob%2F8a9926634095c7a186bd4aaa57ebf757d4536122%2Fclient%2Fgas%2Fmain.js%23L1&style=github&type=code&showBorder=on&showLineNumbers=on&showFileMeta=on&showFullPath=on&showCopy=on&fetchFromJsDelivr=on"></script>
@@ -173,7 +177,7 @@ Haskell の持つ型の表現力とそれを活かした Servant ライブラリ
 保守性と拡張性を保った非常に使い勝手の良いウェブアプリとして実装ができたのではないかと考えている.<br><br>
 クライアント側としては, なにか更に色々としたくなった場合, 生の javascript を書くのをやめて
 TypeScript で書き webpack + babel かなにかでバンドル/トランスパイルしたものを clasp でアップロードしても良いかもしれない.
-いや, サーバ側を Haskell で実装しているのだから, クライアント側は [Purescript](https://www.purescript.org/)[^4]
+いや, サーバ側を Haskell で実装しているのだから, クライアント側は [Purescript](https://www.purescript.org/)[^5]
 で書くと良いかもしれない...等,
 この辺りは考え出せばキリがないが,
 単なるやりすぎは手段と目的の履き違いに他ならないので,
@@ -187,8 +191,9 @@ TypeScript で書き webpack + babel かなにかでバンドル/トランスパ
 
 [^1]: ただし, 一部自作 Bot のエラーハンドリング/フォールバック的な通知用途として LINE Notify を活用している
 [^2]: RFC2104 として公開されている
-[^3]: 実をいうと Servant の関連ライブラリとして [servant-js](https://hackage.haskell.org/package/servant-js) というものがあり,
+[^3]: 2023/11 に myTOKYOGAS の[システムリニューアルがあった](https://members.tokyo-gas.co.jp/contents/public/about/renewal.html)ようで, その際にどうやら請求額通知を送信してくるメールアドレスが変更されたようだ. c.f. <https://github.com/falgon/line-bot-kiirotori/pull/25>)
+[^4]: 実をいうと Servant の関連ライブラリとして [servant-js](https://hackage.haskell.org/package/servant-js) というものがあり,
 これは Servant による API の型定義から有名な javascript ライブラリ (AngularJS, axios, jQuery など) や生の
 javascript クライアントコードを生成することができ非常に便利なのだが,
 今回は実装する API の仕様上と GAS をクライアントとする都合上そこまでの利便性を感じなかったため自分で書くこととした
-[^4]: Purescript 用の [GAS ライブラリ](https://pursuit.purescript.org/packages/purescript-google-apps/0.0.3)も存在する
+[^5]: Purescript 用の [GAS ライブラリ](https://pursuit.purescript.org/packages/purescript-google-apps/0.0.3)も存在する
