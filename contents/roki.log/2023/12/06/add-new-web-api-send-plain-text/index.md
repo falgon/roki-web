@@ -48,6 +48,7 @@ LINE というプラットフォームを最大限活用できる拡張性によ
 一言で言ってしまえば,
 LINE Messaging API とのやりとりで受け取るエンドポイントとは別口の API を実装し,
 それを Google Apps Script (以下 GAS) で叩くという"普通の" Web API のやりとりの構造をつくっただけではあるのだが,
+
 <p class="is-size-7">最近ブログを更新していないことに気づいたのと</p>日本語で
 Haskell Servant の具体的な活用例を示すことにはそれなりの価値があるかもということ,
 同じようなことを実現して生活を楽にしたい方がいるかもということ,
@@ -185,15 +186,17 @@ TypeScript で書き webpack + babel かなにかでバンドル/トランスパ
 
 ![請求額の確定通知](./message_from_bot.jpg){ width=400px }
 
-さて, 
+さて,
 これで請求額通知を見逃すこともなくなり家族とも共有されるようになり万事解決...だが,
 そもそも請求額を抑えたい...昨今の情勢や電気・ガス料金の政府支援半減も厳しい...あれ...日本円の価値:thinking:...というのはまた別の話である.
 
 [^1]: ただし, 一部自作 Bot のエラーハンドリング/フォールバック的な通知用途として LINE Notify を活用している
 [^2]: RFC2104 として公開されている
 [^3]: 2023/11 に myTOKYOGAS の[システムリニューアルがあった](https://members.tokyo-gas.co.jp/contents/public/about/renewal.html)ようで, その際にどうやら請求額通知を送信してくるメールアドレスが変更されたようだ. c.f. <https://github.com/falgon/line-bot-kiirotori/pull/25>)
-[^4]: 実をいうと Servant の関連ライブラリとして [servant-js](https://hackage.haskell.org/package/servant-js) というものがあり,
-これは Servant による API の型定義から有名な javascript ライブラリ (AngularJS, axios, jQuery など) や生の
-javascript クライアントコードを生成することができ非常に便利なのだが,
-今回は実装する API の仕様上と GAS をクライアントとする都合上そこまでの利便性を感じなかったため自分で書くこととした
+[^4]:
+    実をいうと Servant の関連ライブラリとして [servant-js](https://hackage.haskell.org/package/servant-js) というものがあり,
+    これは Servant による API の型定義から有名な javascript ライブラリ (AngularJS, axios, jQuery など) や生の
+    javascript クライアントコードを生成することができ非常に便利なのだが,
+    今回は実装する API の仕様上と GAS をクライアントとする都合上そこまでの利便性を感じなかったため自分で書くこととした
+
 [^5]: Purescript 用の [GAS ライブラリ](https://pursuit.purescript.org/packages/purescript-google-apps/0.0.3)も存在する
