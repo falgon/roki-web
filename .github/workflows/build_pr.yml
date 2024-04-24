@@ -2,6 +2,7 @@ name: CI-pr
 
 env:
   GO_VERSION: 1.21.3
+  DART_SASS_VERSION: 1.75.0
   DEBIAN_FRONTEND: noninteractive
   TZ: Asia/Tokyo
   DOCS_TARXZ: docs.tar.xz
@@ -46,14 +47,22 @@ jobs:
         sudo apt-get -qq update
         sudo apt-get install -y --no-install-recommends \
           libxml2-utils parallel
+    - name: Dart Sass cache
+      uses: actions/cache@v3
+      id: dart-sass-cache
+      with:
+        path: '/usr/local/bin/sass'
+        key: dart-sass-v1-${{ env.DART_SASS_VERSION }}
+    - name: Setup dart-sass
+      if: steps.dart-sass-cache.outputs.cache-hit != 'true'
+      run: |
         wget -O /opt/sass.tar.gz \
-          https://github.com/sass/dart-sass/releases/download/${{ env.SASS_VERSION }}/dart-sass-${{ env.SASS_VERSION }}-linux-x64.tar.gz
+          https://github.com/sass/dart-sass/releases/download/${{ env.DART_SASS_VERSION }}/dart-sass-${{ env.DART_SASS_VERSION }}-linux-x64.tar.gz
         pushd /opt
         sudo tar xvf sass.tar.gz
-        sudo mv ./dart-sass/* /usr/local/bin
+        sudo mv ./dart-sass/sass /usr/local/bin
+        sudo chmod +x /usr/local/bin
         popd
-      env:
-        SASS_VERSION: 1.75.0
     - name: Setup Stack
       if: steps.site-gen-cache.outputs.cache-hit != 'true' && steps.stack-cache.outputs.cache-hit != 'true'
       run: |
