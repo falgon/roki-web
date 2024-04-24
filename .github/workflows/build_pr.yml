@@ -33,7 +33,7 @@ jobs:
       id: stack-cache
       with:
         path: ~/.stack
-        key: stack-v2-${{ runner.os }}-${{ hashFiles('stack.yaml') }}
+        key: stack-v2-${{ runner.os }}-${{ hashFiles('stack.yaml') }}-${{ hashFiles('stack.yaml.lock') }}-${{ hashFiles('package.yaml') }}
     - name: Setup GHC
       if: steps.site-gen-cache.outputs.cache-hit != 'true'
       uses: haskell/actions/setup@v1
@@ -46,6 +46,14 @@ jobs:
         sudo apt-get -qq update
         sudo apt-get install -y --no-install-recommends \
           libxml2-utils parallel
+        wget -O /opt/sass.tar.gz \
+          https://github.com/sass/dart-sass/releases/download/${{ env.SASS_VERSION }}/dart-sass-${{ env.SASS_VERSION }}-linux-x64.tar.gz
+        pushd /opt
+        sudo tar xvf sass.tar.gz
+        sudo mv ./dart-sass/* /usr/local/bin
+        popd
+      env:
+        SASS_VERSION: 1.75.0
     - name: Setup Stack
       if: steps.site-gen-cache.outputs.cache-hit != 'true' && steps.stack-cache.outputs.cache-hit != 'true'
       run: |
