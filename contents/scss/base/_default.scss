@@ -1,3 +1,5 @@
+@use "../../../node_modules/bulma/bulma.scss" as bulma;
+
 @font-face  {
     font-family: 'Roboto';
     src: local('Roboto Thin Italic'),
@@ -168,11 +170,11 @@ span.both-lined:after {
 .no-cl-change a {
     padding: 0;
     margin: 0;
-    color: $grey-darker;
+    color: bulma.$grey-darker;
 }
 
 .no-cl-change a:hover {
-    color: $grey-darker;
+    color: bulma.$grey-darker;
 }
 
 #contributions_table {
@@ -232,7 +234,7 @@ span.both-lined:after {
     margin: 0 0 0 auto !important;
     li {
         a {
-            color: $grey-darker;
+            color: bulma.$grey-darker;
         }
         .social-icon-github:hover {
             color: #C4C4C4;
