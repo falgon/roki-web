@@ -34,18 +34,11 @@ jobs:
       with:
         path: ~/.stack
         key: stack-v2-${{ runner.os }}-${{ hashFiles('stack.yaml') }}-${{ hashFiles('stack.yaml.lock') }}-${{ hashFiles('package.yaml') }}
-    - name: Setup Tools
-      run: |
-        sudo apt-get -qq -o=Dpkg::Use-Pty=0 update
-        sudo apt-get install -qq -y -o=Dpkg::Use-Pty=0 --no-install-recommends \
-          libxml2-utils
-      env:
-        DEBIAN_FRONTEND: noninteractive
     - name: Dart Sass cache
       uses: actions/cache@v3
       id: dart-sass-cache
       with:
-        path: '/usr/local/bin/sass'
+        path: '/opt/dart-sass'
         key: dart-sass-v1-${{ env.DART_SASS_VERSION }}
     - name: Setup dart-sass
       if: steps.dart-sass-cache.outputs.cache-hit != 'true'
@@ -54,10 +47,17 @@ jobs:
           https://github.com/sass/dart-sass/releases/download/${{ env.DART_SASS_VERSION }}/dart-sass-${{ env.DART_SASS_VERSION }}-linux-x64.tar.gz
         pushd /opt
         sudo tar xf ./${{ env.SASS_TAR_GZ }}
-        sudo mv ./dart-sass/sass /usr/local/bin
         popd
       env:
         SASS_TAR_GZ: sass.tar.gz
+    - name: Setup Tools
+      run: |
+        sudo ln -s /opt/dart-sass/sass /usr/local/bin/sass
+        sudo apt-get -qq -o=Dpkg::Use-Pty=0 update
+        sudo apt-get install -qq -y -o=Dpkg::Use-Pty=0 --no-install-recommends \
+          libxml2-utils
+      env:
+        DEBIAN_FRONTEND: noninteractive
     - name: Setup Stack
       if: steps.site-gen-cache.outputs.cache-hit != 'true' && steps.stack-cache.outputs.cache-hit != 'true'
       run: |
