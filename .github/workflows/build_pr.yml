@@ -56,13 +56,14 @@ jobs:
     - name: Setup dart-sass
       if: steps.dart-sass-cache.outputs.cache-hit != 'true'
       run: |
-        wget -O /opt/sass.tar.gz \
+        wget -O /opt/${{ env.SASS_TAR_GZ }} \
           https://github.com/sass/dart-sass/releases/download/${{ env.DART_SASS_VERSION }}/dart-sass-${{ env.DART_SASS_VERSION }}-linux-x64.tar.gz
         pushd /opt
-        sudo tar xvf sass.tar.gz
+        sudo tar xf ${{ env.SASS_TAR_GZ }}
         sudo mv ./dart-sass/sass /usr/local/bin
-        sudo chmod +x /usr/local/bin
         popd
+      env:
+        SASS_TAR_GZ: sass.tar.gz
     - name: Setup Stack
       if: steps.site-gen-cache.outputs.cache-hit != 'true' && steps.stack-cache.outputs.cache-hit != 'true'
       run: |
