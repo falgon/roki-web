@@ -56,7 +56,7 @@ jobs:
     - name: Setup dart-sass
       if: steps.dart-sass-cache.outputs.cache-hit != 'true'
       run: |
-        wget -O /opt/${{ env.SASS_TAR_GZ }} \
+        wget -qO /opt/${{ env.SASS_TAR_GZ }} \
           https://github.com/sass/dart-sass/releases/download/${{ env.DART_SASS_VERSION }}/dart-sass-${{ env.DART_SASS_VERSION }}-linux-x64.tar.gz
         pushd /opt
         sudo tar xf ${{ env.SASS_TAR_GZ }}
