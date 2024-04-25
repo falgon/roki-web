@@ -45,9 +45,9 @@ jobs:
       run: |
         wget -qO /opt/${{ env.SASS_TAR_GZ }} \
           https://github.com/sass/dart-sass/releases/download/${{ env.DART_SASS_VERSION }}/dart-sass-${{ env.DART_SASS_VERSION }}-linux-x64.tar.gz
-        pushd /opt
+        cd /opt
         sudo tar xf ./${{ env.SASS_TAR_GZ }}
-        popd
+        cd -
       env:
         SASS_TAR_GZ: sass.tar.gz
     - name: Setup Tools
