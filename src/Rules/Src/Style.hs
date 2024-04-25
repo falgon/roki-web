@@ -25,4 +25,4 @@ rules = do
         css = fromGlob $ joinPath [contentsRoot, "css", "**"]
         scssDep = fromGlob $ joinPath [contentsRoot, "scss", "*", "**.scss"]
         scss = fromGlob $ joinPath [contentsRoot, "scss", "*.scss"]
-        sassCompiler = getResourceString >>= withItemBody (unixFilter "sass" ["-s", "--scss"])
+        sassCompiler = getResourceString >>= withItemBody (unixFilter "sass" ["--stdin"])
