@@ -1,4 +1,4 @@
-@use "../../../node_modules/bulma/bulma" as bl;
+@use "../../../node_modules/bulma/bulma" as *;
 
 @font-face  {
     font-family: 'Roboto';
@@ -170,7 +170,7 @@ span.both-lined:after {
 .no-cl-change a {
     padding: 0;
     margin: 0;
-    color: bl.$grey-darker;
+    color: $grey-darker;
 }
 
 .no-cl-change a:hover {
