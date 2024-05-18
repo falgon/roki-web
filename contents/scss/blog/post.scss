@@ -1,6 +1,6 @@
-@import "../../../node_modules/bulma/bulma.scss";
-@import "../base/all";
-@import "mixins";
+@use "bulma/sass" as bl;
+@use "base" as b;
+@use "blog/mixins" as *;
 
 $tooltip-color: white;
 
@@ -12,19 +12,19 @@ $tooltip-color: white;
     
 .social-icon {
     a {
-        color: $grey-darker;
+        color: bl.$grey-darker;
     }
     .social-icon-twitter:hover {
-        color: $twitter-color;
+        color: b.$twitter-color;
     }
     .social-icon-facebook:hover {
-        color: $facebook-color;
+        color: b.$facebook-color;
     }
     .social-icon-pocket:hover {
-        color: $pocket-color;
+        color: b.$pocket-color;
     }
     .social-icon-line:hover {
-        color: $line-color;
+        color: b.$line-color;
     }
 }
      
@@ -42,7 +42,7 @@ article {
                     font-size: 1.8rem;
                     @extend .mt-5, .mb-3, .pb-1;
                     font-weight: normal;
-                    border-bottom: solid 1px $grey-lighter;
+                    border-bottom: solid 1px bl.$grey-lighter;
                 }
                 h3 {
                     font-size: 1.4rem;
@@ -65,7 +65,7 @@ article {
                 @extend %math-system;
                 .column-comment {
                     @extend .mt-4;
-                    border: solid 2px $grey-lighter;
+                    border: solid 2px bl.$grey-lighter;
                     border-radius: 12px;
                     @extend .p-3;
                     p {

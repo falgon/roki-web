@@ -1,5 +1,7 @@
+@use "bulma/sass" as bl;
+
 .disabled {
-    color: $grey-darker;
+    color: bl.$grey-darker;
     pointer-events: none;
 }
 

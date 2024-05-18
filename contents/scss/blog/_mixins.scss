@@ -1,3 +1,5 @@
+@use "bulma/sass" as *;
+
 $math-systems: ("def": "定義", "prop": "命題", "lem": "補題", "cor": "系", "thm": "定理", "axm": "公理", "proof": "証明");
 
 %math-system {
