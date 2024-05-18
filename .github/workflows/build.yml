@@ -20,7 +20,7 @@ jobs:
         key: site-gen-v1-${{ runner.os }}-${{ hashFiles('stack.yaml') }}-${{ hashFiles('stack.yaml.lock') }}-${{ hashFiles('package.yaml') }}-${{ hashFiles('src/**') }}-${{ hashFiles('app/**') }}
     - name: Setup Haskell
       if: steps.site-gen-cache.outputs.cache-hit != 'true'
-      uses: haskell/actions/setup@v1
+      uses: haskell-actions/setup@v2
       with:
         ghc-version: '8.8.3'
         enable-stack: true
