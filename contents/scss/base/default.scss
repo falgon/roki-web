@@ -122,6 +122,18 @@ ul.is-unstyled {
     padding: 0;
 }
 
+.blured-my-prof-figure {
+    text-align: center;
+    margin: 0 2em 0 2em;
+    img {
+        display: inline-block;
+    }
+}
+
+.blured-my-prof-figure:not(:last-child) {
+    margin-bottom: 2em;
+}
+
 .blured-my-prof {
     content: url(../images/avator/prof1000x1000.png);
     margin-top: 27px;
