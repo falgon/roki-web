@@ -1,4 +1,5 @@
-@use "bulma/sass" as bl;
+@use "bulma/versions/bulma-no-dark-mode" as bl;
+@use "bulma/sass/helpers";
 @use "base/colors" as c;
 
 @font-face  {
