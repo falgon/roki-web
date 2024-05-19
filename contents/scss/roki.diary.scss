@@ -1,5 +1,6 @@
 @use "bulma/versions/bulma-no-dark-mode";
 @use "style";
+@use "blog";
 
 .navbar {
     @extend .is-warning;
