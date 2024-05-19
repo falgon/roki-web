@@ -2,7 +2,6 @@
 @use "style";
 
 .navbar {
-    background: transparent;
     @extend .is-warning;
     font-family: 'Ubuntu Mono', 'Noto Sans JP', sans-serif !important;
 }
