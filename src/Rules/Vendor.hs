@@ -16,13 +16,11 @@ rules :: Bool -> Rules ()
 rules isPreview = do
     zipWithM_ vendRule
        [ fontAwesomeSVGPath
-       , bulmaPath
        , bulmaToolTipPath
        , highlightPath
        , katexCssPath
        ]
        [ joinPath ["vendor", "fontawesome", "style.css"]
-       , joinPath ["vendor", "bulma", "bulma.min.css"]
        , joinPath ["vendor", "bulma", "bulma-tooltip.min.css"]
        , joinPath ["vendor", "highlight", "highlight.css"]
        , joinPath ["vendor", "katex", "katex.min.css"]
@@ -51,8 +49,6 @@ rules isPreview = do
     where
         fontAwesomeSVGPath = fromGlob $ joinPath
             ["node_modules", "@fortawesome", "fontawesome-svg-core", "styles.css"]
-        bulmaPath = fromGlob $ joinPath
-            ["node_modules", "bulma", "css", "bulma.min.css"]
         bulmaToolTipPath = fromGlob $ joinPath
             ["node_modules", "@creativebulma", "bulma-tooltip", "dist", "bulma-tooltip.min.css"]
         katexCssPath = fromGlob $ joinPath
