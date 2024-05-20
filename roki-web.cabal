@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 2770a89839ea340a18ab2d819e48d1c9b1dca82adca5edba282a46800f69d7cb
+-- hash: 8fa75560922af91dfa6786f4df49562ddeb31b39cdc76c431d0e14ee4eff2f26
 
 name:           roki-web
 version:        1.0.0.0
@@ -97,7 +97,6 @@ library
     , filepath
     , gitrev
     , hakyll
-    , hakyll-sass
     , hjsmin
     , lucid
     , mtl
@@ -130,7 +129,6 @@ executable site
     , filepath
     , gitrev
     , hakyll
-    , hakyll-sass
     , hjsmin
     , lucid
     , mtl
@@ -164,7 +162,6 @@ executable spa
     , filepath
     , gitrev
     , hakyll
-    , hakyll-sass
     , hjsmin
     , lucid
     , mtl

@@ -1,7 +1,5 @@
 @charset "utf-8";
-
-@import '../../node_modules/bulma/bulma.sass';
+@forward 'base';
 @import '../vendor/bulma/bulma-tooltip.min.css';
 @import '../vendor/fontawesome/style.css';
 @import '../vendor/katex/katex.min.css';
-@import 'base/all';

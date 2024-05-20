@@ -1,3 +1,7 @@
+@use "bulma/versions/bulma-no-dark-mode" as bl;
+@use "bulma/sass/helpers";
+@use "base/colors" as c;
+
 @font-face  {
     font-family: 'Roboto';
     src: local('Roboto Thin Italic'),
@@ -118,6 +122,18 @@ ul.is-unstyled {
     padding: 0;
 }
 
+.blured-my-prof-figure {
+    text-align: center;
+    margin: 0 2em;
+    img {
+        display: inline-block;
+    }
+}
+
+.blured-my-prof-figure:not(:last-child) {
+    margin-bottom: 2em;
+}
+
 .blured-my-prof {
     content: url(../images/avator/prof1000x1000.png);
     margin-top: 27px;
@@ -168,11 +184,11 @@ span.both-lined:after {
 .no-cl-change a {
     padding: 0;
     margin: 0;
-    color: $grey-darker;
+    color: bl.$grey-darker;
 }
 
 .no-cl-change a:hover {
-    color: $grey-darker;
+    color: bl.$grey-darker;
 }
 
 #contributions_table {
@@ -206,8 +222,8 @@ span.both-lined:after {
     font-family: 'Ubuntu Mono', sans-serif;
     width: 100%;
     padding-bottom: 5px;
-    border-bottom: solid 1px $grey-lighter;
-    border-image: linear-gradient(to right, $grey-light 0% 50%, transparent 100%);
+    border-bottom: solid 1px bl.$grey-lighter;
+    border-image: linear-gradient(to right, bl.$grey-light 0% 50%, transparent 100%);
     border-image-slice: 1;
     border-right: 0;
     border-top: 0;
@@ -232,19 +248,19 @@ span.both-lined:after {
     margin: 0 0 0 auto !important;
     li {
         a {
-            color: $grey-darker;
+            color: bl.$grey-darker;
         }
         .social-icon-github:hover {
             color: #C4C4C4;
         }
         .social-icon-twitter:hover {
-            color: $twitter-color;
+            color: c.$twitter-color;
         }
         .social-icon-zenn:hover {
-            color: $zenn-color;
+            color: c.$zenn-color;
         }
         .social-icon-note:hover {
-            color: $note-color;
+            color: c.$note-color;
         }
     }
 }

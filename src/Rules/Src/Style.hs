@@ -3,7 +3,6 @@ module Rules.Src.Style (
 ) where
 
 import           Hakyll
-import           Hakyll.Web.Sass
 import           System.FilePath (joinPath)
 
 import           Config          (contentsRoot)
@@ -26,3 +25,4 @@ rules = do
         css = fromGlob $ joinPath [contentsRoot, "css", "**"]
         scssDep = fromGlob $ joinPath [contentsRoot, "scss", "*", "**.scss"]
         scss = fromGlob $ joinPath [contentsRoot, "scss", "*.scss"]
+        sassCompiler = getResourceString >>= withItemBody (unixFilter "npx" ["sass", "-I", "node_modules", "-I", "contents/scss", "--stdin"])

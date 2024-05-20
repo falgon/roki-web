@@ -20,7 +20,7 @@ jobs:
         key: site-gen-v1-${{ runner.os }}-${{ hashFiles('stack.yaml') }}-${{ hashFiles('stack.yaml.lock') }}-${{ hashFiles('package.yaml') }}-${{ hashFiles('src/**') }}-${{ hashFiles('app/**') }}
     - name: Setup Haskell
       if: steps.site-gen-cache.outputs.cache-hit != 'true'
-      uses: haskell/actions/setup@v1
+      uses: haskell-actions/setup@v2
       with:
         ghc-version: '8.8.3'
         enable-stack: true
@@ -31,13 +31,14 @@ jobs:
       id: stack-cache
       with:
         path: ~/.stack
-        key: stack-v2-${{ runner.os }}-${{ hashFiles('stack.yaml') }}
+        key: stack-v2-${{ runner.os }}-${{ hashFiles('stack.yaml') }}-${{ hashFiles('stack.yaml.lock') }}-${{ hashFiles('package.yaml') }}
     - name: Setup Tools
       run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo apt-get -qq update
-        sudo apt-get install -y --no-install-recommends \
+        sudo apt-get -qq -o=Dpkg::Use-Pty=0 update
+        sudo apt-get install -qq -y -o=Dpkg::Use-Pty=0 --no-install-recommends \
           libxml2-utils
+      env:
+        DEBIAN_FRONTEND: noninteractive
     - name: Setup Stack
       if: steps.site-gen-cache.outputs.cache-hit != 'true' && steps.stack-cache.outputs.cache-hit != 'true'
       run: |
