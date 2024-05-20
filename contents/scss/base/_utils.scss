@@ -1,5 +1,8 @@
+@use "bulma/versions/bulma-no-dark-mode" as bl;
+@use "bulma/sass/helpers";
+
 .disabled {
-    color: $grey-darker;
+    color: bl.$grey-darker;
     pointer-events: none;
 }
 

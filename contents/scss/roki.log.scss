@@ -1,7 +1,8 @@
-@import 'blog/all';
+@use "bulma/versions/bulma-no-dark-mode";
+@use "style";
+@use "blog";
 
 .navbar {
-    background: transparent;
     @extend .is-dark;
     font-family: 'Ubuntu Mono', 'Noto Sans JP', sans-serif !important;
 }
