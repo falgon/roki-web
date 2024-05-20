@@ -9,16 +9,16 @@
     },
     "devDependencies": {
         "@creativebulma/bulma-tooltip": "^1.2.0",
-        "@fortawesome/fontawesome-svg-core": "^6.5.1",
-        "@fortawesome/free-brands-svg-icons": "^6.5.1",
-        "@fortawesome/free-solid-svg-icons": "^6.5.1",
+        "@fortawesome/fontawesome-svg-core": "^6.5.2",
+        "@fortawesome/free-brands-svg-icons": "^6.5.2",
+        "@fortawesome/free-solid-svg-icons": "^6.5.2",
         "bulma": "^0.9.4",
-        "katex": "^0.16.9",
+        "katex": "^0.16.10",
         "psi": "^4.1.0",
-        "svgo": "^3.2.0"
+        "svgo": "^3.3.2"
     },
     "dependencies": {
-        "d3": "^7.8.5",
-        "mathjs": "^12.3.0"
+        "d3": "^7.9.0",
+        "mathjs": "^12.4.2"
     }
 }
