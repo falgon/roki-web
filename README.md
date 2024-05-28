@@ -1,17 +1,9 @@
 <h1 align="center">roki-web</h1>
 <p align="center">:memo: The <a href="https://github.com/falgon">roki</a>'s website and blog</p>
 
-<div align="center">
-
-[![CI-push](https://github.com/falgon/roki-web/actions/workflows/build.yml/badge.svg)](https://github.com/falgon/roki-web/actions/workflows/build.yml)
-[![CircleCI](https://dl.circleci.com/status-badge/img/gh/falgon/roki-web/tree/develop.svg?style=shield)](https://dl.circleci.com/status-badge/redirect/gh/falgon/roki-web/tree/develop)
-[![Known Vulnerabilities](https://snyk.io/test/github/falgon/roki-web/badge.svg?targetFile=package.json)](https://snyk.io/test/github/falgon/roki-web?targetFile=package.json)
-[![CodeFactor](https://www.codefactor.io/repository/github/falgon/roki-web/badge?s=e4b1f45b3bb2dc89c42f654d991238ef7771bc9f)](https://www.codefactor.io/repository/github/falgon/roki-web)
-[![Codacy Badge](https://app.codacy.com/project/badge/Grade/0f3e0d5c5bbe43a78eaeed7485b72c7f)](https://www.codacy.com?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=falgon/roki-web&amp;utm_campaign=Badge_Grade)
-[![Maintainability](https://api.codeclimate.com/v1/badges/e6574c3042df63bf6d41/maintainability)](https://codeclimate.com/github/falgon/roki-web/maintainability)
-[![CI-CodeQL](https://github.com/falgon/roki-web/actions/workflows/codeql.yml/badge.svg)](https://github.com/falgon/roki-web/actions/workflows/codeql.yml)
-[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Ffalgon%2Froki-web.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Ffalgon%2Froki-web?ref=badge_shield)
-</div>
+| CI | deployment | inspection | quality | 
+| :--: | :--: | :--: | :--: |
+| [![CI-push](https://github.com/falgon/roki-web/actions/workflows/build.yml/badge.svg)](https://github.com/falgon/roki-web/actions/workflows/build.yml) | [![pages-build-deployment](https://github.com/falgon/roki-web/actions/workflows/pages/pages-build-deployment/badge.svg)](https://github.com/falgon/roki-web/actions/workflows/pages/pages-build-deployment) [![CircleCI](https://dl.circleci.com/status-badge/img/gh/falgon/roki-web/tree/develop.svg?style=shield)](https://dl.circleci.com/status-badge/redirect/gh/falgon/roki-web/tree/develop) | [![Known Vulnerabilities](https://snyk.io/test/github/falgon/roki-web/badge.svg?targetFile=package.json)](https://snyk.io/test/github/falgon/roki-web?targetFile=package.json) [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Ffalgon%2Froki-web.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Ffalgon%2Froki-web?ref=badge_shield) | [![CodeFactor](https://www.codefactor.io/repository/github/falgon/roki-web/badge?s=e4b1f45b3bb2dc89c42f654d991238ef7771bc9f)](https://www.codefactor.io/repository/github/falgon/roki-web) [![Codacy Badge](https://app.codacy.com/project/badge/Grade/0f3e0d5c5bbe43a78eaeed7485b72c7f)](https://www.codacy.com?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=falgon/roki-web&amp;utm_campaign=Badge_Grade) [![Maintainability](https://api.codeclimate.com/v1/badges/e6574c3042df63bf6d41/maintainability)](https://codeclimate.com/github/falgon/roki-web/maintainability) |
 
 * Website: [roki.dev](https://roki.dev)
     * Tech blog: [roki.dev/roki.log](https://roki.dev/roki.log/)
