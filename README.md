@@ -3,7 +3,7 @@
 
 <div align="center">
 
-![CI](https://github.com/falgon/roki-web/workflows/CI/badge.svg)
+[![CI-push](https://github.com/falgon/roki-web/actions/workflows/build.yml/badge.svg)](https://github.com/falgon/roki-web/actions/workflows/build.yml)
 [![CircleCI](https://dl.circleci.com/status-badge/img/gh/falgon/roki-web/tree/develop.svg?style=shield)](https://dl.circleci.com/status-badge/redirect/gh/falgon/roki-web/tree/develop)
 [![Known Vulnerabilities](https://snyk.io/test/github/falgon/roki-web/badge.svg?targetFile=package.json)](https://snyk.io/test/github/falgon/roki-web?targetFile=package.json)
 [![CodeFactor](https://www.codefactor.io/repository/github/falgon/roki-web/badge?s=e4b1f45b3bb2dc89c42f654d991238ef7771bc9f)](https://www.codefactor.io/repository/github/falgon/roki-web)
