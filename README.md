@@ -1,13 +1,13 @@
 <h1 align="center">roki-web</h1>
 <p align="center">:memo: The <a href="https://github.com/falgon">roki</a>'s website and blog</p>
 
-| CI | deployment | inspection | quality | 
+| CI | Deployment | Inspection | Quality | 
 | :--: | :--: | :--: | :--: |
 | [![CI-push](https://github.com/falgon/roki-web/actions/workflows/build.yml/badge.svg)](https://github.com/falgon/roki-web/actions/workflows/build.yml) | [![pages-build-deployment](https://github.com/falgon/roki-web/actions/workflows/pages/pages-build-deployment/badge.svg)](https://github.com/falgon/roki-web/actions/workflows/pages/pages-build-deployment) [![CircleCI](https://dl.circleci.com/status-badge/img/gh/falgon/roki-web/tree/develop.svg?style=shield)](https://dl.circleci.com/status-badge/redirect/gh/falgon/roki-web/tree/develop) | [![Known Vulnerabilities](https://snyk.io/test/github/falgon/roki-web/badge.svg?targetFile=package.json)](https://snyk.io/test/github/falgon/roki-web?targetFile=package.json) [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Ffalgon%2Froki-web.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Ffalgon%2Froki-web?ref=badge_shield) | [![CodeFactor](https://www.codefactor.io/repository/github/falgon/roki-web/badge?s=e4b1f45b3bb2dc89c42f654d991238ef7771bc9f)](https://www.codefactor.io/repository/github/falgon/roki-web) [![Codacy Badge](https://app.codacy.com/project/badge/Grade/0f3e0d5c5bbe43a78eaeed7485b72c7f)](https://www.codacy.com?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=falgon/roki-web&amp;utm_campaign=Badge_Grade) [![Maintainability](https://api.codeclimate.com/v1/badges/e6574c3042df63bf6d41/maintainability)](https://codeclimate.com/github/falgon/roki-web/maintainability) |
 
-* Website: [roki.dev](https://roki.dev)
-    * Tech blog: [roki.dev/roki.log](https://roki.dev/roki.log/)
-    * Diary: [roki.dev/roki.diary](https://roki.dev/roki.diary/)
+* **Website**: [roki.dev](https://roki.dev)
+   * Tech blog: [roki.dev/roki.log](https://roki.dev/roki.log/)
+   * Diary: [roki.dev/roki.diary](https://roki.dev/roki.diary/)
 
 ## Setup
 
@@ -19,7 +19,7 @@ stack build
 
 ## Usage
 
-Building a site
+Building the site
 ```sh
 stack exec site -- --help
 Usage: site [--version] [--preview] [-v|--verbose] [--internal-links] COMMAND
@@ -190,9 +190,12 @@ and commits to a specific branch in that repository are triggered and pushed to 
 This makes it possible to make open source and keep drafts private, 
 improving and integrating the previously separated management form.
 
-## License [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Ffalgon%2Froki-web.svg?type=small)](https://app.fossa.com/projects/git%2Bgithub.com%2Ffalgon%2Froki-web?ref=badge_small) 
+## License [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Ffalgon%2Froki-web.svg?type=small)](https://app.fossa.com/projects/git%2Bgithub.com%2Ffalgon%2Froki-web?ref=badge_small)
 
 Licenses of this project is managed by [FOSSA](https://fossa.com/) (you can see above "license scan" badge).
 For more details, you can see [the dependency report of FOSSA](https://app.fossa.com/projects/git%2Bgithub.com%2Ffalgon%2Froki-web?utm_source=share_link).
 
+<div align="center">
+   
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Ffalgon%2Froki-web.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Ffalgon%2Froki-web?ref=badge_large)
+</div>
