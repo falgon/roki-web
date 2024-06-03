@@ -84,11 +84,51 @@ article {
     }
 }
 
-.balloon-left {
+@mixin balloon-base($ml: 0px, $mr: 0px) {
     position: relative;
     padding: 20px;
     border-radius: 10px;
-    background-color: bl.$cyan;
+    color: bl.$grey-lighter;
+    background-color: bl.$black-ter;
+    margin-left: $ml;
+    margin-right: $mr;
+    .balloon-icon {
+        position: absolute;
+        left: -$ml;
+        right: -$mr;
+        top: 0;
+        img {
+            width: 65px;
+        }
+    }
+    &::before{
+        content: '';
+        position: absolute;
+        display: block;
+        width: 0;
+        height: 0;
+        left: -15px;
+        top: 20px;
+        border-right: 15px solid bl.$black-ter;
+        border-top: 15px solid transparent;
+        border-bottom: 15px solid transparent;
+    }
+}
+
+.balloon-left {
+    @include balloon-base(110px, 0);
+}
+
+.ballon-right {
+    @include balloon-base(0, 110px);
+}
+
+/*.balloon-left {
+    position: relative;
+    padding: 20px;
+    border-radius: 10px;
+    color: bl.$grey-lighter;
+    background-color: bl.$black-ter;
     margin-left: 110px;
     .balloon-icon {
         position: absolute;
@@ -106,7 +146,7 @@ article {
         height: 0;
         left: -15px;
         top: 20px;
-        border-right: 15px solid bl.$cyan;
+        border-right: 15px solid bl.$black-ter;
         border-top: 15px solid transparent;
         border-bottom: 15px solid transparent;
     }
@@ -116,7 +156,8 @@ article {
     position: relative;
     padding: 20px;
     border-radius: 10px;
-    background-color: bl.$cyan;
+    color: bl.$grey-lighter;
+    background-color: bl.$black-ter;
     margin-right: 110px;
     .balloon-icon{
         position: absolute;
@@ -134,8 +175,8 @@ article {
         height: 0;
         right: -15px;
         top: 20px;
-        border-left: 15px solid bl.$cyan;
+        border-left: 15px solid bl.$black-ter;
         border-top: 15px solid transparent;
         border-bottom: 15px solid transparent;
     }
-}
+}*/
