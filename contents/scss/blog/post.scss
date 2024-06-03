@@ -90,12 +90,18 @@ article {
     border-radius: 10px;
     color: bl.$grey-lighter;
     background-color: bl.$black-ter;
-    margin-left: $ml;
-    margin-right: $mr;
+    @if $ml != 0px and $mr == 0px {
+        margin-left: $ml;
+    } @else if $ml == 0px and $mr != 0px {
+        margin-right: $mr;
+    }
     .balloon-icon {
         position: absolute;
-        left: -$ml;
-        right: -$mr;
+        @if $ml != 0px and $mr == 0px {
+            left: -$ml;
+        } @else if $ml == 0px and $mr != 0px {
+            right: -$mr;
+        }
         top: 0;
         img {
             width: 65px;
@@ -115,12 +121,14 @@ article {
     }
 }
 
+$balloon-icon-space: 90px;
+
 .balloon-left {
-    @include balloon-base(110px, 0);
+    @include balloon-base($balloon-icon-space, 0px);
 }
 
 .ballon-right {
-    @include balloon-base(0, 110px);
+    @include balloon-base(0px, $balloon-icon-space);
 }
 
 /*.balloon-left {
