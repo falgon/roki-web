@@ -83,3 +83,53 @@ article {
         }
     }
 }
+
+.balloon-left {
+    position: relative;
+    padding: 20px;
+    border-radius: 10px;
+    background-color: bl.$cyan;
+    margin-left: 110px;
+    .icon {
+        position: absolute;
+        left: -110px;
+        top: 0;
+    }
+    &::before{
+        content: '';
+        position: absolute;
+        display: block;
+        width: 0;
+        height: 0;
+        left: -15px;
+        top: 20px;
+        border-right: 15px solid bl.$cyan;
+        border-top: 15px solid transparent;
+        border-bottom: 15px solid transparent;
+    }
+}
+
+.balloon-right {
+    position: relative;
+    padding: 20px;
+    border-radius: 10px;
+    background-color: bl.$cyan;
+    margin-right: 110px;
+    .icon{
+        position: absolute;
+        right: -110px;
+        top: 0;
+    }
+    &::before{
+        content: '';
+        position: absolute;
+        display: block;
+        width: 0;
+        height: 0;
+        right: -15px;
+        top: 20px;
+        border-left: 15px solid bl.$cyan;
+        border-top: 15px solid transparent;
+        border-bottom: 15px solid transparent;
+    }
+}
