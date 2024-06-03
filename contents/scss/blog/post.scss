@@ -108,14 +108,19 @@ article {
         }
     }
     &::before{
+        @if $ml != 0px and $mr == 0px {
+            left: -15px;
+            border-right: 15px solid bl.$black-ter;
+        } @else if $ml == 0px and $mr != 0px {
+            right: -15px;
+            border-left: 15px solid bl.$black-ter;
+        }
         content: '';
         position: absolute;
         display: block;
         width: 0;
         height: 0;
-        left: -15px;
         top: 20px;
-        border-right: 15px solid bl.$black-ter;
         border-top: 15px solid transparent;
         border-bottom: 15px solid transparent;
     }
