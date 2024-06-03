@@ -85,6 +85,7 @@ article {
 }
 
 .balloon-left {
+    display: inline-block;
     position: relative;
     padding: 20px;
     border-radius: 10px;
@@ -94,6 +95,9 @@ article {
         position: absolute;
         left: -110px;
         top: 0;
+        img {
+            width: 200px;
+        }
     }
     &::before{
         content: '';
@@ -110,6 +114,7 @@ article {
 }
 
 .balloon-right {
+    display: inline-block;
     position: relative;
     padding: 20px;
     border-radius: 10px;
@@ -119,6 +124,9 @@ article {
         position: absolute;
         right: -110px;
         top: 0;
+        img {
+            width: 200px;
+        }
     }
     &::before{
         content: '';
