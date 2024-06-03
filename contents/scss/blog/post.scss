@@ -127,64 +127,7 @@ $balloon-icon-space: 90px;
     @include balloon-base($balloon-icon-space, 0px);
 }
 
-.ballon-right {
+.balloon-right {
     @include balloon-base(0px, $balloon-icon-space);
 }
 
-/*.balloon-left {
-    position: relative;
-    padding: 20px;
-    border-radius: 10px;
-    color: bl.$grey-lighter;
-    background-color: bl.$black-ter;
-    margin-left: 110px;
-    .balloon-icon {
-        position: absolute;
-        left: -110px;
-        top: 0;
-        img {
-            width: 65px;
-        }
-    }
-    &::before{
-        content: '';
-        position: absolute;
-        display: block;
-        width: 0;
-        height: 0;
-        left: -15px;
-        top: 20px;
-        border-right: 15px solid bl.$black-ter;
-        border-top: 15px solid transparent;
-        border-bottom: 15px solid transparent;
-    }
-}
-
-.balloon-right {
-    position: relative;
-    padding: 20px;
-    border-radius: 10px;
-    color: bl.$grey-lighter;
-    background-color: bl.$black-ter;
-    margin-right: 110px;
-    .balloon-icon{
-        position: absolute;
-        right: -110px;
-        top: 0;
-        img {
-            width: 65px;
-        }
-    }
-    &::before{
-        content: '';
-        position: absolute;
-        display: block;
-        width: 0;
-        height: 0;
-        right: -15px;
-        top: 20px;
-        border-left: 15px solid bl.$black-ter;
-        border-top: 15px solid transparent;
-        border-bottom: 15px solid transparent;
-    }
-}*/
