@@ -90,12 +90,12 @@ article {
     border-radius: 10px;
     background-color: bl.$cyan;
     margin-left: 110px;
-    .icon {
+    .balloon-icon {
         position: absolute;
         left: -110px;
         top: 0;
         img {
-            width: 200px;
+            width: 65px;
         }
     }
     &::before{
@@ -118,12 +118,12 @@ article {
     border-radius: 10px;
     background-color: bl.$cyan;
     margin-right: 110px;
-    .icon{
+    .balloon-icon{
         position: absolute;
         right: -110px;
         top: 0;
         img {
-            width: 200px;
+            width: 65px;
         }
     }
     &::before{
