@@ -7,8 +7,6 @@ jobs:
   build:
     runs-on: ubuntu-20.04
     if: github.repository == 'falgon/roki-web'
-    outputs:
-      node_version: ${{ steps.node_version.outputs.node_version }}
     steps:
     - name: Checkout
       uses: actions/checkout@v3
@@ -50,14 +48,11 @@ jobs:
       uses: browniebroke/read-nvmrc-action@v1
       id: nvmrc
     - name: Setup Node
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@v4
       with:
-        node-version: '${{ steps.nvmrc.outputs.node_version }}'
+        node-version-file: '.nvmrc'
     - name: Export node version value
-      id: node_version
-      run: |
-        echo "ROKI_WEB_GH_ACTIONS_NODE_VERSION=v${{ steps.nvmrc.outputs.node_version }}" >> "$GITHUB_ENV"
-        echo "node_version=${{ steps.nvmrc.outputs.node_version }}" >> "$GITHUB_OUTPUT"
+      run: echo "ROKI_WEB_GH_ACTIONS_NODE_VERSION=$(node --version)" >> "$GITHUB_ENV"
     - name: Node module cache
       uses: actions/cache@v3
       id: node-cache
@@ -108,9 +103,9 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v3
     - name: Setup Node
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@v4
       with:
-        node-version: '${{ needs.build.outputs.node_version }}'
+        node-version-file: '.nvmrc'
     - name: Node module cache
       uses: actions/cache@v3
       id: node-cache

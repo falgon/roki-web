@@ -52,15 +52,12 @@ jobs:
       run: |
         stack config set system-ghc --global true
         stack config set install-ghc --global false
-    - name: Read Node version
-      uses: browniebroke/read-nvmrc-action@v1
-      id: nvmrc
     - name: Setup Node
-      uses: actions/setup-node@v2
+      uses: actions/setup-node@v4
       with:
-        node-version: '${{ steps.nvmrc.outputs.node_version }}'
+        node-version-file: '.nvmrc'
     - name: Export node version value
-      run: echo "ROKI_WEB_GH_ACTIONS_NODE_VERSION=v${{ steps.nvmrc.outputs.node_version }}" >> "$GITHUB_ENV"
+      run: echo "ROKI_WEB_GH_ACTIONS_NODE_VERSION=$(node --version)" >> "$GITHUB_ENV"
     - name: Node module cache
       uses: actions/cache@v3
       id: node-cache
@@ -122,7 +119,7 @@ jobs:
       gdrive_path: ${{ steps.upload.outputs.gdrive_path }}
     steps:
     - name: Fetch archive
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v3
       with:
         name: roki.dev
     - name: Skicka cache
