@@ -3,22 +3,29 @@ module Config.Blog (
 ) where
 
 import           Archives
+
 import           Hakyll                hiding (FeedConfiguration (..),
                                         renderAtom)
 import           Hakyll.Web.Feed.Extra (FeedConfiguration)
+import           Lucid.Base            (Html)
 import           Text.Pandoc.Options   (WriterOptions)
 
 data BlogConfig m = BlogConfig {
-    blogName                        :: String
+    blogIsPreview                   :: Bool
+  , blogName                        :: String
   , blogDescription                 :: String
-  , blogHeaderAdditional            :: String
-  , blogBeforeContentBodyAdditional :: String
-  , blogFooterAdditional            :: String
+  , blogFont                        :: Html ()
+  , blogPageEntriesNum              :: Int
+  , blogPrevNextTitleMaxNum         :: Int
+  , blogFeedRecentNum               :: Int
+  , blogHeaderAdditional            :: Html ()
+  , blogBeforeContentBodyAdditional :: Html ()
+  , blogFooterAdditional            :: Html ()
   , blogTagBuilder                  :: m Tags
   , blogTagPagesPath                :: FilePath -> FilePath
   , blogEntryPattern                :: Pattern
   , blogEntryFilesPattern           :: Pattern
-  , blogAtomConfig                  :: FeedConfiguration
+  , blogFeedConfig                  :: FeedConfiguration
   , blogContentSnapshot             :: String
   , blogYearlyArchivesBuilder       :: m YearlyArchives
   , blogMonthlyArchivesBuilder      :: m MonthlyArchives

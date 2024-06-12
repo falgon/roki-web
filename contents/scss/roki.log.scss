@@ -1,12 +1,16 @@
-@import 'blog/all';
+@use "bulma/versions/bulma-no-dark-mode";
+@use "style";
+@use "blog";
 
 .navbar {
-    background: transparent;
     @extend .is-dark;
+    font-family: 'Ubuntu Mono', 'Noto Sans JP', sans-serif !important;
 }
 
 .navbar-brand a:hover {
     color: #4a4a4a;
 }
 
-
+body {
+    font-family: 'Noto Serif JP', serif !important;
+}

@@ -2,9 +2,10 @@ module Rules.Vendor (
     rules
 ) where
 
-import           Config.RegexUtils (intercalateDir)
-import           Control.Monad     (zipWithM_)
 import           Hakyll
+
+import           Control.Monad   (zipWithM_)
+import           System.FilePath (joinPath)
 
 vendRule :: Pattern -> FilePath -> Rules ()
 vendRule inpat outpath = match inpat $ do
@@ -19,39 +20,39 @@ rules isPreview = do
        , highlightPath
        , katexCssPath
        ]
-       [ intercalateDir ["vendor", "fontawesome", "style.css"]
-       , intercalateDir ["vendor", "bulma", "bulma-tooltip.min.css"]
-       , intercalateDir ["vendor", "highlight", "highlight.css"]
-       , intercalateDir ["vendor", "katex", "katex.min.css"]
+       [ joinPath ["vendor", "fontawesome", "style.css"]
+       , joinPath ["vendor", "bulma", "bulma-tooltip.min.css"]
+       , joinPath ["vendor", "highlight", "highlight.css"]
+       , joinPath ["vendor", "katex", "katex.min.css"]
        ]
 
-    match (fromGlob $ intercalateDir ["node_modules", "katex", "dist", "fonts", "**"]) $ do
+    match (fromGlob $ joinPath ["node_modules", "katex", "dist", "fonts", "**"]) $ do
         route $ gsubRoute "node_modules/katex/dist/" (const "vendor/katex/")
         compile copyFileCompiler
 
-    match (fromGlob $ intercalateDir ["node_modules", "d3", "dist", "d3.min.js"]) $ do
+    match (fromGlob $ joinPath ["node_modules", "d3", "dist", "d3.min.js"]) $ do
         route $ gsubRoute "node_modules/d3/dist/" (const "vendor/d3/")
         compile copyFileCompiler
 
-    match (fromGlob $ intercalateDir ["node_modules", "mathjs", "lib", "browser", "math.js"]) $ do
+    match (fromGlob $ joinPath ["node_modules", "mathjs", "lib", "browser", "math.js"]) $ do
         route $ gsubRoute "node_modules/mathjs/lib/browser/" (const "vendor/mathjs/")
         compile copyFileCompiler
 
-    if not isPreview then return () else do
-        match (fromGlob $ intercalateDir ["node_modules", "katex", "dist", "katex.min.js"]) $ do
+    if not isPreview then pure () else do
+        match (fromGlob $ joinPath ["node_modules", "katex", "dist", "katex.min.js"]) $ do
             route $ gsubRoute "node_modules/katex/dist/" (const "vendor/katex/")
             compile copyFileCompiler
 
-        match (fromGlob $ intercalateDir ["node_modules", "katex", "dist", "contrib", "auto-render.min.js"]) $ do
+        match (fromGlob $ joinPath ["node_modules", "katex", "dist", "contrib", "auto-render.min.js"]) $ do
             route $ gsubRoute "node_modules/katex/dist/contrib/" (const "vendor/katex/")
             compile copyFileCompiler
     where
-        fontAwesomeSVGPath = fromGlob $ intercalateDir
+        fontAwesomeSVGPath = fromGlob $ joinPath
             ["node_modules", "@fortawesome", "fontawesome-svg-core", "styles.css"]
-        bulmaToolTipPath = fromGlob $ intercalateDir
+        bulmaToolTipPath = fromGlob $ joinPath
             ["node_modules", "@creativebulma", "bulma-tooltip", "dist", "bulma-tooltip.min.css"]
-        katexCssPath = fromGlob $ intercalateDir
+        katexCssPath = fromGlob $ joinPath
             ["node_modules", "katex", "dist", "katex.min.css"]
-        highlightPath = fromGlob $ intercalateDir
+        highlightPath = fromGlob $ joinPath
             ["external", "hakyll-css", "css", "tango.css"]
 

@@ -27,11 +27,10 @@
         $endif$
         <meta property="og:site_name" content="$site-title$/$blog-title$" />
         
-        <link rel="dns-prefetch" href="//fonts.googleapis.com">
-        <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Sawarabi+Gothic&family=Sawarabi+Mincho&family=Ubuntu+Mono&display=swap" rel="stylesheet">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        $blog-font-html$
 
-        <link rel="stylesheet" href="/style/style.css" />
         <link rel="stylesheet" href="/style/$blog-title$.css" />
         <link rel="shortcut icon" href="/images/avator/favicon.ico" />
         
@@ -76,6 +75,7 @@
   		gtag('js', new Date());
   		gtag('config', '$google-analytics$');
 		</script>
+        <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5658861742931397" crossorigin="anonymous"></script>
         $if(header-additional-component)$
         $header-additional-component$
         $endif$
@@ -140,7 +140,7 @@
                             </a>
                             <a class="navbar-item" 
                                 href="https://feedly.com/i/subscription/feed/https://$site-title$/$blog-title$/feed/$blog-title$.xml">
-                                <i class="fas fa-rss-square fa-fw mr-2"></i>
+                                <i class="fas fa-square-rss fa-fw mr-2"></i>
                                 Feedly
                             </a>
                         </div>
@@ -152,7 +152,7 @@
                         </a>
                         <div class="navbar-dropdown">
                             <a class="navbar-item" href="/index.html">
-                                <i class="fas fa-home fa-fw mr-2"></i>
+                                <i class="fas fa-house fa-fw mr-2"></i>
                                 $site-title$
                             </a>
                             <hr class="navbar-divider">

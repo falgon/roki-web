@@ -1,17 +1,25 @@
 name: CI-pr
 
+env:
+  GO_VERSION: 1.21.3
+  TZ: Asia/Tokyo
+  DOCS_TARXZ: docs.tar.xz
 on:
   pull_request:
     branches: [develop, master, release, draft]
     types: [synchronize, opened, reopened, ready_for_review]
+  workflow_dispatch:
 jobs:
   build:
     runs-on: ubuntu-20.04
+    outputs:
+      target_ref: ${{ steps.build.outputs.target_ref }}
     steps:
     - name: Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         submodules: true
+        ref: ${{ github.head_ref }}
     - name: Site generator cache
       uses: actions/cache@v3
       id: site-gen-cache
@@ -24,19 +32,21 @@ jobs:
       id: stack-cache
       with:
         path: ~/.stack
-        key: stack-v2-${{ runner.os }}-${{ hashFiles('stack.yaml') }}
+        key: stack-v2-${{ runner.os }}-${{ hashFiles('stack.yaml') }}-${{ hashFiles('stack.yaml.lock') }}-${{ hashFiles('package.yaml') }}
     - name: Setup GHC
       if: steps.site-gen-cache.outputs.cache-hit != 'true'
-      uses: haskell/actions/setup@v1
+      uses: haskell-actions/setup@v2
       with:
         ghc-version: '8.8.3'
         enable-stack: true
         stack-version: '2.7.3'
-    - name: Setup XMLlint
-      uses: awalsh128/cache-apt-pkgs-action@v1.2.2
-      with:
-        packages: libxml2-utils
-        version: 1.0
+    - name: Setup Tools
+      run: |
+        sudo apt-get -qq -o=Dpkg::Use-Pty=0 update
+        sudo apt-get install -qq -y -o=Dpkg::Use-Pty=0 --no-install-recommends \
+          libxml2-utils parallel
+      env:
+        DEBIAN_FRONTEND: noninteractive
     - name: Setup Stack
       if: steps.site-gen-cache.outputs.cache-hit != 'true' && steps.stack-cache.outputs.cache-hit != 'true'
       run: |
@@ -49,6 +59,8 @@ jobs:
       uses: actions/setup-node@v2
       with:
         node-version: '${{ steps.nvmrc.outputs.node_version }}'
+    - name: Export node version value
+      run: echo "ROKI_WEB_GH_ACTIONS_NODE_VERSION=v${{ steps.nvmrc.outputs.node_version }}" >> "$GITHUB_ENV"
     - name: Node module cache
       uses: actions/cache@v3
       id: node-cache
@@ -70,22 +82,44 @@ jobs:
         path: './docs'
         key: docs-v1-${{ runner.os }}
     - name: Build and validate roki.dev
+      id: build
       run: |
-        ./site build
+        for i in $(seq 0 ${{ env.RETRY_MAX }}); do
+          set +e -o pipefail
+            exec 3>&1
+              site_out="$(./site build 2>&1 | tee /dev/fd/3)"
+              result=$?
+            exec 3>&-
+          set -e +o pipefail
+          if [ $result -eq 0 ]; then
+            break;
+          elif [ -n "$(grep "code: 'EAGAIN'" <<<"$site_out")" ]; then
+            echo "EAGAIN detected, try to run again (next count: $((i+1)))" >&2
+            ./site clean
+            continue;
+          else
+            exit 1
+          fi
+        done
         ./site check --internal-links
-        xmllint docs/roki.log/sitemap.xml --noout
-        xmllint docs/roki.log/feed/roki.log.xml --noout
-        xmllint docs/roki.diary/sitemap.xml --noout
-        xmllint docs/roki.diary/feed/roki.diary.xml --noout
-        tar cvf docs.tar.xz docs
+        parallel -I% --no-notice -j+0 --progress \
+          xmllint docs/%/sitemap.xml docs/%/feed/%.xml --noout ::: ${{ env.TECH_BLOG }} ${{ env.DIARY_BLOG }}
+        tar cvf "${{ env.DOCS_TARXZ }}" docs
+        echo "target_ref=$(git show --format='%H' --no-patch)" >> "$GITHUB_OUTPUT"
+      env:
+        RETRY_MAX: 3
+        TECH_BLOG: roki.log
+        DIARY_BLOG: roki.diary
     - name: Upload artifact
       uses: actions/upload-artifact@v2
       with:
         name: roki.dev
-        path: docs.tar.xz
+        path: ${{ env.DOCS_TARXZ }}
   upload:
     runs-on: ubuntu-latest
     needs: build
+    outputs:
+      gdrive_path: ${{ steps.upload.outputs.gdrive_path }}
     steps:
     - name: Fetch archive
       uses: actions/download-artifact@v2
@@ -101,17 +135,18 @@ jobs:
           ~/.skicka.tokencache.json
           ~/.skicka.config
           ~/.skicka.metadata.cache
-        key: go-v2-${{ runner.os }}
+        key: go-${{ env.GO_VERSION }}-v3-${{ runner.os }}
     - name: Setup Go Path
       run: |
-        echo "GOPATH=$HOME/.go" >> $GITHUB_ENV
-        echo "$HOME/.go/bin:$PATH" >> $GITHUB_PATH
+        echo "GOPATH=$HOME/.go" >> "$GITHUB_ENV"
+        echo "$HOME/.go/bin:$PATH" >> "$GITHUB_PATH"
     - name: Setup Skicka
+      id: setup-skicka
       if: steps.skicka-cache.outputs.cache-hit != 'true'
       shell: bash
       run: |
-        wget -q https://dl.google.com/go/go1.17.9.linux-amd64.tar.gz
-        tar -C "$HOME" -xzf go1.17.9.linux-amd64.tar.gz
+        wget -q "https://dl.google.com/go/${{ env.GO_TARGZ }}"
+        tar -C "$HOME" -xzf "${{ env.GO_TARGZ }}"
         mv "$HOME/go" "$HOME/.go"
         go install github.com/google/skicka@latest
         skicka init
@@ -122,26 +157,47 @@ jobs:
         SKICKA_TOKENCACHE_JSON: ${{ secrets.SKICKA_TOKENCACHE_JSON }}
         GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
         GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
-    - name: Upload to Google Drive
+        GO_TARGZ: go${{ env.GO_VERSION }}.linux-amd64.tar.gz
+    - name: Setup variables
+      id: setup-variables
       run: |
-        skicka -no-browser-auth upload -ignore-times \
-          ./docs.tar.xz \
-          CI_WORK/GitHubActions/${GITHUB_REPOSITORY#${GITHUB_REPOSITORY_OWNER}/}/${{ github.sha }}-docs.tar.xz
+        echo "repository_name=${GITHUB_REPOSITORY#${GITHUB_REPOSITORY_OWNER}/}" >> "$GITHUB_OUTPUT"
+        echo "docs_prefix=${{ env.DOCS_PREFIX }}" >> "$GITHUB_OUTPUT"
+      env:
+        DOCS_PREFIX: ${{ needs.build.outputs.target_ref }}-${{ github.run_number }}
+    - name: Upload to Google Drive
+      id: upload
+      run: |
+        echo "gdrive_path=${{ env.UPLOAD_GDRIVE_PATH }}" >> "$GITHUB_OUTPUT"
+        skicka -no-browser-auth upload -ignore-times "./${{ env.DOCS_TARXZ }}" "${{ env.UPLOAD_GDRIVE_PATH }}"
+      env:
+        UPLOAD_GDRIVE_PATH: CI_WORK/GitHubActions/${{ steps.setup-variables.outputs.repository_name }}/${{ steps.setup-variables.outputs.docs_prefix }}-${{ env.DOCS_TARXZ }}
   boot-circle-ci:
     runs-on: ubuntu-latest
-    needs: upload
+    needs: [build, upload]
     steps:
+    - name: Set parameters
+      id: parameters
+      run: |
+          echo "enable_comment=$(test $ENAME = pull_request && echo true || echo false)" >> "$GITHUB_OUTPUT"
+          echo "target_branch=$(test $ENAME = pull_request && echo $HEAD_REF || echo $REF_NAME)" >> "$GITHUB_OUTPUT"
+      env:
+          ENAME: ${{ github.event_name }}
+          HEAD_REF: ${{ github.head_ref }}
+          REF_NAME: ${{ github.ref_name }}
     - name: Boot CircleCI
+      id: boot-circleci
       run: |
-          echo CIRCLE_RESP=$(curl -s -X POST \
-            -H "Circle-Token: ${{ secrets.CIRCLE_API_USER_TOKEN }}" \
-            -H "Content-Type: application/json" \
-            -d '{"branch":"${{ github.event.pull_request.head.ref }}","parameters":{"GITHUB_SHA":"${{ github.sha }}"}}' \
-            https://circleci.com/api/v2/project/gh/${{ github.repository }}/pipeline) >> $GITHUB_ENV
-    - name: Set CircleCI variables
-      id: cc
-      run: |
-          echo "CIRCLE_JOB_NUM=$(echo '${{ env.CIRCLE_RESP }}' | jq .number)" >> $GITHUB_ENV
-          echo "CIRCLE_JOB_ID=$(echo '${{ env.CIRCLE_RESP }}' | jq .id)" >> $GITHUB_ENV
-    - name: Out CircleCI URL
-      run: echo "https://app.circleci.com/pipelines/github/${{ github.repository }}/${{ env.CIRCLE_JOB_NUM }}/workflows/${{ env.CIRCLE_JOB_ID }}/jobs/${{ env.CIRCLE_JOB_NUM }}/steps"
+          CIRCLE_RESP="$(curl -fsX POST -H "${{ env.CIRCLE_TOKEN }}" -H "${{ env.CONTENT_TYPE }}" -d '${{ env.DATA }}' "${{ env.ENDPOINT }}")"
+          readonly CIRCLE_RESP
+          echo "circle_job_num=$(jq -r .number <<< "$CIRCLE_RESP")" >> "$GITHUB_OUTPUT"
+          echo "created at: $(date -d "$(jq -r .created_at <<< "$CIRCLE_RESP")" +'%Y/%m/%d (%a) %T')"
+      env:
+        ENDPOINT: https://circleci.com/api/v2/project/gh/${{ github.repository }}/pipeline
+        CIRCLE_TOKEN: "Circle-Token: ${{ secrets.CIRCLE_API_USER_TOKEN }}"
+        CONTENT_TYPE: "Content-Type: application/json"
+        DATA: '{"branch":"${{ steps.parameters.outputs.target_branch }}", "parameters":{"TARGET_REF":"${{ needs.build.outputs.target_ref }}", "GDRIVE_PATH":"${{ needs.upload.outputs.gdrive_path }}","ENABLE_PR_COMMENT":${{ steps.parameters.outputs.enable_comment }}}}'
+    - name: Show CircleCI URL
+      run: echo ${{ env.CIRCLECI_URL }}
+      env:
+        CIRCLECI_URL: https://app.circleci.com/pipelines/github/${{ github.repository }}/${{ steps.boot-circleci.outputs.circle_job_num }}

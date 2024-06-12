@@ -1,6 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Config.Program (
     contentsRoot
+  , templatesRoot
+  , tmBlogRoot
   , hakyllConfig
   , readerOptions
   , writerOptions
@@ -12,7 +14,7 @@ import           Control.Monad       (liftM2)
 import           Data.Char           (toLower)
 import           Data.List           (isPrefixOf, isSuffixOf)
 import           Hakyll
-import           System.FilePath     (takeFileName)
+import           System.FilePath     (takeFileName, (</>))
 import qualified Text.HTML.TagSoup   as T
 import           Text.Pandoc.Options (Extension (..),
                                       HTMLMathMethod (KaTeX, MathJax),
@@ -21,6 +23,12 @@ import           Text.Pandoc.Options (Extension (..),
 
 contentsRoot :: FilePath
 contentsRoot = "contents"
+
+templatesRoot :: FilePath
+templatesRoot = contentsRoot </> "templates"
+
+tmBlogRoot :: FilePath
+tmBlogRoot = templatesRoot </> "blog"
 
 hakyllConfig :: Configuration
 hakyllConfig = defaultConfiguration {
@@ -38,12 +46,12 @@ hakyllConfig = defaultConfiguration {
 
 writerOptions :: WriterOptions
 writerOptions = defaultHakyllWriterOptions {
-    writerHTMLMathMethod = KaTeX ""
+    writerHTMLMathMethod = KaTeX mempty
   }
 
 writerPreviewOptions :: WriterOptions
 writerPreviewOptions = defaultHakyllWriterOptions {
-    writerHTMLMathMethod = MathJax ""
+    writerHTMLMathMethod = MathJax mempty
  }
 
 readerOptions :: ReaderOptions

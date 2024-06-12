@@ -1,0 +1,60 @@
+.archive-tree {
+    list-style: none;
+    margin: 0;
+    padding-left: 1.4em;
+    user-select: none;
+}
+
+.tree-toggle-button {
+    cursor: pointer;
+    margin-left: -1.25em;
+}
+
+
+.tree-child {
+    display: flex;
+    flex-flow: row wrap;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    
+    li {
+        flex: 0 0 50%;
+    }
+}
+
+.tree-toggle {
+    display: none;
+
+    &:not(:checked) + .tree-toggle-button {
+        .fa-angle-right {
+            display: inline-block;
+        }
+    
+        .fa-angle-down {
+            display: none;
+        }
+    }
+
+    &:checked + .tree-toggle-button {
+        .fa-angle-right {
+            display: none;
+        }
+    
+        .fa-angle-down {
+            display: inline-block;
+        }
+    }
+
+    &:checked ~ .tree-child {
+        display: flex;
+    }
+
+    &:not(:checked) ~ .tree-child {
+        display: none;
+    }
+}
+
+.footnotes ol {
+    list-style-position: inside;
+}

@@ -1,10 +1,10 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.34.4.
+-- This file has been generated from package.yaml by hpack version 0.35.1.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 66bb1c61d4e036f477dc3dada73818a451a46c8c1f28b6b91563835fc2671ddb
+-- hash: 8fa75560922af91dfa6786f4df49562ddeb31b39cdc76c431d0e14ee4eff2f26
 
 name:           roki-web
 version:        1.0.0.0
@@ -36,7 +36,9 @@ library
       Config.Program
       Config.RegexUtils
       Config.Site
+      Config.TopPage
       Contexts
+      Contexts.Blog
       Contexts.Core
       Contexts.Field
       Contexts.Field.RokiDiary
@@ -51,10 +53,27 @@ library
       Media.SVG
       Rules.Blog
       Rules.Blog.Core
-      Rules.IndexPage
+      Rules.Blog.EachPosts
+      Rules.Blog.EachPosts.Utils
+      Rules.Blog.EachPostSeries
+      Rules.Blog.Feed.Atom
+      Rules.Blog.Feed.RSS
+      Rules.Blog.Feed.Utils
+      Rules.Blog.Footer
+      Rules.Blog.Index
+      Rules.Blog.ListPage
+      Rules.Blog.Paginate.MonthlyPosts
+      Rules.Blog.Paginate.TaggedPosts
+      Rules.Blog.Paginate.Utils
+      Rules.Blog.Paginate.YearlyPosts
+      Rules.Blog.Search
+      Rules.Blog.Sitemap
+      Rules.Blog.Type
+      Rules.Blog.Utils
       Rules.Media
       Rules.Src.JavaScript
       Rules.Src.Style
+      Rules.TopPage
       Rules.Vendor
       Utils
       Vendor.FontAwesome
@@ -78,7 +97,6 @@ library
     , filepath
     , gitrev
     , hakyll
-    , hakyll-sass
     , hjsmin
     , lucid
     , mtl
@@ -111,7 +129,6 @@ executable site
     , filepath
     , gitrev
     , hakyll
-    , hakyll-sass
     , hjsmin
     , lucid
     , mtl
@@ -145,7 +162,6 @@ executable spa
     , filepath
     , gitrev
     , hakyll
-    , hakyll-sass
     , hjsmin
     , lucid
     , mtl

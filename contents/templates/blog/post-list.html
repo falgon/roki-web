@@ -19,7 +19,7 @@ $endif$
                     </h2>
                     <ul>
                         <li>
-                            <i class="fas fa-calendar-alt fa-fw"></i>
+                            <i class="fas fa-calendar-days fa-fw"></i>
                             $date$
                         </li>
                         $if(tags)$
@@ -39,7 +39,15 @@ $endif$
 
                 <section class="content mt-5">
                     $if(teaser)$
-                        $teaser$<a href="$url$">Read More...</a>
+                        $teaser$
+                        <div class="buttons is-centered mt-3 mb-0">
+                            <a href="$url$">
+                                <span class="button m-0 is-link is-outlined">
+                                    <span class="icon"><i class="fab fa-readme"></i></span>
+                                    <span>Read more</span>
+                                </span>
+                            </a>
+                        </div>
                     $else$
                         $body$
                     $endif$
@@ -63,7 +71,7 @@ $endif$
                     <a href="#" class="pagination-previous" disabled>
                     $endif$
                         <div class="is-inline-block is-valign-middle">
-                            <i class="fas fa-angle-double-left mr-1"></i>
+                            <i class="fas fa-angles-left mr-1"></i>
                         </div>
                         <div class="is-inline-block is-valign-middle">
                             <p>Prev</p>
@@ -83,7 +91,7 @@ $endif$
                             <p>Next</p>
                         </div>
                         <div class="is-inline-block is-valign-middle">
-                            <i class="fas fa-angle-double-right ml-1"></i>
+                            <i class="fas fa-angles-right ml-1"></i>
                         </div>
                     </a>
                 </nav>

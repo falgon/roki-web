@@ -23,7 +23,12 @@ ROLEX Oyster Perpetual Explorer 1 Ref.124270 (以下単に ROLEX Explorer 1 等)
 本エントリでは購入時の詳細そのものについてはあまり触れません.
 こちらについては別の記事として取り上げておりますので, 以下よりご覧ください.
 
-- [**ROLEX Explorer 1 Ref.124270 正規店購入の詳解**](https://note.com/_roki/n/ne17e2089a5b3)
+<article class="message is-info">
+<div class="message-body has-text-centered">
+<i class="fas fa-info-circle"></i>
+<a href="https://note.com/_roki/n/ne17e2089a5b3">ROLEX Explorer 1 Ref.124270 正規店購入の詳解</a>
+</div>
+</article>
 
 また, ROLEX Explorer 1 の使用レビューについても別の記事として取り上げておりますので以下よりご覧ください.
 
