@@ -21,7 +21,7 @@ cmp_expect() {
 }
 
 is_set() {
-  ! cmp_expect "v0.0.0"
+    ! cmp_expect "v0.0.0"
 }
 
 if command -v nvm &> /dev/null; then
@@ -29,10 +29,10 @@ if command -v nvm &> /dev/null; then
         fail
     fi
     node() {
-      nvm exec "$(nvm current)" node "$@"
+        nvm exec "$(nvm current)" node "$@"
     }
 elif is_set && ! cmp_expect "$(node --version)"; then
-  fail
+    fail
 fi
 
 node --max-old-space-size=$MAX_OLD_SPACE_SIZE "$BASEDIR/katex.js" "$@"
