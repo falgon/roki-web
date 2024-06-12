@@ -11,7 +11,7 @@ jobs:
       node_version: ${{ steps.node_version.outputs.node_version }}
     steps:
     - name: Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         submodules: true
     - name: Site generator cache
@@ -50,7 +50,7 @@ jobs:
       uses: browniebroke/read-nvmrc-action@v1
       id: nvmrc
     - name: Setup Node
-      uses: actions/setup-node@v2
+      uses: actions/setup-node@v3
       with:
         node-version: '${{ steps.nvmrc.outputs.node_version }}'
     - name: Export node version value
@@ -106,9 +106,9 @@ jobs:
     if: github.ref == 'refs/heads/develop' || github.repository == 'falgon/roki-web'
     steps:
     - name: Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
     - name: Setup Node
-      uses: actions/setup-node@v2
+      uses: actions/setup-node@v3
       with:
         node-version: '${{ needs.build.outputs.node_version }}'
     - name: Node module cache
@@ -121,7 +121,7 @@ jobs:
       if: steps.node-cache.outputs.cache-hit != 'true'
       run: npm ci
     - name: Fetch archive
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v3
       with:
         name: roki.dev
     - name: Unarchive docs
@@ -130,8 +130,8 @@ jobs:
       if: github.ref == 'refs/heads/develop'
       run: npx percy snapshot -q -t ${{ env.PERCY_TIMEOUT_MS }} ./docs
       env:
-        PERCY_PARALLEL_TOTAL: -1
         PERCY_TOKEN: ${{ secrets.PERCY_TOKEN }}
+        PERCY_CLIENT_ERROR_LOGS: false
         PERCY_TIMEOUT_MS: 750
   deploy:
     runs-on: ubuntu-latest
