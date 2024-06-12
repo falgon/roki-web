@@ -11,11 +11,11 @@ jobs:
       node_version: ${{ steps.node_version.outputs.node_version }}
     steps:
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         submodules: true
     - name: Site generator cache
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       id: site-gen-cache
       with:
         path: ./site
@@ -29,7 +29,7 @@ jobs:
         stack-version: '2.7.3'
     - name: stack cache
       if: steps.site-gen-cache.outputs.cache-hit != 'true'
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       id: stack-cache
       with:
         path: ~/.stack
@@ -58,7 +58,7 @@ jobs:
         echo "ROKI_WEB_GH_ACTIONS_NODE_VERSION=$node_version" >> "$GITHUB_ENV"
         echo "node_version=$node_version" >> "$GITHUB_OUTPUT"
     - name: Node module cache
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       id: node-cache
       with:
         path: '**/node_modules'
@@ -95,7 +95,7 @@ jobs:
         tar cvf docs.tar.xz docs
     - name: Upload artifact
       if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop'
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: roki.dev
         path: docs.tar.xz
@@ -105,13 +105,13 @@ jobs:
     if: github.ref == 'refs/heads/develop' || github.repository == 'falgon/roki-web'
     steps:
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
     - name: Setup Node
       uses: actions/setup-node@v4
       with:
         node-version: '${{ needs.build.outputs.node_version }}'
     - name: Node module cache
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       id: node-cache
       with:
         path: '**/node_modules'
@@ -120,7 +120,7 @@ jobs:
       if: steps.node-cache.outputs.cache-hit != 'true'
       run: npm ci
     - name: Fetch archive
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: roki.dev
     - name: Unarchive docs
@@ -138,7 +138,7 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/master' && github.repository == 'falgon/roki-web'
     steps:
     - name: Fetch archive
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v4
       with:
         name: roki.dev
     - name: Unarchive docs
@@ -153,7 +153,7 @@ jobs:
     needs: deploy
     if: github.repository == 'falgon/roki-web'
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
       with:
         submodules: false
     - name: Polling until deployed

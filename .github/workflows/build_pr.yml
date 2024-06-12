@@ -16,19 +16,19 @@ jobs:
       target_ref: ${{ steps.build.outputs.target_ref }}
     steps:
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         submodules: true
         ref: ${{ github.head_ref }}
     - name: Site generator cache
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       id: site-gen-cache
       with:
         path: ./site
         key: site-gen-v1-${{ runner.os }}-${{ hashFiles('stack.yaml') }}-${{ hashFiles('stack.yaml.lock') }}-${{ hashFiles('package.yaml') }}-${{ hashFiles('src/**') }}-${{ hashFiles('app/**') }}
     - name: Stack cache
       if: steps.site-gen-cache.outputs.cache-hit != 'true'
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       id: stack-cache
       with:
         path: ~/.stack
@@ -59,7 +59,7 @@ jobs:
     - name: Export node version value
       run: echo "ROKI_WEB_GH_ACTIONS_NODE_VERSION=$(node --version)" >> "$GITHUB_ENV"
     - name: Node module cache
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       id: node-cache
       with:
         path: '**/node_modules'
@@ -73,7 +73,7 @@ jobs:
         stack --local-bin-path . install --flag hakyll:-previewServer --flag hakyll:-watchServer
         ./site --version
     - name: Docs cache
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       id: docs-cache
       with:
         path: './docs'
@@ -108,7 +108,7 @@ jobs:
         TECH_BLOG: roki.log
         DIARY_BLOG: roki.diary
     - name: Upload artifact
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: roki.dev
         path: ${{ env.DOCS_TARXZ }}
@@ -119,11 +119,11 @@ jobs:
       gdrive_path: ${{ steps.upload.outputs.gdrive_path }}
     steps:
     - name: Fetch archive
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: roki.dev
     - name: Skicka cache
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       id: skicka-cache
       with:
         path: |
