@@ -93,6 +93,7 @@ jobs:
       run: npx percy snapshot ./docs
       env:
         PERCY_PARALLEL_TOTAL: -1
+        PERCY_TOKEN: ${{ secrets.PERCY_TOKEN }}
     - name: Upload artifact
       if: github.ref == 'refs/heads/master'
       uses: actions/upload-artifact@v2
