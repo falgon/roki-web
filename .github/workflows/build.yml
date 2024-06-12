@@ -89,7 +89,7 @@ jobs:
         xmllint docs/roki.diary/sitemap.xml --noout
         xmllint docs/roki.diary/feed/roki.diary.xml --noout
     - name: Upload artifact
-      if: github.ref == 'refs/heads/master'
+      if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop'
       uses: actions/upload-artifact@v2
       with:
         name: roki.dev
