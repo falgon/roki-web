@@ -132,7 +132,7 @@ jobs:
       env:
         PERCY_PARALLEL_TOTAL: -1
         PERCY_TOKEN: ${{ secrets.PERCY_TOKEN }}
-        PERCY_TIMEOUT_MS: 10000
+        PERCY_TIMEOUT_MS: 750
   deploy:
     runs-on: ubuntu-latest
     needs: build
