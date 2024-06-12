@@ -126,7 +126,6 @@ jobs:
     - name: Unarchive docs
       run: tar xvf docs.tar.xz
     - name: Apply percy
-      if: github.ref == 'refs/heads/develop'
       run: npx percy snapshot -q -t ${{ env.PERCY_TIMEOUT_MS }} ./docs
       env:
         PERCY_TOKEN: ${{ secrets.PERCY_TOKEN }}
