@@ -105,12 +105,8 @@ jobs:
     needs: build
     if: github.ref == 'refs/heads/develop' || github.repository == 'falgon/roki-web'
     steps:
-    - name: Fetch archive
-      uses: actions/download-artifact@v2
-      with:
-        name: roki.dev
-    - name: Unarchive docs
-      run: tar xvf docs.tar.xz
+    - name: Checkout
+      uses: actions/checkout@v2
     - name: Setup Node
       uses: actions/setup-node@v2
       with:
@@ -124,6 +120,12 @@ jobs:
     - name: Install Node dependencies
       if: steps.node-cache.outputs.cache-hit != 'true'
       run: npm ci
+    - name: Fetch archive
+      uses: actions/download-artifact@v2
+      with:
+        name: roki.dev
+    - name: Unarchive docs
+      run: tar xvf docs.tar.xz
     - name: Apply percy
       if: github.ref == 'refs/heads/develop'
       run: npx percy snapshot ./docs
