@@ -7,8 +7,6 @@ jobs:
   build:
     runs-on: ubuntu-20.04
     if: github.repository == 'falgon/roki-web'
-    outputs:
-      node_version: ${{ steps.node_version.outputs.node_version }}
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -52,11 +50,7 @@ jobs:
         node-version-file: '.nvmrc'
     - name: Export node version value
       id: node_version
-      run: |
-        node_version="$(node --version)"
-        readonly node_version
-        echo "ROKI_WEB_GH_ACTIONS_NODE_VERSION=$node_version" >> "$GITHUB_ENV"
-        echo "node_version=$node_version" >> "$GITHUB_OUTPUT"
+      run: echo "ROKI_WEB_GH_ACTIONS_NODE_VERSION=$(node --version)" >> "$GITHUB_ENV"
     - name: Node module cache
       uses: actions/cache@v4
       id: node-cache
@@ -92,46 +86,12 @@ jobs:
         xmllint docs/roki.log/feed/roki.log.xml --noout
         xmllint docs/roki.diary/sitemap.xml --noout
         xmllint docs/roki.diary/feed/roki.diary.xml --noout
-        tar cvf docs.tar.xz docs
     - name: Upload artifact
-      if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop'
+      if: github.ref == 'refs/heads/master'
       uses: actions/upload-artifact@v4
       with:
         name: roki.dev
         path: docs.tar.xz
-  percy:
-    runs-on: ubuntu-latest
-    needs: build
-    if: github.ref == 'refs/heads/develop' || github.repository == 'falgon/roki-web'
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v4
-    - name: Setup Node
-      uses: actions/setup-node@v4
-      with:
-        node-version: '${{ needs.build.outputs.node_version }}'
-    - name: Node module cache
-      uses: actions/cache@v4
-      id: node-cache
-      with:
-        path: '**/node_modules'
-        key: node-v1-${{ needs.build.outputs.node_version }}-${{ runner.os }}-${{ hashFiles('.nvmrc') }}-${{ hashFiles('package.json') }}-${{ hashFiles('package-lock.json') }}
-    - name: Install Node dependencies
-      if: steps.node-cache.outputs.cache-hit != 'true'
-      run: npm ci
-    - name: Fetch archive
-      uses: actions/download-artifact@v4
-      with:
-        name: roki.dev
-    - name: Unarchive docs
-      run: tar xvf docs.tar.xz
-    - name: Apply percy
-      if: github.ref == 'refs/heads/develop'
-      run: npx percy snapshot -q -t ${{ env.PERCY_TIMEOUT_MS }} ./docs
-      env:
-        PERCY_TOKEN: ${{ secrets.PERCY_TOKEN }}
-        PERCY_CLIENT_ERROR_LOGS: false
-        PERCY_TIMEOUT_MS: 750
   deploy:
     runs-on: ubuntu-latest
     needs: build
