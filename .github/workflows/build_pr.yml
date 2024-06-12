@@ -59,6 +59,8 @@ jobs:
       uses: actions/setup-node@v2
       with:
         node-version: '${{ steps.nvmrc.outputs.node_version }}'
+    - name: Export node version value
+      run: echo "ROKI_WEB_GH_ACTIONS_NODE_VERSION=v${{ steps.nvmrc.outputs.node_version }}" >> "$GITHUB_ENV"
     - name: Node module cache
       uses: actions/cache@v3
       id: node-cache
