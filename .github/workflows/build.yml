@@ -123,6 +123,8 @@ jobs:
         run: tar xvf docs.tar.xz
       - name: Apply percy
         run: npx percy snapshot ./docs
+        env:
+          PERCY_PARALLEL_TOTAL: -1
   page-insight:
     runs-on: ubuntu-latest
     needs: deploy
