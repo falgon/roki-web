@@ -7,6 +7,8 @@ jobs:
   build:
     runs-on: ubuntu-20.04
     if: github.repository == 'falgon/roki-web'
+    outputs:
+      node_version: ${{ steps.node_version.outputs.node_version }}
     steps:
     - name: Checkout
       uses: actions/checkout@v3
@@ -44,21 +46,23 @@ jobs:
       run: |
         stack config set system-ghc --global true
         stack config set install-ghc --global false
-    - name: Read Node version
-      uses: browniebroke/read-nvmrc-action@v1
-      id: nvmrc
     - name: Setup Node
       uses: actions/setup-node@v4
       with:
         node-version-file: '.nvmrc'
     - name: Export node version value
-      run: echo "ROKI_WEB_GH_ACTIONS_NODE_VERSION=$(node --version)" >> "$GITHUB_ENV"
+      id: node_version
+      run: |
+        node_version="$(node --version)"
+        readonly node_version
+        echo "ROKI_WEB_GH_ACTIONS_NODE_VERSION=$node_version" >> "$GITHUB_ENV"
+        echo "node_version=$node_version" >> "$GITHUB_OUTPUT"
     - name: Node module cache
       uses: actions/cache@v3
       id: node-cache
       with:
         path: '**/node_modules'
-        key: node-v1-v${{ steps.nvmrc.outputs.node_version }}-${{ runner.os }}-${{ hashFiles('.nvmrc') }}-${{ hashFiles('package.json') }}-${{ hashFiles('package-lock.json') }}
+        key: node-v1-${{ env.ROKI_WEB_GH_ACTIONS_NODE_VERSION }}-${{ runner.os }}-${{ hashFiles('.nvmrc') }}-${{ hashFiles('package.json') }}-${{ hashFiles('package-lock.json') }}
     - name: Install Node dependencies
       if: steps.node-cache.outputs.cache-hit != 'true'
       run: npm ci
@@ -105,13 +109,13 @@ jobs:
     - name: Setup Node
       uses: actions/setup-node@v4
       with:
-        node-version-file: '.nvmrc'
+        node-version: '${{ needs.build.outputs.node_version }}'
     - name: Node module cache
       uses: actions/cache@v3
       id: node-cache
       with:
         path: '**/node_modules'
-        key: node-v1-v${{ steps.step1.outputs.test }}-${{ runner.os }}-${{ hashFiles('.nvmrc') }}-${{ hashFiles('package.json') }}-${{ hashFiles('package-lock.json') }}
+        key: node-v1-${{ needs.build.outputs.node_version }}-${{ runner.os }}-${{ hashFiles('.nvmrc') }}-${{ hashFiles('package.json') }}-${{ hashFiles('package-lock.json') }}
     - name: Install Node dependencies
       if: steps.node-cache.outputs.cache-hit != 'true'
       run: npm ci
