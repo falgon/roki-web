@@ -93,6 +93,7 @@ jobs:
         xmllint docs/roki.log/feed/roki.log.xml --noout
         xmllint docs/roki.diary/sitemap.xml --noout
         xmllint docs/roki.diary/feed/roki.diary.xml --noout
+        tar cvf docs.tar.xz docs
     - name: Upload artifact
       if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop'
       uses: actions/upload-artifact@v2
