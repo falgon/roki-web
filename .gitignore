@@ -3,3 +3,4 @@ node_modules
 docs
 .cache
 .stack-work
+.DS_Store
