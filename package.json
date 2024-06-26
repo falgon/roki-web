@@ -12,7 +12,6 @@
         "@fortawesome/fontawesome-svg-core": "^6.5.2",
         "@fortawesome/free-brands-svg-icons": "^6.5.2",
         "@fortawesome/free-solid-svg-icons": "^6.5.2",
-        "@percy/cli": "^1.28.7",
         "katex": "^0.16.10",
         "psi": "^4.1.0",
         "svgo": "^3.3.2"
@@ -21,6 +20,6 @@
         "bulma": "^1.0.1",
         "d3": "^7.9.0",
         "mathjs": "^13.0.0",
-        "sass": "^1.77.5"
+        "sass": "^1.77.6"
     }
 }
