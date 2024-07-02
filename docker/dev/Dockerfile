@@ -14,7 +14,6 @@ RUN apt-get -qq update \
         libtinfo-dev \
         git \
     && curl -sSL https://get.haskellstack.org/ | sh \
-    && curl -sSL https://deb.nodesource.com/setup_14.x | bash \
     && apt-get -y -qq install --no-install-recommends nodejs \
     && apt-get -y -qq autoremove \
     && apt-get clean \
@@ -29,4 +28,8 @@ ENV LANG=ja_JP.UTF-8 \
 COPY --chown=rw-dev:rw-dev . /home/rw-dev/src
 WORKDIR /home/rw-dev/src
 RUN stack --no-terminal build --only-dependencies \
+    && curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash \
+    && source ~/.bashrc \
+    && nvm install \
+    && nvm use \
     && npm i

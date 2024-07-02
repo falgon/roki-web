@@ -24,7 +24,7 @@ COPY . /opt/src
 WORKDIR /opt/src
 RUN mkdir -p /root/dist \
     && stack --no-terminal --allow-different-user --local-bin-path=/root/dist install \
-    && cp -r ./package.json ./tools /root/dist
+    && cp -r ./package.json ./tools ./.nvmrc /root/dist
 
 FROM ubuntu:20.04
 SHELL ["/bin/bash", "-c"]
@@ -37,7 +37,6 @@ RUN apt-get -qq update \
         ca-certificates \
         language-pack-ja \
         git \
-    && curl -sSL https://deb.nodesource.com/setup_14.x | bash \
     && apt-get -y -qq install --no-install-recommends nodejs \
     && apt-get -y -qq autoremove \
     && apt-get clean \
@@ -50,5 +49,9 @@ ENV LANG=ja_JP.UTF-8 \
     LC_ALL=ja_JP.UTF-8
 COPY --chown=rw-c:rw-c --from=bin /root/dist /home/rw-c/bin
 WORKDIR /home/rw-c/bin
-RUN npm i
+RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash \
+    && source ~/.bashrc \
+    && nvm install \
+    && nvm use \
+    && npm i
 ENV PATH $PATH:/home/rw-c/bin
