@@ -1,5 +1,5 @@
 <h1 align="center">roki-web</h1>
-<p align="center">:memo: The <a href="https://github.com/falgon">roki</a>'s website and blog</p>
+<p align="center">:memo: The <a href="https://github.com/falgon">roki</a>'s website and blogs</p>
 
 | CI | Deployment | Inspection | Quality | PR check |
 | :--: | :--: | :--: | :--: | :--: |
