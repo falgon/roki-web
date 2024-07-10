@@ -3,6 +3,10 @@ name: CI-push
 on:
   push:
     branches: [develop, master]
+    paths-ignore:
+      - '**.md'
+      - 'LICENSE'
+      - '.gitignore'
 jobs:
   build:
     runs-on: ubuntu-20.04
