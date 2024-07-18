@@ -26,14 +26,14 @@ lastUpdate (x:_) = formatTime defaultTimeLocale' (postDateFormat topPageConfig)
     <$> getItemUTC defaultTimeLocale' (itemIdentifier x)
 
 introDateCtx :: [Item a] -> BlogConfReader m Compiler (Context String)
-introDateCtx posts = do
-    name <- asks blogName
-    constField (name <> "-intro-date") <$> lift (lastUpdate posts)
+introDateCtx posts = constField
+    <$> asks ((<> "-intro-date") . blogName)
+    <*> lift (lastUpdate posts)
 
 listPostsCtx :: [Item String] -> BlogConfReader m Compiler (Context String)
 listPostsCtx posts = do
-    name <- asks blogName
-    pure $ listField (name <> "-posts") (siteCtx <> defaultContext) (pure posts)
+    name <- asks ((<> "-posts") . blogName)
+    pure $ listField name (siteCtx <> defaultContext) (pure posts)
 
 mkBlogCtx :: BlogConfReader m Compiler (Context String)
 mkBlogCtx = do

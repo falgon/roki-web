@@ -7,6 +7,7 @@ import           Data.String              (fromString)
 import           Data.Version             (showVersion)
 import           Development.GitRev       (gitHash)
 import           Hakyll
+import           Hakyll.Core.Runtime      (RunMode (..))
 import qualified Options.Applicative      as OA
 import qualified Paths_roki_web           as P
 import           System.FilePath          (joinPath)
@@ -38,7 +39,7 @@ data Opts = Opts
 {-# INLINE buildCmd #-}
 buildCmd :: OA.Mod OA.CommandFields (Configuration -> Command)
 buildCmd = OA.command "build"
-    $ OA.info (pure $ const Build)
+    $ OA.info (pure $ const $ Build RunModeNormal)
     $ OA.progDesc "Generate the site"
 
 {-# INLINE checkCmd #-}

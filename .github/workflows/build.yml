@@ -26,9 +26,9 @@ jobs:
       if: steps.site-gen-cache.outputs.cache-hit != 'true'
       uses: haskell-actions/setup@v2
       with:
-        ghc-version: '8.8.3'
+        ghc-version: '9.6.6'
         enable-stack: true
-        stack-version: '2.7.3'
+        stack-version: '2.15.5'
     - name: stack cache
       if: steps.site-gen-cache.outputs.cache-hit != 'true'
       uses: actions/cache@v4
