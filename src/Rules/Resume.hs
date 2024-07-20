@@ -21,7 +21,8 @@ rules faIcons = match resumeJPPath $ do
             >>= FA.render faIcons
     where
         resumeCtx = mconcat [
-            constField "title" $ "Resume - " <> siteName
+            constField "title" $ "resume - " <> siteName
+          , constField "resume-subtitle" "Serverside engineer"
           , siteCtx
           , defaultContext
           ]
