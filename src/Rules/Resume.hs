@@ -22,7 +22,6 @@ rules faIcons = match resumeJPPath $ do
     where
         resumeCtx = mconcat [
             constField "title" $ "resume - " <> siteName
-          , constField "resume-subtitle" "Serverside engineer"
           , siteCtx
           , defaultContext
           ]
