@@ -266,10 +266,17 @@ span.both-lined:after {
 }
 
 hr.fade-hr-line {
-    height: 1px;
-    background-image: linear-gradient(
-      90deg,
-      hsla(0, 0%, 100%, 0),
-      hsla(0, 0%, 100%, 0.5) 50%,
-      hsla(0, 0%, 100%, 0) 100%);
+    border: 0; 
+    height: 1px; 
+    background-image: -webkit-linear-gradient(left, #f0f0f0, #2E333D, #f0f0f0);
+    background-image: -moz-linear-gradient(left, #f0f0f0, #2E333D, #f0f0f0);
+    background-image: -ms-linear-gradient(left, #f0f0f0, #2E333D, #f0f0f0);
+    background-image: -o-linear-gradient(left, #f0f0f0, #2E333D, #f0f0f0);
+}
+
+// Query for mobile only
+@media screen and (max-width: 768px) {
+    ,has-text-center-in-mobile {
+        text-align: center;
+    }
 }

@@ -1,21 +1,25 @@
 <div class="columns">
-    <div class="column is-one-third">
-        <h1 class="title is-size-1">$author-name$</h1>
-        <p class="subtitle">$author-job$</p>
+    <div class="column is-one-third has-text-center-in-mobile is-flex is-align-items-center is-justify-content-center">
+        <div class="is-block">
+            <h1 class="title is-size-1">$author-name$</h1>
+            <p class="subtitle">$author-job$</p>
+        </div>
     </div>
     <div class="column is-one-third">
-        <figure class="image is-128x128">
+        <figure class="image is-128x128 my-0 mx-auto is-block">
             <picture>
                 <source class="is-rounded" type="image/webp" srcset="/images/avator/prof1000x1000.png.webp">
                 <img alt="Profile photo" class="is-rounded" src="/images/avator/prof1000x1000.png" />
             </picture>
         </figure>
     </div>
-    <div class="column is-one-third">
-        <ul class="is-unstyled mb-0 is-inline-block">
-            <li><i class="fas fa-person fa-fw mr-2" aria-hidden="true"></i>$author-sex$</li>
-            <li><i class="fas fa-map-pin fa-fw mr-2" aria-hidden="true"></i>$author-locale$</li>
-        </ul>
+    <div class="column is-one-third is-flex is-align-items-center is-justify-content-center">
+        <div class="is-block">
+            <ul class="is-unstyled mb-0 is-inline-block has-text-left">
+                <li><i class="fas fa-person fa-fw mr-2" aria-hidden="true"></i>$author-sex$</li>
+                <li><i class="fas fa-map-pin fa-fw mr-2" aria-hidden="true"></i>$author-locale$</li>
+            </ul>
+        </div>
     </div>
 </div>
 <hr class="fade-hr-line">
