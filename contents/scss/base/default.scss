@@ -290,7 +290,7 @@ ul.commit-ul {
         content: "";
         display: inline-block;
         width: 2px;
-        background: #2e333d;
+        background: bl.$grey-darker;
         position: absolute;
         left: 3px;
         top: 5px;
@@ -305,7 +305,7 @@ ul.commit-ul {
             display: inline-block;
             width: 8px;
             height: 8px;
-            background: red;
+            background: bl.$grey-darker;
             position: absolute;
             left: 0;
             top: 5px;
