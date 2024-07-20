@@ -21,6 +21,7 @@ import qualified Contexts.Field.RokiDiary as RokiDiary
 import qualified Contexts.Field.RokiLog   as RokiLog
 import qualified Rules.Blog               as Blog
 import qualified Rules.Media              as Media
+import qualified Rules.Resume             as Resume
 import qualified Rules.Src.JavaScript     as Js
 import qualified Rules.Src.Style          as Style
 import qualified Rules.TopPage            as TopPage
@@ -231,6 +232,7 @@ main = do
         faIcons <- fold <$> preprocess FA.loadFontAwesome
         mapM_ (runReaderT $ Blog.rules faIcons) blogConfs
         TopPage.rules blogConfs faIcons
+        Resume.rules faIcons
 
         match "CNAME" $ route idRoute >> compile copyFileCompiler
         match "ads.txt" $ route idRoute >> compile copyFileCompiler

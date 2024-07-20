@@ -1,10 +1,10 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.35.1.
+-- This file has been generated from package.yaml by hpack version 0.36.0.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 8fa75560922af91dfa6786f4df49562ddeb31b39cdc76c431d0e14ee4eff2f26
+-- hash: e2b6be5e98b4a7553deb7fa962266fea671fc9828d3a7ed4c95ee4de367dd740
 
 name:           roki-web
 version:        1.0.0.0
@@ -71,6 +71,7 @@ library
       Rules.Blog.Type
       Rules.Blog.Utils
       Rules.Media
+      Rules.Resume
       Rules.Src.JavaScript
       Rules.Src.Style
       Rules.TopPage
