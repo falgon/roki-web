@@ -18,7 +18,8 @@ resumeRoot :: FilePath
 resumeRoot = joinPath [contentsRoot, "resume"]
 
 aboutMeIdent :: Identifier
-aboutMeIdent = fromString $ joinPath [resumeRoot, "about_me.md"]
+aboutMeIdent = fromString
+    $ joinPath [resumeRoot, "about_me.md"]
 
 resumeCareerPattern :: Pattern
 resumeCareerPattern = fromRegex $ mconcat
@@ -28,13 +29,17 @@ resumeCareerPattern = fromRegex $ mconcat
     ]
 
 otherActivitiesIdent :: Identifier
-otherActivitiesIdent = fromString $ joinPath [resumeRoot, "other_activities.md"]
+otherActivitiesIdent = fromString
+    $ joinPath [resumeRoot, "other_activities.md"]
 
-sortByNumber :: [Item a] -> [Item a]
-sortByNumber = sortBy
+sortByNum :: [Item a] -> [Item a]
+sortByNum = sortBy
+    $ flip
     $ comparing
     $ (read :: String -> Int) . takeBaseName . toFilePath . itemIdentifier
 
+-- TODO:
+-- use ReaderT monad
 mdRule :: Snapshot
     -> Pattern
     -> WriterOptions
@@ -49,6 +54,9 @@ mdRule ss pat wOpt katexRender faIcons = match pat $ compile $ do
         >>= katexRender
         >>= saveSnapshot ss
 
+-- TODO:
+-- * use ReaderT monad
+-- * add last update (take from current date)
 rules :: WriterOptions -> (Item String -> Compiler (Item String)) -> FA.FontAwesomeIcons -> Rules ()
 rules wOpt katexRender faIcons = do
     mdRule resumeSnapshot (fromList [aboutMeIdent]) wOpt katexRender faIcons
@@ -58,7 +66,7 @@ rules wOpt katexRender faIcons = do
         route $ gsubRoute (contentsRoot </> "pages/") (const mempty)
         compile $ do
             am <- loadSnapshotBody aboutMeIdent resumeSnapshot
-            career <- sortByNumber <$> loadAllSnapshots resumeCareerPattern resumeSnapshot
+            career <- sortByNum <$> loadAllSnapshots resumeCareerPattern resumeSnapshot
             oc <- loadSnapshotBody otherActivitiesIdent resumeSnapshot
             let resumeCtx' = resumeCtx am career oc
             getResourceBody
