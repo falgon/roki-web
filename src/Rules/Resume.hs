@@ -12,14 +12,15 @@ import qualified Vendor.FontAwesome as FA
 resumeCareerPattern :: Pattern
 resumeCareerPattern = fromRegex $
     "(^"
-    <> joinPath [ contentsRoot, "resume", "career", ".+", "index\\.md" ]
+    <> joinPath [contentsRoot, "resume", "career", ".+", "index\\.md"]
     <> "$)"
 
 rules :: FA.FontAwesomeIcons -> Rules ()
 rules faIcons = match resumeJPPath $ do
     route $ gsubRoute (contentsRoot </> "pages/") (const mempty)
     compile $ do
-        career <- recentFirst =<< loadAll resumeCareerPattern
+        career <- loadAll resumeCareerPattern
+        debugCompiler $ (<> " careers found") $ show $ length career
         getResourceBody
             >>= applyAsTemplate (resumeCtx career)
             >>= loadAndApplyTemplate rootTemplate (resumeCtx career)
