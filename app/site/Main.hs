@@ -28,6 +28,8 @@ import qualified Rules.Src.Style          as Style
 import qualified Rules.TopPage            as TopPage
 import qualified Rules.Vendor             as Vendor
 import qualified Vendor.FontAwesome       as FA
+import qualified Vendor.KaTeX             as KaTeX
+
 
 data Opts = Opts
     { optPreviewFlag   :: !Bool
@@ -232,7 +234,10 @@ main = do
             *> Js.rules
         faIcons <- fold <$> preprocess FA.loadFontAwesome
         mapM_ (runReaderT $ Blog.rules faIcons) blogConfs
-        mapM_ (`id` faIcons) [TopPage.rules blogConfs, Resume.rules]
+        mapM_ (`id` faIcons)
+          [ TopPage.rules blogConfs
+          , Resume.rules writer $ if optPreviewFlag opts then KaTeX.render else pure
+          ]
         mapM_ (flip match (route idRoute) >=> const (compile copyFileCompiler)) ["CNAME", "ads.txt"]
         match (fromString $ joinPath ["contents", "templates", "**"]) $
             compile templateBodyCompiler
