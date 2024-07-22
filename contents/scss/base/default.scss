@@ -298,8 +298,7 @@ ul.commit-ul {
     }
     li {
         position: relative;
-        padding-left: 15px;
-        margin-bottom: 15px;
+        @extend .pl-4, .mb-5;
         &:before {
             content: "";
             display: inline-block;
