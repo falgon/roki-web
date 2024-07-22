@@ -1,21 +1,29 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Rules.Resume (rules) where
 
+import           Data.List             (sortBy)
+import           Data.Ord              (comparing)
 import           Hakyll
-import           System.FilePath     (joinPath, (</>))
-import           Text.Pandoc.Options (WriterOptions)
+import           System.FilePath       (joinPath, (</>))
+import           System.FilePath.Posix (takeBaseName)
+import           Text.Pandoc.Options   (WriterOptions)
 
-import           Config              (contentsRoot, readerOptions, siteName)
-import           Contexts            (siteCtx)
-import           Utils               (modifyExternalLinkAttr)
-import qualified Vendor.FontAwesome  as FA
+import           Config                (contentsRoot, readerOptions, siteName)
+import           Contexts              (siteCtx)
+import           Utils                 (modifyExternalLinkAttr)
+import qualified Vendor.FontAwesome    as FA
 
 resumeCareerPattern :: Pattern
 resumeCareerPattern = fromRegex $ mconcat
     [ "(^"
-    , joinPath [contentsRoot, "resume", "career", ".+", "index\\.md"]
+    , joinPath [contentsRoot, "resume", "career", "[0-9]+\\.md"]
     , "$)"
     ]
+
+sortByNumber :: [Item a] -> [Item a]
+sortByNumber = sortBy
+    $ comparing
+    $ (read :: String -> Int) . takeBaseName . toFilePath . itemIdentifier
 
 rules :: WriterOptions -> (Item String -> Compiler (Item String)) -> FA.FontAwesomeIcons -> Rules ()
 rules wOpt katexRender faIcons = do
@@ -31,7 +39,7 @@ rules wOpt katexRender faIcons = do
     match resumeJPPath $ do
         route $ gsubRoute (contentsRoot </> "pages/") (const mempty)
         compile $ do
-            career <- chronological =<< loadAllSnapshots resumeCareerPattern careerSnapshot
+            career <- sortByNumber <$> loadAllSnapshots resumeCareerPattern careerSnapshot
             if null career then error $ show resumeCareerPattern else
                 getResourceBody
                     >>= applyAsTemplate (resumeCtx career)

@@ -226,8 +226,12 @@ main = do
               , B.blogWriterOptions = writer
               }
           ]
+        hakyllOpt = Options (optVerbose opts)
+            $ mapIL (optInternalLinks opts)
+            $ optCmd opts
+            $ conf
 
-    hakyllWithArgs conf (Options (optVerbose opts) $ mapIL (optInternalLinks opts) $ optCmd opts $ conf) $ do
+    hakyllWithArgs conf hakyllOpt $ do
         Media.rules
             *> Vendor.rules (optPreviewFlag opts)
             *> Style.rules
