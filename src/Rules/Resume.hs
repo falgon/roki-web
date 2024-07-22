@@ -20,7 +20,6 @@ rules faIcons = match resumeJPPath $ do
     route $ gsubRoute (contentsRoot </> "pages/") (const mempty)
     compile $ do
         career <- recentFirst =<< loadAll resumeCareerPattern
-        -- let ctx = listField "career-list" defaultContext $ pure career
         getResourceBody
             >>= applyAsTemplate (resumeCtx career)
             >>= loadAndApplyTemplate rootTemplate (resumeCtx career)
