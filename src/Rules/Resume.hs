@@ -60,13 +60,13 @@ rules wOpt katexRender faIcons = do
             am <- loadSnapshotBody aboutMeIdent resumeSnapshot
             career <- sortByNumber <$> loadAllSnapshots resumeCareerPattern resumeSnapshot
             oc <- loadSnapshotBody otherActivitiesIdent resumeSnapshot
-            if null career then error $ show resumeCareerPattern else
-                getResourceBody
-                    >>= applyAsTemplate (resumeCtx am career oc)
-                    >>= loadAndApplyTemplate rootTemplate (resumeCtx am career oc)
-                    >>= modifyExternalLinkAttr
-                    >>= relativizeUrls
-                    >>= FA.render faIcons
+            let resumeCtx' = resumeCtx am career oc
+            getResourceBody
+                >>= applyAsTemplate resumeCtx'
+                >>= loadAndApplyTemplate rootTemplate resumeCtx'
+                >>= modifyExternalLinkAttr
+                >>= relativizeUrls
+                >>= FA.render faIcons
     where
         resumeSnapshot = "resumeSS"
         resumeCtx am career oc = mconcat [
