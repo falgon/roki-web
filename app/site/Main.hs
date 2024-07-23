@@ -22,6 +22,7 @@ import qualified Contexts.Field.RokiDiary as RokiDiary
 import qualified Contexts.Field.RokiLog   as RokiLog
 import qualified Rules.Blog               as Blog
 import qualified Rules.Media              as Media
+import qualified Rules.PageType           as Page
 import qualified Rules.Resume             as Resume
 import qualified Rules.Src.JavaScript     as Js
 import qualified Rules.Src.Style          as Style
@@ -29,7 +30,6 @@ import qualified Rules.TopPage            as TopPage
 import qualified Rules.Vendor             as Vendor
 import qualified Vendor.FontAwesome       as FA
 import qualified Vendor.KaTeX             as KaTeX
-
 
 data Opts = Opts
     { optPreviewFlag   :: !Bool
@@ -237,11 +237,14 @@ main = do
             *> Style.rules
             *> Js.rules
         faIcons <- fold <$> preprocess FA.loadFontAwesome
+        let pageConf = Page.PageConf {
+            Page.pcWriterOpt = writer
+          , Page.pcKaTeXRender = if optPreviewFlag opts then KaTeX.render else pure
+          , Page.pcFaIcons = faIcons
+          }
         mapM_ (runReaderT $ Blog.rules faIcons) blogConfs
-        mapM_ (`id` faIcons)
-          [ TopPage.rules blogConfs
-          , Resume.rules writer $ if optPreviewFlag opts then KaTeX.render else pure
-          ]
+        TopPage.rules blogConfs faIcons
+        runReaderT Resume.rules pageConf
         mapM_ (flip match (route idRoute) >=> const (compile copyFileCompiler)) ["CNAME", "ads.txt"]
         match (fromString $ joinPath ["contents", "templates", "**"]) $
             compile templateBodyCompiler

@@ -3,7 +3,7 @@
 
 ##### 車輪の再発明
 
-<i>車輪の再発明</i>がすきです。これまでの主な<i>車輪の再発明</i>リスト：
+<i>車輪の再発明</i>が好きです。これまでの主な<i>車輪の再発明</i>リスト：
 
 - [Cコンパイラ - htcc](https://github.com/falgon/htcc)
     - 関連記事: [Haskell で C コンパイラを作ってみた](https://roki.dev/roki.log/2020/03/17/SelfMadeCCompiler/index.html)
@@ -22,7 +22,7 @@
 
 ##### 関数プログラミング
 
-関数プログラミングがすきです。一番好きな言語はHaskell。
+関数プログラミングが好きです。一番好きな言語はHaskell。
 C++テンプレートを純粋関数型言語だと思っており，一例としてはその機構を使ってコンパイル時 Lazy K インタプリタを作ったりしていました。
 
 - [コンパイル時 Lazy K インタプリタ - mpl-lazyk](https://github.com/falgon/mpl-lazyk)

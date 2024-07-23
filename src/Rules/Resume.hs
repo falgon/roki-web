@@ -1,6 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Rules.Resume (rules) where
 
+import           Control.Monad.Reader  (asks)
+import           Control.Monad.Trans   (MonadTrans (..))
 import           Data.Functor          ((<&>))
 import           Data.List             (intercalate, sortBy)
 import           Data.Ord              (comparing)
@@ -11,11 +13,11 @@ import           Data.Time.LocalTime   (LocalTime (..), utcToLocalTime)
 import           Hakyll
 import           System.FilePath       (joinPath, (</>))
 import           System.FilePath.Posix (takeBaseName)
-import           Text.Pandoc.Options   (WriterOptions)
 
 import           Config                (contentsRoot, readerOptions, siteName,
                                         timeZoneJST)
 import           Contexts              (siteCtx)
+import           Rules.PageType
 import           Utils                 (modifyExternalLinkAttr)
 import qualified Vendor.FontAwesome    as FA
 
@@ -51,39 +53,38 @@ sortByNum = sortBy
     $ comparing
     $ (read :: String -> Int) . takeBaseName . toFilePath . itemIdentifier
 
--- TODO:
--- use ReaderT monad
 mdRule :: Snapshot
     -> Pattern
-    -> WriterOptions
-    -> (Item String -> Compiler (Item String))
-    -> FA.FontAwesomeIcons
-    -> Rules ()
-mdRule ss pat wOpt katexRender faIcons = match pat $ compile $ do
-    pandocCompilerWith readerOptions wOpt
-        >>= modifyExternalLinkAttr
-        >>= relativizeUrls
-        >>= FA.render faIcons
-        >>= katexRender
-        >>= saveSnapshot ss
+    -> PageConfReader Rules ()
+mdRule ss pat = do
+    wOpt <- asks pcWriterOpt
+    katexRender <- asks pcKaTeXRender
+    faIcons <- asks pcFaIcons
+    lift $ match pat $ compile $ do
+        pandocCompilerWith readerOptions wOpt
+            >>= modifyExternalLinkAttr
+            >>= relativizeUrls
+            >>= FA.render faIcons
+            >>= katexRender
+            >>= saveSnapshot ss
 
 getCurrentDate :: IO String
 getCurrentDate = getCurrentTime
     <&> toGregorian . localDay . utcToLocalTime timeZoneJST
     <&> \(y, m, d) -> intercalate "%2F" [show y, show m, show d]
 
--- TODO:
--- * use ReaderT monad
--- * add last update (take from current date)
-rules :: WriterOptions -> (Item String -> Compiler (Item String)) -> FA.FontAwesomeIcons -> Rules ()
-rules wOpt katexRender faIcons = do
-    lastUpdate <- preprocess getCurrentDate
-    mdRule resumeSnapshot (fromList [aboutMeIdent]) wOpt katexRender faIcons
-        *> mdRule resumeSnapshot resumeCareerPattern wOpt katexRender faIcons
-        *> mdRule resumeSnapshot (fromList [skillsIdent]) wOpt katexRender faIcons
-        *> mdRule resumeSnapshot (fromList [otherActivitiesIdent]) wOpt katexRender faIcons
-        *> mdRule resumeSnapshot (fromList [favTechIdent]) wOpt katexRender faIcons
-    match resumeJPPath $ do
+rules :: PageConfReader Rules ()
+rules = do
+    let items = resumeCareerPattern : map (fromList . (:[]))
+            [ aboutMeIdent
+            , skillsIdent
+            , otherActivitiesIdent
+            , favTechIdent
+            ]
+    mapM_ (mdRule resumeSnapshot) items
+    faIcons <- asks pcFaIcons
+    lastUpdate <- lift $ preprocess getCurrentDate
+    lift $ match resumeJPPath $ do
         route $ gsubRoute (contentsRoot </> "pages/") (const mempty)
         compile $ do
             am <- loadSnapshotBody aboutMeIdent resumeSnapshot

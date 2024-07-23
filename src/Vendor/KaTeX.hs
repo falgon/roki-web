@@ -1,6 +1,7 @@
 {-# LANGUAGE LambdaCase #-}
 module Vendor.KaTeX (
-    render
+    KaTeXRender
+  , render
 ) where
 
 import           Control.Monad.Extra    (concatMapM)
@@ -11,12 +12,14 @@ import qualified Text.HTML.TagSoup.Tree as TT
 
 import           Config                 (tagSoupOption)
 
+type KaTeXRender = Item String -> Compiler (Item String)
+
 transformTreeM :: Monad m => (TT.TagTree s -> m [TT.TagTree s]) -> [TT.TagTree s] -> m [TT.TagTree s]
 transformTreeM act = concatMapM $ \case
     (TT.TagBranch x y z) -> transformTreeM act z >>= act . TT.TagBranch x y
     x -> act x
 
-render :: Item String -> Compiler (Item String)
+render :: KaTeXRender
 render = withItemBody $ fmap (TT.renderTreeOptions tagSoupOption) . transformTreeM f . TT.parseTree
     where
         f tag@(TT.TagBranch _ as [TT.TagLeaf (TS.TagText e)])
