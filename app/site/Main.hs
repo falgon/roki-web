@@ -1,7 +1,6 @@
 {-# LANGUAGE OverloadedStrings, TemplateHaskell #-}
 module Main (main) where
 
-import           Control.Monad            ((>=>))
 import           Control.Monad.Reader     (ReaderT (..))
 import           Data.Foldable            (fold)
 import           Data.String              (fromString)
@@ -244,7 +243,7 @@ main = do
           }
         mapM_ (runReaderT $ Blog.rules faIcons) blogConfs
         mapM_ (flip runReaderT pageConf) [TopPage.rules blogConfs, Resume.rules]
-        mapM_ (flip match (route idRoute) >=> const (compile copyFileCompiler)) ["CNAME", "ads.txt"]
+        mapM_ (flip match (route idRoute >> compile copyFileCompiler)) ["CNAME", "ads.txt"]
         match (fromString $ joinPath ["contents", "templates", "**"]) $
             compile templateBodyCompiler
     where
