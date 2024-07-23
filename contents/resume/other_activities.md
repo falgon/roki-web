@@ -1,3 +1,6 @@
+<div class="content" style="list-style: inside;">
+
+
 - OSS への貢献
     - [C++ 標準化委員会ペーパー内のサンプル実装への PR](https://github.com/PeterSommerlad/SC22WG21_Papers/pull/5), [C++ へマルチステージプログラミングを導入することを試行した Meta C++ コンパイラ実装への PR](https://github.com/meta-cpp/clang/pull/1), [restyler への dhall 言語対応 PR](https://github.com/restyled-io/restylers/pull/96) ... など他プロジェクトへのコントリビュートは <https://roki.dev> の Contributions を参照
     - [cpprefjp](https://github.com/cpprefjp) メンバー
@@ -12,3 +15,4 @@
         - [関連記事](https://roki.dev/roki.log/2020/12/16/CompileTimeLazyKWithCXXTemplateMetaProgramming/index.html)
         - [動画](https://www.youtube.com/watch?v=OTYsKSZNbZc&feature=emb_title&ab_channel=klab_tech)
 
+</div>

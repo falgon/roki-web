@@ -1,3 +1,6 @@
+<div class="content" style="list-style: inside;">
+
+
 ### 車輪の再発明
 
 <i>車輪の再発明</i>がすき。
@@ -12,7 +15,7 @@
     - 関連記事:
         1. [カラー画像の原理からJPEGの圧縮原理までの学習メモ](https://roki.hateblo.jp/entry/2017/04/10/JPEG%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6%E5%AD%A6%E7%BF%92%E3%83%A1%E3%83%A2)
         2. [JPEG エンコーダ書いた](https://roki.hateblo.jp/entry/2017/07/02/JPEG_%E3%82%A8%E3%83%B3%E3%82%B3%E3%83%BC%E3%83%80%E6%9B%B8%E3%81%84%E3%81%9F)
-        3. [JPEG デコーダ書いた](https://roki.hateblo.jp/entry/2017/08/13/JPEG_%E3%83%87%E3%82%B3%E3%83%BC%E3%83%80%E6%9B%B8%E3%81%84%E3%81%9F)
+        3. [JPEG デコーダ書いた](https://roki.hateblo.jp/entry/2017/08/13/JPEG_%E3%83%87%E3%82%B3%E3%83%BC%E3%83%80%E6%9B%B8%E3%gg81%84%E3%81%9F)
         4. [non-type template parameter におけるデータの受け渡しから TMP で実数を含む value computing を行う](https://roki.hateblo.jp/entry/2017/09/01/non-type_template_parameter_%E3%81%AB%E3%81%8A%E3%81%91%E3%82%8B%E3%83%87%E3%83%BC%E3%82%BF%E3%81%AE%E5%8F%97%E3%81%91%E6%B8%A1%E3%81%97%E3%81%8B%E3%82%89_TMP_%E3%81%A7%E5%AE%9F%E6%95%B0%E3%82%92%E5%90%AB)
 - [ping - network-basal](https://github.com/falgon/network-basal)
     - 関連記事: [Haskell でリンクレイヤーにおける ICMP パケットの構築, 送受信および解析による ping の実装](https://roki.dev/roki.log/2018/09/15/scratchPacket/index.html)
@@ -44,7 +47,7 @@ C++20まではC++言語仕様書の重箱の隅をつついたり，ドラフト
 
 ### よく使う言語（順不同）
 
-<div class="has-text-centered">
+<div class="has-text-centered is-disable-pointer-events">
 <img src="https://github-readme-stats.vercel.app/api/top-langs/?username=falgon&layout=donut">
 </div>
 
@@ -70,3 +73,4 @@ C++20まではC++言語仕様書の重箱の隅をつついたり，ドラフト
         - AWS の VPC-EC2 で VRRP: https://github.com/falgon/VKUVC, 記事: https://roki.dev/roki.log/2018/07/23/ec2failover/index.html
         - コマンド一発で AWS EC2 上に環境を自動構築, distcc で分散コンパイルを実行: https://github.com/falgon/edcc, 記事: https://roki.dev/roki.log/2018/08/15/aws_ec2_distcc/index.html
 
+</div>
