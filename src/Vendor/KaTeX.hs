@@ -17,7 +17,7 @@ type KaTeXRender = Item String -> Compiler (Item String)
 transformTreeM :: Monad m => (TT.TagTree s -> m [TT.TagTree s]) -> [TT.TagTree s] -> m [TT.TagTree s]
 transformTreeM act = concatMapM $ \case
     (TT.TagBranch x y z) -> transformTreeM act z >>= act . TT.TagBranch x y
-    x -> act x
+    x                    -> act x
 
 render :: KaTeXRender
 render = withItemBody $ fmap (TT.renderTreeOptions tagSoupOption) . transformTreeM f . TT.parseTree
