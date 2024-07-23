@@ -1,10 +1,11 @@
 <div class="content" style="list-style: inside;">
 
 
-### 車輪の再発明
+#### 車輪の再発明
 
 <i>車輪の再発明</i>がすき。
 これまでの主な<i>車輪の再発明</i>リスト：
+
 - [Cコンパイラ - htcc](https://github.com/falgon/htcc)
     - 関連記事: [Haskell で C コンパイラを作ってみた](https://roki.dev/roki.log/2020/03/17/SelfMadeCCompiler/index.html)
 - [Git - hmgit](https://github.com/falgon/hmgit)
@@ -20,10 +21,11 @@
 - [ping - network-basal](https://github.com/falgon/network-basal)
     - 関連記事: [Haskell でリンクレイヤーにおける ICMP パケットの構築, 送受信および解析による ping の実装](https://roki.dev/roki.log/2018/09/15/scratchPacket/index.html)
 
-### 関数プログラミング
+#### 関数プログラミング
 
 関数プログラミングがすき。一番好きな言語はHaskell。
 C++テンプレートを純粋関数型言語だと思っており，一例としてはその機構を使ってコンパイル時 Lazy K インタプリタを作ったりした。
+
 - [コンパイル時 Lazy K インタプリタ - mpl-lazyk](https://github.com/falgon/mpl-lazyk)
     - 関連記事:
         1. [C++ テンプレートメタプログラミングによるコンパイル時 Lazy K インタプリタ](https://roki.dev/roki.log/2020/12/16/CompileTimeLazyKWithCXXTemplateMetaProgramming/index.html)
@@ -32,20 +34,20 @@ C++テンプレートを純粋関数型言語だと思っており，一例と�
 
 C++20まではC++言語仕様書の重箱の隅をつついたり，ドラフト仕様や提案を追っていたりした。
 
-### その他
+#### その他
 
 その他自分自身でよく使う自作の物々。
 
 - [Hakyll 製 ポータルサイト - roki-web](https://github.com/falgon/roki-web)
-    - 私のポータルサイト https://roki.dev の実装。Hakyll という static site generator を使っている。その他色々妙にこだわりポイントがあるので下記記事を参照
+    - 私のポータルサイト<https://roki.dev>の実装。Hakyllというstatic site generatorを使っている。その他色々妙にこだわりポイントがあるので下記記事を参照
     - 関連記事
         1. [個人ページ, ブログを移行した](https://roki.dev/roki.log/2020/08/25/hello-roki-web/index.html)
         2. [Hakyllで個人ウェブページを作りましたので全体概要を紹介](https://www.klab.com/jp/blog/tech/2020/0924-Hakyll.html)
 - [自作 LINE ボット - line-bot-kiirotori](https://github.com/falgon/line-bot-kiirotori)
-    - 私が日常生活を便利にするのにおいて個人的に使っている LINE BOT の Haskell 実装
-    - 関連騎士: [簡易認証, 指定時間実行可能な LINE Bot の自作](https://roki.dev/roki.log/2022/04/10/LineBotDevelopment/index.html)
+    - 私が日常生活を便利にするのにおいて個人的に使っているLINE BOTのHaskell実装
+    - 関連記事: [簡易認証, 指定時間実行可能な LINE Bot の自作](https://roki.dev/roki.log/2022/04/10/LineBotDevelopment/index.html)
 
-### よく使う言語（順不同）
+#### よく使う言語（順不同）
 
 <div class="has-text-centered is-disable-pointer-events">
 <img src="https://github-readme-stats.vercel.app/api/top-langs/?username=falgon&layout=donut">
@@ -70,7 +72,7 @@ C++20まではC++言語仕様書の重箱の隅をつついたり，ドラフト
 - Go
     - ネットワーキング + マルチスレッド処理が多いとき
     - AWS EC2 を操作するとき (下記例)
-        - AWS の VPC-EC2 で VRRP: https://github.com/falgon/VKUVC, 記事: https://roki.dev/roki.log/2018/07/23/ec2failover/index.html
-        - コマンド一発で AWS EC2 上に環境を自動構築, distcc で分散コンパイルを実行: https://github.com/falgon/edcc, 記事: https://roki.dev/roki.log/2018/08/15/aws_ec2_distcc/index.html
+        - [AWS の VPC-EC2 で VRRP](https://github.com/falgon/VKUVC)，[記事](https://roki.dev/roki.log/2018/07/23/ec2failover/index.html)
+        - [コマンド一発で AWS EC2 上に環境を自動構築, distcc で分散コンパイルを実行](https://github.com/falgon/edcc)，[記事](https://roki.dev/roki.log/2018/08/15/aws_ec2_distcc/index.html)
 
 </div>

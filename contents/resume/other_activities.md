@@ -2,8 +2,8 @@
 
 
 - OSS への貢献
-    - [C++ 標準化委員会ペーパー内のサンプル実装への PR](https://github.com/PeterSommerlad/SC22WG21_Papers/pull/5), [C++ へマルチステージプログラミングを導入することを試行した Meta C++ コンパイラ実装への PR](https://github.com/meta-cpp/clang/pull/1), [restyler への dhall 言語対応 PR](https://github.com/restyled-io/restylers/pull/96) ... など他プロジェクトへのコントリビュートは <https://roki.dev> の Contributions を参照
-    - [cpprefjp](https://github.com/cpprefjp) メンバー
+    - [C++ 標準化委員会ペーパー内のサンプル実装への PR](https://github.com/PeterSommerlad/SC22WG21_Papers/pull/5), [C++ へマルチステージプログラミングを導入することを試行した Meta C++ コンパイラ実装への PR](https://github.com/meta-cpp/clang/pull/1), [restyler への dhall 言語対応 PR](https://github.com/restyled-io/restylers/pull/96) ... など他プロジェクトへのコントリビュートは<https://roki.dev>のContributionsを参照
+    - [cpprefjp](https://github.com/cpprefjp)メンバー
     - Powerted by [haskell-jp](https://haskell.jp/blog/posts/links.html#:~:text=%E3%83%A1%E3%83%A2%20by%20matsubara0507-,roki.log,-by%20Roki) 
 - 書籍
     - [KLab Tech Book Vol.8, 第七章『ミニマル Git を自作しよう』](https://techbookfest.org/product/6185615265628160) - [技術書典 11](https://techbookfest.org/event/tbf11)
