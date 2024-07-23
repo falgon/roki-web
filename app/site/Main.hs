@@ -1,12 +1,14 @@
 {-# LANGUAGE OverloadedStrings, TemplateHaskell #-}
 module Main (main) where
 
+import           Control.Monad            ((>=>))
 import           Control.Monad.Reader     (ReaderT (..))
 import           Data.Foldable            (fold)
 import           Data.String              (fromString)
 import           Data.Version             (showVersion)
 import           Development.GitRev       (gitHash)
 import           Hakyll
+import           Hakyll.Core.Runtime      (RunMode (..))
 import qualified Options.Applicative      as OA
 import qualified Paths_roki_web           as P
 import           System.FilePath          (joinPath)
@@ -20,11 +22,14 @@ import qualified Contexts.Field.RokiDiary as RokiDiary
 import qualified Contexts.Field.RokiLog   as RokiLog
 import qualified Rules.Blog               as Blog
 import qualified Rules.Media              as Media
+import qualified Rules.PageType           as Page
+import qualified Rules.Resume             as Resume
 import qualified Rules.Src.JavaScript     as Js
 import qualified Rules.Src.Style          as Style
 import qualified Rules.TopPage            as TopPage
 import qualified Rules.Vendor             as Vendor
 import qualified Vendor.FontAwesome       as FA
+import qualified Vendor.KaTeX             as KaTeX
 
 data Opts = Opts
     { optPreviewFlag   :: !Bool
@@ -38,7 +43,7 @@ data Opts = Opts
 {-# INLINE buildCmd #-}
 buildCmd :: OA.Mod OA.CommandFields (Configuration -> Command)
 buildCmd = OA.command "build"
-    $ OA.info (pure $ const Build)
+    $ OA.info (pure $ const $ Build RunModeNormal)
     $ OA.progDesc "Generate the site"
 
 {-# INLINE checkCmd #-}
@@ -221,18 +226,25 @@ main = do
               , B.blogWriterOptions = writer
               }
           ]
+        hakyllOpt = Options (optVerbose opts)
+            $ mapIL (optInternalLinks opts)
+            $ optCmd opts
+            $ conf
 
-    hakyllWithArgs conf (Options (optVerbose opts) $ mapIL (optInternalLinks opts) $ optCmd opts $ conf) $ do
+    hakyllWithArgs conf hakyllOpt $ do
         Media.rules
             *> Vendor.rules (optPreviewFlag opts)
             *> Style.rules
             *> Js.rules
         faIcons <- fold <$> preprocess FA.loadFontAwesome
+        let pageConf = Page.PageConf {
+            Page.pcWriterOpt = writer
+          , Page.pcKaTeXRender = if optPreviewFlag opts then KaTeX.render else pure
+          , Page.pcFaIcons = faIcons
+          }
         mapM_ (runReaderT $ Blog.rules faIcons) blogConfs
-        TopPage.rules blogConfs faIcons
-
-        match "CNAME" $ route idRoute >> compile copyFileCompiler
-        match "ads.txt" $ route idRoute >> compile copyFileCompiler
+        mapM_ (flip runReaderT pageConf) [TopPage.rules blogConfs, Resume.rules]
+        mapM_ (flip match (route idRoute) >=> const (compile copyFileCompiler)) ["CNAME", "ads.txt"]
         match (fromString $ joinPath ["contents", "templates", "**"]) $
             compile templateBodyCompiler
     where

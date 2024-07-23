@@ -13,7 +13,15 @@ vendRule inpat outpath = match inpat $ do
     compile compressCssCompiler
 
 rules :: Bool -> Rules ()
-rules isPreview = do
+rules True = do
+    match (fromGlob $ joinPath ["node_modules", "katex", "dist", "katex.min.js"]) $ do
+        route $ gsubRoute "node_modules/katex/dist/" (const "vendor/katex/")
+        compile copyFileCompiler
+    match (fromGlob $ joinPath ["node_modules", "katex", "dist", "contrib", "auto-render.min.js"]) $ do
+        route $ gsubRoute "node_modules/katex/dist/contrib/" (const "vendor/katex/")
+        compile copyFileCompiler
+    rules False
+rules False = do
     zipWithM_ vendRule
        [ fontAwesomeSVGPath
        , bulmaToolTipPath
@@ -37,15 +45,6 @@ rules isPreview = do
     match (fromGlob $ joinPath ["node_modules", "mathjs", "lib", "browser", "math.js"]) $ do
         route $ gsubRoute "node_modules/mathjs/lib/browser/" (const "vendor/mathjs/")
         compile copyFileCompiler
-
-    if not isPreview then pure () else do
-        match (fromGlob $ joinPath ["node_modules", "katex", "dist", "katex.min.js"]) $ do
-            route $ gsubRoute "node_modules/katex/dist/" (const "vendor/katex/")
-            compile copyFileCompiler
-
-        match (fromGlob $ joinPath ["node_modules", "katex", "dist", "contrib", "auto-render.min.js"]) $ do
-            route $ gsubRoute "node_modules/katex/dist/contrib/" (const "vendor/katex/")
-            compile copyFileCompiler
     where
         fontAwesomeSVGPath = fromGlob $ joinPath
             ["node_modules", "@fortawesome", "fontawesome-svg-core", "styles.css"]

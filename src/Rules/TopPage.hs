@@ -17,6 +17,7 @@ import           Config.TopPage
 import           Contexts             (siteCtx)
 import qualified Contexts.Blog        as CtxBlog
 import           Rules.Blog.Type
+import           Rules.PageType
 import           Utils                (mconcatM, modifyExternalLinkAttr)
 import qualified Vendor.FontAwesome   as FA
 
@@ -26,14 +27,14 @@ lastUpdate (x:_) = formatTime defaultTimeLocale' (postDateFormat topPageConfig)
     <$> getItemUTC defaultTimeLocale' (itemIdentifier x)
 
 introDateCtx :: [Item a] -> BlogConfReader m Compiler (Context String)
-introDateCtx posts = do
-    name <- asks blogName
-    constField (name <> "-intro-date") <$> lift (lastUpdate posts)
+introDateCtx posts = constField
+    <$> asks ((<> "-intro-date") . blogName)
+    <*> lift (lastUpdate posts)
 
 listPostsCtx :: [Item String] -> BlogConfReader m Compiler (Context String)
 listPostsCtx posts = do
-    name <- asks blogName
-    pure $ listField (name <> "-posts") (siteCtx <> defaultContext) (pure posts)
+    name <- asks ((<> "-posts") . blogName)
+    pure $ listField name (siteCtx <> defaultContext) (pure posts)
 
 mkBlogCtx :: BlogConfReader m Compiler (Context String)
 mkBlogCtx = do
@@ -49,16 +50,17 @@ mkBlogCtx = do
       , pure defaultContext
       ]
 
-rules :: [BlogConfig m] -> FA.FontAwesomeIcons -> Rules ()
-rules bcs faIcons = do
-    projs <- preprocess renderProjectsList
-    conts <- preprocess renderContributionsTable
+rules :: [BlogConfig m] -> PageConfReader Rules ()
+rules bcs = do
+    faIcons <- asks pcFaIcons
+    projs <- lift $ preprocess renderProjectsList
+    conts <- lift $ preprocess renderContributionsTable
     let baseCtx = mconcatMap (uncurry constField) [
             ("title", siteName)
           , ("projs", projs)
           , ("contable", conts)
           ]
-    match indexPath $ do
+    lift $ match indexPath $ do
         route $ gsubRoute (contentsRoot </> "pages/") (const mempty)
         compile $ do
             topCtx <- mappend baseCtx <$> mconcatMapM (runReaderT mkBlogCtx) bcs

@@ -1,0 +1,81 @@
+<div class="mx-5">
+<div class="columns">
+    <div class="column is-one-third has-text-center-in-mobile is-flex is-align-items-center is-justify-content-center">
+        <div class="is-block">
+            <h1 class="title is-size-1">$author-name$</h1>
+            <p class="subtitle">$author-job$</p>
+        </div>
+    </div>
+    <div class="column is-one-third">
+        <figure class="image is-128x128 my-0 mx-auto is-block is-disable-pointer-events">
+            <picture>
+                <source class="is-rounded" type="image/webp" srcset="$author-avator$.webp">
+                <img alt="Profile photo" class="is-rounded" src="$author-avator$" />
+            </picture>
+        </figure>
+    </div>
+    <div class="column is-one-third is-flex is-align-items-center is-justify-content-center">
+        <div class="is-block">
+            <ul class="is-unstyled mb-0 is-inline-block has-text-left">
+                <li><i class="fas fa-person fa-fw mr-2" aria-hidden="true"></i>$author-sex$</li>
+                <li><i class="fas fa-map-pin fa-fw mr-2" aria-hidden="true"></i>$author-locale$</li>
+            </ul>
+        </div>
+    </div>
+</div>
+<hr class="fade-hr-line">
+<div class="columns">
+    <div class="column is-two-thirds">
+        <div class="mb-5">
+        <div class="title is-size-4 has-text-weight-bold mb-3"><i class="fas fa-user mr-2"></i>私について</div>
+        $about-me-body$
+        </div>
+        <div class="mb-5">
+        <div class="title is-size-4 has-text-weight-bold mb-3"><i class="fas fa-timeline mr-2"></i>経歴</div>
+        <ul class="commit-ul">
+            $for(career-list)$
+            <li>
+                <div class="title is-size-6 mb-0">$career-title$</div>
+                <div class="has-text-right is-size-7 has-text-weight-bold mt-1 is-flex is-justify-content-space-between">
+                    <div class="has-text-left"><p>$career-subtitle$</p></div>
+                    <div style="min-width:123px;">
+                        <i class="fas fa-calendar-days fa-fw" aria-hidden="true"></i>
+                        <p>$career-date$</p>
+                    </div>
+                </div>
+                <p class="is-block mt-2">$career-body$</p>
+            </li>
+            $endfor$
+        </ul>
+        </div>
+        <div class="mb-5">
+        <div class="title is-size-4 has-text-weight-bold mb-3"><i class="fas fa-hat-wizard mr-2"></i>スキル</div>
+        $skills$
+        </div>
+        <div class="mb-0">
+        <div class="title is-size-4 has-text-weight-bold mb-3"><i class="fas fa-person-hiking mr-2"></i>同人誌制作/発表/その他業務外での技術的活動</div>
+        $other-activities-body$
+        </div>
+    </div>
+    <div class="column is-one-third">
+        <div class="mb-5">
+        <div class="title is-size-4 has-text-weight-bold mb-3"><i class="fas fa-wand-sparkles mr-2"></i>好きな技術</div>
+        $fav-tech$
+        </div>
+        <div class="mb-0">
+        <div class="title is-size-4 has-text-weight-bold mb-3"><i class="fas fa-comment mr-2"></i>コンタクト</div>
+            <ul class="is-unstyled mb-0 is-inline-block has-text-left">
+                <li><i class="fas fa-globe fa-fw mr-2" aria-hidden="true"></i><a href="/">https://$site-title$</a></li>
+                <li><i class="fas fa-globe fa-fw mr-2" aria-hidden="true"></i><a href="/roki.log">https://$site-title$/roki.log</a></li>
+                <li><i class="fab fa-github fa-fw mr-2" aria-hidden="true"></i><a href="https://github.com/$author-github$">https://github.com/$author-github$</a></li>
+                <li><i class="fab fa-x-twitter fa-fw mr-2" aria-hidden="true"></i><a href="https://x.com/$author-twitter$">https://x.com/$author-twitter$</a></li>
+            </ul>
+        </div>
+    </div>
+</div>
+<div class="has-text-centered">
+    <p class="is-disable-pointer-events">
+    <img src="https://img.shields.io/badge/Last%20updated-$last-update$%20JST-ededed.svg" alt="badge">
+    </p>
+</div>
+</div>
