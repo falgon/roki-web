@@ -23,7 +23,7 @@
 ##### 関数プログラミング
 
 関数プログラミングがすきです。一番好きな言語はHaskell。
-C++テンプレートを純粋関数型言語だと思っており，一例としてはその機構を使ってコンパイル時 Lazy K インタプリタを作ったりしました。
+C++テンプレートを純粋関数型言語だと思っており，一例としてはその機構を使ってコンパイル時 Lazy K インタプリタを作ったりしていました。
 
 - [コンパイル時 Lazy K インタプリタ - mpl-lazyk](https://github.com/falgon/mpl-lazyk)
     - 関連記事:
@@ -31,7 +31,7 @@ C++テンプレートを純粋関数型言語だと思っており，一例と�
         2. [発表動画](https://klab-fukuoka-meetup.connpass.com/event/199452/)
         3. [Reddit への掲載](https://www.reddit.com/r/cpp/comments/kt72dz/lazy_k_interpreter_in_c_template_metaprogramming/)
 
-C++20まではC++言語仕様書の重箱の隅をつついたり，ドラフト仕様や提案を追っていたりした。
+C++20まではC++言語仕様書の重箱の隅をつついたり，ドラフト仕様や提案を追っていました。
 
 <div class="mb-2"></div>
 
