@@ -33,6 +33,10 @@ resumeCareerPattern = fromRegex $ mconcat
     , "$)"
     ]
 
+skillsIdent :: Identifier
+skillsIdent = fromString
+    $ joinPath [resumeRoot, "skills.md"]
+
 otherActivitiesIdent :: Identifier
 otherActivitiesIdent = fromString
     $ joinPath [resumeRoot, "other_activities.md"]
@@ -76,6 +80,7 @@ rules wOpt katexRender faIcons = do
     lastUpdate <- preprocess getCurrentDate
     mdRule resumeSnapshot (fromList [aboutMeIdent]) wOpt katexRender faIcons
         *> mdRule resumeSnapshot resumeCareerPattern wOpt katexRender faIcons
+        *> mdRule resumeSnapshot (fromList [skillsIdent]) wOpt katexRender faIcons
         *> mdRule resumeSnapshot (fromList [otherActivitiesIdent]) wOpt katexRender faIcons
         *> mdRule resumeSnapshot (fromList [favTechIdent]) wOpt katexRender faIcons
     match resumeJPPath $ do
@@ -83,9 +88,10 @@ rules wOpt katexRender faIcons = do
         compile $ do
             am <- loadSnapshotBody aboutMeIdent resumeSnapshot
             career <- sortByNum <$> loadAllSnapshots resumeCareerPattern resumeSnapshot
+            skills <- loadSnapshotBody skillsIdent resumeSnapshot
             oc <- loadSnapshotBody otherActivitiesIdent resumeSnapshot
             fav <- loadSnapshotBody favTechIdent resumeSnapshot
-            let resumeCtx' = resumeCtx am career oc fav lastUpdate
+            let resumeCtx' = resumeCtx am career skills oc fav lastUpdate
             getResourceBody
                 >>= applyAsTemplate resumeCtx'
                 >>= loadAndApplyTemplate rootTemplate resumeCtx'
@@ -94,12 +100,13 @@ rules wOpt katexRender faIcons = do
                 >>= FA.render faIcons
     where
         resumeSnapshot = "resumeSS"
-        resumeCtx am career oc fav lastUpdate = mconcat [
+        resumeCtx am career skills oc fav lastUpdate = mconcat [
             constField "title" $ "resume - " <> siteName
           , siteCtx
           , defaultContext
           , constField "about-me-body" am
           , listField "career-list" careerCtx $ pure career
+          , constField "skills" skills
           , constField "other-activities-body" oc
           , constField "fav-tech" fav
           , constField "last-update" lastUpdate

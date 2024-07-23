@@ -47,29 +47,5 @@ C++20まではC++言語仕様書の重箱の隅をつついたり，ドラフト
     - 私が日常生活を便利にするのにおいて個人的に使っているLINE BOTのHaskell実装
     - 関連記事: [簡易認証, 指定時間実行可能な LINE Bot の自作](https://roki.dev/roki.log/2022/04/10/LineBotDevelopment/index.html)
 
-##### よく使う言語
-
-<div class="has-text-centered is-disable-pointer-events">
-<img src="https://github-readme-stats.vercel.app/api/top-langs/?username=falgon&layout=donut">
-</div>
-
-Haskell, C++, Python, Bash
-
-- Haskell
-    - 上記, 下記の用途で
-    - 最近は専ら Haskell で書くことが多い
-- C++
-    - 上記, 下記の用途で
-    - プログラミングコンテストとか
-    - 速度が必要なとき
-    - 低レイヤ触るとき
-    - テンプレートメタプログラミングがしたいとき
-- Python
-    - 素早くプロトタイプ的なものを作りたいとき
-    - スクレイピング
-    - numpy 使って行列計算とかしたいやプロットを打ちたいとき等
-- Bash 等シェルスクリプト
-    - 普段の操作のほとんどが zsh
-    - 定常的に実行したいタスクとか
 
 </div>
