@@ -243,8 +243,7 @@ main = do
           , Page.pcFaIcons = faIcons
           }
         mapM_ (runReaderT $ Blog.rules faIcons) blogConfs
-        TopPage.rules blogConfs faIcons
-        runReaderT Resume.rules pageConf
+        mapM_ (flip runReaderT pageConf) [TopPage.rules blogConfs, Resume.rules]
         mapM_ (flip match (route idRoute) >=> const (compile copyFileCompiler)) ["CNAME", "ads.txt"]
         match (fromString $ joinPath ["contents", "templates", "**"]) $
             compile templateBodyCompiler
