@@ -37,6 +37,10 @@ otherActivitiesIdent :: Identifier
 otherActivitiesIdent = fromString
     $ joinPath [resumeRoot, "other_activities.md"]
 
+favTechIdent :: Identifier
+favTechIdent = fromString
+    $ joinPath [resumeRoot, "fav_tech.md"]
+
 sortByNum :: [Item a] -> [Item a]
 sortByNum = sortBy
     $ flip
@@ -73,13 +77,15 @@ rules wOpt katexRender faIcons = do
     mdRule resumeSnapshot (fromList [aboutMeIdent]) wOpt katexRender faIcons
         *> mdRule resumeSnapshot resumeCareerPattern wOpt katexRender faIcons
         *> mdRule resumeSnapshot (fromList [otherActivitiesIdent]) wOpt katexRender faIcons
+        *> mdRule resumeSnapshot (fromList [favTechIdent]) wOpt katexRender faIcons
     match resumeJPPath $ do
         route $ gsubRoute (contentsRoot </> "pages/") (const mempty)
         compile $ do
             am <- loadSnapshotBody aboutMeIdent resumeSnapshot
             career <- sortByNum <$> loadAllSnapshots resumeCareerPattern resumeSnapshot
             oc <- loadSnapshotBody otherActivitiesIdent resumeSnapshot
-            let resumeCtx' = resumeCtx am career oc lastUpdate
+            fav <- loadSnapshotBody favTechIdent resumeSnapshot
+            let resumeCtx' = resumeCtx am career oc fav lastUpdate
             getResourceBody
                 >>= applyAsTemplate resumeCtx'
                 >>= loadAndApplyTemplate rootTemplate resumeCtx'
@@ -88,13 +94,14 @@ rules wOpt katexRender faIcons = do
                 >>= FA.render faIcons
     where
         resumeSnapshot = "resumeSS"
-        resumeCtx am career oc lastUpdate = mconcat [
+        resumeCtx am career oc fav lastUpdate = mconcat [
             constField "title" $ "resume - " <> siteName
           , siteCtx
           , defaultContext
           , constField "about-me-body" am
-          , constField "other-activities-body" oc
           , listField "career-list" careerCtx $ pure career
+          , constField "other-activities-body" oc
+          , constField "fav-tech" fav
           , constField "last-update" lastUpdate
           ]
         careerCtx = mconcat [
