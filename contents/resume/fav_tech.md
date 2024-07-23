@@ -3,8 +3,7 @@
 
 ##### 車輪の再発明
 
-<i>車輪の再発明</i>がすき。
-これまでの主な<i>車輪の再発明</i>リスト：
+<i>車輪の再発明</i>がすきです。これまでの主な<i>車輪の再発明</i>リスト：
 
 - [Cコンパイラ - htcc](https://github.com/falgon/htcc)
     - 関連記事: [Haskell で C コンパイラを作ってみた](https://roki.dev/roki.log/2020/03/17/SelfMadeCCompiler/index.html)
@@ -23,8 +22,8 @@
 
 ##### 関数プログラミング
 
-関数プログラミングがすき。一番好きな言語はHaskell。
-C++テンプレートを純粋関数型言語だと思っており，一例としてはその機構を使ってコンパイル時 Lazy K インタプリタを作ったりした。
+関数プログラミングがすきです。一番好きな言語はHaskell。
+C++テンプレートを純粋関数型言語だと思っており，一例としてはその機構を使ってコンパイル時 Lazy K インタプリタを作ったりしました。
 
 - [コンパイル時 Lazy K インタプリタ - mpl-lazyk](https://github.com/falgon/mpl-lazyk)
     - 関連記事:
@@ -34,13 +33,15 @@ C++テンプレートを純粋関数型言語だと思っており，一例と�
 
 C++20まではC++言語仕様書の重箱の隅をつついたり，ドラフト仕様や提案を追っていたりした。
 
+<div class="mb-2"></div>
+
 ##### その他
 
-その他自分自身でよく使う自作の物々。
+その他自分自身でよく使う自作の物々:
 
 - [Hakyll 製 ポータルサイト - roki-web](https://github.com/falgon/roki-web)
-    - 私のポータルサイト<https://roki.dev>の実装。Hakyllというstatic site generatorを使っている。その他色々妙にこだわりポイントがあるので下記記事を参照
-    - 関連記事
+    - 私のポータルサイト<https://roki.dev>の実装。Hakyllで静的サイト生成器を実装しそれによって作られている。このレジュメ自身も同様にして生成されている
+    - 関連記事:
         1. [個人ページ, ブログを移行した](https://roki.dev/roki.log/2020/08/25/hello-roki-web/index.html)
         2. [Hakyllで個人ウェブページを作りましたので全体概要を紹介](https://www.klab.com/jp/blog/tech/2020/0924-Hakyll.html)
 - [自作 LINE ボット - line-bot-kiirotori](https://github.com/falgon/line-bot-kiirotori)
