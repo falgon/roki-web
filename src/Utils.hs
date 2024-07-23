@@ -33,8 +33,9 @@ modifyExternalLinkAttr :: Item String -> Compiler (Item String)
 modifyExternalLinkAttr = return . fmap (withTags f)
     where
         f t
-            | isExternalLink t = let (TS.TagOpen "a" as) = t in
-                TS.TagOpen "a" $ as <> extraAttributes
+            | isExternalLink t = case t of
+                (TS.TagOpen "a" as) -> TS.TagOpen "a" $ as <> extraAttributes
+                _                   -> t
             | otherwise = t
         isExternalLink = liftM2 (&&) (TS.isTagOpenName "a") (isExternal . TS.fromAttrib "href")
         extraAttributes = [("target", "_blank"), ("rel", "nofollow noopener")]

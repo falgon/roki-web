@@ -17,6 +17,7 @@ import           Data.Tuple.Extra          (dupe, first, second)
 import           Data.Version              (showVersion)
 import           Development.GitRev        (gitBranch, gitHash)
 import qualified Hakyll                    as H
+import qualified Hakyll.Core.Runtime       as H
 import qualified Options.Applicative       as OA
 import qualified Paths_roki_web            as P
 import           System.Exit               (exitFailure, exitSuccess)
@@ -61,7 +62,7 @@ execHakyllFromCmd :: H.Command -> H.Rules a -> IO ()
 execHakyllFromCmd = H.hakyllWithArgs hakyllConfig' . H.Options False
 
 execYaml' :: H.Command -> Opts -> MaybeT IO ()
-execYaml' H.Build opts = let utc = parseJSTTime =<< optSchedulingDate opts in do
+execYaml' (H.Build H.RunModeNormal) opts = let utc = parseJSTTime =<< optSchedulingDate opts in do
         fName <- MaybeT $ pure ((<> ".yml") <$> optBranchName opts)
         date <- MaybeT $ pure (humanize <$> utc)
         bName <- MaybeT $ pure (optBranchName opts)
@@ -71,7 +72,7 @@ execYaml' H.Build opts = let utc = parseJSTTime =<< optSchedulingDate opts in do
                 putStrLn $ "current branch name is: " <> $(gitBranch)
                 putStr "Are you sure you want to continue? (y/N)" >> hFlush stdout
                 unlessM (uncurry (||) . first (=='y') . second (=='Y') . dupe <$> getChar) $ putStrLn "Canceled" >> exitSuccess
-            execHakyllFromCmd H.Build $ do
+            execHakyllFromCmd (H.Build H.RunModeNormal) $ do
                 H.create [H.fromFilePath fName] $ do
                     let ctx = H.constField "cron-expr" cExpr
                             <> H.constField "date" date
@@ -92,7 +93,7 @@ cronExprCmd = OA.command "cexpr" $
 
 genYamlCmd :: OA.Mod OA.CommandFields Command
 genYamlCmd = OA.command "yaml" $
-    OA.info (pure $ CmdGenYaml $ execYaml H.Build) $
+    OA.info (pure $ CmdGenYaml $ execYaml $ H.Build H.RunModeNormal) $
         OA.progDesc "generate GitHub Actions yaml from template"
 
 cleanCmd :: OA.Mod OA.CommandFields Command
