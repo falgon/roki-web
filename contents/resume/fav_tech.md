@@ -1,7 +1,7 @@
 <div class="content" style="list-style: inside;">
 
 
-#### 車輪の再発明
+##### 車輪の再発明
 
 <i>車輪の再発明</i>がすき。
 これまでの主な<i>車輪の再発明</i>リスト：
@@ -21,7 +21,7 @@
 - [ping - network-basal](https://github.com/falgon/network-basal)
     - 関連記事: [Haskell でリンクレイヤーにおける ICMP パケットの構築, 送受信および解析による ping の実装](https://roki.dev/roki.log/2018/09/15/scratchPacket/index.html)
 
-#### 関数プログラミング
+##### 関数プログラミング
 
 関数プログラミングがすき。一番好きな言語はHaskell。
 C++テンプレートを純粋関数型言語だと思っており，一例としてはその機構を使ってコンパイル時 Lazy K インタプリタを作ったりした。
@@ -34,7 +34,7 @@ C++テンプレートを純粋関数型言語だと思っており，一例と�
 
 C++20まではC++言語仕様書の重箱の隅をつついたり，ドラフト仕様や提案を追っていたりした。
 
-#### その他
+##### その他
 
 その他自分自身でよく使う自作の物々。
 
@@ -47,11 +47,13 @@ C++20まではC++言語仕様書の重箱の隅をつついたり，ドラフト
     - 私が日常生活を便利にするのにおいて個人的に使っているLINE BOTのHaskell実装
     - 関連記事: [簡易認証, 指定時間実行可能な LINE Bot の自作](https://roki.dev/roki.log/2022/04/10/LineBotDevelopment/index.html)
 
-#### よく使う言語（順不同）
+##### よく使う言語
 
 <div class="has-text-centered is-disable-pointer-events">
 <img src="https://github-readme-stats.vercel.app/api/top-langs/?username=falgon&layout=donut">
 </div>
+
+Haskell, C++, Python, Bash
 
 - Haskell
     - 上記, 下記の用途で
@@ -69,10 +71,5 @@ C++20まではC++言語仕様書の重箱の隅をつついたり，ドラフト
 - Bash 等シェルスクリプト
     - 普段の操作のほとんどが zsh
     - 定常的に実行したいタスクとか
-- Go
-    - ネットワーキング + マルチスレッド処理が多いとき
-    - AWS EC2 を操作するとき (下記例)
-        - [AWS の VPC-EC2 で VRRP](https://github.com/falgon/VKUVC)，[記事](https://roki.dev/roki.log/2018/07/23/ec2failover/index.html)
-        - [コマンド一発で AWS EC2 上に環境を自動構築, distcc で分散コンパイルを実行](https://github.com/falgon/edcc)，[記事](https://roki.dev/roki.log/2018/08/15/aws_ec2_distcc/index.html)
 
 </div>
