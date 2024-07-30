@@ -9,7 +9,7 @@
     - [KLab Tech Book Vol.8, 第七章『ミニマル Git を自作しよう』](https://techbookfest.org/product/6185615265628160) - [技術書典 11](https://techbookfest.org/event/tbf11)
         - [関連記事1](https://roki.dev/roki.log/2021/07/10/SelfMadeTinyGit/index.html)
         - [関連記事2](https://www.klab.com/jp/blog/tech/2021/tbf11.html)
-        - :star2: **[ミニマル Git を自作しよう！（加筆/調整/改定版）](https://note.com/_roki/)**
+        - [ミニマル Git を自作しよう！（加筆/調整/改定版）](https://note.com/_roki/n/n1e17f077c2eb)
 - 発表
     - C++ テンプレートメタプログラミングによるコンパイル時 Lazy K インタプリタ - [KLab Engineer Advent Calendar 2020 Recap Day1](https://klab-fukuoka-meetup.connpass.com/event/199452/)
         - [関連記事](https://roki.dev/roki.log/2020/12/16/CompileTimeLazyKWithCXXTemplateMetaProgramming/index.html)
