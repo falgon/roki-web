@@ -40,7 +40,7 @@ C++20まではC++言語仕様書の重箱の隅をつついたり，ドラフト
 その他自分自身でよく使う自作の物々:
 
 - [Hakyll 製 ポータルサイト - roki-web](https://github.com/falgon/roki-web)
-    - 私のポータルサイト<https://roki.dev>の実装。Hakyllで静的サイト生成器を実装しそれによって作られている。このレジュメ自身も同様にして生成されている
+    - 私のポータルサイト<https://roki.dev>の実装。Hakyllで静的サイト生成器を実装しそれによって作られている。このレジュメ自身も同様にして生成している
     - 関連記事:
         1. [個人ページ, ブログを移行した](https://roki.dev/roki.log/2020/08/25/hello-roki-web/index.html)
         2. [Hakyllで個人ウェブページを作りましたので全体概要を紹介](https://www.klab.com/jp/blog/tech/2020/0924-Hakyll.html)
