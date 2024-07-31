@@ -1,4 +1,3 @@
-version: '3.7'
 services:
   build:
     image: $ROKI_WEB_ENV_IMAGE_NAME:$ROKI_WEB_ENV_IMAGE_TAG

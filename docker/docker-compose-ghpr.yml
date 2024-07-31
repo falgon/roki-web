@@ -1,4 +1,3 @@
-version: '3.7'
 services:
   build:
     image: docker.pkg.github.com/falgon/roki-web/roki-web-env:latest
