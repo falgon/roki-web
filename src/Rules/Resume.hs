@@ -1,15 +1,15 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Rules.Resume (rules) where
 
+import           Control.Monad         ((>=>))
+import           Control.Monad.Extra   (concatMapM)
 import           Control.Monad.Reader  (asks)
 import           Control.Monad.Trans   (MonadTrans (..))
-import Control.Monad.Extra (concatMapM)
 import           Data.Functor          ((<&>))
 import           Data.List             (intercalate, sortBy)
 import           Data.Ord              (comparing)
 import           Data.String           (IsString (..))
 import           Data.Time.Calendar    (toGregorian)
-import           Data.Time.Clock       (getCurrentTime)
 import           Data.Time.LocalTime   (LocalTime (..), utcToLocalTime)
 import           Hakyll
 import           System.FilePath       (joinPath, (</>))
@@ -69,9 +69,9 @@ mdRule ss pat = do
             >>= katexRender
             >>= saveSnapshot ss
 
-getCurrentDate :: IO String
-getCurrentDate = getCurrentTime
-    <&> toGregorian . localDay . utcToLocalTime timeZoneJST
+getLastModTime :: [Pattern] -> Compiler String
+getLastModTime items = concatMapM (getMatches >=> mapM getItemModificationTime) items
+    <&> toGregorian . localDay . utcToLocalTime timeZoneJST . head . sortBy (flip compare)
     <&> \(y, m, d) -> intercalate "%2F" [show y, show m, show d]
 
 rules :: PageConfReader Rules ()
@@ -84,11 +84,10 @@ rules = do
             ]
     mapM_ (mdRule resumeSnapshot) items
     faIcons <- asks pcFaIcons
-    lastUpdate <- lift $ preprocess getCurrentDate
     lift $ match resumeJPPath $ do
-        modTimes <- concatMapM (getMatches >=> mapM getItemModificationTime) items
         route $ gsubRoute (contentsRoot </> "pages/") (const mempty)
         compile $ do
+            lastUpdate <- getLastModTime items
             am <- loadSnapshotBody aboutMeIdent resumeSnapshot
             career <- sortByNum <$> loadAllSnapshots resumeCareerPattern resumeSnapshot
             skills <- loadSnapshotBody skillsIdent resumeSnapshot
