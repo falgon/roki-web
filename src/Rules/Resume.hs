@@ -19,7 +19,7 @@ import           Config                (contentsRoot, readerOptions, siteName,
                                         timeZoneJST)
 import           Contexts              (siteCtx)
 import           Rules.PageType
-import           Utils                 (modifyExternalLinkAttr, mconcatM)
+import           Utils                 (mconcatM, modifyExternalLinkAttr)
 import qualified Vendor.FontAwesome    as FA
 
 resumeRoot :: FilePath
