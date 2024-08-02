@@ -69,8 +69,8 @@ mdRule ss pat = do
             >>= katexRender
             >>= saveSnapshot ss
 
-getLastModTime :: [Pattern] -> Compiler String
-getLastModTime items = getUnderlying
+getLastModDate :: [Pattern] -> Compiler String
+getLastModDate items = getUnderlying
     >>= concatMapM (getMatches >=> mapM getItemModificationTime) . (:items) . fromList . (:[])
     <&> toGregorian . localDay . utcToLocalTime timeZoneJST . head . sortBy (flip compare)
     <&> \(y, m, d) -> intercalate "%2F" [show y, show m, show d]
@@ -88,7 +88,7 @@ rules = do
     lift $ match resumeJPPath $ do
         route $ gsubRoute (contentsRoot </> "pages/") (const mempty)
         compile $ do
-            lastUpdate <- getLastModTime items
+            lastUpdate <- getLastModDate items
             am <- loadSnapshotBody aboutMeIdent resumeSnapshot
             career <- sortByNum <$> loadAllSnapshots resumeCareerPattern resumeSnapshot
             skills <- loadSnapshotBody skillsIdent resumeSnapshot
