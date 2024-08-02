@@ -166,7 +166,8 @@ jobs:
         path: /tmp
     - name: Load images
       shell: bash
-      run: parallel 'cat {} | gzip -d | docker load' ::: /tmp/env_img.tar.gz /tmp/dev_img.tar.gz
+      run: |
+        parallel 'cat {} | gzip -d | docker load' ::: /tmp/env_img.tar.gz /tmp/dev_img.tar.gz
     - name: Login GitHub Registry
       run: echo ${{ secrets.GITHUB_TOKEN }} | docker login docker.pkg.github.com -u owner --password-stdin
     - name: Push to GitHub Package Registry
