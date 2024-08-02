@@ -3,6 +3,7 @@ module Rules.Resume (rules) where
 
 import           Control.Monad.Reader  (asks)
 import           Control.Monad.Trans   (MonadTrans (..))
+import Control.Monad.Extra (concatMapM)
 import           Data.Functor          ((<&>))
 import           Data.List             (intercalate, sortBy)
 import           Data.Ord              (comparing)
@@ -85,6 +86,7 @@ rules = do
     faIcons <- asks pcFaIcons
     lastUpdate <- lift $ preprocess getCurrentDate
     lift $ match resumeJPPath $ do
+        modTimes <- concatMapM (getMatches >=> mapM getItemModificationTime) items
         route $ gsubRoute (contentsRoot </> "pages/") (const mempty)
         compile $ do
             am <- loadSnapshotBody aboutMeIdent resumeSnapshot
