@@ -70,11 +70,10 @@ mdRule ss pat = do
             >>= saveSnapshot ss
 
 getLastModTime :: [Pattern] -> Compiler String
-getLastModTime items = do
-    idxMod <- getUnderlying >>= getItemModificationTime
-    concatMapM (getMatches >=> mapM getItemModificationTime) items
-        <&> toGregorian . localDay . utcToLocalTime timeZoneJST . head . sortBy (flip compare) . (idxMod:)
-        <&> \(y, m, d) -> intercalate "%2F" [show y, show m, show d]
+getLastModTime items = getUnderlying
+    >>= concatMapM (getMatches >=> mapM getItemModificationTime) . (:items) . fromList . (:[])
+    <&> toGregorian . localDay . utcToLocalTime timeZoneJST . head . sortBy (flip compare)
+    <&> \(y, m, d) -> intercalate "%2F" [show y, show m, show d]
 
 rules :: PageConfReader Rules ()
 rules = do
