@@ -37,6 +37,8 @@ WORKDIR /opt/src
 RUN export BOOTSTRAP_HASKELL_GHC_VERSION="$(yq '.compiler' ./stack.yaml | cut -f2 -d-)" \
     && curl --proto '=https' --tlsv1.2 -sSf https://get-ghcup.haskell.org | sh
 RUN source "$HOME/.ghcup/env" \
+    && stack config set install-ghc false --global \
+    && stack config set system-ghc true --global \
     && mkdir -p /root/dist \
     && stack --no-terminal --allow-different-user --local-bin-path=/root/dist install \
     && cp -r ./package.json ./package-lock.json ./tools ./.nvmrc /root/dist
