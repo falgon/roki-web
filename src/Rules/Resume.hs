@@ -19,7 +19,7 @@ import           Config                (contentsRoot, readerOptions, siteName,
                                         timeZoneJST)
 import           Contexts              (siteCtx)
 import           Rules.PageType
-import           Utils                 (modifyExternalLinkAttr)
+import           Utils                 (modifyExternalLinkAttr, mconcatM)
 import qualified Vendor.FontAwesome    as FA
 
 resumeRoot :: FilePath
@@ -88,35 +88,30 @@ rules = do
     lift $ match resumeJPPath $ do
         route $ gsubRoute (contentsRoot </> "pages/") (const mempty)
         compile $ do
-            lastUpdate <- getLastModDate items
-            am <- loadSnapshotBody aboutMeIdent resumeSnapshot
-            career <- sortByNum <$> loadAllSnapshots resumeCareerPattern resumeSnapshot
-            skills <- loadSnapshotBody skillsIdent resumeSnapshot
-            oc <- loadSnapshotBody otherActivitiesIdent resumeSnapshot
-            fav <- loadSnapshotBody favTechIdent resumeSnapshot
-            let resumeCtx' = resumeCtx am career skills oc fav lastUpdate
+            resumeCtx <- mconcatM [
+                pure $ constField "title" $ "resume - " <> siteName
+              , pure siteCtx
+              , pure defaultContext
+              , constField "about-me-body"
+                    <$> loadSnapshotBody aboutMeIdent resumeSnapshot
+              , pure $ listField "career-list" (metadataField <> bodyField "career-body") $
+                    sortByNum <$> loadAllSnapshots resumeCareerPattern resumeSnapshot
+              , constField "skills"
+                    <$> loadSnapshotBody skillsIdent resumeSnapshot
+              , constField "other-activities-body"
+                    <$> loadSnapshotBody otherActivitiesIdent resumeSnapshot
+              , constField "fav-tech"
+                    <$> loadSnapshotBody favTechIdent resumeSnapshot
+              , constField "last-update"
+                    <$> getLastModDate items
+              ]
             getResourceBody
-                >>= applyAsTemplate resumeCtx'
-                >>= loadAndApplyTemplate rootTemplate resumeCtx'
+                >>= applyAsTemplate resumeCtx
+                >>= loadAndApplyTemplate rootTemplate resumeCtx
                 >>= modifyExternalLinkAttr
                 >>= relativizeUrls
                 >>= FA.render faIcons
     where
         resumeSnapshot = "resumeSS"
-        resumeCtx am career skills oc fav lastUpdate = mconcat [
-            constField "title" $ "resume - " <> siteName
-          , siteCtx
-          , defaultContext
-          , constField "about-me-body" am
-          , listField "career-list" careerCtx $ pure career
-          , constField "skills" skills
-          , constField "other-activities-body" oc
-          , constField "fav-tech" fav
-          , constField "last-update" lastUpdate
-          ]
-        careerCtx = mconcat [
-            metadataField
-          , bodyField "career-body"
-          ]
         resumeJPPath = fromGlob $ joinPath [contentsRoot, "pages", "resume", "jp.html"]
         rootTemplate = fromFilePath $ joinPath [contentsRoot, "templates", "site", "default.html"]
