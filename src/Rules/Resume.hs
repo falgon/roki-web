@@ -111,6 +111,9 @@ rules = do
                 >>= modifyExternalLinkAttr
                 >>= relativizeUrls
                 >>= FA.render faIcons
+    lift $ createRedirects [
+        (fromString $ joinPath ["resume", "index.html"], joinPath ["resume", "jp.html"])
+      ]
     where
         resumeSnapshot = "resumeSS"
         resumeJPPath = fromGlob $ joinPath [contentsRoot, "pages", "resume", "jp.html"]
