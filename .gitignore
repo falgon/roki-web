@@ -4,3 +4,4 @@ docs
 .cache
 .stack-work
 .DS_Store
+.envrc
