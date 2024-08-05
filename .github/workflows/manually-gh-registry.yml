@@ -87,19 +87,22 @@ jobs:
       with:
         submodules: true
     - name: Adjustment docker volumes
-      run: docker system prune -a --volumes -f
+      run: |
+        docker system prune -a --volumes -f
+        sudo rm -rf "/usr/local/share/boost" "$AGENT_TOOLSDIRECTORY"
     - name: Build the env image
       shell: bash
       run: |
-        ROKI_WEB_ENV_IMAGE_TAG=${{ needs.setup.outputs.img_tag }} ROKI_WEB_DEV_IMAGE_TAG=${{ needs.setup.outputs.img_tag }} pushd ./docker && \
-          docker compose build --no-cache preview; \
-        popd
+        export ROKI_WEB_ENV_IMAGE_TAG="${{ needs.setup.outputs.img_tag }}"
+        export ROKI_WEB_DEV_IMAGE_TAG="${{ needs.setup.outputs.img_tag }}"
+        cd ./docker
+        docker compose build --no-cache preview
     - name: Save images with tar
       if: ${{ needs.setup.outputs.to_push == 'true' }}
       run: docker save ${{ needs.setup.outputs.env_img_name }} | gzip -c > /tmp/env_img.tar.gz
     - name: Upload the env image
       if: ${{ needs.setup.outputs.to_push == 'true' }}
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: env_img
         path: /tmp/env_img.tar.gz
@@ -113,19 +116,22 @@ jobs:
       with:
         submodules: true
     - name: Adjustment docker volumes
-      run: docker system prune -a --volumes -f
+      run: |
+        docker system prune -a --volumes -f
+        sudo rm -rf "/usr/local/share/boost" "$AGENT_TOOLSDIRECTORY"
     - name: Build the dev image
       shell: bash
       run: |
-        ROKI_WEB_ENV_IMAGE_TAG=${{ needs.setup.outputs.img_tag }} ROKI_WEB_DEV_IMAGE_TAG=${{ needs.setup.outputs.img_tag }} pushd ./docker && \
-          docker compose build --no-cache dev; \
-        popd
+        export ROKI_WEB_ENV_IMAGE_TAG="${{ needs.setup.outputs.img_tag }}"
+        export ROKI_WEB_DEV_IMAGE_TAG="${{ needs.setup.outputs.img_tag }}"
+        cd ./docker
+        docker compose build --no-cache dev; \
     - name: Save images with tar
       if: ${{ needs.setup.outputs.to_push == 'true' }}
       run: docker save ${{ needs.setup.outputs.dev_img_name }} | gzip -c > /tmp/dev_img.tar.gz
     - name: Upload the dev image
       if: ${{ needs.setup.outputs.to_push == 'true' }}
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: dev_img
         path: /tmp/dev_img.tar.gz
@@ -149,18 +155,22 @@ jobs:
     needs: [setup, build-env-image, build-dev-image]
     if: ${{ needs.setup.outputs.to_push == 'true' && github.repository == 'falgon/roki-web' }}
     steps:
+    - name: Adjustment docker volumes
+      run: |
+        docker system prune -a --volumes -f
+        sudo rm -rf "/usr/local/share/boost" "$AGENT_TOOLSDIRECTORY"
     - name: Install tools
       uses: awalsh128/cache-apt-pkgs-action@v1.4.2
       with:
         packages: parallel
         version: 1.0
     - name: Download the env image
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v4
       with:
         name: env_img
         path: /tmp
     - name: Download the dev image
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v4
       with:
         name: dev_img
         path: /tmp
