@@ -118,14 +118,14 @@ jobs:
     - name: Adjustment docker volumes
       run: |
         docker system prune -a --volumes -f
-        sudo rm -rf "/usr/local/share/boost" "$AGENT_TOOLSDIRECTORY"
+        sudo rm -rfv "/usr/local/share/boost" "$AGENT_TOOLSDIRECTORY"
     - name: Build the dev image
       shell: bash
       run: |
         export ROKI_WEB_ENV_IMAGE_TAG="${{ needs.setup.outputs.img_tag }}"
         export ROKI_WEB_DEV_IMAGE_TAG="${{ needs.setup.outputs.img_tag }}"
         cd ./docker
-        docker compose build --no-cache dev; \
+        docker compose build --no-cache dev
     - name: Save images with tar
       if: ${{ needs.setup.outputs.to_push == 'true' }}
       run: docker save ${{ needs.setup.outputs.dev_img_name }} | gzip -c > /tmp/dev_img.tar.gz
@@ -147,7 +147,7 @@ jobs:
         LINE_NOTIFY_TOKEN: ${{ secrets.LINE_NOTIFY_TOKEN }}
         ACTIONS_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
       run: |
-        curl -X POST $API_ENDPOINT \
+        curl -X POST "$API_ENDPOINT" \
           -H "Authorization: Bearer $LINE_NOTIFY_TOKEN" \
           -d "message=roki.dev docker image build completed!%0a$ACTIONS_URL"
   push:
@@ -158,7 +158,7 @@ jobs:
     - name: Adjustment docker volumes
       run: |
         docker system prune -a --volumes -f
-        sudo rm -rf "/usr/local/share/boost" "$AGENT_TOOLSDIRECTORY"
+        sudo rm -rfv "/usr/local/share/boost" "$AGENT_TOOLSDIRECTORY"
     - name: Install tools
       uses: awalsh128/cache-apt-pkgs-action@v1.4.2
       with:
@@ -185,5 +185,4 @@ jobs:
       run: |
         docker tag ${{ needs.setup.outputs.env_img_name }} ${{ needs.setup.outputs.env_gh_registry }}
         docker tag ${{ needs.setup.outputs.dev_img_name }} ${{ needs.setup.outputs.dev_gh_registry }}
-        docker push ${{ needs.setup.outputs.env_gh_registry }}
-        docker push ${{ needs.setup.outputs.dev_gh_registry }}
+        parallel 'docker push {}' ::: ${{ needs.setup.outputs.env_gh_registry }} ${{ needs.setup.outputs.dev_gh_registry }}
