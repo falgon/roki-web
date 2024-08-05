@@ -33,7 +33,7 @@ jobs:
       enable_notify: ${{ steps.enable_notify_step.outputs.flag }}
     steps:
     - name: Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         submodules: true
     - name: Setup environment variables
@@ -83,7 +83,7 @@ jobs:
     if: github.repository == 'falgon/roki-web'
     steps:
     - name: Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         submodules: true
     - name: Adjustment docker volumes
@@ -92,7 +92,7 @@ jobs:
       shell: bash
       run: |
         ROKI_WEB_ENV_IMAGE_TAG=${{ needs.setup.outputs.img_tag }} ROKI_WEB_DEV_IMAGE_TAG=${{ needs.setup.outputs.img_tag }} pushd ./docker && \
-          docker-compose build --no-cache preview; \
+          docker compose build --no-cache preview; \
         popd
     - name: Save images with tar
       if: ${{ needs.setup.outputs.to_push == 'true' }}
@@ -109,7 +109,7 @@ jobs:
     if: github.repository == 'falgon/roki-web'
     steps:
     - name: Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         submodules: true
     - name: Adjustment docker volumes
@@ -118,7 +118,7 @@ jobs:
       shell: bash
       run: |
         ROKI_WEB_ENV_IMAGE_TAG=${{ needs.setup.outputs.img_tag }} ROKI_WEB_DEV_IMAGE_TAG=${{ needs.setup.outputs.img_tag }} pushd ./docker && \
-          docker-compose build --no-cache dev; \
+          docker compose build --no-cache dev; \
         popd
     - name: Save images with tar
       if: ${{ needs.setup.outputs.to_push == 'true' }}
