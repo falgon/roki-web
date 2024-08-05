@@ -112,7 +112,7 @@ rules = do
                 >>= relativizeUrls
                 >>= FA.render faIcons
     lift $ createRedirects [
-        (fromFilePath $ joinPath ["/", "resume", "index.html"], joinPath ["/", "resume", "jp.html"])
+        (fromFilePath $ joinPath ["resume", "index.html"], joinPath ["/", "resume", "jp.html"])
       ]
     where
         resumeSnapshot = "resumeSS"
