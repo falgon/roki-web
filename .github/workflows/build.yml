@@ -73,6 +73,8 @@ jobs:
     - name: Install Node dependencies
       if: steps.node-cache.outputs.cache-hit != 'true'
       run: npm ci
+      env:
+        NPM_CONFIG_UPDATE_NOTIFIER: false
     - name: Build the roki.dev generator
       if: steps.site-gen-cache.outputs.cache-hit != 'true'
       run: |
