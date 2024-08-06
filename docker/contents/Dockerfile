@@ -5,8 +5,7 @@ LABEL org.opencontainers.image.authors="Roki <falgon53@yahoo.co.jp>"
 LABEL org.opencontainers.image.description="Preview image from the website roki.dev"
 ENV DEBIAN_FRONTEND=noninteractive \
     DEBCONF_NOWARNINGS=yes \
-    BOOTSTRAP_HASKELL_NONINTERACTIVE=1 \
-    BOOTSTRAP_HASKELL_STACK_VERSION=2.15.5
+    BOOTSTRAP_HASKELL_NONINTERACTIVE=1
 RUN sed -i 's@archive.ubuntu.com@ftp.jaist.ac.jp/pub/Linux@g' /etc/apt/sources.list \
     && apt-get -qq -o=Dpkg::Use-Pty=0 update \
     && apt-get -y -o=Dpkg::Use-Pty=0 -qq install --no-install-recommends \

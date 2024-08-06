@@ -25,7 +25,7 @@ jobs:
       id: site-gen-cache
       with:
         path: ./site
-        key: site-gen-v1-${{ runner.os }}-${{ hashFiles('stack.yaml') }}-${{ hashFiles('stack.yaml.lock') }}-${{ hashFiles('package.yaml') }}-${{ hashFiles('src/**') }}-${{ hashFiles('app/**') }}
+        key: site-gen-v3-${{ runner.os }}-${{ hashFiles('stack.yaml') }}-${{ hashFiles('stack.yaml.lock') }}-${{ hashFiles('package.yaml') }}-${{ hashFiles('src/**') }}-${{ hashFiles('app/**') }}
     - name: Stack cache
       if: steps.site-gen-cache.outputs.cache-hit != 'true'
       uses: actions/cache@v4
@@ -33,20 +33,29 @@ jobs:
       with:
         path: ~/.stack
         key: stack-v2-${{ runner.os }}-${{ hashFiles('stack.yaml') }}-${{ hashFiles('stack.yaml.lock') }}-${{ hashFiles('package.yaml') }}
+    - name: Get Haskell version
+      if: steps.site-gen-cache.outputs.cache-hit != 'true'
+      run: |
+        curl -sSLJ \
+          "https://github.com/mikefarah/yq/releases/download/${{ env.yq_version }}/yq_linux_amd64.tar.gz" |
+          tar xzf - ./yq_linux_amd64
+        chmod +x ./yq_linux_amd64
+        echo "ghc_version=$(./yq_linux_amd64 '.compiler' ./stack.yaml | cut -f2 -d-)" >> "$GITHUB_ENV"
+        echo "stack_version=$(grep BOOTSTRAP_HASKELL_STACK_VERSION ./docker/.env | cut -f2 -d=)" >> "$GITHUB_ENV"
+      env:
+        yq_version: v4.44.3
     - name: Setup GHC
       if: steps.site-gen-cache.outputs.cache-hit != 'true'
       uses: haskell-actions/setup@v2
       with:
-        ghc-version: '9.6.6'
+        ghc-version: ${{ env.ghc_version }}
         enable-stack: true
-        stack-version: '2.15.5'
-    - name: Setup Tools
-      run: |
-        sudo apt-get -qq -o=Dpkg::Use-Pty=0 update
-        sudo apt-get install -qq -y -o=Dpkg::Use-Pty=0 --no-install-recommends \
-          libxml2-utils parallel
-      env:
-        DEBIAN_FRONTEND: noninteractive
+        stack-version: ${{ env.stack_version }}
+    - name: Install tools
+      uses: awalsh128/cache-apt-pkgs-action@v1.4.2
+      with:
+        packages: libxml2-utils parallel
+        version: 1.0
     - name: Setup Stack
       if: steps.site-gen-cache.outputs.cache-hit != 'true' && steps.stack-cache.outputs.cache-hit != 'true'
       run: |
