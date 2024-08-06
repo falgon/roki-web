@@ -47,14 +47,11 @@ jobs:
       with:
         path: ~/.stack
         key: stack-v2-${{ runner.os }}-${{ hashFiles('stack.yaml') }}-${{ hashFiles('stack.yaml.lock') }}-${{ hashFiles('package.yaml') }}
-    - name: Setup Tools
-      run: |
-        sudo apt-get -qq -o=Dpkg::Use-Pty=0 update
-        sudo apt-get install -qq -y -o=Dpkg::Use-Pty=0 --no-install-recommends \
-          libxml2-utils
-      env:
-        DEBIAN_FRONTEND: noninteractive
-        DEBCONF_NOWARNINGS: yes
+    - name: Install tools
+      uses: awalsh128/cache-apt-pkgs-action@v1.4.2
+      with:
+        packages: libxml2-utils parallel
+        version: 1.0
     - name: Setup Stack
       if: steps.site-gen-cache.outputs.cache-hit != 'true' && steps.stack-cache.outputs.cache-hit != 'true'
       run: |
