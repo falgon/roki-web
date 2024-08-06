@@ -22,11 +22,21 @@ jobs:
       with:
         path: ./site
         key: site-gen-v1-${{ runner.os }}-${{ hashFiles('stack.yaml') }}-${{ hashFiles('stack.yaml.lock') }}-${{ hashFiles('package.yaml') }}-${{ hashFiles('src/**') }}-${{ hashFiles('app/**') }}
+    - name: Get Haskell version
+      if: steps.site-gen-cache.outputs.cache-hit != 'true'
+      run: |
+        curl -sSLJ \
+          "https://github.com/mikefarah/yq/releases/download/${{ env.yq_version }}/yq_linux_amd64.tar.gz" |
+          tar xzf - ./yq_linux_amd64
+        chmod +x ./yq_linux_amd64
+        echo "ghc_version=$(./yq_linux_amd64 '.compiler' ./stack.yaml | cut -f2 -d-)" >> "$GITHUB_ENV"
+      env:
+        yq_version: v4.44.3
     - name: Setup Haskell
       if: steps.site-gen-cache.outputs.cache-hit != 'true'
       uses: haskell-actions/setup@v2
       with:
-        ghc-version: '9.6.6'
+        ghc-version: ${{ env.ghc_version }}
         enable-stack: true
         stack-version: '2.15.5'
     - name: stack cache
