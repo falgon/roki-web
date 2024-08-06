@@ -36,8 +36,7 @@ RUN mkdir /home/rw-dev/src
 ENV LANG=ja_JP.UTF-8 \
     LANGUAGE=ja_JP:ja \
     LC_ALL=ja_JP.UTF-8 \
-    BOOTSTRAP_HASKELL_NONINTERACTIVE=1 \
-    BOOTSTRAP_HASKELL_STACK_VERSION=2.15.5
+    BOOTSTRAP_HASKELL_NONINTERACTIVE=1
 COPY --chown=rw-dev:rw-dev . /home/rw-dev/src
 WORKDIR /home/rw-dev/src
 RUN curl -sSo- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.0/install.sh | bash \

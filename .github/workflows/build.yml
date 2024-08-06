@@ -30,6 +30,7 @@ jobs:
           tar xzf - ./yq_linux_amd64
         chmod +x ./yq_linux_amd64
         echo "ghc_version=$(./yq_linux_amd64 '.compiler' ./stack.yaml | cut -f2 -d-)" >> "$GITHUB_ENV"
+        echo "stack_version=$(grep BOOTSTRAP_HASKELL_STACK_VERSION ./docker/.env | cut -f2 -d=)" >> "$GITHUB_ENV"
       env:
         yq_version: v4.44.3
     - name: Setup Haskell
@@ -38,7 +39,7 @@ jobs:
       with:
         ghc-version: ${{ env.ghc_version }}
         enable-stack: true
-        stack-version: '2.15.5'
+        stack-version: ${{ env.stack_version }}
     - name: stack cache
       if: steps.site-gen-cache.outputs.cache-hit != 'true'
       uses: actions/cache@v4
@@ -53,6 +54,7 @@ jobs:
           libxml2-utils
       env:
         DEBIAN_FRONTEND: noninteractive
+        DEBCONF_NOWARNINGS: yes
     - name: Setup Stack
       if: steps.site-gen-cache.outputs.cache-hit != 'true' && steps.stack-cache.outputs.cache-hit != 'true'
       run: |
