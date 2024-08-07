@@ -1,4 +1,6 @@
-# Usage
+<h1 align="center">Docker usage</h1>
+<p align="center"><a href="https://github.com/falgon/roki-web/actions/workflows/manually-gh-registry.yml"><img alt="manually-gh-registry" src="https://github.com/falgon/roki-web/actions/workflows/manually-gh-registry.yml/badge.svg?branch=master"></a></p>
+
 
 Update blog posts using docker container
 
