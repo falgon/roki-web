@@ -129,7 +129,7 @@ roki-web-actions{"GitHub Actions"}-."upload the built tar".->gd["Google Drive"]
 roki-web-actions{"GitHub Actions"}-."execute job".->circle{"Circle CI"}
 circle{"Circle CI"}-."upload".->art["Circle CI artifact"]
 circle{"Circle CI"}<-."download and remove the built tar".->gd["Google Drive"]
-circle{"Circle CI"}-."notify complete status and artifacts url".->me
+circle{"Circle CI"}-."notify complete status and artifacts url (with LINE notify and the PR comment)".->me
 
 click develop "https://github.com/falgon/roki-web/tree/develop" "link"
 click roki-web-actions "https://github.com/falgon/roki-web/actions/workflows/build_pr.yml?query=event%3Apull_request" "link"
