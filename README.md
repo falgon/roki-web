@@ -100,8 +100,8 @@ draft-->|merge|release
 roki-web-post-actions{"GitHub Actions"}<-."trigger (on: push)".->release
 roki-web-post-actions{"GitHub Actions"}-."push contents".->master
 end
-click roki-web-actions "https://github.com/falgon/roki-web/actions" "link"
-click roki-web-post-actions "https://github.com/falgon/roki-web-post/actions" "link"
+click roki-web-actions "https://github.com/falgon/roki-web/actions/workflows/build.yml?query=branch%3Amaster" "link"
+click roki-web-post-actions "https://github.com/falgon/roki-web-post/actions/workflows/deploy.yml?query=branch%3Arelease" "link"
 click develop "https://github.com/falgon/roki-web/tree/develop" "link"
 click master "https://github.com/falgon/roki-web/tree/master" "link"
 click gh-pages "https://github.com/falgon/roki-web/tree/gh-pages" "link"
