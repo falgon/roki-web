@@ -80,7 +80,7 @@ Success
 mv .github/workflows/scheduled/my-awesome-scheduled-post.yaml .github/workflows/ && rmdir .github/workflows/scheduled # apply
 ```
 
-[docker documentation here](./docker/README.md)
+docker documentation is [here](./docker/README.md).
 
 ## System overview
 
@@ -120,16 +120,16 @@ Thanks for it.
 
 ```mermaid
 graph TD;
-me((me))-->|create a PR to develop branch|develop
-bot((bot))-->|create a PR to develop branch|develop
+me((me))-->|create the PR|develop
+bot((bot))-->|create the PR|develop
 subgraph "roki-web (public repository)"
 develop<-.trigger.->roki-web-actions{"GitHub Actions"}
 end
 roki-web-actions{"GitHub Actions"}-."upload the built tar".->gd["Google Drive"]
-roki-web-actions{"GitHub Actions"}-."execute job".->circle{"Circle CI"}
-circle{"Circle CI"}-."upload".->art["Circle CI artifact"]
-circle{"Circle CI"}<-."download and remove the built tar".->gd["Google Drive"]
-circle{"Circle CI"}-."notify complete status and artifacts url (with LINE notify and the PR comment)".->me
+roki-web-actions{"GitHub Actions"}-."execute job".->circle{"CircleCI"}
+circle{"CircleCI"}-."upload".->art["CircleCI artifact"]
+circle{"CircleCI"}<-."download and remove the built tar".->gd["Google Drive"]
+circle{"CircleCI"}-."notify complete status and artifacts url<br/>(with LINE notify and the PR comment)".->me
 
 click develop "https://github.com/falgon/roki-web/tree/develop" "link"
 click roki-web-actions "https://github.com/falgon/roki-web/actions/workflows/build_pr.yml?query=event%3Apull_request" "link"
