@@ -42,6 +42,7 @@ WORKDIR /home/rw-dev/src
 RUN curl -sSo- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.0/install.sh | bash \
     && export NVM_DIR="${HOME}/.nvm" \
     && [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" || true \
+    && export NPM_CONFIG_UPDATE_NOTIFIER=false \
     && nvm install \
     && nvm use \
     && npm ci \
