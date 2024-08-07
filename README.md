@@ -118,9 +118,23 @@ Thanks for it.
 
 ### Overview of preview function accompanying PR
 
-<p align="center">
-<img src="https://user-images.githubusercontent.com/1241783/92309894-3fc9e780-efe4-11ea-88f2-29697c54b156.png" height="450px" alt="pr" />
-</p>
+```mermaid
+graph TD;
+me((me))-->|create a PR to develop branch|develop
+bot((bot))-->|create a PR to develop branch|develop
+subgraph "roki-web (public repository)"
+develop<-.trigger.->roki-web-actions{"GitHub Actions"}
+end
+roki-web-actions{"GitHub Actions"}-."upload the built tar".->gd["Google Drive"]
+roki-web-actions{"GitHub Actions"}-."execute job".->circle{"Circle CI"}
+circle{"Circle CI"}-."upload".->art["Circle CI artifact"]
+circle{"Circle CI"}<-."download and remove the built tar".->gd["Google Drive"]
+circle{"Circle CI"}-."notify complete status and artifacts url".->me
+
+click develop "https://github.com/falgon/roki-web/tree/develop" "link"
+click roki-web-actions "https://github.com/falgon/roki-web/actions/workflows/build_pr.yml?query=event%3Apull_request" "link"
+click circle "https://app.circleci.com/pipelines/github/falgon/roki-web?branch=develop" "link"
+```
 
 When PR is issued, artifact is built on CircleCI as shown above and it is possible to preview.
 Also, the bot [@kiirotori](https://github.com/kiirotori) will add a comment containing the URL of the preview site and the URL of the circleci JOB log that can be displayed in the artifact.
