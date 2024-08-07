@@ -86,9 +86,28 @@ mv .github/workflows/scheduled/my-awesome-scheduled-post.yaml .github/workflows/
 
 ### Overview of blog posts and website system updates
 
-<p align="center">
-<img src="https://user-images.githubusercontent.com/1241783/90969880-d99b8a00-e538-11ea-8f35-684365e14406.png" width="640" alt="system overview" />
-</p>
+```mermaid
+graph TD;
+me((me))-->|update web site system|develop
+me((me))-->|push blog contents|draft
+subgraph "roki-web (public repository)"
+develop-->|merge|master
+roki-web-actions{"GitHub Actions"}<-."trigger (on: push)".->master
+roki-web-actions{"GitHub Actions"}-.build and deploy.->gh-pages
+end
+subgraph "roki-web-post (private repository)"
+draft-->|merge|release
+roki-web-post-actions{"GitHub Actions"}<-."trigger (on: push)".->release
+roki-web-post-actions{"GitHub Actions"}-."push contents".->master
+end
+click roki-web-actions "https://github.com/falgon/roki-web/actions" "link"
+click roki-web-post-actions "https://github.com/falgon/roki-web-post/actions" "link"
+click develop "https://github.com/falgon/roki-web/tree/develop" "link"
+click master "https://github.com/falgon/roki-web/tree/master" "link"
+click gh-pages "https://github.com/falgon/roki-web/tree/gh-pages" "link"
+click draft "https://github.com/falgon/roki-web-post/tree/draft" "link"
+click release "https://github.com/falgon/roki-web-post/tree/release" "link"
+```
 
 * [roki-web](https://github.com/falgon/roki-web) (this repository)
 * [roki-web-post](https://github.com/falgon/roki-web-post) (private repository)
