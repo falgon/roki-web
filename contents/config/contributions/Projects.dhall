@@ -13,7 +13,8 @@ in    [ { projName = "htcc"
       , { projName = "mpl-lazyk"
         , lang = g.genreToText (g.Genre.Cpp {=})
         , projLink = "https://github.com/falgon/mpl-lazyk"
-        , summary = "Compile-time Lazy K interpreter with C++17 template metaprogramming (monadic implementation)."
+        , summary =
+            "Compile-time Lazy K interpreter with C++17 template metaprogramming (monadic implementation)."
         }
       , { projName = "roki-web"
         , lang = g.genreToText (g.Genre.Haskell {=})
