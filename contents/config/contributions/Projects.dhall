@@ -15,6 +15,11 @@ in    [ { projName = "htcc"
         , projLink = "https://github.com/falgon/mpl-lazyk"
         , summary = "Compile-time Lazy K interpreter with C++17 template metaprogramming (monadic implementation)."
         }
+      , { projName = "roki-web"
+        , lang = g.genreToText (g.Genre.Haskell {=})
+        , projLink = "https://github.com/falgon/roki-web"
+        , summary = "The implementation of this site."
+        }
       , { projName = "jpezy"
         , lang = g.genreToText (g.Genre.Cpp {=})
         , projLink = "https://github.com/falgon/jpezy"
