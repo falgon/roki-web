@@ -5,6 +5,22 @@ in    [ { projName = "htcc"
         , projLink = "https://github.com/falgon/htcc"
         , summary = "A full scratch, tiny C language compiler."
         }
+      , { projName = "hmgit"
+        , lang = g.genreToText (g.Genre.Haskell {=})
+        , projLink = "https://github.com/falgon/hmgit"
+        , summary = "A full scratch, minimal Git implementation."
+        }
+      , { projName = "mpl-lazyk"
+        , lang = g.genreToText (g.Genre.Cpp {=})
+        , projLink = "https://github.com/falgon/mpl-lazyk"
+        , summary =
+            "Compile-time Lazy K interpreter with C++17 template metaprogramming (monadic implementation)."
+        }
+      , { projName = "roki-web"
+        , lang = g.genreToText (g.Genre.Haskell {=})
+        , projLink = "https://github.com/falgon/roki-web"
+        , summary = "The implementation of this site."
+        }
       , { projName = "jpezy"
         , lang = g.genreToText (g.Genre.Cpp {=})
         , projLink = "https://github.com/falgon/jpezy"
@@ -45,12 +61,6 @@ in    [ { projName = "htcc"
         , projLink = "https://github.com/falgon/ElgamalEncryptionHs"
         , summary =
             "The rustic implementation of ElGamal encryption encoder and its decoder."
-        }
-      , { projName = "deep-learning-playground.rs"
-        , lang = g.genreToText (g.Genre.Rust {=})
-        , projLink = "https://github.com/falgon/deep-learning-playground.rs"
-        , summary =
-            "My playground about deep learning by Rust. This repository is a place for me to play deep learning."
         }
       ]
     : List ./Type/Project.dhall

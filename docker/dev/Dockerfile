@@ -36,13 +36,13 @@ RUN mkdir /home/rw-dev/src
 ENV LANG=ja_JP.UTF-8 \
     LANGUAGE=ja_JP:ja \
     LC_ALL=ja_JP.UTF-8 \
-    BOOTSTRAP_HASKELL_NONINTERACTIVE=1 \
-    BOOTSTRAP_HASKELL_STACK_VERSION=2.15.5
+    BOOTSTRAP_HASKELL_NONINTERACTIVE=1
 COPY --chown=rw-dev:rw-dev . /home/rw-dev/src
 WORKDIR /home/rw-dev/src
 RUN curl -sSo- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.0/install.sh | bash \
     && export NVM_DIR="${HOME}/.nvm" \
     && [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" || true \
+    && export NPM_CONFIG_UPDATE_NOTIFIER=false \
     && nvm install \
     && nvm use \
     && npm ci \

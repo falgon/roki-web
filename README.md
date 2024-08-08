@@ -67,7 +67,7 @@ stack exec spa -- cexpr -d $(date "+%m-%d-%R") # from current time
 00 15 11 09 *
 stack exec spa -- yaml -d $(date "+%m-%d-%R") -b my-awesome-scheduled-post # from current time
 current branch name is: draft
-Are you sure you want to continue connecting? (y/N)y
+Are you sure you want to continue? (y/N)y
 Initialising...
   Creating store...
   Creating provider...
@@ -80,15 +80,34 @@ Success
 mv .github/workflows/scheduled/my-awesome-scheduled-post.yaml .github/workflows/ && rmdir .github/workflows/scheduled # apply
 ```
 
-[docker documentation here](./docker/README.md)
+docker documentation is [here](./docker/README.md).
 
 ## System overview
 
 ### Overview of blog posts and website system updates
 
-<p align="center">
-<img src="https://user-images.githubusercontent.com/1241783/90969880-d99b8a00-e538-11ea-8f35-684365e14406.png" width="640" alt="system overview" />
-</p>
+```mermaid
+graph TD;
+me((me))-->|update web site system|develop
+me((me))-->|push blog contents|draft
+subgraph "roki-web (public repository)"
+develop-->|merge|master
+roki-web-actions{"GitHub Actions"}<-."trigger (on: push)".->master
+roki-web-actions{"GitHub Actions"}-.build and deploy.->gh-pages
+end
+subgraph "roki-web-post (private repository)"
+draft-->|merge|release
+roki-web-post-actions{"GitHub Actions"}<-."trigger (on: push)".->release
+roki-web-post-actions{"GitHub Actions"}-."push contents".->master
+end
+click roki-web-actions "https://github.com/falgon/roki-web/actions/workflows/build.yml?query=branch%3Amaster" "link"
+click roki-web-post-actions "https://github.com/falgon/roki-web-post/actions/workflows/deploy.yml?query=branch%3Arelease" "link"
+click develop "https://github.com/falgon/roki-web/tree/develop" "link"
+click master "https://github.com/falgon/roki-web/tree/master" "link"
+click gh-pages "https://github.com/falgon/roki-web/tree/gh-pages" "link"
+click draft "https://github.com/falgon/roki-web-post/tree/draft" "link"
+click release "https://github.com/falgon/roki-web-post/tree/release" "link"
+```
 
 * [roki-web](https://github.com/falgon/roki-web) (this repository)
 * [roki-web-post](https://github.com/falgon/roki-web-post) (private repository)
@@ -99,9 +118,23 @@ Thanks for it.
 
 ### Overview of preview function accompanying PR
 
-<p align="center">
-<img src="https://user-images.githubusercontent.com/1241783/92309894-3fc9e780-efe4-11ea-88f2-29697c54b156.png" height="450px" alt="pr" />
-</p>
+```mermaid
+graph TD;
+me((me))-->|create the PR|develop
+bot((bot))-->|create the PR|develop
+subgraph "roki-web (public repository)"
+develop<-.trigger.->roki-web-actions{"GitHub Actions"}
+end
+roki-web-actions{"GitHub Actions"}-."upload the built tar".->gd["Google Drive"]
+roki-web-actions{"GitHub Actions"}-."execute job".->circle{"CircleCI"}
+circle{"CircleCI"}-."upload".->art["CircleCI artifact"]
+circle{"CircleCI"}<-."download and remove the built tar".->gd["Google Drive"]
+circle{"CircleCI"}-."notify complete status and artifacts url<br/>(with LINE notify and the PR comment)".->me
+
+click develop "https://github.com/falgon/roki-web/tree/develop" "link"
+click roki-web-actions "https://github.com/falgon/roki-web/actions/workflows/build_pr.yml?query=event%3Apull_request" "link"
+click circle "https://app.circleci.com/pipelines/github/falgon/roki-web?branch=develop" "link"
+```
 
 When PR is issued, artifact is built on CircleCI as shown above and it is possible to preview.
 Also, the bot [@kiirotori](https://github.com/kiirotori) will add a comment containing the URL of the preview site and the URL of the circleci JOB log that can be displayed in the artifact.
