@@ -176,7 +176,7 @@ TypeScript で書き webpack + babel かなにかでバンドル/トランスパ
 <ol>
 <li id="fn1"><p>ただし, 一部自作 Bot のエラーハンドリング/フォールバック的な通知用途として LINE Notify を活用している<a href="/roki.log/2023/12/06/add-new-web-api-send-plain-text/#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 <li id="fn2"><p>RFC2104 として公開されている<a href="/roki.log/2023/12/06/add-new-web-api-send-plain-text/#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-<li id="fn3"><p>2023/11 に myTOKYOGAS の<a href="https://members.tokyo-gas.co.jp/contents/public/about/renewal.html">システムリニューアルがあった</a>ようで, その際にどうやら請求額通知を送信してくるメールアドレスが変更されたようだ. c.f. <a href="https://github.com/falgon/line-bot-kiirotori/pull/25" class="uri">https://github.com/falgon/line-bot-kiirotori/pull/25</a>)<a href="/roki.log/2023/12/06/add-new-web-api-send-plain-text/#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn3"><p>2023/11 に myTOKYOGAS の<a href="https://members.tokyo-gas.co.jp/contents/public/about/renewal.html">システムリニューアルがあった</a>ようで, その際にどうやら請求額通知を送信してくるメールアドレスが変更されたようだ. c.f. <a href="https://github.com/falgon/line-bot-kiirotori/pull/25" class="uri">https://github.com/falgon/line-bot-kiirotori/pull/25</a><a href="/roki.log/2023/12/06/add-new-web-api-send-plain-text/#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 <li id="fn4"><p>実をいうと Servant の関連ライブラリとして <a href="https://hackage.haskell.org/package/servant-js">servant-js</a> というものがあり,
 これは Servant による API の型定義から有名な javascript ライブラリ (AngularJS, axios, jQuery など) や生の
 javascript クライアントコードを生成することができ非常に便利なのだが,
