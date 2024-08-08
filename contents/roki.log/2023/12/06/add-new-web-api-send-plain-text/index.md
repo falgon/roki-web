@@ -191,7 +191,7 @@ TypeScript で書き webpack + babel かなにかでバンドル/トランスパ
 
 [^1]: ただし, 一部自作 Bot のエラーハンドリング/フォールバック的な通知用途として LINE Notify を活用している
 [^2]: RFC2104 として公開されている
-[^3]: 2023/11 に myTOKYOGAS の[システムリニューアルがあった](https://members.tokyo-gas.co.jp/contents/public/about/renewal.html)ようで, その際にどうやら請求額通知を送信してくるメールアドレスが変更されたようだ. c.f. <https://github.com/falgon/line-bot-kiirotori/pull/25>)
+[^3]: 2023/11 に myTOKYOGAS の[システムリニューアルがあった](https://members.tokyo-gas.co.jp/contents/public/about/renewal.html)ようで, その際にどうやら請求額通知を送信してくるメールアドレスが変更されたようだ. c.f. <https://github.com/falgon/line-bot-kiirotori/pull/25>
 [^4]: 実をいうと Servant の関連ライブラリとして [servant-js](https://hackage.haskell.org/package/servant-js) というものがあり,
 これは Servant による API の型定義から有名な javascript ライブラリ (AngularJS, axios, jQuery など) や生の
 javascript クライアントコードを生成することができ非常に便利なのだが,
