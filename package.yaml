@@ -33,6 +33,10 @@ dependencies:
     - optparse-applicative
     - gitrev
     - file-embed
+    - morpheus-graphql-client
+    - network-uri
+    - req
+    - utf8-string
 
 library:
     source-dirs:

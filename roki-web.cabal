@@ -1,10 +1,10 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.36.0.
+-- This file has been generated from package.yaml by hpack version 0.37.0.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: ebb5eeb6daf07767d9501d23c6c1b37cbbce37582adec38f135ead0aa5d099a5
+-- hash: 186b689f44fcbba5dbaed1fea0d54eb32dedb51a58cd4b691e73de3cfc744b9b
 
 name:           roki-web
 version:        1.0.0.0
@@ -101,14 +101,18 @@ library
     , hakyll
     , hjsmin
     , lucid
+    , morpheus-graphql-client
     , mtl
+    , network-uri
     , optparse-applicative
     , pandoc
     , process
+    , req
     , tagsoup
     , text
     , time
     , unordered-containers
+    , utf8-string
   default-language: Haskell2010
 
 executable site
@@ -133,15 +137,19 @@ executable site
     , hakyll
     , hjsmin
     , lucid
+    , morpheus-graphql-client
     , mtl
+    , network-uri
     , optparse-applicative
     , pandoc
     , process
+    , req
     , roki-web
     , tagsoup
     , text
     , time
     , unordered-containers
+    , utf8-string
   default-language: Haskell2010
 
 executable spa
@@ -166,14 +174,18 @@ executable spa
     , hakyll
     , hjsmin
     , lucid
+    , morpheus-graphql-client
     , mtl
+    , network-uri
     , optparse-applicative
     , pandoc
     , process
+    , req
     , roki-web
     , tagsoup
     , text
     , time
     , transformers
     , unordered-containers
+    , utf8-string
   default-language: Haskell2010

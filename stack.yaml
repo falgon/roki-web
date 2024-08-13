@@ -1,7 +1,9 @@
-resolver: lts-22.29
-compiler: ghc-9.6.6
+resolver: nightly-2024-08-12
+compiler: ghc-9.8.2
 packages:
     - .
 allow-newer:
     true
+extra-deps:
+  - dhall-1.42.1@sha256:3af5086c38158868ef7f94c6db8832cf9c61e8eab1010b33e109c4ddca0f0668,16814
 
