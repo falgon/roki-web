@@ -81,12 +81,12 @@ declareLocalTypesInline "./tools/github/schema.docs.graphql"
     |]
 
 reqGitHubPinnedRepo :: BU.ByteString -> IO [Project]
-reqGitHubPinnedRepo token = fetch jsonRes (GetPinnedReposArgs "falgon") >>= \case
-    Left x -> print x >> pure []
-    Right (GetPinnedRepos (Just x)) -> let GetPinnedReposUserPinnedItems (Just ns) = pinnedItems x in
-        print (Prelude.map fromJust ns) >> pure []
-    _ -> pure []
+reqGitHubPinnedRepo token = fetch jsonRes (GetPinnedReposArgs "falgon")
+    >>= either (\_ -> loadProjects) githubResp
     where
+        githubResp (GetPinnedRepos (Just x)) = let GetPinnedReposUserPinnedItems (Just ns) = pinnedItems x in
+            print (Prelude.map fromJust ns) >> pure []
+        githubResp _ = pure []
         jsonRes b = runReq defaultHttpConfig $ responseBody
             <$> req POST (https "api.github.com" /: "graphql") (ReqBodyLbs b) lbsResponse headers
         headers = mconcat [
