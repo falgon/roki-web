@@ -86,7 +86,7 @@ gitHubResp (GetPinnedRepos gpr) = do
     GetPinnedReposUserPinnedItems ns <- pinnedItems <$> hoistMaybe gpr
     mapM (hoistMaybe >=> unwrap) =<< hoistMaybe ns
     where
-        unwrap (GetPinnedReposUserPinnedItemsNodesVariantRepository x) = do
+        unwrap (GetPinnedReposUserPinnedItemsNodesVariantRepository x) =
             let GetPinnedReposUserPinnedItemsNodesRepository _ projLink' projName' summary' _ langs = x in do
                 GetPinnedReposUserPinnedItemsNodesLanguages langs' <- hoistMaybe langs
                 lang' <- TL.unpack . fst
