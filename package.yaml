@@ -1,9 +1,9 @@
 name:       roki-web
-version:    1.0.0.0
+version:    2.0.0.0
 category:   Web
 author:     Roki
 maintainer: falgon53@yahoo.co.jp
-copyright:  Copyright (c) 2020 Roki
+copyright:  Copyright (c) 2020- Roki
 license:    BSD3
 github:     roki/roki-web
 
@@ -37,6 +37,7 @@ dependencies:
     - network-uri
     - req
     - utf8-string
+    - transformers
 
 library:
     source-dirs:
