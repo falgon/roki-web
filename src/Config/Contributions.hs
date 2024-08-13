@@ -1,6 +1,6 @@
 {-# LANGUAGE BangPatterns, DeriveGeneric, DerivingStrategies,
-             DuplicateRecordFields, OverloadedStrings, QuasiQuotes,
-             TemplateHaskell, TypeFamilies, LambdaCase #-}
+             DuplicateRecordFields, LambdaCase, OverloadedStrings, QuasiQuotes,
+             TemplateHaskell, TypeFamilies #-}
 module Config.Contributions (
     reqGitHubPinnedRepo,
     renderProjectsList,
@@ -24,7 +24,7 @@ import           Network.URI           (URI)
 import           System.Environment    (lookupEnv)
 import           System.FilePath       ((</>))
 
-import Data.Maybe (fromJust)
+import           Data.Maybe            (fromJust)
 
 data Date = Date { yyyy :: Natural, mm :: Natural, dd :: Natural }
     deriving (Generic, Show)
