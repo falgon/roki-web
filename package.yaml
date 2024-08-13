@@ -11,7 +11,6 @@ extra-source-files:
     - README.md
 
 dependencies:
-    - aeson
     - base
     - binary
     - hakyll
@@ -24,19 +23,13 @@ dependencies:
     - filepath
     - time
     - text
-    - lucid
     - mtl
     - containers
     - hjsmin
     - extra
-    - dhall
     - optparse-applicative
     - gitrev
     - file-embed
-    - morpheus-graphql-client
-    - network-uri
-    - req
-    - utf8-string
     - transformers
 
 library:
@@ -53,6 +46,13 @@ executables:
         - -O2
         dependencies:
         - roki-web
+        - aeson
+        - morpheus-graphql-client
+        - network-uri
+        - req
+        - utf8-string
+        - dhall
+        - lucid
     spa:
         source-dirs: app
         main:        spa/Main.hs
@@ -62,4 +62,3 @@ executables:
         - -O2
         dependencies:
         - roki-web
-        - transformers
