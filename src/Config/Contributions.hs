@@ -1,30 +1,30 @@
 {-# LANGUAGE BangPatterns, DeriveGeneric, DerivingStrategies,
-             DuplicateRecordFields, LambdaCase, OverloadedStrings, QuasiQuotes,
+             DuplicateRecordFields, OverloadedStrings, QuasiQuotes,
              TemplateHaskell, TypeFamilies #-}
 module Config.Contributions (
     reqGitHubPinnedRepo,
     renderProjectsList,
     renderContributionsTable,
-    GetPinnedReposUserPinnedItemsNodes
+    GetPinnedReposUserPinnedItems (..)
 ) where
 
-import           Control.Monad         (forM_)
-import           Control.Monad.Fix     (fix)
-import qualified Data.ByteString.UTF8  as BU
-import           Data.Functor.Identity (Identity)
-import           Data.Morpheus.Client  (declareLocalTypesInline, fetch, raw)
-import           Data.String           (IsString (..))
-import           Data.Text.Lazy        as TL
-import           Dhall                 (FromDhall, Generic, Natural, auto,
-                                        input)
-import           Lucid.Base            (HtmlT, renderText)
+import           Control.Monad             (MonadPlus (..), forM_, (>=>))
+import           Control.Monad.Fix         (fix)
+import           Control.Monad.Trans.Maybe (MaybeT (..), hoistMaybe)
+import qualified Data.ByteString.UTF8      as BU
+import           Data.Functor.Identity     (Identity)
+import qualified Data.List                 as L
+import           Data.Morpheus.Client      (declareLocalTypesInline, fetch, raw)
+import           Data.String               (IsString (..))
+import           Data.Text.Lazy            as TL
+import           Dhall                     (FromDhall, Generic, Natural, auto,
+                                            input)
+import           Lucid.Base                (HtmlT, renderText)
 import           Lucid.Html5
 import           Network.HTTP.Req
-import           Network.URI           (URI)
-import           System.Environment    (lookupEnv)
-import           System.FilePath       ((</>))
-
-import           Data.Maybe            (fromJust)
+import           Network.URI               (URI)
+import           System.Environment        (lookupEnv)
+import           System.FilePath           ((</>))
 
 data Date = Date { yyyy :: Natural, mm :: Natural, dd :: Natural }
     deriving (Generic, Show)
@@ -80,13 +80,30 @@ declareLocalTypesInline "./tools/github/schema.docs.graphql"
         }
     |]
 
+
+gitHubResp :: GetPinnedRepos -> MaybeT IO [Project]
+gitHubResp (GetPinnedRepos gpr) = do
+    GetPinnedReposUserPinnedItems ns <- pinnedItems <$> hoistMaybe gpr
+    mapM (hoistMaybe >=> unwrap) =<< hoistMaybe ns
+    where
+        unwrap (GetPinnedReposUserPinnedItemsNodesVariantRepository x) = do
+            let GetPinnedReposUserPinnedItemsNodesRepository _ projLink' projName' summary' _ langs = x in do
+                GetPinnedReposUserPinnedItemsNodesLanguages langs' <- hoistMaybe langs
+                lang' <- TL.unpack . fst
+                    <$> (hoistMaybe . L.uncons =<< mapM (hoistMaybe >=> unwrap') =<< hoistMaybe langs')
+                pure $ Project {
+                    projName = TL.unpack projName'
+                  , lang = lang'
+                  , summary = maybe mempty TL.unpack $ summary'
+                  , projLink = show projLink'
+                  }
+        unwrap GetPinnedReposUserPinnedItemsNodes = mzero
+        unwrap' (GetPinnedReposUserPinnedItemsNodesLanguagesNodes l _) = pure l
+
 reqGitHubPinnedRepo :: BU.ByteString -> IO [Project]
 reqGitHubPinnedRepo token = fetch jsonRes (GetPinnedReposArgs "falgon")
-    >>= either (\_ -> loadProjects) githubResp
+    >>= either (const loadProjects) (runMaybeT . gitHubResp >=> maybe loadProjects pure)
     where
-        githubResp (GetPinnedRepos (Just x)) = let GetPinnedReposUserPinnedItems (Just ns) = pinnedItems x in
-            print (Prelude.map fromJust ns) >> pure []
-        githubResp _ = pure []
         jsonRes b = runReq defaultHttpConfig $ responseBody
             <$> req POST (https "api.github.com" /: "graphql") (ReqBodyLbs b) lbsResponse headers
         headers = mconcat [
