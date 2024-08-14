@@ -114,7 +114,7 @@ reqGitHubPinnedRepo token = fetch jsonRes (GetPinnedReposArgs "falgon")
 
 renderProjectsList :: IO String
 renderProjectsList = do
-    ps <- maybe loadProjects (reqGitHubPinnedRepo . BU.fromString) =<< lookupEnv "REPO_TOKEN"
+    ps <- maybe loadProjects (reqGitHubPinnedRepo . BU.fromString) =<< lookupEnv "GITHUB_TOKEN"
     return $ TL.unpack $ renderText $
         dl_ $ forM_ ps $ \p -> do
             dt_ [class_ "title is-4"] $ do
