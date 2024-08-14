@@ -93,6 +93,8 @@ jobs:
         xmllint docs/roki.diary/feed/roki.diary.xml --noout
         xmllint docs/roki.diary/feed/roki.diary-rss.xml --noout
         tar cvf docs.tar.xz docs
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     - name: Build and validate roki.dev (fast build)
       if: github.ref == 'refs/heads/develop'
       run: |
@@ -102,6 +104,8 @@ jobs:
         xmllint docs/roki.log/feed/roki.log.xml --noout
         xmllint docs/roki.diary/sitemap.xml --noout
         xmllint docs/roki.diary/feed/roki.diary.xml --noout
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     - name: Upload artifact
       if: github.ref == 'refs/heads/master'
       uses: actions/upload-artifact@v4
