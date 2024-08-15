@@ -54,7 +54,7 @@ getStackYamlPath = mkRunner
     >>= flip runRIO (getProjectConfig SYLDefault)
     >>= \case
         PCProject a -> pure a
-        _ -> fail "Could not find stack location"
+        _           -> fail "Could not find stack location"
 
 getStackYaml :: IO (HM.HashMap T.Text Value)
 getStackYaml = getStackYamlPath
