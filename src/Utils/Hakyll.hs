@@ -8,12 +8,12 @@ module Utils.Hakyll (
   , getStringField
 ) where
 
-import           Control.Monad       (liftM2)
-import           Data.Char           (isAlphaNum, isSpace, toLower)
+import           Control.Monad     (liftM2)
+import           Data.Char         (isAlphaNum, isSpace, toLower)
 import           Hakyll
-import           System.FilePath     (isRelative, normalise, takeDirectory,
-                                      takeFileName, (</>))
-import qualified Text.HTML.TagSoup   as TS
+import           System.FilePath   (isRelative, normalise, takeDirectory,
+                                    takeFileName, (</>))
+import qualified Text.HTML.TagSoup as TS
 
 absolutizeUrls :: Item String -> Compiler (Item String)
 absolutizeUrls item = getUnderlying >>= fmap (maybe item (flip fmap item . withUrls . f)) . getRoute
