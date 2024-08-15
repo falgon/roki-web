@@ -38,6 +38,11 @@ dependencies:
     - req
     - utf8-string
     - transformers
+    - stack
+    - ansi-terminal-types
+    - rio
+    - yaml
+    - hpack
 
 library:
     source-dirs:

@@ -11,6 +11,13 @@ packages:
       size: 352601
   original:
     hackage: dhall-1.42.1@sha256:3af5086c38158868ef7f94c6db8832cf9c61e8eab1010b33e109c4ddca0f0668,16814
+- completed:
+    hackage: stack-3.1.1@sha256:432e2311306ad991e018cf898f5ec355e1aea652916b11a00a96871cf83f7d05,25721
+    pantry-tree:
+      sha256: 2f2615361b128ced0f22f29bc780f384eec353e9fba39a5e72993c926bc5f480
+      size: 23623
+  original:
+    hackage: stack-3.1.1@sha256:432e2311306ad991e018cf898f5ec355e1aea652916b11a00a96871cf83f7d05,25721
 snapshots:
 - completed:
     sha256: ae0d672697ced584c459d8c6e899483bd78b35f3b4b814e8d179ad3ed6a0eb60

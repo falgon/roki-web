@@ -26,6 +26,8 @@ import           Network.URI               (URI)
 import           System.Environment        (lookupEnv)
 import           System.FilePath           ((</>))
 
+import           Utils.Stack               (getProgNameV)
+
 data Date = Date { yyyy :: Natural, mm :: Natural, dd :: Natural }
     deriving (Generic, Show)
 
@@ -101,14 +103,16 @@ gitHubResp (GetPinnedRepos gpr) = do
         unwrap' (GetPinnedReposUserPinnedItemsNodesLanguagesNodes l _) = pure l
 
 reqGitHubPinnedRepo :: BU.ByteString -> IO [Project]
-reqGitHubPinnedRepo token = fetch jsonRes (GetPinnedReposArgs "falgon")
-    >>= either (const loadProjects) (runMaybeT . gitHubResp >=> maybe loadProjects pure)
+reqGitHubPinnedRepo token = do
+    jsonRes' <- jsonRes . BU.fromString <$> getProgNameV
+    fetch jsonRes' (GetPinnedReposArgs "falgon")
+        >>= either (const loadProjects) (runMaybeT . gitHubResp >=> maybe loadProjects pure)
     where
-        jsonRes b = runReq defaultHttpConfig $ responseBody
-            <$> req POST (https "api.github.com" /: "graphql") (ReqBodyLbs b) lbsResponse headers
-        headers = mconcat [
+        jsonRes progName b = runReq defaultHttpConfig $ responseBody
+            <$> req POST (https "api.github.com" /: "graphql") (ReqBodyLbs b) lbsResponse (headers progName)
+        headers progName = mconcat [
             header "Content-Type" "application/json"
-          , header "User-Agent" "roki-web"
+          , header "User-Agent" progName
           , oAuth2Bearer token
           ]
 
