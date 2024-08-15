@@ -65,4 +65,4 @@ getPackageConfig = readPackageConfig defaultDecodeOptions >>= throwString ||| pu
 
 getProgNameV :: IO String
 getProgNameV = getPackageConfig
-    <&> uncurry (<>) . (packageName &&& (("-v" <>) . packageVersion)) . decodeResultPackage
+    <&> uncurry (<>) . (packageName &&& (("/" <>) . packageVersion)) . decodeResultPackage

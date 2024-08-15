@@ -25,6 +25,7 @@ import           Network.HTTP.Req
 import           Network.URI               (URI)
 import           System.Environment        (lookupEnv)
 import           System.FilePath           ((</>))
+import           System.Info               (arch, os)
 
 import           Utils.Stack               (getProgNameV)
 
@@ -104,7 +105,7 @@ gitHubResp (GetPinnedRepos gpr) = do
 
 reqGitHubPinnedRepo :: BU.ByteString -> IO [Project]
 reqGitHubPinnedRepo token = do
-    jsonRes' <- jsonRes . BU.fromString <$> getProgNameV
+    jsonRes' <- jsonRes <$> getProgNameV
     fetch jsonRes' (GetPinnedReposArgs "falgon")
         >>= either (const loadProjects) (runMaybeT . gitHubResp >=> maybe loadProjects pure)
     where
@@ -112,7 +113,7 @@ reqGitHubPinnedRepo token = do
             <$> req POST (https "api.github.com" /: "graphql") (ReqBodyLbs b) lbsResponse (headers progName)
         headers progName = mconcat [
             header "Content-Type" "application/json"
-          , header "User-Agent" progName
+          , header "User-Agent" $ fromString $ mconcat [ progName, " (", os, "; ", arch, ")" ]
           , oAuth2Bearer token
           ]
 
