@@ -23,7 +23,7 @@ jobs:
       id: site-gen-cache
       with:
         path: ./site
-        key: site-gen-v1-${{ runner.os }}-${{ hashFiles('stack.yaml') }}-${{ hashFiles('stack.yaml.lock') }}-${{ hashFiles('package.yaml') }}-${{ hashFiles('src/**') }}-${{ hashFiles('app/**') }}
+        key: site-gen-v1-${{ runner.os }}-${{ hashFiles('stack.yaml') }}-${{ hashFiles('stack.yaml.lock') }}-${{ hashFiles('package.yaml') }}-${{ hashFiles('src/**') }}-${{ hashFiles('app/**') }}-${{ hashFiles('docker/.env') }}
     - name: Get Haskell version
       if: steps.site-gen-cache.outputs.cache-hit != 'true'
       run: |
@@ -48,7 +48,7 @@ jobs:
       id: stack-cache
       with:
         path: ~/.stack
-        key: stack-v2-${{ runner.os }}-${{ hashFiles('stack.yaml') }}-${{ hashFiles('stack.yaml.lock') }}-${{ hashFiles('package.yaml') }}
+        key: stack-v2-${{ runner.os }}-${{ hashFiles('stack.yaml') }}-${{ hashFiles('stack.yaml.lock') }}-${{ hashFiles('package.yaml') }}-${{ hashFiles('docker/.env') }}
     - name: Install tools
       uses: awalsh128/cache-apt-pkgs-action@v1.4.2
       with:
