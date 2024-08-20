@@ -26,7 +26,7 @@ eachPostsSeries rules = do
               , field "nextPageDate" . pageDateOf <$> np
               ]
     where
-        nextPosts postIDs = tail $ map Just postIDs ++ [Nothing]
+        nextPosts postIDs = drop 1 $ map Just postIDs ++ [Nothing]
         prevPosts postIDs = Nothing : map Just postIDs
         pageTitleOf titleMax i = const $ getMetadataField i "title"
             >>= maybe (fail "no 'title' field")

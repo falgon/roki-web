@@ -12,6 +12,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-20.04
+    permissions:
+      repository-projects: read
     outputs:
       target_ref: ${{ steps.build.outputs.target_ref }}
     steps:
@@ -25,14 +27,14 @@ jobs:
       id: site-gen-cache
       with:
         path: ./site
-        key: site-gen-v3-${{ runner.os }}-${{ hashFiles('stack.yaml') }}-${{ hashFiles('stack.yaml.lock') }}-${{ hashFiles('package.yaml') }}-${{ hashFiles('src/**') }}-${{ hashFiles('app/**') }}
+        key: site-gen-v3-${{ runner.os }}-${{ hashFiles('stack.yaml') }}-${{ hashFiles('stack.yaml.lock') }}-${{ hashFiles('package.yaml') }}-${{ hashFiles('src/**') }}-${{ hashFiles('app/**') }}-${{ hashFiles('docker/.env') }}
     - name: Stack cache
       if: steps.site-gen-cache.outputs.cache-hit != 'true'
       uses: actions/cache@v4
       id: stack-cache
       with:
         path: ~/.stack
-        key: stack-v2-${{ runner.os }}-${{ hashFiles('stack.yaml') }}-${{ hashFiles('stack.yaml.lock') }}-${{ hashFiles('package.yaml') }}
+        key: stack-v2-${{ runner.os }}-${{ hashFiles('stack.yaml') }}-${{ hashFiles('stack.yaml.lock') }}-${{ hashFiles('package.yaml') }}-${{ hashFiles('docker/.env') }}
     - name: Get Haskell version
       if: steps.site-gen-cache.outputs.cache-hit != 'true'
       run: |
@@ -65,7 +67,7 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version-file: '.nvmrc'
-    - name: Export node version value
+    - name: Export values
       run: echo "ROKI_WEB_GH_ACTIONS_NODE_VERSION=$(node --version)" >> "$GITHUB_ENV"
     - name: Node module cache
       uses: actions/cache@v4
@@ -118,6 +120,7 @@ jobs:
         RETRY_MAX: 3
         TECH_BLOG: roki.log
         DIARY_BLOG: roki.diary
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:

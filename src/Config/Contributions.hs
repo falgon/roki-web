@@ -1,19 +1,33 @@
-{-# LANGUAGE BangPatterns, DeriveGeneric, OverloadedStrings #-}
+{-# LANGUAGE BangPatterns, DeriveGeneric, DerivingStrategies,
+             DuplicateRecordFields, OverloadedStrings, QuasiQuotes,
+             TemplateHaskell, TypeFamilies #-}
 module Config.Contributions (
+    reqGitHubPinnedRepo,
     renderProjectsList,
-    renderContributionsTable
+    renderContributionsTable,
+    GetPinnedReposUserPinnedItems (..)
 ) where
 
-import           Control.Monad         (forM_)
-import           Control.Monad.Fix     (fix)
-import           Data.Functor.Identity (Identity)
-import           Data.String           (IsString (..))
-import qualified Data.Text.Lazy        as TL
-import           Dhall                 (FromDhall, Generic, Natural, auto,
-                                        input)
-import           Lucid.Base            (HtmlT, renderText)
+import           Control.Monad             (MonadPlus (..), forM_, (>=>))
+import           Control.Monad.Fix         (fix)
+import           Control.Monad.Trans.Maybe (MaybeT (..), hoistMaybe)
+import qualified Data.ByteString.UTF8      as BU
+import           Data.Functor.Identity     (Identity)
+import qualified Data.List                 as L
+import           Data.Morpheus.Client      (declareLocalTypesInline, fetch, raw)
+import           Data.String               (IsString (..))
+import           Data.Text.Lazy            as TL
+import           Dhall                     (FromDhall, Generic, Natural, auto,
+                                            input)
+import           Lucid.Base                (HtmlT, renderText)
 import           Lucid.Html5
-import           System.FilePath       ((</>))
+import           Network.HTTP.Req
+import           Network.URI               (URI)
+import           System.Environment        (lookupEnv)
+import           System.FilePath           ((</>))
+import           System.Info               (arch, os)
+
+import           Utils.Stack               (getProgNameV)
 
 data Date = Date { yyyy :: Natural, mm :: Natural, dd :: Natural }
     deriving (Generic, Show)
@@ -44,9 +58,68 @@ loadProjects = input auto "./contents/config/contributions/Projects.dhall"
 loadContributes :: IO [Contribute]
 loadContributes = input auto "./contents/config/contributions/Contributions.dhall"
 
+declareLocalTypesInline "./tools/github/schema.docs.graphql"
+    [raw|
+        query GetPinnedRepos($user: String!) {
+            user(login: $user) {
+                pinnedItems(types: REPOSITORY, first: 6) {
+                    nodes {
+                        ... on Repository {
+                            __typename
+                            url
+                            name
+                            description
+                            stargazerCount
+                            languages(orderBy: {field: SIZE, direction: DESC}, first: 1) {
+                                nodes {
+                                    name
+                                    color
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    |]
+
+
+gitHubResp :: GetPinnedRepos -> MaybeT IO [Project]
+gitHubResp (GetPinnedRepos gpr) = do
+    GetPinnedReposUserPinnedItems ns <- pinnedItems <$> hoistMaybe gpr
+    mapM (hoistMaybe >=> unwrap) =<< hoistMaybe ns
+    where
+        unwrap (GetPinnedReposUserPinnedItemsNodesVariantRepository x) =
+            let GetPinnedReposUserPinnedItemsNodesRepository _ projLink' projName' summary' _ langs = x in do
+                GetPinnedReposUserPinnedItemsNodesLanguages langs' <- hoistMaybe langs
+                lang' <- TL.unpack . fst
+                    <$> (hoistMaybe . L.uncons =<< mapM (hoistMaybe >=> unwrap') =<< hoistMaybe langs')
+                pure $ Project {
+                    projName = TL.unpack projName'
+                  , lang = lang'
+                  , summary = maybe mempty TL.unpack $ summary'
+                  , projLink = show projLink'
+                  }
+        unwrap GetPinnedReposUserPinnedItemsNodes = mzero
+        unwrap' (GetPinnedReposUserPinnedItemsNodesLanguagesNodes l _) = pure l
+
+reqGitHubPinnedRepo :: BU.ByteString -> IO [Project]
+reqGitHubPinnedRepo token = do
+    jsonRes' <- jsonRes <$> getProgNameV
+    fetch jsonRes' (GetPinnedReposArgs "falgon")
+        >>= either (const loadProjects) (runMaybeT . gitHubResp >=> maybe loadProjects pure)
+    where
+        jsonRes progName b = runReq defaultHttpConfig $ responseBody
+            <$> req POST (https "api.github.com" /: "graphql") (ReqBodyLbs b) lbsResponse (headers progName)
+        headers progName = mconcat [
+            header "Content-Type" "application/json"
+          , header "User-Agent" $ fromString $ mconcat [ progName, " (", os, "; ", arch, ")" ]
+          , oAuth2Bearer token
+          ]
+
 renderProjectsList :: IO String
 renderProjectsList = do
-    ps <- loadProjects
+    ps <- maybe loadProjects (reqGitHubPinnedRepo . BU.fromString) =<< lookupEnv "GITHUB_TOKEN"
     return $ TL.unpack $ renderText $
         dl_ $ forM_ ps $ \p -> do
             dt_ [class_ "title is-4"] $ do
@@ -64,12 +137,13 @@ renderContributionsTable = do
                 th_ $ abbr_ [title_ "Contents"] "Contents"
                 th_ $ abbr_ [title_ "Genre"] "Genre"
                 th_ $ abbr_ [title_ "Date"] "Date"
-            tbody_ $ ($ (cs, 1 :: Int)) $ fix $ \f (cs', !i) ->
-                if null cs' then return mempty :: HtmlT Identity () else let c = head cs' in do
+            tbody_ $ ($ (cs, 1 :: Int)) $ fix $ \f (cs', !i) -> case cs' of
+                [] -> return mempty :: HtmlT Identity ()
+                (c:cs'') -> do
                     tr_ $ do
                         td_ $ fromString $ show i
                         td_ $ a_ [href_ (fromString $ link c)] $ fromString $ text c
                         td_ $ div_ [class_ "tag is-success is-light"] $ fromString $ genre c
                         td_ $ let c' = date c in
                             fromString (show (yyyy c') </> show (mm c') </> show (dd c'))
-                    f (tail cs', succ i)
+                    f (cs'', succ i)

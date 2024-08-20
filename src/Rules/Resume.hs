@@ -1,26 +1,29 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Rules.Resume (rules) where
 
-import           Control.Monad         ((>=>))
-import           Control.Monad.Extra   (concatMapM)
-import           Control.Monad.Reader  (asks)
-import           Control.Monad.Trans   (MonadTrans (..))
-import           Data.Functor          ((<&>))
-import           Data.List             (intercalate, sortBy)
-import           Data.Ord              (comparing)
-import           Data.String           (IsString (..))
-import           Data.Time.Calendar    (toGregorian)
-import           Data.Time.LocalTime   (LocalTime (..), utcToLocalTime)
+import           Control.Monad                 ((>=>))
+import           Control.Monad.Extra           (concatMapM)
+import           Control.Monad.Reader          (asks)
+import           Control.Monad.Trans           (MonadTrans (..))
+import           Data.Functor                  ((<&>))
+import           Data.List                     (intercalate, sortBy, uncons)
+import           Data.Ord                      (comparing)
+import           Data.String                   (IsString (..))
+import           Data.Time.Calendar            (toGregorian)
+import           Data.Time.Clock               (getCurrentTime)
+import           Data.Time.LocalTime           (LocalTime (..), utcToLocalTime)
 import           Hakyll
-import           System.FilePath       (joinPath, (</>))
-import           System.FilePath.Posix (takeBaseName)
+import           System.FilePath               (joinPath, (</>))
+import           System.FilePath.Posix         (takeBaseName)
 
-import           Config                (contentsRoot, readerOptions, siteName,
-                                        timeZoneJST)
-import           Contexts              (siteCtx)
+import           Config                        (contentsRoot, readerOptions,
+                                                siteName, timeZoneJST)
+import           Contexts                      (siteCtx)
+import           Hakyll.Core.Compiler.Internal (compilerUnsafeIO)
 import           Rules.PageType
-import           Utils                 (mconcatM, modifyExternalLinkAttr)
-import qualified Vendor.FontAwesome    as FA
+import           Utils                         (mconcatM,
+                                                modifyExternalLinkAttr)
+import qualified Vendor.FontAwesome            as FA
 
 resumeRoot :: FilePath
 resumeRoot = joinPath [contentsRoot, "resume"]
@@ -72,7 +75,8 @@ mdRule ss pat = do
 getLastModDate :: [Pattern] -> Compiler String
 getLastModDate items = getUnderlying
     >>= concatMapM (getMatches >=> mapM getItemModificationTime) . (:items) . fromList . (:[])
-    <&> toGregorian . localDay . utcToLocalTime timeZoneJST . head . sortBy (flip compare)
+    >>= maybe (compilerUnsafeIO getCurrentTime) (pure . fst) . uncons . sortBy (flip compare)
+    <&> toGregorian . localDay . utcToLocalTime timeZoneJST
     <&> \(y, m, d) -> intercalate "%2F" [show y, show m, show d]
 
 rules :: PageConfReader Rules ()
