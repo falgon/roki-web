@@ -10,6 +10,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-20.04
+    permissions:
+      repository-projects: read
     if: github.repository == 'falgon/roki-web'
     steps:
     - name: Checkout
@@ -21,7 +23,7 @@ jobs:
       id: site-gen-cache
       with:
         path: ./site
-        key: site-gen-v1-${{ runner.os }}-${{ hashFiles('stack.yaml') }}-${{ hashFiles('stack.yaml.lock') }}-${{ hashFiles('package.yaml') }}-${{ hashFiles('src/**') }}-${{ hashFiles('app/**') }}
+        key: site-gen-v1-${{ runner.os }}-${{ hashFiles('stack.yaml') }}-${{ hashFiles('stack.yaml.lock') }}-${{ hashFiles('package.yaml') }}-${{ hashFiles('src/**') }}-${{ hashFiles('app/**') }}-${{ hashFiles('docker/.env') }}
     - name: Get Haskell version
       if: steps.site-gen-cache.outputs.cache-hit != 'true'
       run: |
@@ -46,7 +48,7 @@ jobs:
       id: stack-cache
       with:
         path: ~/.stack
-        key: stack-v2-${{ runner.os }}-${{ hashFiles('stack.yaml') }}-${{ hashFiles('stack.yaml.lock') }}-${{ hashFiles('package.yaml') }}
+        key: stack-v2-${{ runner.os }}-${{ hashFiles('stack.yaml') }}-${{ hashFiles('stack.yaml.lock') }}-${{ hashFiles('package.yaml') }}-${{ hashFiles('docker/.env') }}
     - name: Install tools
       uses: awalsh128/cache-apt-pkgs-action@v1.4.2
       with:
@@ -61,8 +63,7 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version-file: '.nvmrc'
-    - name: Export node version value
-      id: node_version
+    - name: Export values
       run: echo "ROKI_WEB_GH_ACTIONS_NODE_VERSION=$(node --version)" >> "$GITHUB_ENV"
     - name: Node module cache
       uses: actions/cache@v4
@@ -92,6 +93,8 @@ jobs:
         xmllint docs/roki.diary/feed/roki.diary.xml --noout
         xmllint docs/roki.diary/feed/roki.diary-rss.xml --noout
         tar cvf docs.tar.xz docs
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     - name: Build and validate roki.dev (fast build)
       if: github.ref == 'refs/heads/develop'
       run: |
@@ -101,6 +104,8 @@ jobs:
         xmllint docs/roki.log/feed/roki.log.xml --noout
         xmllint docs/roki.diary/sitemap.xml --noout
         xmllint docs/roki.diary/feed/roki.diary.xml --noout
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     - name: Upload artifact
       if: github.ref == 'refs/heads/master'
       uses: actions/upload-artifact@v4

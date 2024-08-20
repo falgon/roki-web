@@ -3,10 +3,101 @@
 # For more information, please see the documentation at:
 #   https://docs.haskellstack.org/en/stable/lock_files
 
-packages: []
+packages:
+- completed:
+    hackage: dhall-1.42.1@sha256:3af5086c38158868ef7f94c6db8832cf9c61e8eab1010b33e109c4ddca0f0668,16814
+    pantry-tree:
+      sha256: 296bfba2c52bb9aff78e9653f3724d33d009a1753e5d71c10e9cf7edd76c5569
+      size: 352601
+  original:
+    hackage: dhall-1.42.1@sha256:3af5086c38158868ef7f94c6db8832cf9c61e8eab1010b33e109c4ddca0f0668,16814
+- completed:
+    hackage: stack-3.1.1@sha256:432e2311306ad991e018cf898f5ec355e1aea652916b11a00a96871cf83f7d05,25721
+    pantry-tree:
+      sha256: 2f2615361b128ced0f22f29bc780f384eec353e9fba39a5e72993c926bc5f480
+      size: 23623
+  original:
+    hackage: stack-3.1.1@sha256:432e2311306ad991e018cf898f5ec355e1aea652916b11a00a96871cf83f7d05,25721
+- completed:
+    hackage: character-ps-0.1@sha256:b38ed1c07ae49e7461e44ca1d00c9ca24d1dcb008424ccd919916f92fd48d9fe,1315
+    pantry-tree:
+      sha256: 22d98d7c8b4c2bb9cb7fe429adf52bfed0c18269eac146b1e591c5941e26161a
+      size: 382
+  original:
+    hackage: character-ps-0.1@sha256:b38ed1c07ae49e7461e44ca1d00c9ca24d1dcb008424ccd919916f92fd48d9fe,1315
+- completed:
+    hackage: pantry-0.10.0@sha256:8d69a11774c4c9074b73c7692eb0237c025e557d9b1d9b9e44cfa0863d7de5cf,7879
+    pantry-tree:
+      sha256: 31ed5f65a99aa5e197ad92c0c0126e542847e20264e86938ae3cbdf1137cbeac
+      size: 2722
+  original:
+    hackage: pantry-0.10.0@sha256:8d69a11774c4c9074b73c7692eb0237c025e557d9b1d9b9e44cfa0863d7de5cf,7879
+- completed:
+    hackage: aeson-2.2.3.0@sha256:ef66d29cb5b8d87a144838dfd5745bb3ac6b8fc4b142129fac84814baee13660,6351
+    pantry-tree:
+      sha256: f925a03afc15ae26beaf32dfbf4bf126b66744b459ea6a7065381c71ccd48371
+      size: 83371
+  original:
+    hackage: aeson-2.2.3.0@sha256:ef66d29cb5b8d87a144838dfd5745bb3ac6b8fc4b142129fac84814baee13660,6351
+- completed:
+    hackage: attoparsec-aeson-2.2.2.0@sha256:02dc3cc4d217a364471da7ce0f47be39e5b1449e7768134e5f2926d87a21448d,1590
+    pantry-tree:
+      sha256: e218cf2c1290f8f718a5501f23383d7de2b226800314ba61539b260e078d3c5f
+      size: 404
+  original:
+    hackage: attoparsec-aeson-2.2.2.0@sha256:02dc3cc4d217a364471da7ce0f47be39e5b1449e7768134e5f2926d87a21448d,1590
+- completed:
+    hackage: morpheus-graphql-0.28.1@sha256:3a9d854e6bf65213f1cf941fe2d54d9c9b798c0d454d3e66119af50a52b25cc6,17793
+    pantry-tree:
+      sha256: 96a1a97319c56fb709df802c8a9e7d16d79a5887da76186820ff6551dae1efbb
+      size: 22603
+  original:
+    hackage: morpheus-graphql-0.28.1@sha256:3a9d854e6bf65213f1cf941fe2d54d9c9b798c0d454d3e66119af50a52b25cc6,17793
+- completed:
+    hackage: morpheus-graphql-client-0.28.1@sha256:dafa8ac98167d4b010c21eceed5ccfb4d28c331c894dfa3e52b33dec486cc781,5333
+    pantry-tree:
+      sha256: 2b29608f260357913eaeddfb1e1432e4522a0b56920bdbff5a0ff452f93d655d
+      size: 5123
+  original:
+    hackage: morpheus-graphql-client-0.28.1@sha256:dafa8ac98167d4b010c21eceed5ccfb4d28c331c894dfa3e52b33dec486cc781,5333
+- completed:
+    hackage: morpheus-graphql-app-0.28.1@sha256:f397e571a5d45e3d69e1cbaf95c602db029b8723ad23726133d2198e953b5faa,9202
+    pantry-tree:
+      sha256: 64e222540f0704952076e05cf8b0b197b5086851be10a9e687e3cca59ff121aa
+      size: 11497
+  original:
+    hackage: morpheus-graphql-app-0.28.1@sha256:f397e571a5d45e3d69e1cbaf95c602db029b8723ad23726133d2198e953b5faa,9202
+- completed:
+    hackage: morpheus-graphql-code-gen-0.28.1@sha256:22a8ac2225feb5c139762adaee9aa7375e3d203aa4b645f89ee9b0dca2a87daa,2761
+    pantry-tree:
+      sha256: 3e503abed298e9ea7b675e382a288786a4e784dcd173ae748d61cbfa2401fe0a
+      size: 1124
+  original:
+    hackage: morpheus-graphql-code-gen-0.28.1@sha256:22a8ac2225feb5c139762adaee9aa7375e3d203aa4b645f89ee9b0dca2a87daa,2761
+- completed:
+    hackage: morpheus-graphql-code-gen-utils-0.28.1@sha256:3f0f15bbbfc7afe68996efa92aaba6ccb25c67de9a7586607ed3b34de8a8b73a,1570
+    pantry-tree:
+      sha256: 5da4b868d60cb49c09b2fad16d82a8d284df64159a88c9e911094b2bb3da6eff
+      size: 700
+  original:
+    hackage: morpheus-graphql-code-gen-utils-0.28.1@sha256:3f0f15bbbfc7afe68996efa92aaba6ccb25c67de9a7586607ed3b34de8a8b73a,1570
+- completed:
+    hackage: morpheus-graphql-subscriptions-0.28.1@sha256:4c31a6487de940cecd3732f6413325f4b87084481467402666347752e2ca30bd,1784
+    pantry-tree:
+      sha256: f07e3d094585b143f998aa8d1804d8ae1ed90f42f8c2a37481e7b1464f2df5b3
+      size: 813
+  original:
+    hackage: morpheus-graphql-subscriptions-0.28.1@sha256:4c31a6487de940cecd3732f6413325f4b87084481467402666347752e2ca30bd,1784
+- completed:
+    hackage: morpheus-graphql-core-0.28.1@sha256:d257c2f9a251ead16e2b1156adf0bc4eca33c10de5635562c3de5093bfaac052,14209
+    pantry-tree:
+      sha256: 110cb0552fc6cf56395e6ccf2ebf40be622f7e058b3d040be5300e596aacb99f
+      size: 19536
+  original:
+    hackage: morpheus-graphql-core-0.28.1@sha256:d257c2f9a251ead16e2b1156adf0bc4eca33c10de5635562c3de5093bfaac052,14209
 snapshots:
 - completed:
-    sha256: 98fe98dae6f42f9b4405e5467f62f57df2896c57b742a09772688c900c722510
-    size: 719579
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/22/29.yaml
-  original: lts-22.29
+    sha256: 098936027eaa1ef14e2b8eb39d9933a973894bb70a68684a1bbf00730249879b
+    size: 720001
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/22/33.yaml
+  original: lts-22.33

@@ -1,7 +1,20 @@
-resolver: lts-22.29
+resolver: lts-22.33
 compiler: ghc-9.6.6
 packages:
     - .
 allow-newer:
     true
-
+extra-deps:
+  - dhall-1.42.1@sha256:3af5086c38158868ef7f94c6db8832cf9c61e8eab1010b33e109c4ddca0f0668,16814
+  - stack-3.1.1@sha256:432e2311306ad991e018cf898f5ec355e1aea652916b11a00a96871cf83f7d05,25721
+  - character-ps-0.1@sha256:b38ed1c07ae49e7461e44ca1d00c9ca24d1dcb008424ccd919916f92fd48d9fe,1315
+  - pantry-0.10.0@sha256:8d69a11774c4c9074b73c7692eb0237c025e557d9b1d9b9e44cfa0863d7de5cf,7879
+  - aeson-2.2.3.0@sha256:ef66d29cb5b8d87a144838dfd5745bb3ac6b8fc4b142129fac84814baee13660,6351
+  - attoparsec-aeson-2.2.2.0@sha256:02dc3cc4d217a364471da7ce0f47be39e5b1449e7768134e5f2926d87a21448d,1590
+  - morpheus-graphql-0.28.1@sha256:3a9d854e6bf65213f1cf941fe2d54d9c9b798c0d454d3e66119af50a52b25cc6,17793
+  - morpheus-graphql-client-0.28.1@sha256:dafa8ac98167d4b010c21eceed5ccfb4d28c331c894dfa3e52b33dec486cc781,5333
+  - morpheus-graphql-app-0.28.1@sha256:f397e571a5d45e3d69e1cbaf95c602db029b8723ad23726133d2198e953b5faa,9202
+  - morpheus-graphql-code-gen-0.28.1@sha256:22a8ac2225feb5c139762adaee9aa7375e3d203aa4b645f89ee9b0dca2a87daa,2761
+  - morpheus-graphql-code-gen-utils-0.28.1@sha256:3f0f15bbbfc7afe68996efa92aaba6ccb25c67de9a7586607ed3b34de8a8b73a,1570
+  - morpheus-graphql-subscriptions-0.28.1@sha256:4c31a6487de940cecd3732f6413325f4b87084481467402666347752e2ca30bd,1784
+  - morpheus-graphql-core-0.28.1@sha256:d257c2f9a251ead16e2b1156adf0bc4eca33c10de5635562c3de5093bfaac052,14209
