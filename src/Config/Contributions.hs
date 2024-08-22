@@ -5,6 +5,9 @@ module Config.Contributions (
     renderProjectsList
   , renderContributionsTable
 #ifdef HADDOCK
+  , reqGitHubPinnedRepo
+  , renderContributionsTable
+  , renderProjectsList
   , GetPinnedRepos (..)
   , GetPinnedReposArgs (..)
   , GetPinnedReposUserPinnedItems (..)
@@ -91,6 +94,8 @@ declareLocalTypesInline "./tools/github/schema.docs.graphql"
     |]
 
 
+-- | Convert pinned repositories to a list of projects.
+-- `Nothing` is returned if there is an unexpected failure during conversion.
 gitHubResp :: GetPinnedRepos -> MaybeT IO [Project]
 gitHubResp (GetPinnedRepos gpr) = do
     GetPinnedReposUserPinnedItems ns <- pinnedItems <$> hoistMaybe gpr
@@ -110,6 +115,7 @@ gitHubResp (GetPinnedRepos gpr) = do
         unwrap GetPinnedReposUserPinnedItemsNodes = mzero
         unwrap' (GetPinnedReposUserPinnedItemsNodesLanguagesNodes l _) = pure l
 
+-- | Use the token to retrieve pinned repositories using the GitHub GraphQL API.
 reqGitHubPinnedRepo :: BU.ByteString -> IO [Project]
 reqGitHubPinnedRepo token = do
     jsonRes' <- jsonRes <$> getProgNameV
@@ -124,6 +130,7 @@ reqGitHubPinnedRepo token = do
           , oAuth2Bearer token
           ]
 
+-- | Returns the html of your favorite projects list as a `String`.
 renderProjectsList :: IO String
 renderProjectsList = do
     ps <- maybe loadProjects (reqGitHubPinnedRepo . BU.fromString) =<< lookupEnv "GITHUB_TOKEN"
@@ -134,6 +141,7 @@ renderProjectsList = do
                 span_ [class_ "ml-2 tag is-success is-light"] $ fromString $ lang p
             dd_ [class_ "mb-6"] $ fromString $ summary p
 
+-- | Returns the contribution list in html tabular format as a `String`.
 renderContributionsTable :: IO String
 renderContributionsTable = do
     cs <- loadContributes
