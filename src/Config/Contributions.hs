@@ -1,11 +1,18 @@
-{-# LANGUAGE BangPatterns, DeriveGeneric, DerivingStrategies,
+{-# LANGUAGE BangPatterns, CPP, DeriveGeneric, DerivingStrategies,
              DuplicateRecordFields, OverloadedStrings, QuasiQuotes,
              TemplateHaskell, TypeFamilies #-}
 module Config.Contributions (
-    reqGitHubPinnedRepo,
-    renderProjectsList,
-    renderContributionsTable,
-    GetPinnedReposUserPinnedItems (..)
+    renderProjectsList
+  , renderContributionsTable
+#ifdef HADDOCK
+  , GetPinnedRepos (..)
+  , GetPinnedReposArgs (..)
+  , GetPinnedReposUserPinnedItems (..)
+  , GetPinnedReposUserPinnedItemsNodes (..)
+  , GetPinnedReposUserPinnedItemsNodesRepository (..)
+  , GetPinnedReposUserPinnedItemsNodesLanguages (..)
+  , GetPinnedReposUserPinnedItemsNodesLanguagesNodes (..)
+#endif
 ) where
 
 import           Control.Monad             (MonadPlus (..), forM_, (>=>))
