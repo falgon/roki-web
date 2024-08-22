@@ -75,6 +75,8 @@ jobs:
         name: haddock
         path: haddock.tar.gz
   push:
+    permissions:
+      deployments: write
     needs: haddock
     runs-on: ubuntu-latest
     if: github.repository == 'falgon/roki-web'
@@ -88,7 +90,7 @@ jobs:
     - name: Push
       uses: peaceiris/actions-gh-pages@v3
       with:
-        deploy_key: ${{ secrets.ACTIONS_DEPLOY_KEY }}
+        deploy_key: ${{ secrets.GITHUB_TOKEN }}
         publish_dir: ./haddock
         publish_branch: gh-pages
         external_repository: "${{ github.actor }}/roki-web-haddock"
