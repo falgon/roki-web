@@ -1,0 +1,81 @@
+name: haddock
+on:
+  workflow_dispatch:
+    inputs:
+      extra_deps:
+        description: 'Enable extra_deps'
+        required: true
+        default: true
+        type: boolean
+  push:
+    branches: [master]
+    tags:
+      - v*
+  pull_request: # TODO should remove
+    branches: [develop]
+    types: [synchronize, opened, reopened, ready_for_review]
+jobs:
+  haddock:
+    runs-on: ubuntu-latest
+    if: github.repository == 'falgon/roki-web'
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        submodules: true
+    - name: Stack cache
+      uses: actions/cache@v4
+      id: stack-cache
+      with:
+        path: ~/.stack
+        key: stack-v2-${{ runner.os }}-${{ hashFiles('stack.yaml') }}-${{ hashFiles('stack.yaml.lock') }}-${{ hashFiles('package.yaml') }}-${{ hashFiles('docker/.env') }}
+    - name: Get Haskell version
+      run: |
+        curl -sSLJ \
+          "https://github.com/mikefarah/yq/releases/download/${{ env.yq_version }}/yq_linux_amd64.tar.gz" |
+          tar xzf - ./yq_linux_amd64
+        chmod +x ./yq_linux_amd64
+        echo "ghc_version=$(./yq_linux_amd64 '.compiler' ./stack.yaml | cut -f2 -d-)" >> "$GITHUB_ENV"
+        echo "stack_version=$(grep BOOTSTRAP_HASKELL_STACK_VERSION ./docker/.env | cut -f2 -d=)" >> "$GITHUB_ENV"
+      env:
+        yq_version: v4.44.3
+    - name: Setup GHC
+      uses: haskell-actions/setup@v2
+      with:
+        ghc-version: ${{ env.ghc_version }}
+        enable-stack: true
+        stack-version: ${{ env.stack_version }}
+    - name: Generate haddock
+      run: |
+        declare -a OPT_ARGS
+        if [[ "${{ github.event.inputs.extra_deps }}" ]]; then
+          OPT_ARGS+=(--no-haddock-deps)
+        fi
+        stack haddock "${OPT_ARGS[@]}"
+        tar cvfz haddock.tar.gz ./haddock
+    - name: Upload artifact
+      if: github.ref == 'refs/heads/master'
+      uses: actions/upload-artifact@v4
+      with:
+        name: haddock
+        path: haddock.tar.gz
+  push:
+    runs-on: ubuntu-latest
+    if: github.repository == 'falgon/roki-web'
+    steps:
+    - name: Fetch archive
+      uses: actions/download-artifact@v4
+      with:
+        name: haddock
+    - name: Unarchive haddock
+      run: tar xvzf haddock.tar.gz
+    - name: Push
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        deploy_key: ${{ secrets.ACTIONS_DEPLOY_KEY }}
+        publish_dir: ./haddock
+        publish_branch: gh-pages
+        external_repository: "${{ github.actor }}/roki-web-haddock"
+        keep_files: true
+        enable_jekyll: true
+        exclude_assets: ''
