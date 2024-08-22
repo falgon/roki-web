@@ -82,6 +82,12 @@ mv .github/workflows/scheduled/my-awesome-scheduled-post.yaml .github/workflows/
 
 docker documentation is [here](./docker/README.md).
 
+Generating haddock.
+
+```bash
+$ stack haddock
+```
+
 ## System overview
 
 ### Overview of blog posts and website system updates
