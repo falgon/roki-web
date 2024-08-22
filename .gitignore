@@ -5,3 +5,4 @@ docs
 .stack-work
 .DS_Store
 .envrc
+haddock
