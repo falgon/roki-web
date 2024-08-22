@@ -81,8 +81,7 @@ mv .github/workflows/scheduled/my-awesome-scheduled-post.yaml .github/workflows/
 ```
 
 docker documentation is [here](./docker/README.md).
-
-Generating haddock.
+Generating haddock:
 
 ```bash
 $ stack haddock
@@ -93,18 +92,26 @@ $ stack haddock
 ### Overview of blog posts and website system updates
 
 ```mermaid
-graph TD;
+graph LR;
 me((me))-->|update web site system|develop
 me((me))-->|push blog contents|draft
 subgraph "roki-web (public repository)"
-develop-->|merge|master
-roki-web-actions{"GitHub Actions"}<-."trigger (on: push)".->master
-roki-web-actions{"GitHub Actions"}-.build and deploy.->gh-pages
+    subgraph mf["merge flow"]
+        develop-->|merge|master
+    end
+    mf<-."trigger (on: push)".->roki-web-actions("GitHub Actions")
+    mf<-."trigger (on: push)".->gah("GitHub Actions")
+    roki-web-actions-.build and deploy.->gh-pages
+end
+subgraph "roki-web-haddock (public repository)"
+    gah-.stack haddock and deploy.->rwhgh[gh-pages]
 end
 subgraph "roki-web-post (private repository)"
-draft-->|merge|release
-roki-web-post-actions{"GitHub Actions"}<-."trigger (on: push)".->release
-roki-web-post-actions{"GitHub Actions"}-."push contents".->master
+    subgraph mf2["merge flow"]
+        draft-->|merge|release
+    end
+    mf2<-."trigger (on: push)".->roki-web-post-actions("GitHub Actions")
+    roki-web-post-actions-."push contents".->master
 end
 click roki-web-actions "https://github.com/falgon/roki-web/actions/workflows/build.yml?query=branch%3Amaster" "link"
 click roki-web-post-actions "https://github.com/falgon/roki-web-post/actions/workflows/deploy.yml?query=branch%3Arelease" "link"
@@ -113,10 +120,13 @@ click master "https://github.com/falgon/roki-web/tree/master" "link"
 click gh-pages "https://github.com/falgon/roki-web/tree/gh-pages" "link"
 click draft "https://github.com/falgon/roki-web-post/tree/draft" "link"
 click release "https://github.com/falgon/roki-web-post/tree/release" "link"
+click gah "https://github.com/falgon/roki-web/actions/workflows/haddock.yml" "link"
+click rwhgh "https://github.com/falgon/roki-web-haddock/tree/gh-pages" "link"
 ```
 
 * [roki-web](https://github.com/falgon/roki-web) (this repository)
 * [roki-web-post](https://github.com/falgon/roki-web-post) (private repository)
+* [roki-web-haddock](https://github.com/falgon/roki-web-haddock)
 
 [GitHub Actions for GitHub pages](https://github.com/peaceiris/actions-gh-pages)
 has been very helpful in building this system. 
@@ -129,13 +139,13 @@ graph TD;
 me((me))-->|create the PR|develop
 bot((bot))-->|create the PR|develop
 subgraph "roki-web (public repository)"
-develop<-.trigger.->roki-web-actions{"GitHub Actions"}
+develop<-.trigger.->roki-web-actions("GitHub Actions")
 end
-roki-web-actions{"GitHub Actions"}-."upload the built tar".->gd["Google Drive"]
-roki-web-actions{"GitHub Actions"}-."execute job".->circle{"CircleCI"}
-circle{"CircleCI"}-."upload".->art["CircleCI artifact"]
-circle{"CircleCI"}<-."download and remove the built tar".->gd["Google Drive"]
-circle{"CircleCI"}-."notify complete status and artifacts url<br/>(with LINE notify and the PR comment)".->me
+roki-web-actions("GitHub Actions")-."upload the built tar".->gd[("Google Drive")]
+roki-web-actions-."execute job".->circle("CircleCI")
+circle-."upload".->art[("CircleCI artifact")]
+circle<-."download and remove the built tar".->gd
+circle-."notify complete status and artifacts url<br/>(with LINE notify and the PR comment)".->me
 
 click develop "https://github.com/falgon/roki-web/tree/develop" "link"
 click roki-web-actions "https://github.com/falgon/roki-web/actions/workflows/build_pr.yml?query=event%3Apull_request" "link"
@@ -181,3 +191,4 @@ For more details, you can see [the dependency report of FOSSA](https://app.fossa
    
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Ffalgon%2Froki-web.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Ffalgon%2Froki-web?ref=badge_large)
 </div>
+
