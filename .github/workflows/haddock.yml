@@ -87,7 +87,7 @@ jobs:
         deploy_key: ${{ secrets.ACTIONS_ROKI_WEB_HADDOC_DEPLOY_KEY }}
         publish_dir: ./haddock
         publish_branch: gh-pages
-        external_repository: "${{ github.actor }}/roki-web-haddock"
+        external_repository: "falgon/roki-web-haddock"
         keep_files: true
         enable_jekyll: true
         exclude_assets: ''
