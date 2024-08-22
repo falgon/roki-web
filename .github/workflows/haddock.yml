@@ -56,12 +56,17 @@ jobs:
         ghc-version: ${{ env.ghc_version }}
         enable-stack: true
         stack-version: ${{ env.stack_version }}
+    - name: Setup Stack
+      if: steps.stack-cache.outputs.cache-hit != 'true'
+      run: |
+        stack config set system-ghc --global true
+        stack config set install-ghc --global false
     - name: stack-work cache
       uses: actions/cache@v4
       id: stack-work-cache
       with:
         path: ./.stack-work
-        key: stack-v2-${{ runner.os }}-${{ hashFiles('stack.yaml') }}-${{ hashFiles('stack.yaml.lock') }}-${{ hashFiles('package.yaml') }}-${{ hashFiles('docker/.env') }}
+        key: stack-work-v2-${{ runner.os }}-${{ hashFiles('stack.yaml') }}-${{ hashFiles('stack.yaml.lock') }}-${{ hashFiles('package.yaml') }}-${{ hashFiles('docker/.env') }}
     - name: Generate haddock
       run: |
         declare -a OPT_ARGS
