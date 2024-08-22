@@ -48,13 +48,11 @@ jobs:
     - name: Generate haddock
       run: |
         declare -a OPT_ARGS
-        if [[ "${{ github.event.inputs.extra_deps }}" ]]; then
-          OPT_ARGS+=(--no-haddock-deps)
-        fi
+        [[ "${{ github.event.inputs.extra_deps }}" = "false" ]] && OPT_ARGS+=(--no-haddock-deps)
         stack haddock "${OPT_ARGS[@]}"
         tar cvfz haddock.tar.gz ./haddock
     - name: Upload artifact
-      if: github.ref == 'refs/heads/master'
+      # if: github.ref == 'refs/heads/master' TODO
       uses: actions/upload-artifact@v4
       with:
         name: haddock
