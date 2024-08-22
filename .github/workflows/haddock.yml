@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
     inputs:
       extra_deps:
-        description: 'Enable extra_deps'
+        description: 'Enable haddock-deps'
         required: true
         default: true
         type: boolean
