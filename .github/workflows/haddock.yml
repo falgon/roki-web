@@ -60,6 +60,7 @@ jobs:
         name: haddock
         path: haddock.tar.gz
   push:
+    needs: haddock
     runs-on: ubuntu-latest
     if: github.repository == 'falgon/roki-web'
     steps:
