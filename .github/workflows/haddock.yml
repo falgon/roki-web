@@ -95,7 +95,7 @@ jobs:
     - name: Push
       uses: peaceiris/actions-gh-pages@v3
       with:
-        deploy_key: ${{ secrets.GITHUB_TOKEN }}
+        deploy_key: ${{ secrets.ACTIONS_ROKI_WEB_HADDOC_DEPLOY_KEY }}
         publish_dir: ./haddock
         publish_branch: gh-pages
         external_repository: "${{ github.actor }}/roki-web-haddock"
