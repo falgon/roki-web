@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 2e765fe9906217a5e641f0218c199a3a84ce395a90f569a06dd4520842460221
+-- hash: 12a62f638fd7f5658a96ed3c96eda60471f335319db338c78906f3af194f05c1
 
 name:           roki-web
 version:        2.0.0.0
@@ -111,6 +111,7 @@ library
     , network-uri
     , optparse-applicative
     , pandoc
+    , pandoc-types
     , process
     , req
     , rio
@@ -153,6 +154,7 @@ executable site
     , network-uri
     , optparse-applicative
     , pandoc
+    , pandoc-types
     , process
     , req
     , rio
@@ -196,6 +198,7 @@ executable spa
     , network-uri
     , optparse-applicative
     , pandoc
+    , pandoc-types
     , process
     , req
     , rio

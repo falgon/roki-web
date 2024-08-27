@@ -43,6 +43,7 @@ dependencies:
     - rio
     - yaml
     - hpack
+    - pandoc-types
 
 library:
     source-dirs:
