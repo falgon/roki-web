@@ -57,6 +57,8 @@ executables:
         - -threaded
         - -Wall
         - -O2
+        - -rtsopts
+        - -with-rtsopts=-N
         dependencies:
         - roki-web
     spa:
@@ -66,6 +68,8 @@ executables:
         - -threaded
         - -Wall
         - -O2
+        - -rtsopts
+        - -with-rtsopts=-N
         dependencies:
         - roki-web
         - transformers
