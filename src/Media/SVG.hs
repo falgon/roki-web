@@ -32,5 +32,7 @@ codeBlock cb@(CodeBlock attr@(_, _, t) contents) = runMaybeT codeBlock'
         args = ["mmdc", "-i", "/dev/stdin", "-e", "svg", "-o", "-"]
 codeBlock x = pure x
 
+-- | When a code block starts in @```{lang=mermaid}@,
+-- convert its internal mermaid format to svg.
 mermaidTransform :: Pandoc -> Compiler Pandoc
 mermaidTransform = walkM codeBlock
