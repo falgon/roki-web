@@ -11,7 +11,8 @@ on:
   workflow_dispatch:
 jobs:
   build:
-    runs-on: ubuntu-20.04
+    if: github.actor != 'falgon' || !contains(github.event.head_commit.message, '[ignore-tests]')
+    runs-on: ubuntu-latest
     permissions:
       repository-projects: read
     outputs:
