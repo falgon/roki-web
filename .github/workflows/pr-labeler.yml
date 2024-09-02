@@ -17,4 +17,4 @@ jobs:
         uses: actions/labeler@v5
         with:
           configuration-path: .github/pr-labeler.yml
-
+          sync-labels: true
