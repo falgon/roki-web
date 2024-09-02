@@ -1,8 +1,7 @@
 name: CI-pr-label
 on:
   pull_request_target:
-    types:
-      - opened
+    types: opened
 jobs:
   label:
     permissions:
@@ -11,7 +10,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/labeler@v5
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Labeling
+        uses: actions/labeler@v5
         with:
           configuration-path: .github/pr-labeler.yml
 
