@@ -4,11 +4,14 @@ on:
     types:
       - opened
 jobs:
-  pr-labeler:
+  label:
+    permissions:
+      contents: read
+      pull-requests: write
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
-      - uses: TimonVS/pr-labeler-action@v5
+      - uses: actions/labeler@v5
         with:
           configuration-path: .github/pr-labeler.yml
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
