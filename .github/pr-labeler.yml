@@ -1,16 +1,23 @@
 style:
   - changed-files:
     - any-glob-to-any-file: 'contents/scss/**'
+
 CI:
   - all:
     - changed-files:
       - any-glob-to-any-file: '.github/**'
       - all-glob-to-all-file: '!.github/ISSUE_TEMPLATE/**'
+
 documentation:
   - changed-files:
-    - any-glob-to-any-file: ['**/*.md', '**/*.markdown']
+    - any-glob-to-any-file:
+      - '**/*.md'
+      - '**/*.markdown'
+
 docker:
   - changed-files:
     - any-glob-to-any-file: 'docker/**'
+
 pages:
-  - any-glob-to-any-file: 'contents/pages/**'
+  - changed-files:
+    - any-glob-to-any-file: 'contents/pages/**'
