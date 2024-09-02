@@ -6,7 +6,7 @@ CI:
   - all:
     - changed-files:
       - any-glob-to-any-file: '.github/**'
-      - all-globs-to-all-file: '!.github/ISSUE_TEMPLATE/**'
+      - all-globs-to-all-files: '!.github/ISSUE_TEMPLATE/**'
 
 documentation:
   - changed-files:
