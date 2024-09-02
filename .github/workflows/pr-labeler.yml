@@ -1,7 +1,8 @@
 name: CI-pr-label
 on:
   pull_request_target:
-    types: [opened]
+    types: 
+      - opened
 jobs:
   label:
     permissions:
@@ -16,4 +17,4 @@ jobs:
         uses: actions/labeler@v5
         with:
           configuration-path: .github/pr-labeler.yml
-
+          sync-labels: true
