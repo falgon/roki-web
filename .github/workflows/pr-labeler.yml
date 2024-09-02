@@ -1,8 +1,7 @@
 name: CI-pr-label
 on:
   pull_request_target:
-    types:
-      - opened
+    types: [opened]
 jobs:
   pr-labeler:
     runs-on: ubuntu-latest
