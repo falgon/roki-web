@@ -56,15 +56,15 @@ jobs:
         version: 1.0
     - name: snap cache
       uses: actions/cache@v2
-        env:
-          cache-name: cache-snap-packages
-        with:
-          path: ~/snap
-          key: ${{ runner.os }}-snap-${{ env.cache-name }}-${{ hashFiles('**/snap-packages.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-snap-${{ env.cache-name }}-
-            ${{ runner.os }}-snap-
-            ${{ runner.os }}-
+      env:
+        cache-name: cache-snap-packages
+      with:
+        path: ~/snap
+        key: ${{ runner.os }}-snap-${{ env.cache-name }}-${{ hashFiles('**/snap-packages.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-snap-${{ env.cache-name }}-
+          ${{ runner.os }}-snap-
+          ${{ runner.os }}-
     - name: Install tools (snap)
       run: sudo snap install chromium
     - name: Setup Stack
