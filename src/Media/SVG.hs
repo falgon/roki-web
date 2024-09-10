@@ -1,4 +1,4 @@
-{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE LambdaCase, OverloadedStrings #-}
 module Media.SVG (
     optimizeSVGCompiler
   , mermaidTransform
@@ -12,7 +12,8 @@ import qualified Data.Text                 as T
 import           Hakyll
 import           System.Exit               (ExitCode (..))
 import           System.Process            (proc, readCreateProcessWithExitCode)
-import           Text.Pandoc               (Block (..), Pandoc)
+import           Text.Pandoc               (Block (..), Format (..),
+                                            Inline (..), Pandoc)
 import           Text.Pandoc.Walk          (walkM)
 
 optimizeSVGCompiler :: [String] -> Compiler (Item String)
@@ -20,7 +21,7 @@ optimizeSVGCompiler opts = getResourceString >>=
     withItemBody (unixFilter "npx" $ ["svgo", "-i", "-", "-o", "-"] ++ opts)
 
 codeBlock :: Block -> Compiler Block
-codeBlock cb@(CodeBlock attr@(_, _, t) contents) = runMaybeT codeBlock'
+codeBlock cb@(CodeBlock (_, _, t) contents) = runMaybeT codeBlock'
     >>= maybe (pure cb) pure
     where
         codeBlock' = do
@@ -28,7 +29,7 @@ codeBlock cb@(CodeBlock attr@(_, _, t) contents) = runMaybeT codeBlock'
             if lang /= "mermaid" then mzero else do
                 lift (unsafeCompiler $ readCreateProcessWithExitCode (proc "npx" args) $ T.unpack contents) >>= \case
                     (ExitFailure _, _, err) -> lift $ fail err
-                    (ExitSuccess, out, _) -> pure $ CodeBlock attr $ T.pack out
+                    (ExitSuccess, out, _) -> pure $ Plain [RawInline (Format "html")  $ T.pack out]
         args = ["mmdc", "-i", "/dev/stdin", "-e", "svg", "-o", "-"]
 codeBlock x = pure x
 
