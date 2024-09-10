@@ -5,9 +5,13 @@ module Media.SVG (
 ) where
 
 import           Control.Arrow             (first)
-import           Control.Monad             (MonadPlus (..))
+import           Control.Exception.Safe    (MonadThrow, throwString)
+import           Control.Monad             (MonadPlus (..), (>=>))
+import           Control.Monad.Extra       (ifM)
+import           Control.Monad.IO.Class    (MonadIO (..))
 import           Control.Monad.Trans       (MonadTrans (..))
 import           Control.Monad.Trans.Maybe (hoistMaybe, runMaybeT)
+import           Data.Functor              ((<&>))
 import qualified Data.Text                 as T
 import           Hakyll
 import           System.Exit               (ExitCode (..))
@@ -17,23 +21,28 @@ import           Text.Pandoc               (Block (..), Format (..),
 import           Text.Pandoc.Walk          (walkM)
 
 optimizeSVGCompiler :: [String] -> Compiler (Item String)
-optimizeSVGCompiler opts = getResourceString >>=
-    withItemBody (unixFilter "npx" $ ["svgo", "-i", "-", "-o", "-"] ++ opts)
+optimizeSVGCompiler opts = getResourceString
+    >>= withItemBody (unixFilter "npx" $ ["svgo", "-i", "-", "-o", "-"] ++ opts)
 
-codeBlock :: Block -> Compiler Block
-codeBlock cb@(CodeBlock (_, _, t) contents) = runMaybeT codeBlock'
-    >>= maybe (pure cb) pure
+execMmdc :: (MonadIO m, MonadThrow m) => T.Text -> m String
+execMmdc = liftIO . readCreateProcessWithExitCode (proc "npx" args) . T.unpack >=> \case
+    (ExitFailure _, _, err) -> throwString err
+    (ExitSuccess, out, _) -> pure out
     where
-        codeBlock' = do
-            lang <- T.unpack . T.toLower <$> hoistMaybe (lookup "lang" $ map (first $ T.unpack . T.toLower) t)
-            if lang /= "mermaid" then mzero else do
-                lift (unsafeCompiler $ readCreateProcessWithExitCode (proc "npx" args) $ T.unpack contents) >>= \case
-                    (ExitFailure _, _, err) -> lift $ fail err
-                    (ExitSuccess, out, _) -> pure $ Plain [RawInline (Format "html")  $ T.pack out]
         args = ["mmdc", "-i", "/dev/stdin", "-e", "svg", "-o", "-"]
-codeBlock x = pure x
+
+mermaidCodeBlock :: Block -> Compiler Block
+mermaidCodeBlock cb@(CodeBlock (_, _, t) contents) = maybe cb id <$>
+    runMaybeT mermaidCodeBlock'
+    where
+        mermaidCodeBlock' =
+            ifM ((/="mermaid") . T.toLower <$> hoistMaybe (lookup "lang" $ map (first $ T.unpack . T.toLower) t))
+                mzero $
+                    lift $ unsafeCompiler (execMmdc contents)
+                        <&> Plain . (:[]) . RawInline (Format "html") . T.pack
+mermaidCodeBlock x = pure x
 
 -- | When a code block starts in @```{lang=mermaid}@,
 -- convert its internal mermaid format to svg.
 mermaidTransform :: Pandoc -> Compiler Pandoc
-mermaidTransform = walkM codeBlock
+mermaidTransform = walkM mermaidCodeBlock
