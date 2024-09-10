@@ -65,6 +65,10 @@ executables:
         dependencies:
         - roki-web
         - optparse-applicative
+        - mtl
+        - gitrev
+        - hakyll
+        - filepath
     spa:
         source-dirs: app
         main:        spa/Main.hs
