@@ -12,6 +12,7 @@ extra-source-files:
 
 dependencies:
     - base
+    - 
 
 library:
     source-dirs:
@@ -77,3 +78,10 @@ executables:
         dependencies:
         - roki-web
         - transformers
+        - optparse-applicative
+        - hakyll
+        - gitrev
+        - extra
+        - time
+        - mtl
+        - extra
