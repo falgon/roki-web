@@ -11,43 +11,46 @@ extra-source-files:
     - README.md
 
 dependencies:
-    - aeson
     - base
-    - binary
-    - hakyll
-    - tagsoup
-    - process
-    - bytestring
-    - unordered-containers
-    - basic-prelude
-    - pandoc
-    - filepath
-    - time
-    - text
-    - lucid
-    - mtl
-    - containers
-    - hjsmin
-    - extra
-    - dhall
-    - optparse-applicative
-    - gitrev
-    - file-embed
-    - morpheus-graphql-client
-    - network-uri
-    - req
-    - utf8-string
-    - transformers
-    - stack
-    - ansi-terminal-types
-    - rio
-    - yaml
-    - hpack
-    - pandoc-types
 
 library:
     source-dirs:
         - src
+    dependencies:
+      - aeson
+      - binary
+      - gitrev
+      - file-embed
+      - bytestring
+      - text
+      - transformers
+      - extra
+      - filepath
+      - lucid
+      - process
+      - ansi-terminal-types
+      - hakyll
+      - rio
+      - hjsmin
+      - safe-exceptions
+      - morpheus-graphql-client
+      - network-uri
+      - utf8-string
+      - hpack
+      - pandoc-types
+      - yaml
+      - stack
+      - network-uri
+      - req
+      - pandoc-types
+      - dhall
+      - unordered-containers
+      - pandoc
+      - tagsoup
+      - time
+      - mtl
+      - containers
+      - basic-prelude
 
 executables:
     site:
@@ -61,6 +64,7 @@ executables:
         - -with-rtsopts=-N
         dependencies:
         - roki-web
+        - optparse-applicative
     spa:
         source-dirs: app
         main:        spa/Main.hs
