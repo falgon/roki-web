@@ -27,7 +27,7 @@ optimizeSVGCompiler opts = getResourceString
 execMmdc :: (MonadIO m, MonadThrow m) => T.Text -> m String
 execMmdc = liftIO . readCreateProcessWithExitCode (proc "npx" args) . T.unpack >=> \case
     (ExitFailure _, _, err) -> throwString err
-    (ExitSuccess, out, _) -> pure out
+    (ExitSuccess, out, _)   -> pure out
     where
         args = ["mmdc", "-i", "/dev/stdin", "-e", "svg", "-o", "-"]
 
