@@ -56,6 +56,7 @@ RUN sed -i 's@archive.ubuntu.com@ftp.jaist.ac.jp/pub/Linux@g' /etc/apt/sources.l
         ca-certificates \
         language-pack-ja \
         git \
+        chromium-browser \
     && apt-get -y -qq autoremove \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* \

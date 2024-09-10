@@ -12,6 +12,7 @@ RUN sed -i 's@archive.ubuntu.com@ftp.jaist.ac.jp/pub/Linux@g' /etc/apt/sources.l
         build-essential \
         curl \
         ca-certificates \
+        chromium-browser \
         language-pack-ja \
         libtinfo-dev \
         git \
