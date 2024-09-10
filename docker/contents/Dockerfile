@@ -34,6 +34,7 @@ ENV LANG=ja_JP.UTF-8 \
 COPY . /opt/src
 WORKDIR /opt/src
 RUN export BOOTSTRAP_HASKELL_GHC_VERSION="$(yq '.compiler' ./stack.yaml | cut -f2 -d-)" \
+    export PUPPETEER_EXECUTABLE_PATH="$(which chromium-browser)" \
     && curl --proto '=https' --tlsv1.2 -sSf https://get-ghcup.haskell.org | sh
 RUN source "$HOME/.ghcup/env" \
     && stack config set install-ghc false --global \
