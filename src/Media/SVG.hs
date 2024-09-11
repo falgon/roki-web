@@ -20,34 +20,38 @@ import           Lucid.Html5
 import           System.Exit               (ExitCode (..))
 import           System.Process            (proc, readCreateProcessWithExitCode)
 import           Text.Pandoc               (Block (..), Format (..),
-                                            Inline (..), Pandoc)
+                                            Inline (..))
 import           Text.Pandoc.Walk          (walkM)
 
 optimizeSVGCompiler :: [String] -> Compiler (Item String)
 optimizeSVGCompiler opts = getResourceString
     >>= withItemBody (unixFilter "npx" $ ["svgo", "-i", "-", "-o", "-"] ++ opts)
 
-execMmdc :: (MonadIO m, Monad n, MonadThrow m) => T.Text -> m (HtmlT n ())
+type SVGHtml n = HtmlT n ()
+
+execMmdc :: (MonadIO m, Monad n, MonadThrow m) => T.Text -> m (SVGHtml n)
 execMmdc = liftIO . readCreateProcessWithExitCode (proc "npx" args) . T.unpack >=> \case
     (ExitFailure _, _, err) -> throwString err
     (ExitSuccess, out, _)   -> pure $ toHtmlRaw $ T.pack out
     where
         args = ["mmdc", "-i", "/dev/stdin", "-e", "svg", "-o", "-"]
 
-mermaidCodeBlock :: Block -> Compiler Block
-mermaidCodeBlock cb@(CodeBlock (_, _, t) contents) = maybe cb id <$>
-    runMaybeT mermaidCodeBlock'
-    where
-        mermaidCodeBlock' =
-            ifM ((/="mermaid") . T.toLower <$> hoistMaybe (lookup "lang" $ map (first $ T.unpack . T.toLower) t))
-                mzero $
-                lift $ unsafeCompiler (execMmdc contents)
-                    <&> Plain . (:[]) . RawInline (Format "html")
-                        . TL.toStrict . renderText
-                        . div_ [class_ "has-text-centered"]
-mermaidCodeBlock x = pure x
+styledSvg :: Monad m => [(String, T.Text)] -> SVGHtml m -> SVGHtml m
+styledSvg args svgHtml = figure_ [class_ "has-text-centered image"] $ do
+    maybe mempty (figcaption_ [class_ "has-text-centered"] . toHtmlRaw) $ lookup "caption" args
+    svgHtml
 
 -- | When a code block starts in @```{lang=mermaid}@,
 -- convert its internal mermaid format to svg.
-mermaidTransform :: Pandoc -> Compiler Pandoc
-mermaidTransform = walkM mermaidCodeBlock
+-- Add the caption as follows: @```{lang=mermaid, caption=hoge}@.
+mermaidTransform :: Block -> Compiler Block
+mermaidTransform cb@(CodeBlock (_, _, t) contents) = maybe cb id <$>
+    runMaybeT mermaidTransform'
+    where
+        mermaidTransform' = let args = map (first $ T.unpack . T.toLower) t in
+            ifM ((/="mermaid") . T.toLower <$> hoistMaybe (lookup "lang" args))
+                mzero $
+                lift $ unsafeCompiler (execMmdc contents)
+                    <&> Plain . (:[]) . RawInline (Format "html")
+                        . TL.toStrict . renderText . styledSvg args
+mermaidTransform x = pure x

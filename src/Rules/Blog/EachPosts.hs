@@ -17,6 +17,7 @@ import           Media.SVG                  (mermaidTransform)
 import           Rules.Blog.EachPosts.Utils
 import           Rules.Blog.Type
 import           Rules.Blog.Utils           (appendFooter)
+import           Text.Pandoc.Walk           (walkM)
 import           Utils                      (absolutizeUrls, mconcatM,
                                              modifyExternalLinkAttr)
 import qualified Vendor.FontAwesome         as FA
@@ -38,7 +39,7 @@ build faIcons ctx = do
 
     eachPostsSeries $ \s -> do
         route $ gsubRoute (contentsRoot <> "/") (const mempty) `composeRoutes` setExtension "html"
-        compile $ pandocCompilerWithTransformM readerOptions wOptions mermaidTransform
+        compile $ pandocCompilerWithTransformM readerOptions wOptions (walkM mermaidTransform)
             >>= absolutizeUrls
             >>= saveSnapshot feedContent
             >>= katexRender
