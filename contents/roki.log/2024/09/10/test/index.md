@@ -8,3 +8,13 @@ tags: Test
 graph LR;
 a-->b
 ```
+
+```{lang=mermaid, caption=hogehoge}
+graph TD;
+a-->b
+```
+
+```{lang=mermaid, caption="hoge hoge"}
+graph LR;
+a-->b
+```
