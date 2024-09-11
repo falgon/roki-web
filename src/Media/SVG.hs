@@ -12,6 +12,7 @@ import           Control.Monad.IO.Class    (MonadIO (..))
 import           Control.Monad.Trans       (MonadTrans (..))
 import           Control.Monad.Trans.Maybe (hoistMaybe, runMaybeT)
 import           Data.Functor              ((<&>))
+import           Data.Maybe                (fromMaybe)
 import qualified Data.Text                 as T
 import qualified Data.Text.Lazy            as TL
 import           Hakyll
@@ -21,7 +22,6 @@ import           System.Exit               (ExitCode (..))
 import           System.Process            (proc, readCreateProcessWithExitCode)
 import           Text.Pandoc               (Block (..), Format (..),
                                             Inline (..))
-import           Text.Pandoc.Walk          (walkM)
 
 optimizeSVGCompiler :: [String] -> Compiler (Item String)
 optimizeSVGCompiler opts = getResourceString
@@ -45,7 +45,7 @@ styledSvg args svgHtml = figure_ [class_ "has-text-centered image"] $ do
 -- convert its internal mermaid format to svg.
 -- Add the caption as follows: @```{lang=mermaid, caption=hoge}@.
 mermaidTransform :: Block -> Compiler Block
-mermaidTransform cb@(CodeBlock (_, _, t) contents) = maybe cb id <$>
+mermaidTransform cb@(CodeBlock (_, _, t) contents) = fromMaybe cb <$>
     runMaybeT mermaidTransform'
     where
         mermaidTransform' = let args = map (first $ T.unpack . T.toLower) t in
