@@ -35,7 +35,7 @@ execMmdc = liftIO . readCreateProcessWithExitCode (proc "npx" args) . T.unpack >
         args = ["mmdc", "-i", "/dev/stdin", "-e", "svg", "-o", "-"]
 
 mermaidCodeBlock :: Block -> Compiler Block
-mermaidCodeBlock cb@(CodeBlock (_, _, t) contents) = maybe cb id <$>
+mermaidCodeBlock cb@(CodeBlock (_, _, t) contents) = fromMaybe cb <$>
     runMaybeT mermaidCodeBlock'
     where
         mermaidCodeBlock' =
