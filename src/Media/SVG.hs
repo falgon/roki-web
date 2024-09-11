@@ -43,7 +43,7 @@ styledSvg args svgHtml = figure_ [class_ "has-text-centered image"] $ do
 
 -- | When a code block starts in @```{lang=mermaid}@,
 -- convert its internal mermaid format to svg.
--- Add the caption as follows: @```{lang=mermaid, caption=hoge}@.
+-- Add the caption as follows: @```{lang=mermaid caption=hoge}@.
 mermaidTransform :: Block -> Compiler Block
 mermaidTransform cb@(CodeBlock (_, _, t) contents) = fromMaybe cb <$>
     runMaybeT mermaidTransform'

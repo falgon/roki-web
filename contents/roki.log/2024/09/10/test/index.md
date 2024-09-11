@@ -9,12 +9,12 @@ graph LR;
 a-->b
 ```
 
-```{lang=mermaid, caption=hogehoge}
+```{lang=mermaid caption=hogehoge}
 graph TD;
 a-->b
 ```
 
-```{lang=mermaid, caption="hoge hoge"}
+```{lang=mermaid caption="hoge hoge"}
 graph LR;
 a-->b
 ```
