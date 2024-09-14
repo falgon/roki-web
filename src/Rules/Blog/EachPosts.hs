@@ -13,9 +13,11 @@ import           Config                     (contentsRoot, readerOptions,
 import           Config.Blog                (BlogConfig (..))
 import           Config.Site                (defaultTimeLocale', timeZoneJST)
 import qualified Contexts.Blog              as BlogCtx
+import           Media.SVG                  (mermaidTransform)
 import           Rules.Blog.EachPosts.Utils
 import           Rules.Blog.Type
 import           Rules.Blog.Utils           (appendFooter)
+import           Text.Pandoc.Walk           (walkM)
 import           Utils                      (absolutizeUrls, mconcatM,
                                              modifyExternalLinkAttr)
 import qualified Vendor.FontAwesome         as FA
@@ -37,7 +39,7 @@ build faIcons ctx = do
 
     eachPostsSeries $ \s -> do
         route $ gsubRoute (contentsRoot <> "/") (const mempty) `composeRoutes` setExtension "html"
-        compile $ pandocCompilerWith readerOptions wOptions
+        compile $ pandocCompilerWithTransformM readerOptions wOptions (walkM mermaidTransform)
             >>= absolutizeUrls
             >>= saveSnapshot feedContent
             >>= katexRender

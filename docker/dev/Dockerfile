@@ -12,6 +12,7 @@ RUN sed -i 's@archive.ubuntu.com@ftp.jaist.ac.jp/pub/Linux@g' /etc/apt/sources.l
         build-essential \
         curl \
         ca-certificates \
+        chromium \
         language-pack-ja \
         libtinfo-dev \
         git \
@@ -39,6 +40,7 @@ ENV LANG=ja_JP.UTF-8 \
     BOOTSTRAP_HASKELL_NONINTERACTIVE=1
 COPY --chown=rw-dev:rw-dev . /home/rw-dev/src
 WORKDIR /home/rw-dev/src
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 RUN curl -sSo- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.0/install.sh | bash \
     && export NVM_DIR="${HOME}/.nvm" \
     && [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" || true \

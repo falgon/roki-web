@@ -20,7 +20,9 @@ import           Config                        (contentsRoot, readerOptions,
                                                 siteName, timeZoneJST)
 import           Contexts                      (siteCtx)
 import           Hakyll.Core.Compiler.Internal (compilerUnsafeIO)
+import           Media.SVG                     (mermaidTransform)
 import           Rules.PageType
+import           Text.Pandoc.Walk              (walkM)
 import           Utils                         (mconcatM,
                                                 modifyExternalLinkAttr)
 import qualified Vendor.FontAwesome            as FA
@@ -65,7 +67,7 @@ mdRule ss pat = do
     katexRender <- asks pcKaTeXRender
     faIcons <- asks pcFaIcons
     lift $ match pat $ compile $ do
-        pandocCompilerWith readerOptions wOpt
+        pandocCompilerWithTransformM readerOptions wOpt (walkM mermaidTransform)
             >>= modifyExternalLinkAttr
             >>= relativizeUrls
             >>= FA.render faIcons
