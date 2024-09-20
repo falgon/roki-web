@@ -1,0 +1,42 @@
+services:
+  # site watch
+  site-watch:
+    image: $ROKI_WEB_ENV_IMAGE_NAME:$ROKI_WEB_ENV_IMAGE_TAG
+    container_name: roki-web-preview
+    volumes:
+      - "../contents:/home/rw-c/roki-web-apps/contents"
+    ports:
+      - "8888:8888"
+    working_dir: /home/rw/bin
+    build:
+      context: ../
+      dockerfile: ./docker/Dockerfile
+      target: apps
+      args:
+        - BOOTSTRAP_HASKELL_STACK_VERSION=$BOOTSTRAP_HASKELL_STACK_VERSION
+        - NVM_VERSION=$NVM_VERSION
+        - GROUP_ID=$GROUP_ID
+        - USER_ID=$USER_ID
+        - USER_NAME=$USER_NAME
+        - YQ_VERSION=$YQ_VERSION
+    command: /bin/bash -c './site watch --preview --port 8888 --host 0.0.0.0'
+  # development
+  dev:
+    image: $ROKI_WEB_DEV_IMAGE_NAME:$ROKI_WEB_DEV_IMAGE_TAG
+    container_name: roki-web-dev
+    tty: true
+    volumes:
+      - "../:/home/rw/src"
+    ports:
+      - "8888:8888"
+    working_dir: /home/rw/src
+    build:
+      context: ../
+      dockerfile: ./docker/Dockerfile
+      target: dev
+      args:
+        - BOOTSTRAP_HASKELL_STACK_VERSION=$BOOTSTRAP_HASKELL_STACK_VERSION
+        - NVM_VERSION=$NVM_VERSION
+        - GROUP_ID=$GROUP_ID
+        - USER_ID=$USER_ID
+        - USER_NAME=$USER_NAME

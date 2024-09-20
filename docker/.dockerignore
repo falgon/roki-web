@@ -1,6 +1,4 @@
-.stack-work
 docs
-node_modules
 .dockerignore
 .git
 .gitignore
