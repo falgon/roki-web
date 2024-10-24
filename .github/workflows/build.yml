@@ -12,6 +12,7 @@ jobs:
     runs-on: ubuntu-20.04
     permissions:
       repository-projects: read
+      contents: read
     if: github.repository == 'falgon/roki-web'
     steps:
     - name: Checkout
