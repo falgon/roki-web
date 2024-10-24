@@ -14,6 +14,7 @@ jobs:
     runs-on: ubuntu-20.04
     permissions:
       repository-projects: read
+      contents: read
     outputs:
       target_ref: ${{ steps.build.outputs.target_ref }}
     steps:
