@@ -21,7 +21,7 @@ env:
   COMPOSE_DOCKER_CLI_BUILD: 1
 jobs:
   setup:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     if: github.repository == 'falgon/roki-web'
     outputs:
       img_tag: ${{ steps.img_tag_step.outputs.name }}
