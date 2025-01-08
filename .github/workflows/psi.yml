@@ -16,7 +16,7 @@ on:
         default: 'ja_JP'
 jobs:
   check_psi:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     if: github.repository == 'falgon/roki-web'
     steps:
     - uses: actions/checkout@v2
@@ -28,7 +28,7 @@ jobs:
       with:
         node-version: '${{ steps.nvmrc.outputs.node_version }}'
     - name: PSI module cache
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       id: psi-cache
       with:
         path: '**/node_modules'
