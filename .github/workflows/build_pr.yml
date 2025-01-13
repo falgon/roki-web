@@ -1,7 +1,7 @@
 name: CI-pr
 
 env:
-  GO_VERSION: 1.21.3
+  GO_VERSION: 1.23.4
   TZ: Asia/Tokyo
   DOCS_TARXZ: docs.tar.xz
 on:
