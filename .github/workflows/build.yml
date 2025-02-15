@@ -9,7 +9,7 @@ on:
       - '.gitignore'
 jobs:
   build:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     permissions:
       repository-projects: read
       contents: read
@@ -51,12 +51,12 @@ jobs:
         path: ~/.stack
         key: stack-v2-${{ runner.os }}-${{ hashFiles('stack.yaml') }}-${{ hashFiles('stack.yaml.lock') }}-${{ hashFiles('package.yaml') }}-${{ hashFiles('docker/.env') }}
     - name: Install tools (apt)
-      uses: awalsh128/cache-apt-pkgs-action@v1.4.2
+      uses: awalsh128/cache-apt-pkgs-action@v1
       with:
         packages: libxml2-utils
         version: 1.0
     - name: snap cache
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       env:
         cache-name: cache-snap-packages
       with:

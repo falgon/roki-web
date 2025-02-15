@@ -1,7 +1,7 @@
 name: CI-pr
 
 env:
-  GO_VERSION: 1.21.3
+  GO_VERSION: 1.23.4
   TZ: Asia/Tokyo
   DOCS_TARXZ: docs.tar.xz
 on:
@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
 jobs:
   build:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     permissions:
       repository-projects: read
       contents: read
@@ -55,12 +55,12 @@ jobs:
         enable-stack: true
         stack-version: ${{ env.stack_version }}
     - name: Install tools (apt)
-      uses: awalsh128/cache-apt-pkgs-action@v1.4.2
+      uses: awalsh128/cache-apt-pkgs-action@v1
       with:
         packages: libxml2-utils parallel
         version: 1.0
     - name: snap cache
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       env:
         cache-name: cache-snap-packages
       with:
