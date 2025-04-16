@@ -8,8 +8,78 @@
         <name>Roki</name>
         <email>falgon53@yahoo.co.jp</email>
     </author>
-    <updated>2023-12-06T00:00:00Z</updated>
+    <updated>2025-04-16T00:00:00Z</updated>
     <entry>
+    <title>Snipe-IT と MDM を連携してモバイル端末の資産管理を効率化</title>
+    <link href="https://roki.dev/roki.log/2025/04/16/introducing-mdm-snipe-it-asset-management-article/index.html" />
+    <id>https://roki.dev/roki.log/2025/04/16/introducing-mdm-snipe-it-asset-management-article/index.html</id>
+    <published>2025-04-16T00:00:00Z</published>
+    <updated>2025-04-16T00:00:00Z</updated>
+    <summary type="html"><![CDATA[<p>先日, <a href="https://developers.cyberagent.co.jp/blog/">CyberAgent Developers Blog</a> にて私が執筆した以下の記事が公開された.</p>
+<article class="message is-info">
+<div class="message-body has-text-centered">
+<p><i class="fas fa-info-circle"></i></p>
+<p>👉 <a href="https://developers.cyberagent.co.jp/blog/archives/54939/">数千台のモバイル端末の管理: Snipe-ITを活用した大規模MDM連携システム</a></p>
+</div>
+</article>
+<p>本記事では, 上記記事の宣伝と, 私が担当したプロジェクトの一環として,
+Snipe-IT と Mobile Device Management (以下 MDM) ツールを組み合わせて構築したモバイル端末資産管理システムについて技術的な観点からまとめている.</p>
+<!--more-->
+<h2 id="背景と課題">背景と課題</h2>
+<p>モバイルデバイスの管理は, 端末数の増加に比例して運用の複雑さが増す領域である. 従来の運用では, 以下のような問題があった.</p>
+<ul>
+<li>MDM に登録された情報と貸出・返却の実態管理が煩雑であった</li>
+<li>管理画面の UI/UX が貧弱で, 現場での操作性に課題があった<br />
+</li>
+<li>台帳情報が属人的に更新され, 正確性や即時性に欠けていた</li>
+</ul>
+<p>このような課題を解決するために資産管理 OSS である Snipe-IT と, AWS を基盤とした連携システムを設計/実装した.</p>
+<h2 id="snipe-it-について">Snipe-IT について</h2>
+<p>Snipe-IT は, オープンソースで開発されているIT資産管理システムである.
+Webベースで動作し, ソフトウェア・ハードウェア・ライセンス・契約情報などの資産情報を一元管理できることが特徴である.
+Laravelベースで構築されており, REST APIが充実しているため, 他システムとの連携性が高く,
+記事執筆時現在も開発やコミュニティでのディスカッションが盛んに行われている.
+特に以下のような特徴が, 今回のユースケースにおいて有効であった：</p>
+<ul>
+<li>資産とユーザー, ロケーション, ステータスの紐付けが柔軟に行える</li>
+<li>API経由での読み書き操作が安定しており, 自動同期がしやすい</li>
+<li>シンプルなUIにより, 現場担当者でも直感的に操作可能<br />
+</li>
+<li>オープンソースであり, 自社要件に応じたカスタマイズが容易である</li>
+</ul>
+<p>これらの特徴を活かすことで, 現行の運用課題に対して柔軟かつ確実に対応することが可能となった.</p>
+<h2 id="システム構成と工夫点">システム構成と工夫点</h2>
+<p>システムは以下の構成を採用した：</p>
+<ul>
+<li>AWS Lambda による Webhook 受信および非同期処理<br />
+</li>
+<li>Amazon S3 による中間データの永続化とリカバリ<br />
+</li>
+<li>Snipe-IT を REST API 経由で操作し, 資産データを正規化<br />
+</li>
+<li>CloudWatch Logs と Slack通知によるエラー検知と運用監視</li>
+</ul>
+<p>Lambda関数には最大実行時間があるため,
+長時間処理が必要な場合には自己再帰＋状態保存によって処理を分割継続する構成とした.
+この仕組みによって, 数千台規模の同期処理も安定して完走できるようにしている.</p>
+<p>また, 処理中の一時状態（リトライ回数, スリープ時間など）をBase64エンコードして渡すことで, Lambda間のステートレス性を維持しつつ連携できるよう工夫した.</p>
+<h2 id="成果と展望">成果と展望</h2>
+<p>この構成によって, 以下のような成果が得られた：</p>
+<ul>
+<li>デバイス台帳の整合性と信頼性が大幅に向上した<br />
+</li>
+<li>貸出・返却の運用負担が減少し, 棚卸の効率が飛躍的に改善した<br />
+</li>
+<li>システム全体が疎結合化され, 今後の拡張や他 MDM 対応も容易となった</li>
+</ul>
+<p>今後は, さらなる台帳の活用分析も視野に入れている.</p>
+<h2 id="最後に">最後に</h2>
+<p>本記事は, 所属企業内の業務で実際に直面した課題に対して,
+個人として設計・開発・運用に携わった経験をもとに執筆したものである.
+記事内で紹介している構成や手法は, 同様の課題を持つ現場においても応用可能であると考えている.
+興味を持たれた方は, ぜひ上記のリンクから記事全文をご覧いただきたい.</p>]]></summary>
+</entry>
+<entry>
     <title>東京ガスの請求通知を自作 LINE Bot に喋らせる</title>
     <link href="https://roki.dev/roki.log/2023/12/06/add-new-web-api-send-plain-text/index.html" />
     <id>https://roki.dev/roki.log/2023/12/06/add-new-web-api-send-plain-text/index.html</id>
@@ -7764,38 +7834,6 @@ EC2 においても各メタ情報を HTTP リクエストで取得できるこ�
 <li id="fn7"><p>このとき 80 番ポートを利用するが, デフォルトの設定では VPC を 10.0.0.0/16, サブネットを 10.0.0.0/24 とし, 80 番ポートのインバウンド設定を, セキュリティグループにより 10.0.0.0/24 と設定するので, 外部からの HTTP アクセスに対して応答することはない. よって, インスタンスの状態がインターネットに漏れてしまうといった懸念は必要ない. なお自動構築時, このサブネット中にすべてのインスタンスを設定するため, 自ずと分散コンパイルを行うインスタンスの最大数は 256 となる. それよりも増やしたいのであれば, 単にパラメータを変えればよいが, あまり台数を増やしても, 然程効果はないと思われる.<a href="/roki.log/2018/08/15/aws_ec2_distcc/#fnref7" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 </ol>
 </section>]]></summary>
-</entry>
-<entry>
-    <title>AWS SNS + S3 でバケット内の状態を即座に EC2 に反映するまで</title>
-    <link href="https://roki.dev/roki.log/2018/08/1/aws_sns_s3_ec2/index.html" />
-    <id>https://roki.dev/roki.log/2018/08/1/aws_sns_s3_ec2/index.html</id>
-    <published>2018-08-01T00:00:00Z</published>
-    <updated>2018-08-01T00:00:00Z</updated>
-    <summary type="html"><![CDATA[<p>ウェブアプリケーションが EC2 上で動作していて,
-そのコンテンツ内容を S3 バケットによって管理しているシチュエーションにおいて,
-S3 バケットの状態を即座にそのウェブアプリケーションに反映させたいという事例はよくあると思う(ステージング云々は, 一旦置いておくとして).
-本エントリは, AWS SNS による HTTP リクエストをトリガーに,
-S3 バケットの状態を EC2 上のコンテンツへ即座に反映するための構造と簡単な実装について取り上げる.</p>
-<!--more-->
-<h2 id="システムの全体構造">システムの全体構造</h2>
-<p>上記の要件を達成する方法はいくつかあるだろうが, 今回は次のような構造を取ることとした.</p>
-<figure>
-<img src="/roki.log/2018/08/1/aws_sns_s3_ec2/UD.png" title="全体図" width="400" alt="全体図" />
-<figcaption aria-hidden="true">全体図</figcaption>
-</figure>
-<p>今回 EC2 インスタンス上では, Nginx および Go で実装したウェブアプリケーションサーバを Fast-CGI で動かすこととした.
-S3 にコンテンツをアップロードしたり削除等の操作をすると, SNS トピックに対して通知を発行する.
-SNS はこれに対して, 設定したエンドポイント(今回は EC2 インスタンス) へ HTTP POST リクエストを発行し,
-EC2 インスタンスはこれに応じて, S3 バケットと同期を実行する. 至ってシンプルな構造である.</p>
-<h2 id="実装">実装</h2>
-<p>EC2 インスタンスで稼働するシンプルなウェブサーバの実装, および各種設定ファイルは, 次のリポジトリの通りである.</p>
-<div class="box has-text-centered is-shadowless">
-<p><i class="fab fa-github mr-2"></i>
-<a href="https://github.com/falgon/tinyGoWebServer">falgon/tinyGoWebServer - Tiny Go Web Server. AWS SNS + S3 + EC2 + Nginx Fast-CGI technology automatically synchronizes content on S3 bucket.</a></p>
-</div>
-<p>なお, S3 バケットとの同期処理が失敗した場合, 別の SNS トピックを用いて, 失敗の旨のメールを管理者に送信するようにしてある.
-リポジトリ内の README にも記してあるが, 同期を実行するスクリプト, およびウェブサーバの実行ファイルは, systemd で管理することを前提として,
-<a href="http://www.pathname.com/fhs/">Filesystem Hierarchy Standard</a> に従い, 配置することとした.</p>]]></summary>
 </entry>
 
 </feed>
