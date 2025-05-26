@@ -1,12 +1,12 @@
 #!/usr/bin/env stack
--- stack script --resolver lts-22.33 --package bytestring --package smtp-mail --package optparse-applicative --package text
+-- stack script --resolver lts-22.33 --package bytestring --package smtp-mail --package mime-mail --package optparse-applicative --package text
 
 {-# LANGUAGE OverloadedStrings #-}
 module Main where
 
 import qualified Data.Text                       as T
-import           Network.HaskellNet.SMTP
-import           Network.HaskellNet.SMTP.SSL
+import           Network.Mail.Mime               (simpleMail')
+import           Network.Mail.SMTP               (sendMailWithLoginOAuthSTARTTLS)
 import qualified Options.Applicative             as OA
 import qualified Options.Applicative.Help.Pretty as OA
 import           System.Environment              (getEnv)
@@ -69,20 +69,9 @@ optsParser = OA.info (OA.helper <*> programOptions) $ mconcat [
   ]
 
 sendEmail :: String -> String -> String -> String -> IO ()
-sendEmail message fromEmail toEmail password = do
-    let connSettings = SMTPConnectionSettings
-            { smtpServer = "smtp.gmail.com"
-            , smtpPort = 587
-            , smtpSecurity = STARTTLS
-            , smtpUsername = fromEmail
-            , smtpPassword = password
-            }
-
-    sendMail connSettings
-        (T.pack fromEmail)  -- from
-        [T.pack toEmail]  -- to
-        "roki-web PR Artifacts Notification"  -- subject
-        (T.pack message)  -- body
+sendEmail message fromEmail toEmail token = do
+    let mail = simpleMail' (fromString toEmail) [fromString fromEmail] "roki-web PR Artifacts Notification" message
+    sendMailWithLoginOAuthSTARTTLS "smtp.gmail.com" fromEmail token mail
 
 main :: IO ()
 main = do
