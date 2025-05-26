@@ -68,7 +68,7 @@ optsParser = OA.info (OA.helper <*> programOptions) $ mconcat [
   ]
 
 sendEmail :: LT.Text -> LT.Text -> LT.Text -> String -> IO ()
-sendEmail message fromEmail toEmail token = sendMailWithLoginSTARTTLS "smtp.gmail.com" (LT.unpack fromEmail) token mail
+sendEmail message fromEmail toEmail password = sendMailWithLoginSTARTTLS "smtp.gmail.com" (LT.unpack fromEmail) password mail
   where
     mail = simpleMail'
       (fromString $ LT.unpack toEmail)  -- to
