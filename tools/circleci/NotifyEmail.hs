@@ -1,5 +1,5 @@
 #!/usr/bin/env stack
--- stack script --resolver lts-14.27 --package bytestring --package smtp-mail --package optparse-applicative --package text
+-- stack script --resolver lts-22.33 --package bytestring --package smtp-mail --package optparse-applicative --package text
 
 {-# LANGUAGE OverloadedStrings #-}
 module Main where
@@ -80,6 +80,7 @@ sendEmail message toEmail password = do
 main :: IO ()
 main = do
     opts <- OA.execParser optsParser
-    let message = show $ messageDoc (optPRURL opts) (optArtifactsURL opts)
-    getEnv "GMAIL_APP_PASSWORD" >>= sendEmail message (optToEmail opts)
-    putStrLn "Email sent successfully"
+    let message = show $ messageDoc (optPRURL opts) (optArtifactsURL opts) in
+      getEnv "GMAIL_APP_PASSWORD"
+        >>= sendEmail message (optToEmail opts)
+        >> putStrLn "Email sent successfully"
