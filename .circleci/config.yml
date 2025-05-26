@@ -91,9 +91,9 @@ jobs:
                   echo "$post_result" | jq -r '.html_url'
                 fi
     - restore_cache:
-        key: v1-notify-line-{{ checksum "tools/circleci/NotifyLine.hs" }}
+        key: v1-notify-email-{{ checksum "tools/circleci/NotifyEmail.hs" }}
     - run:
-        name: Notify LINE
+        name: Notify Email
         command: |
           if << pipeline.parameters.ENABLE_PR_COMMENT >>; then
             if [ -z "$(cat $PR_RESPONSE_TMP)" ]; then
@@ -106,11 +106,14 @@ jobs:
             readonly pr_url="none"
           fi
           # eval is needed for the CIRCLE_WORKING_DIRECTORY variable as it contains a non-expanded '~'
-          eval ${CIRCLE_WORKING_DIRECTORY}/tools/circleci/NotifyLine.hs \
+          eval ${CIRCLE_WORKING_DIRECTORY}/tools/circleci/NotifyEmail.hs \
             --pr-url "$pr_url" \
-            --artifacts-url "$ARTIFACTS_URL"
+            --artifacts-url "$ARTIFACTS_URL" \
+            --from-email "$FROM_EMAIL" \
+            --to-email "$TO_EMAIL"
+
     - save_cache:
-        key: v1-notify-line-{{ checksum "tools/circleci/NotifyLine.hs" }}
+        key: v1-notify-email-{{ checksum "tools/circleci/NotifyEmail.hs" }}
         paths:
           - ~/.stack
 
