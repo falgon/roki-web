@@ -4,6 +4,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Main where
 
+import           Data.String                     (IsString (..))
 import qualified Data.Text                       as T
 import           Network.Mail.Mime               (simpleMail')
 import           Network.Mail.SMTP               (sendMailWithLoginOAuthSTARTTLS)
