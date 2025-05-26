@@ -7,7 +7,7 @@ module Main where
 import           Data.String                     (IsString (..))
 import qualified Data.Text.Lazy                  as LT
 import           Network.Mail.Mime               (simpleMail')
-import           Network.Mail.SMTP               (sendMailWithLoginOAuthSTARTTLS)
+import           Network.Mail.SMTP               (sendMailWithLoginSTARTTLS)
 import qualified Options.Applicative             as OA
 import qualified Options.Applicative.Help.Pretty as OA
 import           System.Environment              (getEnv)
@@ -68,7 +68,7 @@ optsParser = OA.info (OA.helper <*> programOptions) $ mconcat [
   ]
 
 sendEmail :: LT.Text -> LT.Text -> LT.Text -> String -> IO ()
-sendEmail message fromEmail toEmail token = sendMailWithLoginOAuthSTARTTLS "smtp.gmail.com" (LT.unpack fromEmail) token mail
+sendEmail message fromEmail toEmail token = sendMailWithLoginSTARTTLS "smtp.gmail.com" (LT.unpack fromEmail) token mail
   where
     mail = simpleMail'
       (fromString $ LT.unpack toEmail)  -- to
