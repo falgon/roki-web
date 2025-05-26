@@ -4,9 +4,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Main where
 
-import qualified Data.ByteString.Char8           as BC
 import qualified Data.Text                       as T
-import qualified Data.Text.Encoding              as TE
 import           Network.HaskellNet.SMTP
 import           Network.HaskellNet.SMTP.SSL
 import qualified Options.Applicative             as OA
@@ -25,6 +23,7 @@ messageDoc prURL artifactsURL = mconcat [
 data Opts = Opts
   { optPRURL        :: String
   , optArtifactsURL :: String
+  , optFromEmail    :: String
   , optToEmail      :: String
   }
 
@@ -42,6 +41,13 @@ pArtifactsURL = OA.option OA.str $ mconcat [
   , OA.metavar "<URL>"
   ]
 
+pFromEmail :: OA.Parser String
+pFromEmail = OA.option OA.str $ mconcat [
+    OA.long "from-email"
+  , OA.help "Sender email address"
+  , OA.metavar "<EMAIL>"
+  ]
+
 pToEmail :: OA.Parser String
 pToEmail = OA.option OA.str $ mconcat [
     OA.long "to-email"
@@ -53,6 +59,7 @@ programOptions :: OA.Parser Opts
 programOptions = Opts
     <$> pPRURL
     <*> pArtifactsURL
+    <*> pFromEmail
     <*> pToEmail
 
 optsParser :: OA.ParserInfo Opts
@@ -61,18 +68,18 @@ optsParser = OA.info (OA.helper <*> programOptions) $ mconcat [
   , OA.progDesc "A script that sends an email notification about roki-web artifacts build completion"
   ]
 
-sendEmail :: String -> String -> String -> IO ()
-sendEmail message toEmail password = do
+sendEmail :: String -> String -> String -> String -> IO ()
+sendEmail message fromEmail toEmail password = do
     let connSettings = SMTPConnectionSettings
             { smtpServer = "smtp.gmail.com"
             , smtpPort = 587
             , smtpSecurity = STARTTLS
-            , smtpUsername = toEmail
+            , smtpUsername = fromEmail
             , smtpPassword = password
             }
 
     sendMail connSettings
-        (T.pack toEmail)  -- from
+        (T.pack fromEmail)  -- from
         [T.pack toEmail]  -- to
         "roki-web PR Artifacts Notification"  -- subject
         (T.pack message)  -- body
@@ -82,5 +89,5 @@ main = do
     opts <- OA.execParser optsParser
     let message = show $ messageDoc (optPRURL opts) (optArtifactsURL opts) in
       getEnv "GMAIL_APP_PASSWORD"
-        >>= sendEmail message (optToEmail opts)
+        >>= sendEmail message (optFromEmail opts) (optToEmail opts)
         >> putStrLn "Email sent successfully"
