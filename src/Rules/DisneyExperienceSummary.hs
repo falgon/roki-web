@@ -66,8 +66,8 @@ loadDisneyFavorites :: IO [Favorite]
 loadDisneyFavorites = input auto "contents/config/disney/Favorites.dhall"
 
 filterFavoritesByCategory :: [Favorite] -> String -> [String]
-filterFavoritesByCategory favorites category =
-    map text $ filter (\f -> category f == category) favorites
+filterFavoritesByCategory favorites cat =
+    map text $ filter (\f -> category f == cat) favorites
 
 rules :: PageConfReader Rules ()
 rules = do
@@ -86,7 +86,7 @@ rules = do
             route $ gsubRoute (contentsRoot </> "pages/") (const mempty)
             compile $ do
                 disneyLogs <- sortByNum <$> loadAllSnapshots disneyLogsPattern disneyExperienceSummarySnapshot
-                favorites <- liftIO loadDisneyFavorites
+                favorites <- unsafeCompiler loadDisneyFavorites
                 let works = filterFavoritesByCategory favorites "works"
                     attractions = filterFavoritesByCategory favorites "attractions"
                 disneyExperienceSummaryCtx <- mconcatM [
@@ -97,8 +97,8 @@ rules = do
                   , constField "about-body"
                         <$> loadSnapshotBody aboutIdent disneyExperienceSummarySnapshot
                   , pure $ listField "disney-logs" (metadataField <> bodyField "log-body") (return disneyLogs)
-                  , pure $ listField "favorite-works" (constField "text") (return $ map (\w -> Item (fromString w) w) works)
-                  , pure $ listField "favorite-attractions" (constField "text") (return $ map (\a -> Item (fromString a) a) attractions)
+                  , pure $ listField "favorite-works" (field "text" (return . itemBody)) (return $ map (\w -> Item (fromString w) w) works)
+                  , pure $ listField "favorite-attractions" (field "text" (return . itemBody)) (return $ map (\a -> Item (fromString a) a) attractions)
                   ]
                 getResourceBody
                     >>= applyAsTemplate disneyExperienceSummaryCtx
