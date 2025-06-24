@@ -89,6 +89,7 @@ rules = do
             compile $ do
                 disneyLogs <- sortByNum <$> loadAllSnapshots disneyLogsPattern disneyExperienceSummarySnapshot
                 let works = filterFavoritesByCategory favorites "works"
+                    characters = filterFavoritesByCategory favorites "characters"
                     parkContents = filterFavoritesByCategory favorites "park-contents"
                 disneyExperienceSummaryCtx <- mconcatM [
                     pure $ constField "title" "Ponchi's Disney Journey"
@@ -99,6 +100,7 @@ rules = do
                         <$> loadSnapshotBody aboutIdent disneyExperienceSummarySnapshot
                   , pure $ listField "disney-logs" (metadataField <> bodyField "log-body") (return disneyLogs)
                   , pure $ listField "favorite-works" (field "text" (return . text . itemBody) <> field "link" (return . maybe "" id . link . itemBody)) (return $ map (\f -> Item (fromString $ text f) f) $ filter ((== "works") . category) favorites)
+                  , pure $ listField "favorite-characters" (field "text" (return . text . itemBody) <> field "link" (return . maybe "" id . link . itemBody)) (return $ map (\f -> Item (fromString $ text f) f) $ filter ((== "characters") . category) favorites)
                   , pure $ listField "favorite-park-contents" (field "text" (return . text . itemBody) <> field "link" (return . maybe "" id . link . itemBody)) (return $ map (\f -> Item (fromString $ text f) f) $ filter ((== "park-contents") . category) favorites)
                   ]
                 getResourceBody

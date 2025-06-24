@@ -55,6 +55,12 @@
     .favorites-section .column {
         padding: 0;
     }
+    @media screen and (max-width: 768px) {
+        .favorites-section .column:first-child,
+        .favorites-section .column:nth-child(2) {
+            margin-bottom: 2rem;
+        }
+    }
     .favorite-category {
         margin-bottom: 0;
     }
@@ -169,6 +175,20 @@
             </div>
             <div class="column">
                 <div class="favorite-category">
+                    <h3 class="title is-4"><i class="fas fa-user mr-2"></i>好きなキャラクター</h3>
+                    <div class="tag-list">
+                        $for(favorite-characters)$
+                        $if(link)$
+                        <span class="tag is-small custom-tag"><a href="$link$" target="_blank" rel="noopener">$text$</a></span>
+                        $else$
+                        <span class="tag is-small custom-tag">$text$</span>
+                        $endif$
+                        $endfor$
+                    </div>
+                </div>
+            </div>
+            <div class="column">
+                <div class="favorite-category">
                     <h3 class="title is-4"><i class="fas fa-horse mr-2"></i>好きなパークコンテンツ</h3>
                     <div class="tag-list">
                         $for(favorite-park-contents)$
@@ -185,7 +205,7 @@
     </div>
     
     <div class="favorite-category mt-2">
-        <h3 class="title is-4 mb-3">体験歴</h3>
+        <h3 class="title is-4 mb-3"><i class="fas fa-hat-wizard mr-2"></i>体験歴</h3>
         <div class="logs">
             $for(disney-logs)$
             <article class="log-entry">

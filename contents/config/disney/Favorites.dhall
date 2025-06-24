@@ -16,16 +16,42 @@ in    [ { text = "美女と野獣"
         , category = "works"
         , link = Some "https://disney.fandom.com/wiki/Toy_Story"
         }
+      , { text = "ミッキーマウス"
+        , category = "characters"
+        , link = Some "https://disney.fandom.com/wiki/Mickey_Mouse"
+        }
+      , { text = "ミニーマウス"
+        , category = "characters"
+        , link = Some "https://disney.fandom.com/wiki/Minnie_Mouse"
+        }
+      , { text = "ドナルドダック"
+        , category = "characters"
+        , link = Some "https://disney.fandom.com/wiki/Donald_Duck"
+        }
+      , { text = "プーさん"
+        , category = "characters"
+        , link = Some "https://disney.fandom.com/wiki/Winnie_the_Pooh"
+        }
+      , { text = "ピーター・パン"
+        , category = "characters"
+        , link = Some "https://disney.fandom.com/wiki/Peter_Pan"
+        }
       , { text = "スプラッシュ・マウンテン"
         , category = "park-contents"
         , link = Some "https://disney.fandom.com/wiki/Splash_Mountain"
         }
-      , { text = "スペース・マウンテン", category = "park-contents", link = None Text }
+      , { text = "スペース・マウンテン"
+        , category = "park-contents"
+        , link = None Text
+        }
       , { text = "ホーンテッド・マンション"
         , category = "park-contents"
         , link = Some "https://disney.fandom.com/wiki/Haunted_Mansion"
         }
-      , { text = "ピーター・パン", category = "park-contents", link = None Text }
+      , { text = "ピーター・パン"
+        , category = "park-contents"
+        , link = None Text
+        }
       , { text = "イッツ・ア・スモールワールド"
         , category = "park-contents"
         , link = Some "https://disney.fandom.com/wiki/It%27s_a_Small_World"
