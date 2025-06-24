@@ -64,9 +64,7 @@ mdRule ss pat = do
             >>= saveSnapshot ss
 
 loadDisneyFavorites :: IO [Favorite]
-loadDisneyFavorites = input auto dhallPath
-    where
-        dhallPath = T.pack $ joinPath [contentsRoot, "config", "disney", "Favorites.dhall"]
+loadDisneyFavorites = input auto "./contents/config/disney/Favorites.dhall"
 
 filterFavoritesByCategory :: [Favorite] -> String -> [String]
 filterFavoritesByCategory favorites cat = map text $ filter ((== cat) . category) favorites
