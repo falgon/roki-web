@@ -47,25 +47,21 @@
         border-left: 4px solid #1e40af;
     }
     .profile-section {
-        display: flex;
-        align-items: center;
+        text-align: center;
         margin-bottom: 2rem;
     }
     .profile-image {
-        margin-right: 1rem;
+        margin-bottom: 1rem;
     }
     .sns-links {
         display: flex;
+        justify-content: center;
         align-items: center;
     }
     .sns-links ul {
         list-style: none;
         padding: 0;
         margin: 0;
-    }
-    .sns-links li {
-        display: inline-block;
-        margin-right: 0.5rem;
     }
     .sns-links a {
         color: #1e40af;
@@ -74,25 +70,25 @@
 </style>
 
 <div class="container">
+    <h1 class="disney-title">$title$</h1>
     <div class="profile-section">
         <div class="profile-image">
-            <figure class="image is-128x128 my-0 mx-auto is-block is-disable-pointer-events">
+            <figure class="image is-128x128 mx-auto">
                 <picture>
-                    <source class="is-rounded" type="image/webp" srcset="../../images/avator/prof1000x1000.png.webp">
-                    <img alt="Profile photo" class="is-rounded" src="../../images/avator/prof1000x1000.png" />
+                    <source class="is-rounded" type="image/webp" srcset="../images/avator/prof1000x1000.png.webp">
+                    <img alt="Profile photo" class="is-rounded" src="../images/avator/prof1000x1000.png" />
                 </picture>
             </figure>
         </div>
         <div class="sns-links">
-            <ul class="is-unstyled mb-0 is-inline-block has-text-left">
-                <li class="is-inline-block mr-3"><a href="/"><i class="fas fa-home fa-2x" aria-hidden="true"></i></a></li>
-                <li class="is-inline-block mr-3"><a href="https://x.com/p0nchi_v"><i class="fab fa-x-twitter fa-2x" aria-hidden="true"></i></a></li>
+            <ul class="is-unstyled mb-0 has-text-centered">
+                <li class="is-inline-block mr-4"><a href="/"><i class="fas fa-home fa-2x" aria-hidden="true"></i></a></li>
+                <li class="is-inline-block mr-4"><a href="https://x.com/p0nchi_v"><i class="fab fa-x-twitter fa-2x" aria-hidden="true"></i></a></li>
                 <li class="is-inline-block"><a href="https://www.instagram.com/ponchi.v/"><i class="fab fa-instagram fa-2x" aria-hidden="true"></i></a></li>
             </ul>
         </div>
     </div>
     
-    <h1 class="disney-title">$title$</h1>
     
     <div class="about-section">
         $about-body$
