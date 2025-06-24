@@ -67,7 +67,7 @@ rules = do
                 let disneyResumeCtx = mconcat [
                         constField "title" "ディズニーリゾートで遊んだ経歴"
                       , constField "font_path" "/fonts/waltograph42.otf"
-                      , listField "logs" (metadataField <> bodyField "log-body") (return disneyLogs)
+                      , listField "disney-logs" (metadataField <> bodyField "log-body") (return disneyLogs)
                       , siteCtx
                       , defaultContext
                       ]

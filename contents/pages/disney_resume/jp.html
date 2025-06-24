@@ -45,11 +45,11 @@
     <h1 class="disney-title">ディズニーリゾートで遊んだ経歴</h1>
     
     <div class="logs">
-        $for(logs)$
+        $for(disney-logs)$
         <article class="log-entry">
-            <h2 class="log-title">$log.title$</h2>
-            <div class="log-date">$log.date$</div>
-            <div class="log-body">$log.log-body$</div>
+            <h2 class="log-title">$title$</h2>
+            <div class="log-date">$date$</div>
+            <div class="log-body">$log-body$</div>
         </article>
         $endfor$
     </div>
