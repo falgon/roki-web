@@ -60,6 +60,9 @@
         .favorites-section .column:nth-child(2) {
             margin-bottom: 2rem;
         }
+        .favorite-category.mt-2 {
+            margin-top: 2rem !important;
+        }
     }
     .favorite-category {
         margin-bottom: 0;
@@ -67,6 +70,13 @@
     .favorite-category h3 {
         color: #083963;
         margin-bottom: 0.5rem;
+        padding-left: 1.5rem;
+        position: relative;
+    }
+    .favorite-category h3 svg {
+        position: absolute;
+        left: 0;
+        top: 0.1rem;
     }
     .tag-list {
         display: flex;
@@ -159,7 +169,7 @@
     
     <div class="favorites-section">
         <div class="columns">
-            <div class="column">
+            <div class="column pr-2">
                 <div class="favorite-category">
                     <h3 class="title is-4"><i class="fas fa-film mr-2"></i>好きな作品</h3>
                     <div class="tag-list">
@@ -173,9 +183,9 @@
                     </div>
                 </div>
             </div>
-            <div class="column">
+            <div class="column pr-2">
                 <div class="favorite-category">
-                    <h3 class="title is-4"><i class="fas fa-user mr-2"></i>好きなキャラクター</h3>
+                    <h3 class="title is-4"><i class="fas fa-user mr-2"></i>好きなキャラクタ</h3>
                     <div class="tag-list">
                         $for(favorite-characters)$
                         $if(link)$
@@ -187,7 +197,7 @@
                     </div>
                 </div>
             </div>
-            <div class="column">
+            <div class="column pr-2">
                 <div class="favorite-category">
                     <h3 class="title is-4"><i class="fas fa-horse mr-2"></i>好きなパークコンテンツ</h3>
                     <div class="tag-list">

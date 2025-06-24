@@ -1,54 +1,72 @@
 let t = ./Type/Favorite.dhall
 
-in    [ { text = "美女と野獣"
+in    [ { text = "アナと雪の女王"
         , category = "works"
-        , link = Some
-            "https://disney.fandom.com/wiki/Beauty_and_the_Beast_(1991_film)"
+        , link = Some "https://www.disney.co.jp/movie/frozen.html"
         }
-      , { text = "アラジン", category = "works", link = None Text }
-      , { text = "リトル・マーメイド"
+      , { text = "ズートピア"
         , category = "works"
-        , link = Some
-            "https://disney.fandom.com/wiki/The_Little_Mermaid_(1989_film)"
+        , link = Some "https://www.disney.co.jp/movie/zootopia.html"
         }
-      , { text = "ライオン・キング", category = "works", link = None Text }
-      , { text = "トイ・ストーリー"
+      , { text = "ミラベルと魔法だらけの家"
         , category = "works"
-        , link = Some "https://disney.fandom.com/wiki/Toy_Story"
+        , link = Some "https://www.disney.co.jp/movie/encanto.html"
         }
-      , { text = "ミッキーマウス"
+      , { text = "魔法にかけられて"
+        , category = "works"
+        , link = Some "https://www.disney.co.jp/movie/enchanted.html"
+        }
+      , { text = "ソウルフル・ワールド"
+        , category = "works"
+        , link = Some "https://www.disney.co.jp/movie/soul.html"
+        }
+      , { text = "クルエラ"
+        , category = "works"
+        , link = Some "https://www.disney.co.jp/movie/cruella.html"
+        }
+      , { text = "ワンス・アポン・ア・スタジオ"
+        , category = "works"
+        , link = Some "https://www.disney.co.jp/movie/once-upon-a-studio.html"
+        }
+      , { text = "スノーギース"
         , category = "characters"
-        , link = Some "https://disney.fandom.com/wiki/Mickey_Mouse"
+        , link = Some "https://www.disney.co.jp/character/snowgies.html"
         }
-      , { text = "ミニーマウス"
+      , { text = "エルサ"
         , category = "characters"
-        , link = Some "https://disney.fandom.com/wiki/Minnie_Mouse"
+        , link = Some "https://www.disney.co.jp/character/elsa.html"
         }
-      , { text = "ドナルドダック"
+      , { text = "ジュディ・ポップス"
         , category = "characters"
-        , link = Some "https://disney.fandom.com/wiki/Donald_Duck"
+        , link = Some "https://www.disney.co.jp/character/judy-hopps.html"
         }
-      , { text = "プーさん"
-        , category = "characters"
-        , link = Some "https://disney.fandom.com/wiki/Winnie_the_Pooh"
-        }
-      , { text = "ピーター・パン"
-        , category = "characters"
-        , link = Some "https://disney.fandom.com/wiki/Peter_Pan"
-        }
-      , { text = "スプラッシュ・マウンテン"
+      , { text = "ミッキーのフィルハーマジック"
         , category = "park-contents"
-        , link = Some "https://disney.fandom.com/wiki/Splash_Mountain"
+        , link = Some "https://www.tokyodisneyresort.jp/tdl/attraction/detail/185/"
         }
-      , { text = "スペース・マウンテン", category = "park-contents", link = None Text }
-      , { text = "ホーンテッド・マンション"
+      , { text = "クラブマウスビート"
         , category = "park-contents"
-        , link = Some "https://disney.fandom.com/wiki/Haunted_Mansion"
+        , link = Some "https://www.tokyodisneyresort.jp/tdl/attraction/detail/186/"
         }
-      , { text = "ピーター・パン", category = "park-contents", link = None Text }
-      , { text = "イッツ・ア・スモールワールド"
+      , { text = "フィルハーマジック"
         , category = "park-contents"
-        , link = Some "https://disney.fandom.com/wiki/It%27s_a_Small_World"
+        , link = Some "https://www.tokyodisneyresort.jp/tdl/attraction/detail/187/"
+        }
+      , { text = "スター・ツアーズ"
+        , category = "park-contents"
+        , link = Some "https://www.tokyodisneyresort.jp/tdl/attraction/detail/188/"
+        }
+      , { text = "ビッグサンダー・マウンテン"
+        , category = "park-contents"
+        , link = Some "https://www.tokyodisneyresort.jp/tdl/attraction/detail/189/"
+        }
+      , { text = "フローズンジャーニー"
+        , category = "park-contents"
+        , link = Some "https://www.tokyodisneyresort.jp/tdl/attraction/detail/190/"
+        }
+      , { text = "タワー・オブ・テラー"
+        , category = "park-contents"
+        , link = Some "https://www.tokyodisneyresort.jp/tdl/attraction/detail/191/"
         }
       ]
     : List t
