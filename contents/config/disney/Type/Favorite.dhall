@@ -1,1 +1,1 @@
-{ text : Text, category : Text } : Type 
+{ text : Text, category : Text } : Type
