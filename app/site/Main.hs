@@ -20,6 +20,7 @@ import qualified Config.Blogs.TechBlog    as TB
 import qualified Contexts.Field.RokiDiary as RokiDiary
 import qualified Contexts.Field.RokiLog   as RokiLog
 import qualified Rules.Blog               as Blog
+import qualified Rules.DisneyResume       as DisneyResume
 import qualified Rules.Media              as Media
 import qualified Rules.PageType           as Page
 import qualified Rules.Resume             as Resume
@@ -242,7 +243,7 @@ main = do
           , Page.pcFaIcons = faIcons
           }
         mapM_ (runReaderT $ Blog.rules faIcons) blogConfs
-        mapM_ (flip runReaderT pageConf) [TopPage.rules blogConfs, Resume.rules]
+        mapM_ (flip runReaderT pageConf) [TopPage.rules blogConfs, Resume.rules, DisneyResume.rules]
         mapM_ (flip match (route idRoute >> compile copyFileCompiler)) ["CNAME", "ads.txt"]
         match (fromString $ joinPath ["contents", "templates", "**"]) $
             compile templateBodyCompiler

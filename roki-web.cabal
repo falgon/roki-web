@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: bed2b1203bd0451905717ed9887b9776eefb461aa6c93edb38ff1bf2591e243b
+-- hash: 9a872fd7da3cb192a7bca500b26c6d86e7ee281f0d553db31b0c9eb5f44fd8ed
 
 name:           roki-web
 version:        2.0.0.0
@@ -70,6 +70,7 @@ library
       Rules.Blog.Sitemap
       Rules.Blog.Type
       Rules.Blog.Utils
+      Rules.DisneyResume
       Rules.Media
       Rules.PageType
       Rules.Resume
@@ -134,6 +135,10 @@ executable site
   ghc-options: -threaded -Wall -O2 -rtsopts -with-rtsopts=-N
   build-depends:
       base
+    , filepath
+    , gitrev
+    , hakyll
+    , mtl
     , optparse-applicative
     , roki-web
   default-language: Haskell2010
@@ -147,6 +152,12 @@ executable spa
   ghc-options: -threaded -Wall -O2 -rtsopts -with-rtsopts=-N
   build-depends:
       base
+    , extra
+    , gitrev
+    , hakyll
+    , mtl
+    , optparse-applicative
     , roki-web
+    , time
     , transformers
   default-language: Haskell2010
