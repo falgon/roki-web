@@ -1,22 +1,22 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Rules.DisneyResume (rules) where
 
-import           Control.Monad.Reader          (asks)
-import           Control.Monad.Trans           (MonadTrans (..))
-import           Data.List                     (sortBy)
-import           Data.Ord                      (comparing)
-import           Data.String                   (IsString (..))
+import           Control.Monad.Reader  (asks)
+import           Control.Monad.Trans   (MonadTrans (..))
+import           Data.List             (sortBy)
+import           Data.Ord              (comparing)
+import           Data.String           (IsString (..))
 import           Hakyll
-import           System.FilePath               (joinPath, (</>))
-import           System.FilePath.Posix         (takeBaseName)
+import           System.FilePath       (joinPath, (</>))
+import           System.FilePath.Posix (takeBaseName)
 
-import           Config                        (contentsRoot, readerOptions)
-import           Contexts                      (siteCtx)
-import           Media.SVG                     (mermaidTransform)
+import           Config                (contentsRoot, readerOptions)
+import           Contexts              (siteCtx)
+import           Media.SVG             (mermaidTransform)
 import           Rules.PageType
-import           Text.Pandoc.Walk              (walkM)
-import           Utils                         (modifyExternalLinkAttr)
-import qualified Vendor.FontAwesome            as FA
+import           Text.Pandoc.Walk      (walkM)
+import           Utils                 (modifyExternalLinkAttr)
+import qualified Vendor.FontAwesome    as FA
 
 disneyResumeRoot :: FilePath
 disneyResumeRoot = joinPath [contentsRoot, "disney_resume"]
@@ -59,7 +59,7 @@ rules = do
         match (fromGlob $ joinPath [contentsRoot, "fonts", "*.otf"]) $ do
             route $ gsubRoute "contents/" $ const ""
             compile copyFileCompiler
-        
+
         match disneyResumeJPPath $ do
             route $ gsubRoute (contentsRoot </> "pages/") (const mempty)
             compile $ do
@@ -77,11 +77,11 @@ rules = do
                     >>= modifyExternalLinkAttr
                     >>= relativizeUrls
                     >>= FA.render faIcons
-        
+
         createRedirects [
             (fromFilePath $ joinPath ["disney_resume", "index.html"], joinPath ["/", "disney_resume", "jp.html"])
           ]
     where
         disneyResumeSnapshot = "disneyResumeSS"
         disneyResumeJPPath = fromGlob $ joinPath [contentsRoot, "pages", "disney_resume", "jp.html"]
-        rootTemplate = fromFilePath $ joinPath [contentsRoot, "templates", "site", "default.html"] 
+        rootTemplate = fromFilePath $ joinPath [contentsRoot, "templates", "site", "default.html"]
