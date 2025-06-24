@@ -17,7 +17,7 @@
         margin: 2rem 0;
         padding: 1.5rem;
         border-left: 4px solid #3b82f6;
-        background-color: #f8fafc;
+        background-color: #E3F2FE;
         border-radius: 0 8px 8px 0;
     }
     .log-title {
@@ -86,7 +86,7 @@
         transition: color 0.3s ease;
     }
     .sns-links a:hover {
-        color: rgba(255, 255, 255, 0.8);
+        color: rgba(60, 170, 223, 0.6);
     }
     .tag a {
         color: inherit;
@@ -101,8 +101,27 @@
         transition: all 0.3s ease;
     }
     .custom-tag:hover {
-        background-color: rgba(255, 255, 255, 0.8) !important;
+        background-color: rgba(227, 242, 254, 0.6) !important;
         color: #083963 !important;
+    }
+    .logs {
+        max-height: 600px;
+        overflow-y: auto;
+        padding-right: 10px;
+    }
+    .logs::-webkit-scrollbar {
+        width: 8px;
+    }
+    .logs::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 4px;
+    }
+    .logs::-webkit-scrollbar-thumb {
+        background: #E3F2FE;
+        border-radius: 4px;
+    }
+    .logs::-webkit-scrollbar-thumb:hover {
+        background: rgba(227, 242, 254, 0.6);
     }
 </style>
 
@@ -164,13 +183,16 @@
         </div>
     </div>
     
-    <div class="logs">
-        $for(disney-logs)$
-        <article class="log-entry">
-            <h2 class="log-title">$title$</h2>
-            <div class="log-date">$date$</div>
-            <div class="log-body">$log-body$</div>
-        </article>
-        $endfor$
+    <div class="favorite-category">
+        <h3 class="title is-4">体験歴</h3>
+        <div class="logs">
+            $for(disney-logs)$
+            <article class="log-entry">
+                <h2 class="log-title">$title$</h2>
+                <div class="log-date">$date$</div>
+                <div class="log-body">$log-body$</div>
+            </article>
+            $endfor$
+        </div>
     </div>
 </div> 
