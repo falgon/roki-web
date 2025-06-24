@@ -89,7 +89,7 @@ rules = do
             compile $ do
                 disneyLogs <- sortByNum <$> loadAllSnapshots disneyLogsPattern disneyExperienceSummarySnapshot
                 let works = filterFavoritesByCategory favorites "works"
-                    attractions = filterFavoritesByCategory favorites "attractions"
+                    parkContents = filterFavoritesByCategory favorites "park-contents"
                 disneyExperienceSummaryCtx <- mconcatM [
                     pure $ constField "title" "Ponchi's Disney Journey"
                   , pure $ constField "font_path" "../fonts/waltograph42.otf"
@@ -99,7 +99,7 @@ rules = do
                         <$> loadSnapshotBody aboutIdent disneyExperienceSummarySnapshot
                   , pure $ listField "disney-logs" (metadataField <> bodyField "log-body") (return disneyLogs)
                   , pure $ listField "favorite-works" (field "text" (return . text . itemBody) <> field "link" (return . maybe "" id . link . itemBody)) (return $ map (\f -> Item (fromString $ text f) f) $ filter ((== "works") . category) favorites)
-                  , pure $ listField "favorite-attractions" (field "text" (return . text . itemBody) <> field "link" (return . maybe "" id . link . itemBody)) (return $ map (\f -> Item (fromString $ text f) f) $ filter ((== "attractions") . category) favorites)
+                  , pure $ listField "favorite-park-contents" (field "text" (return . text . itemBody) <> field "link" (return . maybe "" id . link . itemBody)) (return $ map (\f -> Item (fromString $ text f) f) $ filter ((== "park-contents") . category) favorites)
                   ]
                 getResourceBody
                     >>= applyAsTemplate disneyExperienceSummaryCtx
