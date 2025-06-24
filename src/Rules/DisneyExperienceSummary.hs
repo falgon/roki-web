@@ -15,11 +15,15 @@ import           Contexts              (siteCtx)
 import           Media.SVG             (mermaidTransform)
 import           Rules.PageType
 import           Text.Pandoc.Walk      (walkM)
-import           Utils                 (modifyExternalLinkAttr)
+import           Utils                 (mconcatM, modifyExternalLinkAttr)
 import qualified Vendor.FontAwesome    as FA
 
 disneyExperienceSummaryRoot :: FilePath
 disneyExperienceSummaryRoot = joinPath [contentsRoot, "disney_experience_summary"]
+
+aboutIdent :: Identifier
+aboutIdent = fromString
+    $ joinPath [disneyExperienceSummaryRoot, "about.md"]
 
 disneyLogsPattern :: Pattern
 disneyLogsPattern = fromRegex $ mconcat
@@ -51,7 +55,9 @@ mdRule ss pat = do
 
 rules :: PageConfReader Rules ()
 rules = do
-    let items = [disneyLogsPattern]
+    let items = disneyLogsPattern : map (fromList . (:[]))
+            [ aboutIdent
+            ]
     mapM_ (mdRule disneyExperienceSummarySnapshot) items
     faIcons <- asks pcFaIcons
     lift $ do
@@ -64,13 +70,15 @@ rules = do
             route $ gsubRoute (contentsRoot </> "pages/") (const mempty)
             compile $ do
                 disneyLogs <- sortByNum <$> loadAllSnapshots disneyLogsPattern disneyExperienceSummarySnapshot
-                let disneyExperienceSummaryCtx = mconcat [
-                        constField "title" "Ponchi’s Tokyo Disney Resort Journey"
-                      , constField "font_path" "../../fonts/waltograph42.otf"
-                      , listField "disney-logs" (metadataField <> bodyField "log-body") (return disneyLogs)
-                      , siteCtx
-                      , defaultContext
-                      ]
+                disneyExperienceSummaryCtx <- mconcatM [
+                    pure $ constField "title" "Ponchi’s Tokyo Disney Resort Journey"
+                  , pure $ constField "font_path" "../../fonts/waltograph42.otf"
+                  , pure siteCtx
+                  , pure defaultContext
+                  , constField "about-body"
+                        <$> loadSnapshotBody aboutIdent disneyExperienceSummarySnapshot
+                  , pure $ listField "disney-logs" (metadataField <> bodyField "log-body") (return disneyLogs)
+                  ]
                 getResourceBody
                     >>= applyAsTemplate disneyExperienceSummaryCtx
                     >>= loadAndApplyTemplate rootTemplate disneyExperienceSummaryCtx

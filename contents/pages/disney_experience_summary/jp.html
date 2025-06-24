@@ -1,7 +1,7 @@
 <style>
     @font-face {
         font-family: 'Waltograph';
-        src: url('/fonts/waltograph42.otf') format('opentype');
+        src: url('../../fonts/waltograph42.otf') format('opentype');
         font-weight: normal;
         font-style: normal;
     }
@@ -39,10 +39,21 @@
         margin: 0 auto;
         padding: 0 1rem;
     }
+    .about-section {
+        margin: 2rem 0;
+        padding: 1.5rem;
+        background-color: #f0f8ff;
+        border-radius: 8px;
+        border-left: 4px solid #1e40af;
+    }
 </style>
 
 <div class="container">
-    <h1 class="disney-title">ディズニーリゾートで遊んだ経歴</h1>
+    <h1 class="disney-title">$title$</h1>
+    
+    <div class="about-section">
+        $about-body$
+    </div>
     
     <div class="logs">
         $for(disney-logs)$
