@@ -7,6 +7,7 @@ import           Control.Monad.Trans    (MonadTrans (..))
 import           Data.List              (sortBy)
 import           Data.Ord               (comparing)
 import           Data.String            (IsString (..))
+import qualified Data.Text              as T
 import           Dhall                  (FromDhall, Generic, auto, input)
 import           Hakyll
 import           System.FilePath        (joinPath, (</>))
@@ -63,11 +64,12 @@ mdRule ss pat = do
             >>= saveSnapshot ss
 
 loadDisneyFavorites :: IO [Favorite]
-loadDisneyFavorites = input auto "contents/config/disney/Favorites.dhall"
+loadDisneyFavorites = input auto dhallPath
+    where
+        dhallPath = T.pack $ joinPath [contentsRoot, "config", "disney", "Favorites.dhall"]
 
 filterFavoritesByCategory :: [Favorite] -> String -> [String]
-filterFavoritesByCategory favorites cat =
-    map text $ filter (\f -> category f == cat) favorites
+filterFavoritesByCategory favorites cat = map text $ filter ((== cat) . category) favorites
 
 rules :: PageConfReader Rules ()
 rules = do
