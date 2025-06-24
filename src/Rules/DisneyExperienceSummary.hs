@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Rules.DisneyResume (rules) where
+module Rules.DisneyExperienceSummary (rules) where
 
 import           Control.Monad.Reader  (asks)
 import           Control.Monad.Trans   (MonadTrans (..))
@@ -18,13 +18,13 @@ import           Text.Pandoc.Walk      (walkM)
 import           Utils                 (modifyExternalLinkAttr)
 import qualified Vendor.FontAwesome    as FA
 
-disneyResumeRoot :: FilePath
-disneyResumeRoot = joinPath [contentsRoot, "disney_resume"]
+disneyExperienceSummaryRoot :: FilePath
+disneyExperienceSummaryRoot = joinPath [contentsRoot, "disney_experience_summary"]
 
 disneyLogsPattern :: Pattern
 disneyLogsPattern = fromRegex $ mconcat
     [ "(^"
-    , joinPath [disneyResumeRoot, "logs", "[0-9]+.md"]
+    , joinPath [disneyExperienceSummaryRoot, "logs", "[0-9]+.md"]
     , "$)"
     ]
 
@@ -52,7 +52,7 @@ mdRule ss pat = do
 rules :: PageConfReader Rules ()
 rules = do
     let items = [disneyLogsPattern]
-    mapM_ (mdRule disneyResumeSnapshot) items
+    mapM_ (mdRule disneyExperienceSummarySnapshot) items
     faIcons <- asks pcFaIcons
     lift $ do
         -- フォントファイルのコピー
@@ -60,28 +60,28 @@ rules = do
             route $ gsubRoute "contents/" $ const ""
             compile copyFileCompiler
 
-        match disneyResumeJPPath $ do
+        match disneyExperienceSummaryJPPath $ do
             route $ gsubRoute (contentsRoot </> "pages/") (const mempty)
             compile $ do
-                disneyLogs <- sortByNum <$> loadAllSnapshots disneyLogsPattern disneyResumeSnapshot
-                let disneyResumeCtx = mconcat [
-                        constField "title" "ディズニーリゾートで遊んだ経歴"
-                      , constField "font_path" "/fonts/waltograph42.otf"
+                disneyLogs <- sortByNum <$> loadAllSnapshots disneyLogsPattern disneyExperienceSummarySnapshot
+                let disneyExperienceSummaryCtx = mconcat [
+                        constField "title" "Ponchi’s Tokyo Disney Resort Journey"
+                      , constField "font_path" "../../fonts/waltograph42.otf"
                       , listField "disney-logs" (metadataField <> bodyField "log-body") (return disneyLogs)
                       , siteCtx
                       , defaultContext
                       ]
                 getResourceBody
-                    >>= applyAsTemplate disneyResumeCtx
-                    >>= loadAndApplyTemplate rootTemplate disneyResumeCtx
+                    >>= applyAsTemplate disneyExperienceSummaryCtx
+                    >>= loadAndApplyTemplate rootTemplate disneyExperienceSummaryCtx
                     >>= modifyExternalLinkAttr
                     >>= relativizeUrls
                     >>= FA.render faIcons
 
         createRedirects [
-            (fromFilePath $ joinPath ["disney_resume", "index.html"], joinPath ["/", "disney_resume", "jp.html"])
+            (fromFilePath $ joinPath ["disney_experience_summary", "index.html"], joinPath ["/", "disney_experience_summary", "jp.html"])
           ]
     where
-        disneyResumeSnapshot = "disneyResumeSS"
-        disneyResumeJPPath = fromGlob $ joinPath [contentsRoot, "pages", "disney_resume", "jp.html"]
+        disneyExperienceSummarySnapshot = "disneyExperienceSummarySS"
+        disneyExperienceSummaryJPPath = fromGlob $ joinPath [contentsRoot, "pages", "disney_experience_summary", "jp.html"]
         rootTemplate = fromFilePath $ joinPath [contentsRoot, "templates", "site", "default.html"]

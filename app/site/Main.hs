@@ -1,35 +1,36 @@
 {-# LANGUAGE OverloadedStrings, TemplateHaskell #-}
 module Main (main) where
 
-import           Control.Monad.Reader     (ReaderT (..))
-import           Data.Foldable            (fold)
-import           Data.String              (fromString)
-import           Data.Version             (showVersion)
-import           Development.GitRev       (gitHash)
+import           Control.Monad.Reader          (ReaderT (..))
+import           Data.Foldable                 (fold)
+import           Data.String                   (fromString)
+import           Data.Version                  (showVersion)
+import           Development.GitRev            (gitHash)
 import           Hakyll
-import           Hakyll.Core.Runtime      (RunMode (..))
-import qualified Options.Applicative      as OA
-import qualified Paths_roki_web           as P
-import           System.FilePath          (joinPath)
+import           Hakyll.Core.Runtime           (RunMode (..))
+import qualified Options.Applicative           as OA
+import qualified Paths_roki_web                as P
+import           System.FilePath               (joinPath)
 
-import           Config                   (hakyllConfig, siteName,
-                                           writerOptions, writerPreviewOptions)
-import qualified Config.Blog              as B
-import qualified Config.Blogs.AnotherBlog as AB
-import qualified Config.Blogs.TechBlog    as TB
-import qualified Contexts.Field.RokiDiary as RokiDiary
-import qualified Contexts.Field.RokiLog   as RokiLog
-import qualified Rules.Blog               as Blog
-import qualified Rules.DisneyResume       as DisneyResume
-import qualified Rules.Media              as Media
-import qualified Rules.PageType           as Page
-import qualified Rules.Resume             as Resume
-import qualified Rules.Src.JavaScript     as Js
-import qualified Rules.Src.Style          as Style
-import qualified Rules.TopPage            as TopPage
-import qualified Rules.Vendor             as Vendor
-import qualified Vendor.FontAwesome       as FA
-import qualified Vendor.KaTeX             as KaTeX
+import           Config                        (hakyllConfig, siteName,
+                                                writerOptions,
+                                                writerPreviewOptions)
+import qualified Config.Blog                   as B
+import qualified Config.Blogs.AnotherBlog      as AB
+import qualified Config.Blogs.TechBlog         as TB
+import qualified Contexts.Field.RokiDiary      as RokiDiary
+import qualified Contexts.Field.RokiLog        as RokiLog
+import qualified Rules.Blog                    as Blog
+import qualified Rules.DisneyExperienceSummary as DisneyExperienceSummary
+import qualified Rules.Media                   as Media
+import qualified Rules.PageType                as Page
+import qualified Rules.Resume                  as Resume
+import qualified Rules.Src.JavaScript          as Js
+import qualified Rules.Src.Style               as Style
+import qualified Rules.TopPage                 as TopPage
+import qualified Rules.Vendor                  as Vendor
+import qualified Vendor.FontAwesome            as FA
+import qualified Vendor.KaTeX                  as KaTeX
 
 data Opts = Opts
     { optPreviewFlag   :: !Bool
@@ -243,7 +244,7 @@ main = do
           , Page.pcFaIcons = faIcons
           }
         mapM_ (runReaderT $ Blog.rules faIcons) blogConfs
-        mapM_ (flip runReaderT pageConf) [TopPage.rules blogConfs, Resume.rules, DisneyResume.rules]
+        mapM_ (flip runReaderT pageConf) [TopPage.rules blogConfs, Resume.rules, DisneyExperienceSummary.rules]
         mapM_ (flip match (route idRoute >> compile copyFileCompiler)) ["CNAME", "ads.txt"]
         match (fromString $ joinPath ["contents", "templates", "**"]) $
             compile templateBodyCompiler

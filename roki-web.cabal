@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 9a872fd7da3cb192a7bca500b26c6d86e7ee281f0d553db31b0c9eb5f44fd8ed
+-- hash: 5520df4699e577bed25a8a719969e5e71f27273a3d0f6f9bd3b44d4442bcc72d
 
 name:           roki-web
 version:        2.0.0.0
@@ -70,7 +70,7 @@ library
       Rules.Blog.Sitemap
       Rules.Blog.Type
       Rules.Blog.Utils
-      Rules.DisneyResume
+      Rules.DisneyExperienceSummary
       Rules.Media
       Rules.PageType
       Rules.Resume
