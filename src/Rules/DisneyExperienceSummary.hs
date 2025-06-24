@@ -1,22 +1,31 @@
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE DeriveGeneric, OverloadedStrings #-}
 module Rules.DisneyExperienceSummary (rules) where
 
-import           Control.Monad.Reader  (asks)
-import           Control.Monad.Trans   (MonadTrans (..))
-import           Data.List             (sortBy)
-import           Data.Ord              (comparing)
-import           Data.String           (IsString (..))
+import           Control.Monad.IO.Class (liftIO)
+import           Control.Monad.Reader   (asks)
+import           Control.Monad.Trans    (MonadTrans (..))
+import           Data.List              (sortBy)
+import           Data.Ord               (comparing)
+import           Data.String            (IsString (..))
+import           Dhall                  (FromDhall, Generic, auto, input)
 import           Hakyll
-import           System.FilePath       (joinPath, (</>))
-import           System.FilePath.Posix (takeBaseName)
+import           System.FilePath        (joinPath, (</>))
+import           System.FilePath.Posix  (takeBaseName)
 
-import           Config                (contentsRoot, readerOptions)
-import           Contexts              (siteCtx)
-import           Media.SVG             (mermaidTransform)
+import           Config                 (contentsRoot, readerOptions)
+import           Contexts               (siteCtx)
+import           Media.SVG              (mermaidTransform)
 import           Rules.PageType
-import           Text.Pandoc.Walk      (walkM)
-import           Utils                 (mconcatM, modifyExternalLinkAttr)
-import qualified Vendor.FontAwesome    as FA
+import           Text.Pandoc.Walk       (walkM)
+import           Utils                  (mconcatM, modifyExternalLinkAttr)
+import qualified Vendor.FontAwesome     as FA
+
+data Favorite = Favorite {
+    text     :: String
+  , category :: String
+  } deriving (Generic, Show)
+
+instance FromDhall Favorite
 
 disneyExperienceSummaryRoot :: FilePath
 disneyExperienceSummaryRoot = joinPath [contentsRoot, "disney_experience_summary"]
@@ -53,6 +62,13 @@ mdRule ss pat = do
             >>= katexRender
             >>= saveSnapshot ss
 
+loadDisneyFavorites :: IO [Favorite]
+loadDisneyFavorites = input auto "contents/config/disney/Favorites.dhall"
+
+filterFavoritesByCategory :: [Favorite] -> String -> [String]
+filterFavoritesByCategory favorites category =
+    map text $ filter (\f -> category f == category) favorites
+
 rules :: PageConfReader Rules ()
 rules = do
     let items = disneyLogsPattern : map (fromList . (:[]))
@@ -70,14 +86,19 @@ rules = do
             route $ gsubRoute (contentsRoot </> "pages/") (const mempty)
             compile $ do
                 disneyLogs <- sortByNum <$> loadAllSnapshots disneyLogsPattern disneyExperienceSummarySnapshot
+                favorites <- liftIO loadDisneyFavorites
+                let works = filterFavoritesByCategory favorites "works"
+                    attractions = filterFavoritesByCategory favorites "attractions"
                 disneyExperienceSummaryCtx <- mconcatM [
-                    pure $ constField "title" "Ponchi's Tokyo Disney Resort Journey"
+                    pure $ constField "title" "Ponchi's Disney Journey"
                   , pure $ constField "font_path" "../fonts/waltograph42.otf"
                   , pure siteCtx
                   , pure defaultContext
                   , constField "about-body"
                         <$> loadSnapshotBody aboutIdent disneyExperienceSummarySnapshot
                   , pure $ listField "disney-logs" (metadataField <> bodyField "log-body") (return disneyLogs)
+                  , pure $ listField "favorite-works" (constField "text") (return $ map (\w -> Item (fromString w) w) works)
+                  , pure $ listField "favorite-attractions" (constField "text") (return $ map (\a -> Item (fromString a) a) attractions)
                   ]
                 getResourceBody
                     >>= applyAsTemplate disneyExperienceSummaryCtx

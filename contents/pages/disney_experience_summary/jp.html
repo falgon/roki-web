@@ -44,7 +44,23 @@
         padding: 1.5rem;
         background-color: #f0f8ff;
         border-radius: 8px;
-        border-left: 4px solid #1e40af;
+        text-align: center;
+    }
+    .favorites-section {
+        margin: 2rem 0;
+    }
+    .favorite-category {
+        margin-bottom: 1rem;
+    }
+    .favorite-category h3 {
+        color: #1e40af;
+        margin-bottom: 0.5rem;
+    }
+    .tag-list {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0.5rem;
     }
     .profile-section {
         text-align: center;
@@ -82,7 +98,7 @@
         </div>
         <div class="sns-links">
             <ul class="is-unstyled mb-0 has-text-centered">
-                <li class="is-inline-block mr-4"><a href="/"><i class="fas fa-home fa-2x" aria-hidden="true"></i></a></li>
+                <li class="is-inline-block mr-4"><a href="/"><i class="fas fa-house fa-2x" aria-hidden="true"></i></a></li>
                 <li class="is-inline-block mr-4"><a href="https://x.com/p0nchi_v"><i class="fab fa-x-twitter fa-2x" aria-hidden="true"></i></a></li>
                 <li class="is-inline-block"><a href="https://www.instagram.com/ponchi.v/"><i class="fab fa-instagram fa-2x" aria-hidden="true"></i></a></li>
             </ul>
@@ -92,6 +108,35 @@
     
     <div class="about-section">
         $about-body$
+    </div>
+    
+    <div class="favorites-section">
+        <div class="columns">
+            <div class="column">
+                <div class="favorite-category">
+                    <h3 class="title is-4">好きな作品</h3>
+                    <div class="tag-list">
+                        <span class="tag is-info is-medium">美女と野獣</span>
+                        <span class="tag is-info is-medium">アラジン</span>
+                        <span class="tag is-info is-medium">リトル・マーメイド</span>
+                        <span class="tag is-info is-medium">ライオン・キング</span>
+                        <span class="tag is-info is-medium">トイ・ストーリー</span>
+                    </div>
+                </div>
+            </div>
+            <div class="column">
+                <div class="favorite-category">
+                    <h3 class="title is-4">好きなアトラクション</h3>
+                    <div class="tag-list">
+                        <span class="tag is-success is-medium">スプラッシュ・マウンテン</span>
+                        <span class="tag is-success is-medium">スペース・マウンテン</span>
+                        <span class="tag is-success is-medium">ホーンテッド・マンション</span>
+                        <span class="tag is-success is-medium">ピーター・パン</span>
+                        <span class="tag is-success is-medium">イッツ・ア・スモールワールド</span>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
     
     <div class="logs">
