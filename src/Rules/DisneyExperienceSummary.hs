@@ -71,8 +71,8 @@ rules = do
             compile $ do
                 disneyLogs <- sortByNum <$> loadAllSnapshots disneyLogsPattern disneyExperienceSummarySnapshot
                 disneyExperienceSummaryCtx <- mconcatM [
-                    pure $ constField "title" "Ponchi’s Tokyo Disney Resort Journey"
-                  , pure $ constField "font_path" "../../fonts/waltograph42.otf"
+                    pure $ constField "title" "Ponchi's Tokyo Disney Resort Journey"
+                  , pure $ constField "font_path" "../fonts/waltograph42.otf"
                   , pure siteCtx
                   , pure defaultContext
                   , constField "about-body"
