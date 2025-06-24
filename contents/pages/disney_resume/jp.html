@@ -1,9 +1,3 @@
----
-title: ディズニーリゾートで遊んだ経歴
----
-
-$partial("templates/site/head.html")$
-
 <style>
     @font-face {
         font-family: 'Waltograph';
@@ -47,10 +41,8 @@ $partial("templates/site/head.html")$
     }
 </style>
 
-$partial("templates/site/header.html")$
-
-<main class="container">
-    <h1 class="disney-title">$title$</h1>
+<div class="container">
+    <h1 class="disney-title">ディズニーリゾートで遊んだ経歴</h1>
     
     <div class="logs">
         $for(logs)$
@@ -61,6 +53,4 @@ $partial("templates/site/header.html")$
         </article>
         $endfor$
     </div>
-</main>
-
-$partial("templates/site/footer.html")$ 
+</div> 
