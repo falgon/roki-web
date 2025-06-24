@@ -9,7 +9,7 @@
         font-family: 'Waltograph', serif;
         font-size: 2.5rem;
         text-align: center;
-        color: #1e3a8a;
+        color: #083963;
         margin: 2rem 0;
         text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
     }
@@ -23,7 +23,7 @@
     .log-title {
         font-size: 1.5rem;
         font-weight: bold;
-        color: #1e40af;
+        color: #083963;
         margin-bottom: 0.5rem;
     }
     .log-date {
@@ -38,11 +38,12 @@
         max-width: 800px;
         margin: 0 auto;
         padding: 0 1rem;
+        color: #083963;
     }
     .about-section {
         margin: 2rem 0;
         padding: 1.5rem;
-        background-color: #f0f8ff;
+        background-color: #E3F2FE;
         border-radius: 8px;
         text-align: center;
     }
@@ -53,7 +54,7 @@
         margin-bottom: 1rem;
     }
     .favorite-category h3 {
-        color: #1e40af;
+        color: #083963;
         margin-bottom: 0.5rem;
     }
     .tag-list {
@@ -80,8 +81,12 @@
         margin: 0;
     }
     .sns-links a {
-        color: #1e40af;
+        color: #3CAADF;
         text-decoration: none;
+        transition: color 0.3s ease;
+    }
+    .sns-links a:hover {
+        color: rgba(255, 255, 255, 0.8);
     }
     .tag a {
         color: inherit;
@@ -89,6 +94,15 @@
     }
     .tag a:hover {
         text-decoration: underline;
+    }
+    .custom-tag {
+        background-color: #E3F2FE !important;
+        color: #083963 !important;
+        transition: all 0.3s ease;
+    }
+    .custom-tag:hover {
+        background-color: rgba(255, 255, 255, 0.8) !important;
+        color: #083963 !important;
     }
 </style>
 
@@ -125,9 +139,9 @@
                     <div class="tag-list">
                         $for(favorite-works)$
                         $if(link)$
-                        <span class="tag is-info is-medium"><a href="$link$" target="_blank" rel="noopener">$text$</a></span>
+                        <span class="tag is-small custom-tag"><a href="$link$" target="_blank" rel="noopener">$text$</a></span>
                         $else$
-                        <span class="tag is-info is-medium">$text$</span>
+                        <span class="tag is-small custom-tag">$text$</span>
                         $endif$
                         $endfor$
                     </div>
@@ -139,9 +153,9 @@
                     <div class="tag-list">
                         $for(favorite-attractions)$
                         $if(link)$
-                        <span class="tag is-success is-medium"><a href="$link$" target="_blank" rel="noopener">$text$</a></span>
+                        <span class="tag is-small custom-tag"><a href="$link$" target="_blank" rel="noopener">$text$</a></span>
                         $else$
-                        <span class="tag is-success is-medium">$text$</span>
+                        <span class="tag is-small custom-tag">$text$</span>
                         $endif$
                         $endfor$
                     </div>
