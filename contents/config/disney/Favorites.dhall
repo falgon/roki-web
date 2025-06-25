@@ -46,33 +46,27 @@ in    [ { text = "アナと雪の女王"
         }
       , { text = "クラブマウスビート"
         , category = "park-contents"
-        , link = Some
-            "https://www.tokyodisneyresort.jp/tdl/attraction/detail/186/"
+        , link = Some "https://www.tokyodisneyresort.jp/tdl/show/detail/965/"
         }
       , { text = "ミッキーのフィルハーマジック"
         , category = "park-contents"
-        , link = Some
-            "https://www.tokyodisneyresort.jp/tdl/attraction/detail/167/"
+        , link = Some "https://www.tokyodisneyresort.jp/tdl/attraction/detail/167/"
         }
       , { text = "スター・ツアーズ"
         , category = "park-contents"
-        , link = Some
-            "https://www.tokyodisneyresort.jp/tdl/attraction/detail/188/"
+        , link = Some "https://www.tokyodisneyresort.jp/tdl/attraction/detail/183/"
         }
       , { text = "ビッグサンダー・マウンテン"
         , category = "park-contents"
-        , link = Some
-            "https://www.tokyodisneyresort.jp/tdl/attraction/detail/189/"
+        , link = Some "https://www.tokyodisneyresort.jp/tdl/attraction/detail/160/"
         }
-      , { text = "フローズンジャーニー"
+      , { text = "アナとエルサのフローズンジャーニー"
         , category = "park-contents"
-        , link = Some
-            "https://www.tokyodisneyresort.jp/tdl/attraction/detail/190/"
+        , link = Some "https://www.tokyodisneyresort.jp/tds/attraction/detail/255/"
         }
       , { text = "タワー・オブ・テラー"
         , category = "park-contents"
-        , link = Some
-            "https://www.tokyodisneyresort.jp/tdl/attraction/detail/191/"
+        , link = Some "https://www.tokyodisneyresort.jp/tds/attraction/detail/243/"
         }
       ]
     : List t
