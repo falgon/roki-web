@@ -22,6 +22,20 @@
     }
 }
 
+.author-info-list {
+    li {
+        position: relative;
+        padding-left: 1.5rem;
+        margin-bottom: 0.5rem;
+    }
+    li i,
+    li svg {
+        position: absolute;
+        left: 0;
+        top: 0.1rem;
+    }
+}
+
 #tab-content {
     .acontent {
         &.is-active {
