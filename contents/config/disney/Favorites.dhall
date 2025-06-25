@@ -8,9 +8,9 @@ in    [ { text = "アナと雪の女王"
         , category = "works"
         , link = Some "https://www.disney.co.jp/movie/zootopia.html"
         }
-      , { text = "ミラベルと魔法だらけの家"
+      , { text = "メリーポピンズ"
         , category = "works"
-        , link = Some "https://www.disney.co.jp/movie/encanto.html"
+        , link = Some "https://www.disney.co.jp/movie/mary-poppins.html"
         }
       , { text = "魔法にかけられて"
         , category = "works"
@@ -36,21 +36,21 @@ in    [ { text = "アナと雪の女王"
         , category = "characters"
         , link = Some "https://www.disney.co.jp/character/elsa.html"
         }
-      , { text = "ジュディ・ポップス"
+      , { text = "ジュディ・ホップス"
         , category = "characters"
         , link = Some "https://www.disney.co.jp/character/judy-hopps.html"
         }
-      , { text = "ミッキーのフィルハーマジック"
+      , { text = "ミッキーのマジカルミュージックワールド"
         , category = "park-contents"
-        , link = Some "https://www.tokyodisneyresort.jp/tdl/attraction/detail/185/"
+        , link = Some "https://www.tokyodisneyresort.jp/tdl/show/detail/895/"
         }
       , { text = "クラブマウスビート"
         , category = "park-contents"
         , link = Some "https://www.tokyodisneyresort.jp/tdl/attraction/detail/186/"
         }
-      , { text = "フィルハーマジック"
+      , { text = "ミッキーのフィルハーマジック"
         , category = "park-contents"
-        , link = Some "https://www.tokyodisneyresort.jp/tdl/attraction/detail/187/"
+        , link = Some "https://www.tokyodisneyresort.jp/tdl/attraction/detail/167/"
         }
       , { text = "スター・ツアーズ"
         , category = "park-contents"
