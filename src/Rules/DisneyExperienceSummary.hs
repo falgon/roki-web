@@ -12,6 +12,7 @@ import           Dhall                  (FromDhall, Generic, auto, input)
 import           Hakyll
 import           System.FilePath        (joinPath, (</>))
 import           System.FilePath.Posix  (takeBaseName)
+import           Text.Read              (readMaybe)
 
 import           Config                 (contentsRoot, readerOptions)
 import           Contexts               (siteCtx)
@@ -28,6 +29,17 @@ data Favorite = Favorite {
   } deriving (Generic, Show)
 
 instance FromDhall Favorite
+
+-- SNSリンクのメタデータを処理するためのフィールド
+snsLinksField :: String -> Context String
+snsLinksField snsType = listFieldWith (snsType ++ "-links") (field "url" (return . itemBody)) $ \item -> do
+    mUrls <- getMetadataField (itemIdentifier item) snsType
+    case mUrls of
+        Just urls -> return $ map (\url -> Item (fromString url) (trim url)) (lines urls)
+        Nothing   -> return []
+  where
+    trim = f . f
+      where f = reverse . dropWhile (`elem` (" \n\r\t" :: String))
 
 disneyExperienceSummaryRoot :: FilePath
 disneyExperienceSummaryRoot = joinPath [contentsRoot, "disney_experience_summary"]
@@ -70,6 +82,16 @@ loadDisneyFavorites = input auto "./contents/config/disney/Favorites.dhall"
 filterFavoritesByCategory :: [Favorite] -> String -> [String]
 filterFavoritesByCategory favorites cat = map text $ filter ((== cat) . category) favorites
 
+-- ログエントリ用のコンテキストを作成
+disneyLogCtx :: Context String
+disneyLogCtx = mconcat
+    [ metadataField
+    , bodyField "log-body"
+    , snsLinksField "youtube"
+    , snsLinksField "instagram"
+    , snsLinksField "x"
+    ]
+
 rules :: PageConfReader Rules ()
 rules = do
     let items = disneyLogsPattern : map (fromList . (:[]))
@@ -98,11 +120,11 @@ rules = do
                   , pure defaultContext
                   , constField "about-body"
                         <$> loadSnapshotBody aboutIdent disneyExperienceSummarySnapshot
-                  , pure $ listField "disney-logs" (metadataField <> bodyField "log-body") (return disneyLogs)
+                  , pure $ listField "disney-logs" disneyLogCtx (return disneyLogs)
                   , pure $ listField "favorite-works" (field "text" (return . text . itemBody) <> field "link" (return . maybe "" id . link . itemBody)) (return $ map (\f -> Item (fromString $ text f) f) $ filter ((== "works") . category) favorites)
                   , pure $ listField "favorite-characters" (field "text" (return . text . itemBody) <> field "link" (return . maybe "" id . link . itemBody)) (return $ map (\f -> Item (fromString $ text f) f) $ filter ((== "characters") . category) favorites)
                   , pure $ listField "favorite-park-contents" (field "text" (return . text . itemBody) <> field "link" (return . maybe "" id . link . itemBody)) (return $ map (\f -> Item (fromString $ text f) f) $ filter ((== "park-contents") . category) favorites)
-                  ]
+                      ]
                 getResourceBody
                     >>= applyAsTemplate disneyExperienceSummaryCtx
                     >>= loadAndApplyTemplate rootTemplate disneyExperienceSummaryCtx

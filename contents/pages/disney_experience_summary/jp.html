@@ -29,6 +29,9 @@
         color: #6b7280;
         font-size: 0.8rem;
         margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
     }
     .log-body {
         line-height: 1.5;
@@ -140,6 +143,29 @@
     .logs::-webkit-scrollbar-thumb:hover {
         background: rgba(227, 242, 254, 0.6);
     }
+    .sns-icons {
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+        margin-left: auto;
+    }
+    .sns-icons a {
+        color: #6b7280;
+        text-decoration: none;
+        transition: color 0.3s ease;
+    }
+    .sns-icons a:hover {
+        color: #3CAADF;
+    }
+    .sns-icons .fa-youtube:hover {
+        color: #FF0000;
+    }
+    .sns-icons .fa-instagram:hover {
+        color: #E4405F;
+    }
+    .sns-icons .fa-x-twitter:hover {
+        color: #000000;
+    }
 </style>
 
 <div class="container">
@@ -220,7 +246,30 @@
             $for(disney-logs)$
             <article class="log-entry">
                 <h2 class="log-title">$title$</h2>
-                <div class="log-date">$date$</div>
+                <div class="log-date">
+                    <span>$date$</span>
+                    $if(youtube-links)$
+                    <div class="sns-icons">
+                        $for(youtube-links)$
+                        <a href="$url$" target="_blank" rel="noopener" title="YouTube"><i class="fab fa-youtube fa-sm"></i></a>
+                        $endfor$
+                    </div>
+                    $endif$
+                    $if(instagram-links)$
+                    <div class="sns-icons">
+                        $for(instagram-links)$
+                        <a href="$url$" target="_blank" rel="noopener" title="Instagram"><i class="fab fa-instagram fa-sm"></i></a>
+                        $endfor$
+                    </div>
+                    $endif$
+                    $if(x-links)$
+                    <div class="sns-icons">
+                        $for(x-links)$
+                        <a href="$url$" target="_blank" rel="noopener" title="X (Twitter)"><i class="fab fa-x-twitter fa-sm"></i></a>
+                        $endfor$
+                    </div>
+                    $endif$
+                </div>
                 <div class="log-body">$log-body$</div>
             </article>
             $endfor$
