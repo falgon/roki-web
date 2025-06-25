@@ -10,7 +10,8 @@ in    [ { text = "アナと雪の女王"
         }
       , { text = "メリー・ポピンズ"
         , category = "works"
-        , link = Some "https://www.disneyplus.com/ja-jp/browse/entity-f63db666-b097-4c61-99c1-b778de2d4ae1"
+        , link = Some
+            "https://www.disneyplus.com/ja-jp/browse/entity-f63db666-b097-4c61-99c1-b778de2d4ae1"
         }
       , { text = "魔法にかけられて"
         , category = "works"
@@ -26,7 +27,8 @@ in    [ { text = "アナと雪の女王"
         }
       , { text = "ワンス・アポン・ア・スタジオ -100年の思い出-"
         , category = "works"
-        , link = Some "https://www.disneyplus.com/ja-jp/browse/entity-ed8f308d-b613-48b4-aefc-e20f0c84fc64"
+        , link = Some
+            "https://www.disneyplus.com/ja-jp/browse/entity-ed8f308d-b613-48b4-aefc-e20f0c84fc64"
         }
       , { text = "スノーギース"
         , category = "characters"
@@ -50,23 +52,28 @@ in    [ { text = "アナと雪の女王"
         }
       , { text = "ミッキーのフィルハーマジック"
         , category = "park-contents"
-        , link = Some "https://www.tokyodisneyresort.jp/tdl/attraction/detail/167/"
+        , link = Some
+            "https://www.tokyodisneyresort.jp/tdl/attraction/detail/167/"
         }
       , { text = "スター・ツアーズ"
         , category = "park-contents"
-        , link = Some "https://www.tokyodisneyresort.jp/tdl/attraction/detail/183/"
+        , link = Some
+            "https://www.tokyodisneyresort.jp/tdl/attraction/detail/183/"
         }
       , { text = "ビッグサンダー・マウンテン"
         , category = "park-contents"
-        , link = Some "https://www.tokyodisneyresort.jp/tdl/attraction/detail/160/"
+        , link = Some
+            "https://www.tokyodisneyresort.jp/tdl/attraction/detail/160/"
         }
       , { text = "アナとエルサのフローズンジャーニー"
         , category = "park-contents"
-        , link = Some "https://www.tokyodisneyresort.jp/tds/attraction/detail/255/"
+        , link = Some
+            "https://www.tokyodisneyresort.jp/tds/attraction/detail/255/"
         }
       , { text = "タワー・オブ・テラー"
         , category = "park-contents"
-        , link = Some "https://www.tokyodisneyresort.jp/tds/attraction/detail/243/"
+        , link = Some
+            "https://www.tokyodisneyresort.jp/tds/attraction/detail/243/"
         }
       ]
     : List t
