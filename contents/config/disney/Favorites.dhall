@@ -42,6 +42,10 @@ in    [ { text = "アナと雪の女王"
         , category = "characters"
         , link = Some "https://www.disney.co.jp/fc/zootopia/character/judy"
         }
+      , { text = "リトル・グリーン・メン"
+        , category = "characters"
+        , link = Some "https://www.disney.co.jp/fc/toystory/character/aliens"
+        }
       , { text = "ミッキーのマジカルミュージックワールド"
         , category = "park-contents"
         , link = Some "https://www.tokyodisneyresort.jp/tdl/show/detail/895/"
