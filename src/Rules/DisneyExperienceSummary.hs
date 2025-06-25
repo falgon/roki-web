@@ -33,10 +33,11 @@ instance FromDhall Favorite
 -- SNSリンクのメタデータを処理するためのフィールド
 snsLinksField :: String -> Context String
 snsLinksField snsType = listFieldWith (snsType ++ "-links") (field "url" (return . itemBody)) $ \item -> do
-    mUrls <- getMetadataField (itemIdentifier item) snsType
-    case mUrls of
-        Just urls -> return $ map (\url -> Item (fromString url) (trim url)) (lines urls)
-        Nothing   -> return []
+    metadata <- getMetadata $ itemIdentifier item
+    let urls = case lookupString snsType metadata of
+            Just urlsStr -> filter (not . null) $ map trim $ lines urlsStr
+            Nothing -> []
+    return $ map (\url -> Item (fromString url) url) urls
   where
     trim = f . f
       where f = reverse . dropWhile (`elem` (" \n\r\t" :: String))
