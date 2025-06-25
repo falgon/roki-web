@@ -51,7 +51,8 @@ in    [ { text = "アナと雪の女王"
         }
       , { text = "ミッキーのフィルハーマジック"
         , category = "park-contents"
-        , link = Some "https://www.tokyodisneyresort.jp/tdl/attraction/detail/167/"
+        , link = Some
+            "https://www.tokyodisneyresort.jp/tdl/attraction/detail/167/"
         }
       , { text = "スター・ツアーズ"
         , category = "park-contents"
