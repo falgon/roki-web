@@ -2,43 +2,43 @@ let t = ./Type/Favorite.dhall
 
 in    [ { text = "アナと雪の女王"
         , category = "works"
-        , link = Some "https://www.disney.co.jp/movie/frozen.html"
+        , link = Some "https://www.disney.co.jp/fc/anayuki"
         }
       , { text = "ズートピア"
         , category = "works"
-        , link = Some "https://www.disney.co.jp/movie/zootopia.html"
+        , link = Some "https://www.disney.co.jp/fc/zootopia"
         }
-      , { text = "メリーポピンズ"
+      , { text = "メリー・ポピンズ"
         , category = "works"
-        , link = Some "https://www.disney.co.jp/movie/mary-poppins.html"
+        , link = Some "https://www.disneyplus.com/ja-jp/browse/entity-f63db666-b097-4c61-99c1-b778de2d4ae1"
         }
       , { text = "魔法にかけられて"
         , category = "works"
-        , link = Some "https://www.disney.co.jp/movie/enchanted.html"
+        , link = Some "https://www.disney.co.jp/fc/live-action/enchanted"
         }
       , { text = "ソウルフル・ワールド"
         , category = "works"
-        , link = Some "https://www.disney.co.jp/movie/soul.html"
+        , link = Some "https://www.disney.co.jp/movie/soulfulworld"
         }
       , { text = "クルエラ"
         , category = "works"
-        , link = Some "https://www.disney.co.jp/movie/cruella.html"
+        , link = Some "https://www.disney.co.jp/movie/cruella"
         }
-      , { text = "ワンス・アポン・ア・スタジオ"
+      , { text = "ワンス・アポン・ア・スタジオ -100年の思い出-"
         , category = "works"
-        , link = Some "https://www.disney.co.jp/movie/once-upon-a-studio.html"
+        , link = Some "https://www.disneyplus.com/ja-jp/browse/entity-ed8f308d-b613-48b4-aefc-e20f0c84fc64"
         }
       , { text = "スノーギース"
         , category = "characters"
-        , link = Some "https://www.disney.co.jp/character/snowgies.html"
+        , link = Some "https://www.disney.co.jp/fc/anayuki/character/snowgies"
         }
       , { text = "エルサ"
         , category = "characters"
-        , link = Some "https://www.disney.co.jp/character/elsa.html"
+        , link = Some "https://www.disney.co.jp/fc/anayuki/character/elsa"
         }
       , { text = "ジュディ・ホップス"
         , category = "characters"
-        , link = Some "https://www.disney.co.jp/character/judy-hopps.html"
+        , link = Some "https://www.disney.co.jp/fc/zootopia/character/judy"
         }
       , { text = "ミッキーのマジカルミュージックワールド"
         , category = "park-contents"
