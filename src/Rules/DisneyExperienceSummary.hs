@@ -7,12 +7,10 @@ import           Control.Monad.Trans    (MonadTrans (..))
 import           Data.List              (sortBy)
 import           Data.Ord               (comparing)
 import           Data.String            (IsString (..))
-import qualified Data.Text              as T
 import           Dhall                  (FromDhall, Generic, auto, input)
 import           Hakyll
 import           System.FilePath        (joinPath, (</>))
 import           System.FilePath.Posix  (takeBaseName)
-import           Text.Read              (readMaybe)
 
 import           Config                 (contentsRoot, readerOptions)
 import           Contexts               (siteCtx)
@@ -33,11 +31,10 @@ instance FromDhall Favorite
 -- SNSリンクのメタデータを処理するためのフィールド
 snsLinksField :: String -> Context String
 snsLinksField snsType = listFieldWith (snsType ++ "-links") (field "url" (return . itemBody)) $ \item -> do
-    metadata <- getMetadata $ itemIdentifier item
-    let urls = case lookupString snsType metadata of
-            Just urlsStr -> filter (not . null) $ map trim $ lines urlsStr
-            Nothing      -> []
-    return $ map (\url -> Item (fromString url) url) urls
+    mUrls <- getMetadataField (itemIdentifier item) snsType
+    case mUrls of
+        Just urlsStr -> return $ map (\url -> Item (fromString url) (trim url)) (splitAll "," urlsStr)
+        Nothing     -> return []
   where
     trim = f . f
       where f = reverse . dropWhile (`elem` (" \n\r\t" :: String))
