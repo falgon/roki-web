@@ -36,7 +36,7 @@ snsLinksField snsType = listFieldWith (snsType ++ "-links") (field "url" (return
     metadata <- getMetadata $ itemIdentifier item
     let urls = case lookupString snsType metadata of
             Just urlsStr -> filter (not . null) $ map trim $ lines urlsStr
-            Nothing -> []
+            Nothing      -> []
     return $ map (\url -> Item (fromString url) url) urls
   where
     trim = f . f
