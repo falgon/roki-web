@@ -1,0 +1,266 @@
+<style>
+    @font-face {
+        font-family: 'Waltograph';
+        src: url('../fonts/waltograph42.otf') format('opentype');
+        font-weight: normal;
+        font-style: normal;
+    }
+    .disney-title {
+        font-family: 'Waltograph', serif;
+        font-size: 2.5rem;
+        text-align: center;
+        color: #083963;
+        margin: 0 0 2rem 0;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+    }
+    .log-entry {
+        margin: 1rem 0;
+        padding: 1rem;
+        background-color: #E3F2FE;
+        border-radius: 8px;
+    }
+    .log-title {
+        font-size: 1.2rem;
+        font-weight: bold;
+        color: #083963;
+        margin-bottom: 0.3rem;
+    }
+    .log-date {
+        color: #6b7280;
+        font-size: 0.8rem;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .log-date a {
+        color: #6b7280;
+        text-decoration: none;
+        transition: color 0.3s ease;
+    }
+    .log-date a:hover {
+        color: #3CAADF;
+    }
+    .log-date .fa-youtube:hover {
+        color: #FF0000;
+    }
+    .log-date .fa-instagram:hover {
+        color: #E4405F;
+    }
+    .log-date .fa-x-twitter:hover {
+        color: #000000;
+    }
+    .log-body {
+        line-height: 1.5;
+        font-size: 0.95rem;
+    }
+    .container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 0 1rem;
+        color: #083963;
+    }
+    .about-section {
+        padding: 1.5rem;
+        background-color: #E3F2FE;
+        border-radius: 8px;
+        text-align: center;
+    }
+    .favorites-section {
+        margin-top: 4rem;
+    }
+    .favorites-section .columns {
+        margin: 0;
+    }
+    .favorites-section .column {
+        padding: 0;
+    }
+    @media screen and (max-width: 768px) {
+        .favorites-section .column:first-child,
+        .favorites-section .column:nth-child(2) {
+            margin-bottom: 2rem;
+        }
+        .favorite-category.mt-2 {
+            margin-top: 2rem !important;
+        }
+    }
+    .favorite-category {
+        margin-bottom: 0;
+    }
+    .favorite-category h3 {
+        color: #083963;
+        margin-bottom: 0.5rem;
+        padding-left: 2rem;
+        position: relative;
+    }
+    .favorite-category h3 svg {
+        position: absolute;
+        left: 0;
+        top: 0.1rem;
+    }
+    .tag-list {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+    .profile-section {
+        text-align: center;
+    }
+    .sns-links {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    .sns-links ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    .sns-links a {
+        color: #3CAADF;
+        text-decoration: none;
+        transition: color 0.3s ease;
+    }
+    .sns-links a:hover {
+        color: rgba(60, 170, 223, 0.6);
+    }
+    .tag a {
+        color: inherit;
+        text-decoration: none;
+    }
+    .tag a:hover {
+        text-decoration: none;
+    }
+    .custom-tag {
+        background-color: #E3F2FE !important;
+        color: #083963 !important;
+        transition: all 0.3s ease;
+    }
+    .custom-tag:hover {
+        background-color: rgba(227, 242, 254, 0.6) !important;
+        color: #083963 !important;
+    }
+    .logs {
+        max-height: 600px;
+        overflow-y: auto;
+        
+    }
+    .logs::-webkit-scrollbar {
+        width: 8px;
+    }
+    .logs::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 4px;
+    }
+    .logs::-webkit-scrollbar-thumb {
+        background: #E3F2FE;
+        border-radius: 4px;
+    }
+    .logs::-webkit-scrollbar-thumb:hover {
+        background: rgba(227, 242, 254, 0.6);
+    }
+</style>
+
+<div class="container">
+    <h1 class="disney-title">$title$</h1>
+    <div class="profile-section">
+        <div class="profile-image mb-3">
+            <figure class="image is-128x128 mx-auto">
+                <picture>
+                    <source class="is-rounded" type="image/webp" srcset="../images/avator/prof1000x1000.png.webp">
+                    <img alt="Profile photo" class="is-rounded" src="../images/avator/prof1000x1000.png" />
+                </picture>
+            </figure>
+        </div>
+        <div class="sns-links mb-3">
+            <ul class="is-unstyled mb-0 has-text-centered">
+                <li class="is-inline-block mr-4"><a href="/"><i class="fas fa-house fa-lg" aria-hidden="true"></i></a></li>
+                <li class="is-inline-block mr-4"><a href="https://x.com/p0nchi_v"><i class="fab fa-x-twitter fa-lg" aria-hidden="true"></i></a></li>
+                <li class="is-inline-block"><a href="https://www.instagram.com/ponchi.v/"><i class="fab fa-instagram fa-lg" aria-hidden="true"></i></a></li>
+            </ul>
+        </div>
+    </div>
+    
+    
+    <div class="about-section">
+        $about-body$
+    </div>
+    
+    <div class="favorites-section">
+        <div class="columns">
+            <div class="column pr-2">
+                <div class="favorite-category">
+                    <h3 class="title is-4"><i class="fas fa-film mr-2"></i>好きな作品</h3>
+                    <div class="tag-list">
+                        $for(favorite-works)$
+                        $if(link)$
+                        <span class="tag is-small custom-tag"><a href="$link$" target="_blank" rel="noopener">$text$</a></span>
+                        $else$
+                        <span class="tag is-small custom-tag">$text$</span>
+                        $endif$
+                        $endfor$
+                    </div>
+                </div>
+            </div>
+            <div class="column pr-2">
+                <div class="favorite-category">
+                    <h3 class="title is-4"><i class="fas fa-hat-wizard mr-2"></i>好きなキャラクタ</h3>
+                    <div class="tag-list">
+                        $for(favorite-characters)$
+                        $if(link)$
+                        <span class="tag is-small custom-tag"><a href="$link$" target="_blank" rel="noopener">$text$</a></span>
+                        $else$
+                        <span class="tag is-small custom-tag">$text$</span>
+                        $endif$
+                        $endfor$
+                    </div>
+                </div>
+            </div>
+            <div class="column pr-2">
+                <div class="favorite-category">
+                    <h3 class="title is-4"><i class="fas fa-horse mr-2"></i>好きなパークコンテンツ</h3>
+                    <div class="tag-list">
+                        $for(favorite-park-contents)$
+                        $if(link)$
+                        <span class="tag is-small custom-tag"><a href="$link$" target="_blank" rel="noopener">$text$</a></span>
+                        $else$
+                        <span class="tag is-small custom-tag">$text$</span>
+                        $endif$
+                        $endfor$
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="favorite-category mt-2">
+        <h3 class="title is-4 mb-3"><i class="fas fa-wand-magic-sparkles"></i>体験歴</h3>
+        <div class="logs">
+            $for(disney-logs)$
+            <article class="log-entry">
+                <h2 class="log-title">$title$</h2>
+                <div class="log-date">
+                    <span>$date$</span>
+                    $if(youtube-links)$
+                    $for(youtube-links)$
+                    <a href="$url$" target="_blank" rel="noopener" title="YouTube"><i class="fab fa-youtube fa-sm"></i></a>
+                    $endfor$
+                    $endif$
+                    $if(instagram-links)$
+                    $for(instagram-links)$
+                    <a href="$url$" target="_blank" rel="noopener" title="Instagram"><i class="fab fa-instagram fa-sm"></i></a>
+                    $endfor$
+                    $endif$
+                    $if(x-links)$
+                    $for(x-links)$
+                    <a href="$url$" target="_blank" rel="noopener" title="X (Twitter)"><i class="fab fa-x-twitter fa-sm"></i></a>
+                    $endfor$
+                    $endif$
+                </div>
+                <div class="log-body">$log-body$</div>
+            </article>
+            $endfor$
+        </div>
+    </div>
+</div> 

@@ -71,6 +71,9 @@ authorCtx = mconcatMap (uncurry constField) [
                 li_ $ a_
                     [href_ "https://www.san-x.co.jp/rilakkuma/profile/#&gid=1&pid=3"]
                     "Kiiroitori"
+                li_ $ a_
+                    [href_ "disney_experience_summary/jp.html"]
+                    "Disney"
 
 siteCtx :: Context String
 siteCtx = mconcat [
