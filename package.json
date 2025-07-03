@@ -17,7 +17,7 @@
         "svgo": "^4.0.0"
     },
     "dependencies": {
-        "@mermaid-js/mermaid-cli": "^11.4.2",
+        "@mermaid-js/mermaid-cli": "^11.6.0",
         "bulma": "^1.0.4",
         "d3": "^7.9.0",
         "mathjs": "^14.5.3",
