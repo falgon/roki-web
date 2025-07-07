@@ -160,6 +160,21 @@
     .logs::-webkit-scrollbar-thumb:hover {
         background: rgba(227, 242, 254, 0.6);
     }
+    .log-tags {
+        margin-bottom: 0.5rem;
+    }
+    .log-tags .tag {
+        margin-right: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+    .log-tags .tag a {
+        color: white;
+        text-decoration: none;
+    }
+    .log-tags .tag a:hover {
+        color: white;
+        text-decoration: none;
+    }
 </style>
 
 <div class="container">
@@ -240,6 +255,15 @@
             $for(disney-logs)$
             <article class="log-entry">
                 <h2 class="log-title">$title$</h2>
+                $if(tags)$
+                <div class="log-tags">
+                    $for(tags)$
+                    <span class="tag is-small" style="background-color: $color$; color: white;">
+                        <a href="$link$" target="_blank" rel="noopener">$name$</a>
+                    </span>
+                    $endfor$
+                </div>
+                $endif$
                 <div class="log-date">
                     <span>$date$</span>
                     $if(youtube-links)$

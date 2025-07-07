@@ -28,12 +28,47 @@ data Favorite = Favorite {
 
 instance FromDhall Favorite
 
+-- タグの色とリンクの定義
+tagConfig :: [(String, (String, String))]
+tagConfig = [
+    ("FSH", ("#854454", "https://www.tokyodisneyresort.jp/hotel/fsh.html"))
+  , ("DHM", ("#8A7501", "https://www.tokyodisneyresort.jp/hotel/dhm.html"))
+  , ("TDH", ("#B95C00", "https://www.tokyodisneyresort.jp/hotel/tdh.html"))
+  , ("DAH", ("#1A2B8F", "https://www.tokyodisneyresort.jp/hotel/dah.html"))
+  , ("TSH", ("#C28A02", "https://www.tokyodisneyresort.jp/hotel/tsh.html"))
+  , ("TDL", ("#CF2C72", "https://www.tokyodisneyresort.jp/tdl/"))
+  , ("TDS", ("#017788", "https://www.tokyodisneyresort.jp/tds/"))
+  ]
+
+-- タグの色を取得
+getTagColor :: String -> String
+getTagColor tag = case lookup tag tagConfig of
+    Just (color, _) -> color
+    Nothing         -> "#363636" -- Bulma is-dark の色
+
+-- タグのリンクを取得
+getTagLink :: String -> String
+getTagLink tag = case lookup tag tagConfig of
+    Just (_, link) -> link
+    Nothing        -> "#"
+
 -- SNSリンクのメタデータを処理するためのフィールド
 snsLinksField :: String -> Context String
 snsLinksField snsType = listFieldWith (snsType ++ "-links") (field "url" (return . itemBody)) $ \item -> do
     mUrls <- getMetadataField (itemIdentifier item) snsType
     case mUrls of
         Just urlsStr -> return $ map (\url -> Item (fromString url) (trim url)) (splitAll "," urlsStr)
+        Nothing     -> return []
+  where
+    trim = f . f
+      where f = reverse . dropWhile (`elem` (" \n\r\t" :: String))
+
+-- タグのメタデータを処理するためのフィールド
+disneyTagsField :: Context String
+disneyTagsField = listFieldWith "tags" (field "name" (return . itemBody) <> field "color" (return . getTagColor . itemBody) <> field "link" (return . getTagLink . itemBody)) $ \item -> do
+    mTags <- getMetadataField (itemIdentifier item) "tags"
+    case mTags of
+        Just tagsStr -> return $ map (\tag -> Item (fromString tag) (trim tag)) (splitAll "," tagsStr)
         Nothing     -> return []
   where
     trim = f . f
@@ -88,6 +123,7 @@ disneyLogCtx = mconcat
     , snsLinksField "youtube"
     , snsLinksField "instagram"
     , snsLinksField "x"
+    , disneyTagsField
     ]
 
 rules :: PageConfReader Rules ()
