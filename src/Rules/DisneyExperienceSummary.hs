@@ -2,7 +2,7 @@
 module Rules.DisneyExperienceSummary (rules) where
 
 import           Control.Monad.IO.Class (liftIO)
-import           Control.Monad.Reader   (asks)
+import           Control.Monad.Reader   (asks, lift)
 import           Control.Monad.Trans    (MonadTrans (..))
 import           Data.List              (sortBy)
 import           Data.Ord               (comparing)
@@ -65,7 +65,7 @@ snsLinksField snsType = listFieldWith (snsType ++ "-links") (field "url" (return
 
 -- タグのメタデータを処理するためのフィールド
 disneyTagsField :: Context String
-disneyTagsField = listFieldWith "tags" (field "name" (return . itemBody) <> field "color" (return . getTagColor . itemBody) <> field "link" (return . getTagLink . itemBody)) $ \item -> do
+disneyTagsField = listFieldWith "tags" tagCtx $ \item -> do
     mTags <- getMetadataField (itemIdentifier item) "tags"
     case mTags of
         Just tagsStr -> return $ map (\tag -> Item (fromString tag) (trim tag)) (splitAll "," tagsStr)
@@ -73,6 +73,7 @@ disneyTagsField = listFieldWith "tags" (field "name" (return . itemBody) <> fiel
   where
     trim = f . f
       where f = reverse . dropWhile (`elem` (" \n\r\t" :: String))
+    tagCtx = field "name" (return . itemBody) <> field "color" (return . getTagColor . itemBody) <> field "link" (return . getTagLink . itemBody)
 
 disneyExperienceSummaryRoot :: FilePath
 disneyExperienceSummaryRoot = joinPath [contentsRoot, "disney_experience_summary"]
