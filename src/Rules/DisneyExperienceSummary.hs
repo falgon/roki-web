@@ -14,6 +14,10 @@ import           System.FilePath.Posix  (takeBaseName)
 
 import           Config                 (contentsRoot, readerOptions)
 import           Contexts               (siteCtx)
+import qualified Data.Text              as T
+import qualified Data.Text.Lazy         as TL
+import           Lucid.Base             (Html, renderText, toHtml)
+import           Lucid.Html5
 import           Media.SVG              (mermaidTransform)
 import           Rules.PageType
 import           Text.Pandoc.Walk       (walkM)
@@ -65,17 +69,19 @@ snsLinksField snsType = listFieldWith (snsType ++ "-links") (field "url" (return
 
 -- タグのメタデータを処理するためのフィールド
 disneyTagsField :: Context String
-disneyTagsField = listFieldWith "disney-tags" tagCtx $ \item -> do
+disneyTagsField = field "disney-tags" $ \item -> do
     mTags <- getMetadataField (itemIdentifier item) "disney-tags"
     case mTags of
-        Just tagsStr -> return $ map (\tag -> Item (fromString tag) (trim tag)) (splitAll "," tagsStr)
-        Nothing      -> return []
+        Just tagsStr -> do
+            let tags = map trim (splitAll "," tagsStr)
+            return $ TL.unpack $ renderText $ mconcat (map renderTag tags)
+        Nothing      -> return ""
   where
     trim = f . f
       where f = reverse . dropWhile (`elem` (" \n\r\t" :: String))
-    tagCtx = field "name" (return . itemBody)
-          <> field "color" (return . getTagColor . itemBody)
-          <> field "link" (return . getTagLink . itemBody)
+    renderTag :: String -> Html ()
+    renderTag tag = span_ [class_ "tag is-small", style_ (T.pack $ "background-color: " ++ getTagColor tag ++ "; color: white; margin-right: 0.5rem; margin-bottom: 0.5rem; display: inline-block;")] $
+        a_ [href_ (T.pack $ getTagLink tag), target_ "_blank", rel_ "noopener"] $ toHtml tag
 
 disneyExperienceSummaryRoot :: FilePath
 disneyExperienceSummaryRoot = joinPath [contentsRoot, "disney_experience_summary"]
