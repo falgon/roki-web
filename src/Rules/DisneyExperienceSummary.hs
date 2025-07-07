@@ -1,28 +1,27 @@
 {-# LANGUAGE DeriveGeneric, OverloadedStrings #-}
 module Rules.DisneyExperienceSummary (rules) where
 
-import           Control.Monad.IO.Class (liftIO)
-import           Control.Monad.Reader   (asks, lift)
-import           Control.Monad.Trans    (MonadTrans (..))
-import           Data.List              (sortBy)
-import           Data.Ord               (comparing)
-import           Data.String            (IsString (..))
-import           Dhall                  (FromDhall, Generic, auto, input)
+import           Control.Monad.Reader  (asks)
+import           Control.Monad.Trans   (MonadTrans (..))
+import           Data.List             (sortBy)
+import           Data.Ord              (comparing)
+import           Data.String           (IsString (..))
+import           Dhall                 (FromDhall, Generic, auto, input)
 import           Hakyll
-import           System.FilePath        (joinPath, (</>))
-import           System.FilePath.Posix  (takeBaseName)
+import           System.FilePath       (joinPath, (</>))
+import           System.FilePath.Posix (takeBaseName)
 
-import           Config                 (contentsRoot, readerOptions)
-import           Contexts               (siteCtx)
-import qualified Data.Text              as T
-import qualified Data.Text.Lazy         as TL
-import           Lucid.Base             (Html, renderText, toHtml)
+import           Config                (contentsRoot, readerOptions)
+import           Contexts              (siteCtx)
+import qualified Data.Text             as T
+import qualified Data.Text.Lazy        as TL
+import           Lucid.Base            (Html, renderText, toHtml)
 import           Lucid.Html5
-import           Media.SVG              (mermaidTransform)
+import           Media.SVG             (mermaidTransform)
 import           Rules.PageType
-import           Text.Pandoc.Walk       (walkM)
-import           Utils                  (mconcatM, modifyExternalLinkAttr)
-import qualified Vendor.FontAwesome     as FA
+import           Text.Pandoc.Walk      (walkM)
+import           Utils                 (mconcatM, modifyExternalLinkAttr)
+import qualified Vendor.FontAwesome    as FA
 
 data Favorite = Favorite {
     text     :: String
@@ -53,19 +52,21 @@ getTagColor tag = case lookup tag tagConfig of
 -- タグのリンクを取得
 getTagLink :: String -> String
 getTagLink tag = case lookup tag tagConfig of
-    Just (_, link) -> link
-    Nothing        -> "#"
+    Just (_, lnk) -> lnk
+    Nothing       -> "#"
+
+-- メタデータ用のトリム関数
+trimMeta :: String -> String
+trimMeta = f . f
+  where f = reverse . dropWhile (`elem` (" \n\r\t" :: String))
 
 -- SNSリンクのメタデータを処理するためのフィールド
 snsLinksField :: String -> Context String
 snsLinksField snsType = listFieldWith (snsType ++ "-links") (field "url" (return . itemBody)) $ \item -> do
     mUrls <- getMetadataField (itemIdentifier item) snsType
     case mUrls of
-        Just urlsStr -> return $ map (\url -> Item (fromString url) (trim url)) (splitAll "," urlsStr)
-        Nothing     -> return []
-  where
-    trim = f . f
-      where f = reverse . dropWhile (`elem` (" \n\r\t" :: String))
+        Just urlsStr -> return $ map (\url -> Item (fromString url) (trimMeta url)) (splitAll "," urlsStr)
+        Nothing      -> return []
 
 -- タグのメタデータを処理するためのフィールド
 disneyTagsField :: Context String
@@ -73,12 +74,10 @@ disneyTagsField = field "disney-tags" $ \item -> do
     mTags <- getMetadataField (itemIdentifier item) "disney-tags"
     case mTags of
         Just tagsStr -> do
-            let tags = map trim (splitAll "," tagsStr)
+            let tags = filter (not . null) $ map trimMeta (splitAll "," tagsStr)
             return $ TL.unpack $ renderText $ mconcat (map renderTag tags)
         Nothing      -> return ""
   where
-    trim = f . f
-      where f = reverse . dropWhile (`elem` (" \n\r\t" :: String))
     renderTag :: String -> Html ()
     renderTag tag = span_ [class_ "tag is-small", style_ (T.pack $ "background-color: " ++ getTagColor tag ++ "; color: white; margin-right: 0.5rem; margin-bottom: 0.5rem; display: inline-block;")] $
         a_ [href_ (T.pack $ getTagLink tag), target_ "_blank", rel_ "noopener"] $ toHtml tag
@@ -121,9 +120,6 @@ mdRule ss pat = do
 loadDisneyFavorites :: IO [Favorite]
 loadDisneyFavorites = input auto "./contents/config/disney/Favorites.dhall"
 
-filterFavoritesByCategory :: [Favorite] -> String -> [String]
-filterFavoritesByCategory favorites cat = map text $ filter ((== cat) . category) favorites
-
 -- ログエントリ用のコンテキストを作成
 disneyLogCtx :: Context String
 disneyLogCtx = mconcat
@@ -153,9 +149,6 @@ rules = do
             route $ gsubRoute (contentsRoot </> "pages/") (const mempty)
             compile $ do
                 disneyLogs <- sortByNum <$> loadAllSnapshots disneyLogsPattern disneyExperienceSummarySnapshot
-                let works = filterFavoritesByCategory favorites "works"
-                    characters = filterFavoritesByCategory favorites "characters"
-                    parkContents = filterFavoritesByCategory favorites "park-contents"
                 disneyExperienceSummaryCtx <- mconcatM [
                     pure $ constField "title" "Ponchi's Disney Journey"
                   , pure $ constField "font_path" "../fonts/waltograph42.otf"
