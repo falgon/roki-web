@@ -74,13 +74,13 @@ disneyTagsField = field "disney-tags" $ \item -> do
     case mTags of
         Just tagsStr -> do
             let tags = map trim (splitAll "," tagsStr)
-            return $ TL.unpack $ renderText $ foldMap renderTag tags
+            return $ TL.unpack $ renderText $ div_ [class_ "tags"] $ foldMap renderTag tags
         Nothing     -> return ""
   where
     trim = f . f
       where f = reverse . dropWhile (`elem` (" \n\r\t" :: String))
     renderTag :: String -> Html ()
-    renderTag tag = span_ [class_ "tag is-small", style_ (T.pack $ "background-color: " ++ getTagColor tag ++ "; color: white;")] $
+    renderTag tag = span_ [class_ "tag is-small", style_ (T.pack $ "background-color: " ++ getTagColor tag ++ " !important; color: white !important;")] $
         a_ [href_ (T.pack $ getTagLink tag), target_ "_blank", rel_ "noopener"] $ toHtml tag
 
 disneyExperienceSummaryRoot :: FilePath
