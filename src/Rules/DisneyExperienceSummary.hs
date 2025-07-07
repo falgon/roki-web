@@ -65,8 +65,8 @@ snsLinksField snsType = listFieldWith (snsType ++ "-links") (field "url" (return
 
 -- タグのメタデータを処理するためのフィールド
 disneyTagsField :: Context String
-disneyTagsField = listFieldWith "tags" tagCtx $ \item -> do
-    mTags <- getMetadataField (itemIdentifier item) "tags"
+disneyTagsField = listFieldWith "disney-tags" tagCtx $ \item -> do
+    mTags <- getMetadataField (itemIdentifier item) "disney-tags"
     case mTags of
         Just tagsStr -> return $ map (\tag -> Item (fromString tag) (trim tag)) (splitAll "," tagsStr)
         Nothing     -> return []
