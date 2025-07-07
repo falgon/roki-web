@@ -53,7 +53,7 @@ getTagLink tag = case lookup tag tagConfig of
     Nothing        -> "#"
 
 -- SNSリンクのメタデータを処理するためのフィールド
-snsLinksField :: String -> Context String
+snsLinksField :: String -> Context a
 snsLinksField snsType = listFieldWith (snsType ++ "-links") (field "url" (return . itemBody)) $ \item -> do
     mUrls <- getMetadataField (itemIdentifier item) snsType
     case mUrls of
@@ -64,7 +64,7 @@ snsLinksField snsType = listFieldWith (snsType ++ "-links") (field "url" (return
       where f = reverse . dropWhile (`elem` (" \n\r\t" :: String))
 
 -- タグのメタデータを処理するためのフィールド
-disneyTagsField :: Context String
+disneyTagsField :: Context a
 disneyTagsField = listFieldWith "disney-tags" tagCtx $ \item -> do
     mTags <- getMetadataField (itemIdentifier item) "disney-tags"
     case mTags of
