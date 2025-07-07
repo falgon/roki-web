@@ -35,7 +35,7 @@ jobs:
       id: stack-cache
       with:
         path: ~/.stack
-        key: stack-v3-${{ runner.os }}-${{ hashFiles('stack.yaml') }}-${{ hashFiles('stack.yaml.lock') }}-${{ hashFiles('package.yaml') }}-${{ hashFiles('docker/.env') }}
+        key: stack-v2-${{ runner.os }}-${{ hashFiles('stack.yaml') }}-${{ hashFiles('stack.yaml.lock') }}-${{ hashFiles('package.yaml') }}-${{ hashFiles('docker/.env') }}
     - name: Get Haskell version
       if: steps.site-gen-cache.outputs.cache-hit != 'true'
       run: |
@@ -106,7 +106,7 @@ jobs:
       id: docs-cache
       with:
         path: './docs'
-        key: docs-v2-${{ runner.os }}
+        key: docs-v1-${{ runner.os }}
     - name: Build and validate roki.dev
       id: build
       run: |
