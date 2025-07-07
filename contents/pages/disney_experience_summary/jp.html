@@ -164,8 +164,12 @@
         margin-bottom: 0.5rem;
     }
     .log-tags .tag {
-        margin-right: 0.5rem;
-        margin-bottom: 0.5rem;
+        margin-right: 0.2rem;
+        margin-bottom: 0.2rem;
+        display: inline-flex;
+        align-items: center;
+        font-size: 0.75em;
+        padding: 0.2em 0.6em;
     }
     .log-tags .tag a {
         color: white !important;
@@ -174,11 +178,6 @@
     .log-tags .tag a:hover {
         color: white !important;
         text-decoration: none;
-    }
-    .log-tags .tag {
-        margin-right: 0.5rem;
-        margin-bottom: 0.5rem;
-        display: inline-block;
     }
 </style>
 
@@ -260,9 +259,9 @@
             $for(disney-logs)$
             <article class="log-entry">
                 <h2 class="log-title">$title$</h2>
-                $if(disney-tags)$
+                $if(disney-tags-list)$
                 <div class="log-tags">
-                    $for(disney-tags)$
+                    $for(disney-tags-list)$
                     <span class="tag is-small" style="background-color: $color$; color: white;">
                         <a href="$link$" target="_blank" rel="noopener">$name$</a>
                     </span>

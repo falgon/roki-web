@@ -1,24 +1,23 @@
 {-# LANGUAGE DeriveGeneric, OverloadedStrings #-}
 module Rules.DisneyExperienceSummary (rules) where
 
-import           Control.Monad.IO.Class (liftIO)
-import           Control.Monad.Reader   (asks, lift)
-import           Control.Monad.Trans    (MonadTrans (..))
-import           Data.List              (sortBy)
-import           Data.Ord               (comparing)
-import           Data.String            (IsString (..))
-import           Dhall                  (FromDhall, Generic, auto, input)
+import           Control.Monad.Reader  (asks)
+import           Control.Monad.Trans   (MonadTrans (..))
+import           Data.List             (sortBy)
+import           Data.Ord              (comparing)
+import           Data.String           (IsString (..))
+import           Dhall                 (FromDhall, Generic, auto, input)
 import           Hakyll
-import           System.FilePath        (joinPath, (</>))
-import           System.FilePath.Posix  (takeBaseName)
+import           System.FilePath       (joinPath, (</>))
+import           System.FilePath.Posix (takeBaseName)
 
-import           Config                 (contentsRoot, readerOptions)
-import           Contexts               (siteCtx)
-import           Media.SVG              (mermaidTransform)
+import           Config                (contentsRoot, readerOptions)
+import           Contexts              (siteCtx)
+import           Media.SVG             (mermaidTransform)
 import           Rules.PageType
-import           Text.Pandoc.Walk       (walkM)
-import           Utils                  (mconcatM, modifyExternalLinkAttr)
-import qualified Vendor.FontAwesome     as FA
+import           Text.Pandoc.Walk      (walkM)
+import           Utils                 (mconcatM, modifyExternalLinkAttr)
+import qualified Vendor.FontAwesome    as FA
 
 data Favorite = Favorite {
     text     :: String
@@ -49,30 +48,30 @@ getTagColor tag = case lookup tag tagConfig of
 -- タグのリンクを取得
 getTagLink :: String -> String
 getTagLink tag = case lookup tag tagConfig of
-    Just (_, link) -> link
-    Nothing        -> "#"
+    Just (_, tagLink) -> tagLink
+    Nothing           -> "#"
+
+-- メタデータ用のトリム関数
+trimMeta :: String -> String
+trimMeta = f . f
+  where f = reverse . dropWhile (`elem` (" \n\r\t" :: String))
 
 -- SNSリンクのメタデータを処理するためのフィールド
 snsLinksField :: String -> Context String
 snsLinksField snsType = listFieldWith (snsType ++ "-links") (field "url" (return . itemBody)) $ \item -> do
     mUrls <- getMetadataField (itemIdentifier item) snsType
     case mUrls of
-        Just urlsStr -> return $ map (\url -> Item (fromString url) (trim url)) (splitAll "," urlsStr)
+        Just urlsStr -> return $ map (\url -> Item (fromString url) (trimMeta url)) (splitAll "," urlsStr)
         Nothing     -> return []
-  where
-    trim = f . f
-      where f = reverse . dropWhile (`elem` (" \n\r\t" :: String))
 
 -- タグのメタデータを処理するためのフィールド
 disneyTagsField :: Context String
-disneyTagsField = listFieldWith "disney-tags" tagCtx $ \item -> do
+disneyTagsField = listFieldWith "disney-tags-list" tagCtx $ \item -> do
     mTags <- getMetadataField (itemIdentifier item) "disney-tags"
     case mTags of
-        Just tagsStr -> return $ map (\tag -> Item (fromString tag) (trim tag)) (splitAll "," tagsStr)
+        Just tagsStr -> return $ map (\tag -> Item (fromString tag) tag) $ filter (not . null) $ map trimMeta (splitAll "," tagsStr)
         Nothing      -> return []
   where
-    trim = f . f
-      where f = reverse . dropWhile (`elem` (" \n\r\t" :: String))
     tagCtx = field "name" (return . itemBody)
           <> field "color" (return . getTagColor . itemBody)
           <> field "link" (return . getTagLink . itemBody)
@@ -115,9 +114,6 @@ mdRule ss pat = do
 loadDisneyFavorites :: IO [Favorite]
 loadDisneyFavorites = input auto "./contents/config/disney/Favorites.dhall"
 
-filterFavoritesByCategory :: [Favorite] -> String -> [String]
-filterFavoritesByCategory favorites cat = map text $ filter ((== cat) . category) favorites
-
 -- ログエントリ用のコンテキストを作成
 disneyLogCtx :: Context String
 disneyLogCtx = mconcat
@@ -147,9 +143,6 @@ rules = do
             route $ gsubRoute (contentsRoot </> "pages/") (const mempty)
             compile $ do
                 disneyLogs <- sortByNum <$> loadAllSnapshots disneyLogsPattern disneyExperienceSummarySnapshot
-                let works = filterFavoritesByCategory favorites "works"
-                    characters = filterFavoritesByCategory favorites "characters"
-                    parkContents = filterFavoritesByCategory favorites "park-contents"
                 disneyExperienceSummaryCtx <- mconcatM [
                     pure $ constField "title" "Ponchi's Disney Journey"
                   , pure $ constField "font_path" "../fonts/waltograph42.otf"
