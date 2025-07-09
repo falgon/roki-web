@@ -107,6 +107,62 @@ jobs:
       with:
         path: './docs'
         key: docs-v1-${{ runner.os }}
+    - name: Generate mermaid test file for dependabot mermaid-cli PR
+      if: startsWith(github.head_ref, 'dependabot/npm_and_yarn/') && contains(github.head_ref, 'mermaid-cli')
+      run: |
+        mkdir -p contents/roki.log/9999/12/31
+        cat > contents/roki.log/9999/12/31/mermaid-test.md << 'EOF'
+        ---
+        title: "Mermaid Test for Dependabot mermaid-cli PR"
+        date: 9999-12-31
+        tags: [test, mermaid, dependabot]
+        ---
+
+        This is a test file generated automatically for dependabot mermaid-cli PRs to verify mermaid diagram rendering.
+
+        ## Test Diagram
+
+        ```mermaid
+        graph TD;
+            A[Start] --> B{Is it mermaid-cli PR?};
+            B -->|Yes| C[Generate test file];
+            B -->|No| D[Skip];
+            C --> E[Build with mermaid];
+            E --> F[Verify rendering];
+            F --> G[Success];
+            D --> H[Continue normal build];
+        ```
+
+        ## Another Test Diagram
+
+        ```mermaid
+        sequenceDiagram
+            participant D as Dependabot
+            participant G as GitHub Actions
+            participant S as Site Generator
+            
+            D->>G: Create PR with mermaid-cli update
+            G->>G: Detect mermaid-cli in branch name
+            G->>S: Generate test markdown with mermaid
+            S->>S: Process mermaid diagrams
+            S->>G: Return build result
+            G->>D: Report build status
+        ```
+
+        ## Flowchart Test
+
+        ```mermaid
+        flowchart LR
+            A[Package.json] --> B[mermaid-cli version]
+            B --> C[Dependabot detects update]
+            C --> D[Creates PR]
+            D --> E[Branch: dependabot/npm_and_yarn/develop/mermaid-js/mermaid-cli-X.Y.Z]
+            E --> F[GitHub Actions triggers]
+            F --> G[Generate test file]
+            G --> H[Build and test]
+        ```
+        EOF
+        echo "Generated mermaid test file for dependabot mermaid-cli PR"
     - name: Build and validate roki.dev
       id: build
       run: |
