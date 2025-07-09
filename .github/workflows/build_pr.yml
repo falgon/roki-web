@@ -17,6 +17,7 @@ jobs:
       contents: read
     outputs:
       target_ref: ${{ steps.build.outputs.target_ref }}
+      mermaid_test_path: ${{ steps.build.outputs.mermaid_test_path }}
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -107,6 +108,65 @@ jobs:
       with:
         path: './docs'
         key: docs-v1-${{ runner.os }}
+    - name: Generate mermaid test file for dependabot mermaid-cli PR
+      if: startsWith(github.head_ref, 'dependabot/npm_and_yarn/') && contains(github.head_ref, 'mermaid-cli')
+      env:
+        MERMAID_TEST_PATH: "contents/roki.log/1970/01/01/mermaid-test"
+      run: |
+        mkdir -p ${{ env.MERMAID_TEST_PATH }}
+        cat > ${{ env.MERMAID_TEST_PATH }}/index.md << 'EOF'
+        ---
+        title: "Mermaid Test for Dependabot mermaid-cli PR"
+        date: 1970-01-01 00:00:00
+        tags: dependabot-test
+        ---
+
+        This is a test file generated automatically for dependabot mermaid-cli PRs to verify mermaid diagram rendering.
+
+        ## Test Diagram
+
+        ```{lang=mermaid}
+        graph TD;
+            A[Start] --> B{Is it mermaid-cli PR?};
+            B -->|Yes| C[Generate test file];
+            B -->|No| D[Skip];
+            C --> E[Build with mermaid];
+            E --> F[Verify rendering];
+            F --> G[Success];
+            D --> H[Continue normal build];
+        ```
+
+        ## Another Test Diagram
+
+        ```{lang=mermaid}
+        sequenceDiagram
+            participant D as Dependabot
+            participant G as GitHub Actions
+            participant S as Site Generator
+            
+            D->>G: Create PR with mermaid-cli update
+            G->>G: Detect mermaid-cli in branch name
+            G->>S: Generate test markdown with mermaid
+            S->>S: Process mermaid diagrams
+            S->>G: Return build result
+            G->>D: Report build status
+        ```
+
+        ## Flowchart Test
+
+        ```{lang=mermaid}
+        flowchart LR
+            A[Package.json] --> B[mermaid-cli version]
+            B --> C[Dependabot detects update]
+            C --> D[Creates PR]
+            D --> E[Branch: dependabot/npm_and_yarn/develop/mermaid-js/mermaid-cli-X.Y.Z]
+            E --> F[GitHub Actions triggers]
+            F --> G[Generate test file]
+            G --> H[Build and test]
+        ```
+        EOF
+        echo "Generated mermaid test file for dependabot mermaid-cli PR"
+        echo "MERMAID_TEST_PATH=${MERMAID_TEST_PATH#contents/}/index.html" >> "$GITHUB_ENV"
     - name: Build and validate roki.dev
       id: build
       run: |
@@ -132,6 +192,12 @@ jobs:
           xmllint docs/%/sitemap.xml docs/%/feed/%.xml --noout ::: ${{ env.TECH_BLOG }} ${{ env.DIARY_BLOG }}
         tar cvf "${{ env.DOCS_TARXZ }}" docs
         echo "target_ref=$(git show --format='%H' --no-patch)" >> "$GITHUB_OUTPUT"
+        # Set mermaid_test_path based on whether mermaid test file was generated
+        if [ -n "${{ env.MERMAID_TEST_PATH }}" ]; then
+          echo "mermaid_test_path=${{ env.MERMAID_TEST_PATH }}" >> "$GITHUB_OUTPUT"
+        else
+          echo "mermaid_test_path=index.html" >> "$GITHUB_OUTPUT"
+        fi
       env:
         RETRY_MAX: 3
         TECH_BLOG: roki.log
@@ -212,6 +278,10 @@ jobs:
           ENAME: ${{ github.event_name }}
           HEAD_REF: ${{ github.head_ref }}
           REF_NAME: ${{ github.ref_name }}
+    - name: Set artifact path
+      id: artifact-path
+      run: |
+        echo "artifact_path=${{ needs.build.outputs.mermaid_test_path }}" >> "$GITHUB_OUTPUT"
     - name: Boot CircleCI
       id: boot-circleci
       run: |
@@ -223,7 +293,7 @@ jobs:
         ENDPOINT: https://circleci.com/api/v2/project/gh/${{ github.repository }}/pipeline
         CIRCLE_TOKEN: "Circle-Token: ${{ secrets.CIRCLE_API_USER_TOKEN }}"
         CONTENT_TYPE: "Content-Type: application/json"
-        DATA: '{"branch":"${{ steps.parameters.outputs.target_branch }}", "parameters":{"TARGET_REF":"${{ needs.build.outputs.target_ref }}", "GDRIVE_PATH":"${{ needs.upload.outputs.gdrive_path }}","ENABLE_PR_COMMENT":${{ steps.parameters.outputs.enable_comment }}}}'
+        DATA: '{"branch":"${{ steps.parameters.outputs.target_branch }}", "parameters":{"TARGET_REF":"${{ needs.build.outputs.target_ref }}", "GDRIVE_PATH":"${{ needs.upload.outputs.gdrive_path }}","ENABLE_PR_COMMENT":${{ steps.parameters.outputs.enable_comment }},"ARTIFACT_PATH":"${{ steps.artifact-path.outputs.artifact_path }}"}}'
     - name: Show CircleCI URL
       run: echo ${{ env.CIRCLECI_URL }}
       env:
