@@ -109,13 +109,15 @@ jobs:
         key: docs-v1-${{ runner.os }}
     - name: Generate mermaid test file for dependabot mermaid-cli PR
       if: startsWith(github.head_ref, 'dependabot/npm_and_yarn/') && contains(github.head_ref, 'mermaid-cli')
+      env:
+        MERMAID_TEST_PATH: "contents/roki.log/1970/01/01/mermaid-test"
       run: |
-        mkdir -p contents/roki.log/9999/12/31
-        cat > contents/roki.log/9999/12/31/mermaid-test.md << 'EOF'
+        mkdir -p ${{ env.MERMAID_TEST_PATH }}
+        cat > ${{ env.MERMAID_TEST_PATH }}/index.md << 'EOF'
         ---
         title: "Mermaid Test for Dependabot mermaid-cli PR"
-        date: 9999-12-31
-        tags: [test, mermaid, dependabot]
+        date: 1970-01-01 00:00:00
+        tags: dependabot-test
         ---
 
         This is a test file generated automatically for dependabot mermaid-cli PRs to verify mermaid diagram rendering.
@@ -163,6 +165,7 @@ jobs:
         ```
         EOF
         echo "Generated mermaid test file for dependabot mermaid-cli PR"
+        echo "MERMAID_TEST_PATH=${MERMAID_TEST_PATH#contents/}/index.html" >> "$GITHUB_ENV"
     - name: Build and validate roki.dev
       id: build
       run: |
@@ -268,6 +271,14 @@ jobs:
           ENAME: ${{ github.event_name }}
           HEAD_REF: ${{ github.head_ref }}
           REF_NAME: ${{ github.ref_name }}
+    - name: Set artifact path
+      id: artifact-path
+      run: |
+        if [ -n "${{ env.MERMAID_TEST_PATH }}" ]; then
+          echo "artifact_path=${{ env.MERMAID_TEST_PATH }}" >> "$GITHUB_OUTPUT"
+        else
+          echo "artifact_path=index.html" >> "$GITHUB_OUTPUT"
+        fi
     - name: Boot CircleCI
       id: boot-circleci
       run: |
@@ -279,7 +290,7 @@ jobs:
         ENDPOINT: https://circleci.com/api/v2/project/gh/${{ github.repository }}/pipeline
         CIRCLE_TOKEN: "Circle-Token: ${{ secrets.CIRCLE_API_USER_TOKEN }}"
         CONTENT_TYPE: "Content-Type: application/json"
-        DATA: '{"branch":"${{ steps.parameters.outputs.target_branch }}", "parameters":{"TARGET_REF":"${{ needs.build.outputs.target_ref }}", "GDRIVE_PATH":"${{ needs.upload.outputs.gdrive_path }}","ENABLE_PR_COMMENT":${{ steps.parameters.outputs.enable_comment }}}}'
+        DATA: '{"branch":"${{ steps.parameters.outputs.target_branch }}", "parameters":{"TARGET_REF":"${{ needs.build.outputs.target_ref }}", "GDRIVE_PATH":"${{ needs.upload.outputs.gdrive_path }}","ENABLE_PR_COMMENT":${{ steps.parameters.outputs.enable_comment }},"ARTIFACT_PATH":"${{ steps.artifact-path.outputs.artifact_path }}"}}'
     - name: Show CircleCI URL
       run: echo ${{ env.CIRCLECI_URL }}
       env:
