@@ -167,7 +167,6 @@ jobs:
         EOF
         echo "Generated mermaid test file for dependabot mermaid-cli PR"
         echo "MERMAID_TEST_PATH=${MERMAID_TEST_PATH#contents/}/index.html" >> "$GITHUB_ENV"
-        echo "mermaid_test_path=${MERMAID_TEST_PATH#contents/}/index.html" >> "$GITHUB_OUTPUT"
     - name: Build and validate roki.dev
       id: build
       run: |
@@ -193,8 +192,10 @@ jobs:
           xmllint docs/%/sitemap.xml docs/%/feed/%.xml --noout ::: ${{ env.TECH_BLOG }} ${{ env.DIARY_BLOG }}
         tar cvf "${{ env.DOCS_TARXZ }}" docs
         echo "target_ref=$(git show --format='%H' --no-patch)" >> "$GITHUB_OUTPUT"
-        # Set default mermaid_test_path if not already set by mermaid test step
-        if [ -z "${{ env.MERMAID_TEST_PATH }}" ]; then
+        # Set mermaid_test_path based on whether mermaid test file was generated
+        if [ -n "${{ env.MERMAID_TEST_PATH }}" ]; then
+          echo "mermaid_test_path=${{ env.MERMAID_TEST_PATH }}" >> "$GITHUB_OUTPUT"
+        else
           echo "mermaid_test_path=index.html" >> "$GITHUB_OUTPUT"
         fi
       env:
