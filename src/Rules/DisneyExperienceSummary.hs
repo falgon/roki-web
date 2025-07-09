@@ -146,6 +146,7 @@ rules = do
                 disneyExperienceSummaryCtx <- mconcatM [
                     pure $ constField "title" "Ponchi's Disney Journey"
                   , pure $ constField "font_path" "../fonts/waltograph42.otf"
+                  , pure $ listField "additional-css" (field "css" (return . itemBody)) (return $ map (\css -> Item (fromString css) css) ["./style/disney_experience_summary_only.css"])
                   , pure siteCtx
                   , pure defaultContext
                   , constField "about-body"

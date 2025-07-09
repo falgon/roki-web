@@ -1,0 +1,226 @@
+@font-face {
+    font-family: 'Waltograph';
+    src: url('../fonts/waltograph42.otf') format('opentype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+.disney-experience-summary {
+    .disney-title {
+        font-family: 'Waltograph', serif;
+        font-size: 2.5rem;
+        text-align: center;
+        color: #083963;
+        margin: 0 0 2rem 0;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .log-entry {
+        margin: 1rem 0;
+        padding: 1rem;
+        background-color: #E3F2FE;
+        border-radius: 8px;
+    }
+
+    .log-title {
+        font-size: 1.2rem;
+        font-weight: bold;
+        color: #083963;
+        margin-bottom: 0.3rem;
+    }
+
+    .log-date {
+        color: #6b7280;
+        font-size: 0.8rem;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        
+        a {
+            color: #6b7280;
+            text-decoration: none;
+            transition: color 0.3s ease;
+            
+            &:hover {
+                color: #3CAADF;
+            }
+            
+            &.fa-youtube:hover {
+                color: #FF0000;
+            }
+            
+            &.fa-instagram:hover {
+                color: #E4405F;
+            }
+            
+            &.fa-x-twitter:hover {
+                color: #000000;
+            }
+        }
+    }
+
+    .log-body {
+        line-height: 1.5;
+        font-size: 0.95rem;
+    }
+
+    .container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 0 1rem;
+        color: #083963;
+    }
+
+    .about-section {
+        padding: 1.5rem;
+        background-color: #E3F2FE;
+        border-radius: 8px;
+        text-align: center;
+    }
+
+    .favorites-section {
+        margin-top: 4rem;
+        
+        .columns {
+            margin: 0;
+        }
+        
+        .column {
+            padding: 0;
+        }
+    }
+
+    .favorite-category {
+        margin-bottom: 0;
+        
+        h3 {
+            color: #083963;
+            margin-bottom: 0.5rem;
+            padding-left: 2rem;
+            position: relative;
+            
+            svg {
+                position: absolute;
+                left: 0;
+                top: 0.1rem;
+            }
+        }
+    }
+
+    .tag-list {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+
+    .profile-section {
+        text-align: center;
+    }
+
+    .sns-links {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        
+        ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        a {
+            color: #3CAADF;
+            text-decoration: none;
+            transition: color 0.3s ease;
+            
+            &:hover {
+                color: rgba(60, 170, 223, 0.6);
+            }
+        }
+    }
+
+    .tag {
+        a {
+            color: inherit;
+            text-decoration: none;
+            
+            &:hover {
+                text-decoration: none;
+            }
+        }
+    }
+
+    .custom-tag {
+        background-color: #E3F2FE !important;
+        color: #083963 !important;
+        transition: all 0.3s ease;
+        
+        &:hover {
+            background-color: rgba(227, 242, 254, 0.6) !important;
+            color: #083963 !important;
+        }
+    }
+
+    .logs {
+        max-height: 600px;
+        overflow-y: auto;
+        
+        &::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        &::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+        
+        &::-webkit-scrollbar-thumb {
+            background: #E3F2FE;
+            border-radius: 4px;
+            
+            &:hover {
+                background: rgba(227, 242, 254, 0.6);
+            }
+        }
+    }
+
+    .log-tags {
+        margin-bottom: 0.5rem;
+        
+        .tag {
+            margin-right: 0.2rem;
+            margin-bottom: 0.2rem;
+            display: inline-flex;
+            align-items: center;
+            font-size: 0.75em;
+            padding: 0.2em 0.6em;
+            
+            a {
+                color: white !important;
+                text-decoration: none;
+                
+                &:hover {
+                    color: white !important;
+                    text-decoration: none;
+                }
+            }
+        }
+    }
+}
+
+@media screen and (max-width: 768px) {
+    .disney-experience-summary {
+        .favorites-section {
+            .column:first-child,
+            .column:nth-child(2) {
+                margin-bottom: 2rem;
+            }
+        }
+        
+        .favorite-category.mt-2 {
+            margin-top: 2rem !important;
+        }
+    }
+} 

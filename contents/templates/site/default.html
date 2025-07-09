@@ -27,6 +27,9 @@
         <link href="https://fonts.googleapis.com/css2?family=Sawarabi+Gothic&family=Sawarabi+Mincho&family=Ubuntu+Mono&display=swap" rel="stylesheet">
 
         <link rel="stylesheet" href="/style/style.css" />
+        $for(additional-css)$
+        <link rel="stylesheet" href="$css$" />
+        $endfor$
         <script type="text/javascript" src="/js/components.js"></script>
         <script type="text/javascript">
             addEventModal();
