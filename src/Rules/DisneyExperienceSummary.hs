@@ -3,7 +3,7 @@ module Rules.DisneyExperienceSummary (rules) where
 
 import           Control.Monad.Reader  (asks)
 import           Control.Monad.Trans   (MonadTrans (..))
-import           Data.List             (sortBy)
+import           Data.List             (nub, sortBy)
 import           Data.Ord              (comparing)
 import           Data.String           (IsString (..))
 import           Dhall                 (FromDhall, Generic, auto, input)
@@ -143,15 +143,27 @@ rules = do
             route $ gsubRoute (contentsRoot </> "pages/") (const mempty)
             compile $ do
                 disneyLogs <- sortByNum <$> loadAllSnapshots disneyLogsPattern disneyExperienceSummarySnapshot
+                -- ユニークなタグリストを作成
+                uniqueTags <- do
+                    allTags <- sequence $ map (\logItem -> do
+                        mTags <- getMetadataField (itemIdentifier logItem) "disney-tags"
+                        case mTags of
+                            Just tagsStr -> return $ map trimMeta $ filter (not . null) $ splitAll "," tagsStr
+                            Nothing      -> return []
+                        ) disneyLogs
+                    return $ nub $ concat allTags
+
                 disneyExperienceSummaryCtx <- mconcatM [
                     pure $ constField "title" "Ponchi's Disney Journey"
                   , pure $ constField "font_path" "../fonts/waltograph42.otf"
                   , pure $ listField "additional-css" (field "css" (return . itemBody)) (return $ map (\css -> Item (fromString css) css) ["../style/disney_experience_summary_only.css"])
+                  , pure $ listField "additional-js" (field "js" (return . itemBody)) (return $ map (\js -> Item (fromString js) js) ["../js/disney-tag-filter.js"])
                   , pure siteCtx
                   , pure defaultContext
                   , constField "about-body"
                         <$> loadSnapshotBody aboutIdent disneyExperienceSummarySnapshot
                   , pure $ listField "disney-logs" disneyLogCtx (return disneyLogs)
+                  , pure $ listField "unique-tags" (field "name" (return . itemBody) <> field "color" (return . getTagColor . itemBody) <> field "link" (return . getTagLink . itemBody)) (return $ map (\tag -> Item (fromString tag) tag) uniqueTags)
                   , pure $ listField "favorite-works" (field "text" (return . text . itemBody) <> field "link" (return . maybe "" id . link . itemBody)) (return $ map (\f -> Item (fromString $ text f) f) $ filter ((== "works") . category) favorites)
                   , pure $ listField "favorite-characters" (field "text" (return . text . itemBody) <> field "link" (return . maybe "" id . link . itemBody)) (return $ map (\f -> Item (fromString $ text f) f) $ filter ((== "characters") . category) favorites)
                   , pure $ listField "favorite-park-contents" (field "text" (return . text . itemBody) <> field "link" (return . maybe "" id . link . itemBody)) (return $ map (\f -> Item (fromString $ text f) f) $ filter ((== "park-contents") . category) favorites)

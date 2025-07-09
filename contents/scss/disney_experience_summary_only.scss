@@ -208,6 +208,86 @@
             }
         }
     }
+
+    .tag-filter {
+        .tag-filter-header {
+            text-align: center;
+            
+            h4 {
+                color: #083963;
+                margin-bottom: 0.5rem;
+            }
+            
+            p {
+                margin-bottom: 0;
+            }
+        }
+        
+        .tag-filter-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            justify-content: center;
+            
+            .tag-filter-btn {
+                transition: all 0.3s ease;
+                border-radius: 20px;
+                font-size: 0.8rem;
+                
+                &:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+                }
+                
+                &.active {
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+                }
+                
+                .icon {
+                    margin-right: 0.3rem;
+                }
+            }
+        }
+        
+        .selected-tags {
+            text-align: center;
+            padding: 0.5rem;
+            background-color: #f5f5f5;
+            border-radius: 8px;
+            
+            .selected-tags-list {
+                display: inline-block;
+                
+                .tag {
+                    margin-right: 0.5rem;
+                    margin-bottom: 0.2rem;
+                    font-size: 0.75rem;
+                    padding: 0.2em 0.6em;
+                }
+            }
+            
+            #clear-selection {
+                font-size: 0.75rem;
+                padding: 0.2em 0.6em;
+                height: auto;
+                border-radius: 12px;
+                
+                &:hover {
+                    transform: translateY(-1px);
+                }
+            }
+        }
+    }
+
+    .log-entry {
+        transition: opacity 0.3s ease, transform 0.3s ease;
+        
+        &.filtered-out {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+    }
 }
 
 @media screen and (max-width: 768px) {
