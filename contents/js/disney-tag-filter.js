@@ -1,16 +1,16 @@
 document.addEventListener('DOMContentLoaded', function() {
-    const tagFilterButtons = document.querySelectorAll('.tag-filter-btn');
-    const logEntries = document.querySelectorAll('.log-entry');
-    const selectedTagsContainer = document.querySelector('.selected-tags');
-    const selectedTagsList = document.querySelector('.selected-tags-list');
-    const clearSelectionBtn = document.getElementById('clear-selection');
+    var tagFilterButtons = document.querySelectorAll('.tag-filter-btn');
+    var logEntries = document.querySelectorAll('.log-entry');
+    var selectedTagsContainer = document.querySelector('.selected-tags');
+    var selectedTagsList = document.querySelector('.selected-tags-list');
+    var clearSelectionBtn = document.getElementById('clear-selection');
     
-    let selectedTags = new Set();
+    var selectedTags = [];
 
     // タグフィルターボタンのクリックイベント
-    tagFilterButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            const clickedTag = this.getAttribute('data-tag');
+    for (var i = 0; i < tagFilterButtons.length; i++) {
+        tagFilterButtons[i].addEventListener('click', function() {
+            var clickedTag = this.getAttribute('data-tag');
             
             if (clickedTag === 'all') {
                 // 「すべて」ボタンがクリックされた場合
@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 this.classList.remove('is-outlined');
             } else {
                 // 個別のタグボタンがクリックされた場合
-                const allButton = document.querySelector('[data-tag="all"]');
+                var allButton = document.querySelector('[data-tag="all"]');
                 allButton.classList.remove('active', 'is-info');
                 allButton.classList.add('is-outlined');
                 
@@ -27,12 +27,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     // タグの選択を解除
                     this.classList.remove('active');
                     this.classList.add('is-outlined');
-                    selectedTags.delete(clickedTag);
+                    removeFromArray(selectedTags, clickedTag);
                 } else {
                     // タグを選択
                     this.classList.add('active');
                     this.classList.remove('is-outlined');
-                    selectedTags.add(clickedTag);
+                    if (selectedTags.indexOf(clickedTag) === -1) {
+                        selectedTags.push(clickedTag);
+                    }
                 }
                 
                 updateSelectedTagsDisplay();
@@ -41,7 +43,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // ログエントリの表示/非表示を切り替え
             filterLogEntries();
         });
-    });
+    }
 
     // クリアボタンのクリックイベント
     clearSelectionBtn.addEventListener('click', function() {
@@ -49,15 +51,23 @@ document.addEventListener('DOMContentLoaded', function() {
         filterLogEntries();
     });
 
+    // 配列から要素を削除する関数
+    function removeFromArray(array, item) {
+        var index = array.indexOf(item);
+        if (index > -1) {
+            array.splice(index, 1);
+        }
+    }
+
     // 選択をクリアする関数
     function clearSelection() {
-        selectedTags.clear();
-        tagFilterButtons.forEach(btn => {
-            btn.classList.remove('active', 'is-info');
-            btn.classList.add('is-outlined');
-        });
+        selectedTags = [];
+        for (var i = 0; i < tagFilterButtons.length; i++) {
+            tagFilterButtons[i].classList.remove('active', 'is-info');
+            tagFilterButtons[i].classList.add('is-outlined');
+        }
         
-        const allButton = document.querySelector('[data-tag="all"]');
+        var allButton = document.querySelector('[data-tag="all"]');
         allButton.classList.add('active', 'is-info');
         allButton.classList.remove('is-outlined');
         
@@ -66,34 +76,43 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // 選択されたタグの表示を更新する関数
     function updateSelectedTagsDisplay() {
-        if (selectedTags.size === 0) {
+        if (selectedTags.length === 0) {
             selectedTagsContainer.style.display = 'none';
         } else {
             selectedTagsContainer.style.display = 'block';
-            const tagButtons = Array.from(selectedTags).map(tag => {
-                const button = document.querySelector(`[data-tag="${tag}"]`);
-                const color = button.style.borderColor || button.style.color;
-                return `<span class="tag is-small" style="background-color: ${color}; color: white; margin-right: 0.5rem;">${tag}</span>`;
-            }).join('');
+            var tagButtons = '';
+            for (var i = 0; i < selectedTags.length; i++) {
+                var tag = selectedTags[i];
+                var button = document.querySelector('[data-tag="' + tag + '"]');
+                var color = button.style.borderColor || button.style.color;
+                tagButtons += '<span class="tag is-small" style="background-color: ' + color + '; color: white; margin-right: 0.5rem;">' + tag + '</span>';
+            }
             selectedTagsList.innerHTML = tagButtons;
         }
     }
 
     // ログエントリのフィルタリング関数
     function filterLogEntries() {
-        logEntries.forEach(entry => {
-            if (selectedTags.size === 0) {
+        for (var i = 0; i < logEntries.length; i++) {
+            var entry = logEntries[i];
+            if (selectedTags.length === 0) {
                 // タグが選択されていない場合はすべて表示
                 entry.style.display = 'block';
                 entry.classList.remove('filtered-out');
             } else {
                 // 選択されたタグに基づいてフィルタリング（かつ条件）
-                const entryTags = entry.getAttribute('data-tags');
+                var entryTags = entry.getAttribute('data-tags');
                 if (entryTags) {
-                    const entryTagArray = entryTags.split(',').map(tag => tag.trim());
-                    const hasAllSelectedTags = Array.from(selectedTags).every(selectedTag => 
-                        entryTagArray.includes(selectedTag)
-                    );
+                    var entryTagArray = entryTags.split(',').map(function(tag) {
+                        return tag.trim();
+                    });
+                    var hasAllSelectedTags = true;
+                    for (var j = 0; j < selectedTags.length; j++) {
+                        if (entryTagArray.indexOf(selectedTags[j]) === -1) {
+                            hasAllSelectedTags = false;
+                            break;
+                        }
+                    }
                     
                     if (hasAllSelectedTags) {
                         entry.style.display = 'block';
@@ -107,7 +126,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     entry.classList.add('filtered-out');
                 }
             }
-        });
+        }
 
         // フィルタリング結果のアニメーション
         animateFilteredEntries();
@@ -115,17 +134,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // フィルタリング結果のアニメーション
     function animateFilteredEntries() {
-        const visibleEntries = document.querySelectorAll('.log-entry:not(.filtered-out)');
-        visibleEntries.forEach((entry, index) => {
+        var visibleEntries = document.querySelectorAll('.log-entry:not(.filtered-out)');
+        for (var i = 0; i < visibleEntries.length; i++) {
+            var entry = visibleEntries[i];
             entry.style.opacity = '0';
             entry.style.transform = 'translateY(20px)';
             
-            setTimeout(() => {
-                entry.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
-                entry.style.opacity = '1';
-                entry.style.transform = 'translateY(0)';
-            }, index * 50);
-        });
+            (function(entry, index) {
+                setTimeout(function() {
+                    entry.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+                    entry.style.opacity = '1';
+                    entry.style.transform = 'translateY(0)';
+                }, index * 50);
+            })(entry, i);
+        }
     }
 
 }); 
