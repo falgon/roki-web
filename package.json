@@ -14,7 +14,9 @@
         "@fortawesome/free-solid-svg-icons": "^6.7.2",
         "katex": "^0.16.22",
         "psi": "^4.1.0",
-        "svgo": "^4.0.0"
+        "svgo": "^4.0.0",
+        "typescript": "^5.7.2",
+        "terser": "^5.29.2"
     },
     "dependencies": {
         "@mermaid-js/mermaid-cli": "^11.6.0",

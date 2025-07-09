@@ -107,7 +107,7 @@ jobs:
       id: docs-cache
       with:
         path: './docs'
-        key: docs-v1-${{ runner.os }}
+        key: docs-v2-${{ runner.os }}
     - name: Generate mermaid test file for dependabot mermaid-cli PR
       if: startsWith(github.head_ref, 'dependabot/npm_and_yarn/') && contains(github.head_ref, 'mermaid-cli')
       env:
