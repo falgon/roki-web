@@ -17,6 +17,7 @@ jobs:
       contents: read
     outputs:
       target_ref: ${{ steps.build.outputs.target_ref }}
+      mermaid_test_path: ${{ steps.build.outputs.mermaid_test_path }}
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -166,6 +167,7 @@ jobs:
         EOF
         echo "Generated mermaid test file for dependabot mermaid-cli PR"
         echo "MERMAID_TEST_PATH=${MERMAID_TEST_PATH#contents/}/index.html" >> "$GITHUB_ENV"
+        echo "mermaid_test_path=${MERMAID_TEST_PATH#contents/}/index.html" >> "$GITHUB_OUTPUT"
     - name: Build and validate roki.dev
       id: build
       run: |
@@ -191,6 +193,10 @@ jobs:
           xmllint docs/%/sitemap.xml docs/%/feed/%.xml --noout ::: ${{ env.TECH_BLOG }} ${{ env.DIARY_BLOG }}
         tar cvf "${{ env.DOCS_TARXZ }}" docs
         echo "target_ref=$(git show --format='%H' --no-patch)" >> "$GITHUB_OUTPUT"
+        # Set default mermaid_test_path if not already set by mermaid test step
+        if [ -z "${{ env.MERMAID_TEST_PATH }}" ]; then
+          echo "mermaid_test_path=index.html" >> "$GITHUB_OUTPUT"
+        fi
       env:
         RETRY_MAX: 3
         TECH_BLOG: roki.log
@@ -274,11 +280,7 @@ jobs:
     - name: Set artifact path
       id: artifact-path
       run: |
-        if [ -n "${{ env.MERMAID_TEST_PATH }}" ]; then
-          echo "artifact_path=${{ env.MERMAID_TEST_PATH }}" >> "$GITHUB_OUTPUT"
-        else
-          echo "artifact_path=index.html" >> "$GITHUB_OUTPUT"
-        fi
+        echo "artifact_path=${{ needs.build.outputs.mermaid_test_path }}" >> "$GITHUB_OUTPUT"
     - name: Boot CircleCI
       id: boot-circleci
       run: |
