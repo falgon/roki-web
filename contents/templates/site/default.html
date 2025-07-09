@@ -27,16 +27,20 @@
         <link href="https://fonts.googleapis.com/css2?family=Sawarabi+Gothic&family=Sawarabi+Mincho&family=Ubuntu+Mono&display=swap" rel="stylesheet">
 
         <link rel="stylesheet" href="/style/style.css" />
+        $if(additional-css)$
         $for(additional-css)$
         <link rel="stylesheet" href="$css$" />
         $endfor$
+        $endif$
         <script type="text/javascript" src="/js/components.js"></script>
         <script type="text/javascript">
             addEventModal();
         </script>
+        $if(additional-js)$
         $for(additional-js)$
         <script type="text/javascript" src="$js$"></script>
         $endfor$
+        $endif$
         <!-- Global site tag (gtag.js) - Google Analytics -->
 		<script async src="https://www.googletagmanager.com/gtag/js?id=$google-analytics$"></script>
 		<script>

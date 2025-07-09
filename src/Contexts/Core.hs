@@ -81,7 +81,6 @@ siteCtx = mconcat [
   , constField "site-title" siteName
   , constField "site-description" "This is a Roki's website."
   , constField "copyright" "copyright &copy; 2016~ Roki All Rights Reserved."
-  , listField "additional-css" (field "css" (return . itemBody)) (return [])
   , blogCtx
   , authorCtx
   ]
