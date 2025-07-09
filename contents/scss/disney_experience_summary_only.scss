@@ -360,17 +360,48 @@
                 padding: 0.2em 0.6em;
                 height: auto;
                 border-radius: 12px;
-                display: inline-flex;
-                align-items: center;
+                display: inline-flex !important;
+                align-items: center !important;
                 border-width: 1px !important;
                 box-sizing: border-box !important;
                 transition: background-color 0.3s ease !important;
+                line-height: 1 !important;
+                vertical-align: middle !important;
                 
                 &:hover {
                     transform: translateY(-1px);
                     background-color: #f14668 !important;
                     color: #fff !important;
                     border-color: #f14668 !important;
+                }
+                
+                .icon {
+                    display: inline-flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                    width: 1em !important;
+                    height: 1em !important;
+                    flex-shrink: 0 !important;
+                    line-height: 1 !important;
+                    margin-right: 0.3rem !important;
+                    transition: none !important;
+                    
+                    i {
+                        font-size: 0.875em !important;
+                        line-height: 1 !important;
+                        display: inline-block !important;
+                        vertical-align: middle !important;
+                        width: auto !important;
+                        height: auto !important;
+                        transition: none !important;
+                    }
+                }
+                
+                span:not(.icon) {
+                    line-height: 1 !important;
+                    display: inline-block !important;
+                    vertical-align: middle !important;
+                    transition: none !important;
                 }
             }
         }
