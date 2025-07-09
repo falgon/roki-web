@@ -99,11 +99,72 @@
             margin-bottom: 0.5rem;
             padding-left: 2rem;
             position: relative;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
             
             svg {
                 position: absolute;
                 left: 0;
                 top: 0.1rem;
+            }
+            
+            .button {
+                display: inline-flex !important;
+                align-items: center !important;
+                line-height: 1 !important;
+                border-width: 1px !important;
+                box-sizing: border-box !important;
+                padding: 0.25em 0.5em !important;
+                min-height: 1.8em !important;
+                font-size: 0.75rem !important;
+                transition: color 0.3s ease, background-color 0.3s ease !important;
+                background-color: transparent !important;
+                border-color: #3e8ed0 !important;
+                color: #3e8ed0 !important;
+                
+                &:hover {
+                    color: #fff !important;
+                    background-color: #3e8ed0 !important;
+                    border-color: #3e8ed0 !important;
+                }
+                
+                .icon {
+                    display: inline-flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                    width: 1em !important;
+                    height: 1em !important;
+                    flex-shrink: 0 !important;
+                    line-height: 1 !important;
+                    margin-right: 0.3rem !important;
+                    transition: none !important;
+                    
+                    i, svg {
+                        font-size: 0.875em !important;
+                        line-height: 1 !important;
+                        display: inline-block !important;
+                        vertical-align: middle !important;
+                        width: 1em !important;
+                        height: 1em !important;
+                        transition: none !important;
+                    }
+                    
+                    svg {
+                        position: relative !important;
+                        top: 0 !important;
+                        transform: translateY(0) !important;
+                        margin: 0 !important;
+                        padding: 0 !important;
+                    }
+                }
+                
+                span:not(.icon) {
+                    line-height: 1 !important;
+                    display: inline-block !important;
+                    vertical-align: middle !important;
+                    transition: none !important;
+                }
             }
         }
     }
@@ -210,33 +271,30 @@
     }
 
     .tag-filter {
-        .tag-filter-header {
-            text-align: center;
-            
-            h4 {
-                color: #083963;
-                margin-bottom: 0.5rem;
-            }
-            
-            p {
-                margin-bottom: 0;
-            }
-        }
-        
         .tag-filter-buttons {
             display: flex;
             flex-wrap: wrap;
             gap: 0.5rem;
             justify-content: center;
+            padding: 0.5rem 0;
             
             .tag-filter-btn {
                 transition: all 0.3s ease;
                 border-radius: 20px;
                 font-size: 0.8rem;
+                display: inline-flex !important;
+                align-items: center !important;
+                line-height: 1 !important;
+                border-width: 1px !important;
+                box-sizing: border-box !important;
+                padding: 0.375em 0.75em !important;
+                min-height: 2.25em !important;
                 
                 &:hover {
                     transform: translateY(-2px);
                     box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+                    color: #fff !important;
+                    background-color: var(--tag-color, #3e8ed0) !important;
                 }
                 
                 &.active {
@@ -245,7 +303,32 @@
                 }
                 
                 .icon {
-                    margin-right: 0.3rem;
+                    margin-right: 0.3rem !important;
+                    display: inline-flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                    width: 1em !important;
+                    height: 1em !important;
+                    flex-shrink: 0 !important;
+                    line-height: 1 !important;
+                    transition: none !important;
+                    
+                    i {
+                        font-size: 0.875em !important;
+                        line-height: 1 !important;
+                        display: inline-block !important;
+                        vertical-align: middle !important;
+                        width: auto !important;
+                        height: auto !important;
+                        transition: none !important;
+                    }
+                }
+                
+                span:not(.icon) {
+                    line-height: 1 !important;
+                    display: inline-block !important;
+                    vertical-align: middle !important;
+                    transition: none !important;
                 }
             }
         }
@@ -255,6 +338,11 @@
             padding: 0.5rem;
             background-color: #f5f5f5;
             border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 0.5rem;
             
             .selected-tags-list {
                 display: inline-block;
@@ -272,9 +360,17 @@
                 padding: 0.2em 0.6em;
                 height: auto;
                 border-radius: 12px;
+                display: inline-flex;
+                align-items: center;
+                border-width: 1px !important;
+                box-sizing: border-box !important;
+                transition: background-color 0.3s ease !important;
                 
                 &:hover {
                     transform: translateY(-1px);
+                    background-color: #f14668 !important;
+                    color: #fff !important;
+                    border-color: #f14668 !important;
                 }
             }
         }

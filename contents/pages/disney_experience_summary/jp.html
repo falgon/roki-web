@@ -72,22 +72,20 @@
     </div>
     
     <div class="favorite-category mt-2">
-        <h3 class="title is-4 mb-3"><i class="fas fa-wand-magic-sparkles"></i>体験歴</h3>
-        <div class="tag-filter mb-3">
-            <div class="tag-filter-header mb-2">
-                <h4 class="title is-5 mb-1">タグで絞り込み</h4>
-                <p class="is-size-7 has-text-grey">複数のタグを選択すると「かつ」条件で絞り込まれます</p>
-            </div>
+        <h3 class="title is-4 mb-3">
+            <i class="fas fa-wand-magic-sparkles"></i>体験歴
+            <button class="button is-small is-info ml-2" id="toggle-tag-filter">
+                <span class="icon">
+                    <i class="fas fa-filter"></i>
+                </span>
+                <span>タグで絞り込み</span>
+            </button>
+        </h3>
+        <div class="tag-filter mb-3" style="display: none;">
             <div class="tag-filter-buttons">
-                <button class="button is-small is-info is-outlined tag-filter-btn active" data-tag="all">
-                    <span class="icon is-small">
-                        <i class="fas fa-list"></i>
-                    </span>
-                    <span>すべて</span>
-                </button>
                 $for(unique-tags)$
-                <button class="button is-small is-outlined tag-filter-btn" data-tag="$name$" style="border-color: $color$; color: $color$;">
-                    <span class="icon is-small">
+                <button class="button is-small is-outlined tag-filter-btn" data-tag="$name$" style="border-color: $color$; color: $color$; --tag-color: $color$;">
+                    <span class="icon">
                         <i class="fas fa-tag"></i>
                     </span>
                     <span>$name$</span>
@@ -98,8 +96,8 @@
                 <span class="is-size-7 has-text-grey">選択中: </span>
                 <span class="selected-tags-list"></span>
                 <button class="button is-small is-danger is-outlined ml-2" id="clear-selection">
-                    <span class="icon is-small">
-                        <i class="fas fa-times"></i>
+                    <span class="icon">
+                        <i class="fas fa-xmark"></i>
                     </span>
                     <span>クリア</span>
                 </button>
