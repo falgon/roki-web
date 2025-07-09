@@ -125,7 +125,7 @@ jobs:
 
         ## Test Diagram
 
-        ```mermaid
+        ```{lang=mermaid}
         graph TD;
             A[Start] --> B{Is it mermaid-cli PR?};
             B -->|Yes| C[Generate test file];
@@ -138,7 +138,7 @@ jobs:
 
         ## Another Test Diagram
 
-        ```mermaid
+        ```{lang=mermaid}
         sequenceDiagram
             participant D as Dependabot
             participant G as GitHub Actions
@@ -154,7 +154,7 @@ jobs:
 
         ## Flowchart Test
 
-        ```mermaid
+        ```{lang=mermaid}
         flowchart LR
             A[Package.json] --> B[mermaid-cli version]
             B --> C[Dependabot detects update]
