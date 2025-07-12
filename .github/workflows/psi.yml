@@ -5,11 +5,11 @@ on:
       sp_threshold:
         description: 'Smart phone threshold'
         required: true
-        default: 65
+        default: '65'
       pc_threshold:
         description: 'PC threshold'
         required: true
-        default: 90
+        default: '90'
       locale:
         description: 'Locale'
         required: true
@@ -19,33 +19,19 @@ jobs:
     runs-on: ubuntu-24.04
     if: github.repository == 'falgon/roki-web'
     steps:
-    - uses: actions/checkout@v2
-    - name: Read Node version
-      uses: browniebroke/read-nvmrc-action@v1
-      id: nvmrc
+    - uses: actions/checkout@v4
     - name: Setup Node
-      uses: actions/setup-node@v2
+      uses: actions/setup-node@v4
       with:
-        node-version: '${{ steps.nvmrc.outputs.node_version }}'
-    - name: PSI module cache
-      uses: actions/cache@v4
-      id: psi-cache
-      with:
-        path: '**/node_modules'
-        key: node-v1-${{ runner.os }}-${{ hashFiles('.nvmrc') }}-${{ hashFiles('package.json') }}-${{ hashFiles('package-lock.json') }}
-    - name: Setup psi
-      if: steps.psi-cache.outputs.cache-hit != 'true'
-      run: npm ci
+        node-version-file: '.nvmrc'
+    - name: Setup jq
+      run: sudo apt-get update && sudo apt-get install -y jq bc
     - name: Get page insights
+      env:
+        PAGESPEED_API_KEY: ${{ secrets.PAGESPEED_API_KEY }}
       run: |
         readonly TARGET_URL=https://$(cat CNAME)
         set +e
-        npx psi $TARGET_URL \
-          --strategy=mobile \
-          --locale=${{ github.event.inputs.locale }} \
-          --threshold=${{ github.event.inputs.sp_threshold }}
-        npx psi $TARGET_URL \
-          --strategy=desktop \
-          --locale=${{ github.event.inputs.locale }} \
-          --threshold=${{ github.event.inputs.pc_threshold }}
+        bash tools/pagespeed-check.sh $TARGET_URL mobile ${{ github.event.inputs.locale }} ${{ github.event.inputs.sp_threshold }}
+        bash tools/pagespeed-check.sh $TARGET_URL desktop ${{ github.event.inputs.locale }} ${{ github.event.inputs.pc_threshold }}
         set -e
