@@ -134,6 +134,7 @@ disneyLogCtx tagConfig = mconcat
     , snsLinksField "youtube"
     , snsLinksField "instagram"
     , snsLinksField "x"
+    , snsLinksField "note"
     , disneyTagsField tagConfig
     ]
 

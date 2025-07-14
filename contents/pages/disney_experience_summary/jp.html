@@ -133,6 +133,11 @@
                     <a href="$url$" target="_blank" rel="noopener" title="X (Twitter)"><i class="fab fa-x-twitter fa-sm"></i></a>
                     $endfor$
                     $endif$
+                    $if(note-links)$
+                    $for(note-links)$
+                    <a href="$url$" target="_blank" rel="noopener" title="Note"><i class="fas fa-note-sticky fa-sm"></i></a>
+                    $endfor$
+                    $endif$
                 </div>
                 <div class="log-body">$log-body$</div>
             </article>
