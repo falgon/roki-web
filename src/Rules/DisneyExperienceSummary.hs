@@ -4,6 +4,7 @@ module Rules.DisneyExperienceSummary (rules) where
 import           Control.Monad.Reader  (asks)
 import           Control.Monad.Trans   (MonadTrans (..))
 import           Data.List             (nub, sortBy)
+import qualified Data.Map              as M
 import           Data.Ord              (comparing)
 import           Data.String           (IsString (..))
 import           Dhall                 (FromDhall, Generic, auto, input)
@@ -27,29 +28,40 @@ data Favorite = Favorite {
 
 instance FromDhall Favorite
 
--- タグの色とリンクの定義
-tagConfig :: [(String, (String, String))]
-tagConfig = [
-    ("FSH", ("#854454", "https://www.tokyodisneyresort.jp/hotel/fsh.html"))
-  , ("DHM", ("#8A7501", "https://www.tokyodisneyresort.jp/hotel/dhm.html"))
-  , ("TDH", ("#B95C00", "https://www.tokyodisneyresort.jp/hotel/tdh.html"))
-  , ("DAH", ("#1A2B8F", "https://www.tokyodisneyresort.jp/hotel/dah.html"))
-  , ("TSH", ("#C28A02", "https://www.tokyodisneyresort.jp/hotel/tsh.html"))
-  , ("TDL", ("#CF2C72", "https://www.tokyodisneyresort.jp/tdl/"))
-  , ("TDS", ("#017788", "https://www.tokyodisneyresort.jp/tds/"))
-  ]
+-- タグ設定のデータ構造
+data TagConfig = TagConfig {
+    mapKey   :: String
+  , mapValue :: TagInfo
+  } deriving (Generic, Show)
+
+data TagInfo = TagInfo {
+    color :: String
+  , url   :: String
+  } deriving (Generic, Show)
+
+instance FromDhall TagConfig
+instance FromDhall TagInfo
+
+-- Dhallファイルからタグ設定を読み込み
+loadDisneyTags :: IO [TagConfig]
+loadDisneyTags = input auto "./contents/config/disney/Tags.dhall"
+
+-- タグ設定をMapに変換
+tagConfigMap :: IO (M.Map String (String, String))
+tagConfigMap = do
+    tags <- loadDisneyTags
+    return $ M.fromList $ map (\tag -> (mapKey tag, (color $ mapValue tag, url $ mapValue tag))) tags
+
+getTag :: String -> M.Map String (String, String) -> (String, String)
+getTag = M.findWithDefault ("#363636", "#")
 
 -- タグの色を取得
-getTagColor :: String -> String
-getTagColor tag = case lookup tag tagConfig of
-    Just (color, _) -> color
-    Nothing         -> "#363636" -- Bulma is-dark の色
+getTagColor :: String -> M.Map String (String, String) -> String
+getTagColor = (.) fst . getTag
 
 -- タグのリンクを取得
-getTagLink :: String -> String
-getTagLink tag = case lookup tag tagConfig of
-    Just (_, tagLink) -> tagLink
-    Nothing           -> "#"
+getTagLink :: String -> M.Map String (String, String) -> String
+getTagLink = (.) snd . getTag
 
 -- メタデータ用のトリム関数
 trimMeta :: String -> String
@@ -65,16 +77,16 @@ snsLinksField snsType = listFieldWith (snsType ++ "-links") (field "url" (return
         Nothing     -> return []
 
 -- タグのメタデータを処理するためのフィールド
-disneyTagsField :: Context String
-disneyTagsField = listFieldWith "disney-tags-list" tagCtx $ \item -> do
+disneyTagsField :: M.Map String (String, String) -> Context String
+disneyTagsField tagConfig = listFieldWith "disney-tags-list" tagCtx $ \item -> do
     mTags <- getMetadataField (itemIdentifier item) "disney-tags"
     case mTags of
         Just tagsStr -> return $ map (\tag -> Item (fromString tag) tag) $ filter (not . null) $ map trimMeta (splitAll "," tagsStr)
         Nothing      -> return []
   where
     tagCtx = field "name" (return . itemBody)
-          <> field "color" (return . getTagColor . itemBody)
-          <> field "link" (return . getTagLink . itemBody)
+          <> field "color" (return . flip getTagColor tagConfig . itemBody)
+          <> field "link" (return . flip getTagLink tagConfig . itemBody)
 
 disneyExperienceSummaryRoot :: FilePath
 disneyExperienceSummaryRoot = joinPath [contentsRoot, "disney_experience_summary"]
@@ -115,14 +127,14 @@ loadDisneyFavorites :: IO [Favorite]
 loadDisneyFavorites = input auto "./contents/config/disney/Favorites.dhall"
 
 -- ログエントリ用のコンテキストを作成
-disneyLogCtx :: Context String
-disneyLogCtx = mconcat
+disneyLogCtx :: M.Map String (String, String) -> Context String
+disneyLogCtx tagConfig = mconcat
     [ metadataField
     , bodyField "log-body"
     , snsLinksField "youtube"
     , snsLinksField "instagram"
     , snsLinksField "x"
-    , disneyTagsField
+    , disneyTagsField tagConfig
     ]
 
 rules :: PageConfReader Rules ()
@@ -133,6 +145,7 @@ rules = do
     mapM_ (mdRule disneyExperienceSummarySnapshot) items
     faIcons <- asks pcFaIcons
     favorites <- lift $ preprocess loadDisneyFavorites
+    tagConfig <- lift $ preprocess tagConfigMap
     lift $ do
         -- フォントファイルのコピー
         match (fromGlob $ joinPath [contentsRoot, "fonts", "*.otf"]) $ do
@@ -162,8 +175,8 @@ rules = do
                   , pure defaultContext
                   , constField "about-body"
                         <$> loadSnapshotBody aboutIdent disneyExperienceSummarySnapshot
-                  , pure $ listField "disney-logs" disneyLogCtx (return disneyLogs)
-                  , pure $ listField "unique-tags" (field "name" (return . itemBody) <> field "color" (return . getTagColor . itemBody) <> field "link" (return . getTagLink . itemBody)) (return $ map (\tag -> Item (fromString tag) tag) uniqueTags)
+                  , pure $ listField "disney-logs" (disneyLogCtx tagConfig) (return disneyLogs)
+                  , pure $ listField "unique-tags" (field "name" (return . itemBody) <> field "color" (return . flip getTagColor tagConfig . itemBody) <> field "link" (return . flip getTagLink tagConfig . itemBody)) (return $ map (\tag -> Item (fromString tag) tag) uniqueTags)
                   , pure $ listField "favorite-works" (field "text" (return . text . itemBody) <> field "link" (return . maybe "" id . link . itemBody)) (return $ map (\f -> Item (fromString $ text f) f) $ filter ((== "works") . category) favorites)
                   , pure $ listField "favorite-characters" (field "text" (return . text . itemBody) <> field "link" (return . maybe "" id . link . itemBody)) (return $ map (\f -> Item (fromString $ text f) f) $ filter ((== "characters") . category) favorites)
                   , pure $ listField "favorite-park-contents" (field "text" (return . text . itemBody) <> field "link" (return . maybe "" id . link . itemBody)) (return $ map (\f -> Item (fromString $ text f) f) $ filter ((== "park-contents") . category) favorites)
