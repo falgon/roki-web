@@ -24,8 +24,11 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version-file: '.nvmrc'
-    - name: Setup jq
-      run: sudo apt-get update && sudo apt-get install -y jq bc
+    - name: Install tools (apt)
+      uses: awalsh128/cache-apt-pkgs-action@v1
+      with:
+        packages: jq bc
+        version: 1.0
     - name: Get page insights
       env:
         PAGESPEED_API_KEY: ${{ secrets.PAGESPEED_API_KEY }}
