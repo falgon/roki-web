@@ -1,0 +1,175 @@
+<!-- ローディング画面 -->
+<div id="loading-overlay" class="loading-overlay">
+    <div class="loading-content">
+        <div class="loading-title">$title$</div>
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Loading...</div>
+        <div class="loading-details" id="loading-details">Loading fonts...</div>
+        <div class="progress-container">
+            <div id="progress-bar" class="progress-bar"></div>
+        </div>
+        <div id="progress-text" class="progress-text">0%</div>
+    </div>
+</div>
+
+<div class="disney-experience-summary" id="main-content">
+<div class="container">
+    <h1 class="disney-title">$title$</h1>
+    <div class="profile-section">
+        <div class="profile-image mb-3">
+            <figure class="image is-128x128 mx-auto">
+                <picture>
+                    <source class="is-rounded" type="image/webp" srcset="../images/avator/prof1000x1000.png.webp">
+                    <img alt="Profile photo" class="is-rounded" src="../images/avator/prof1000x1000.png" />
+                </picture>
+            </figure>
+        </div>
+        <div class="sns-links mb-3">
+            <ul class="is-unstyled mb-0 has-text-centered">
+                <li class="is-inline-block mr-4"><a href="/"><i class="fas fa-house fa-lg" aria-hidden="true"></i></a></li>
+                <li class="is-inline-block mr-4"><a href="https://x.com/p0nchi_v"><i class="fab fa-x-twitter fa-lg" aria-hidden="true"></i></a></li>
+                <li class="is-inline-block"><a href="https://www.instagram.com/ponchi.v/"><i class="fab fa-instagram fa-lg" aria-hidden="true"></i></a></li>
+            </ul>
+        </div>
+    </div>
+    
+    
+    <div class="about-section">
+        $about-body$
+    </div>
+    
+    <div class="favorites-section">
+        <div class="columns">
+            <div class="column pr-2">
+                <div class="favorite-category">
+                    <h3 class="title is-4"><i class="fas fa-film mr-2"></i>好きな作品</h3>
+                    <div class="tag-list">
+                        $for(favorite-works)$
+                        $if(link)$
+                        <span class="tag is-small custom-tag"><a href="$link$" target="_blank" rel="noopener">$text$</a></span>
+                        $else$
+                        <span class="tag is-small custom-tag">$text$</span>
+                        $endif$
+                        $endfor$
+                    </div>
+                </div>
+            </div>
+            <div class="column pr-2">
+                <div class="favorite-category">
+                    <h3 class="title is-4"><i class="fas fa-hat-wizard mr-2"></i>好きなキャラクタ</h3>
+                    <div class="tag-list">
+                        $for(favorite-characters)$
+                        $if(link)$
+                        <span class="tag is-small custom-tag"><a href="$link$" target="_blank" rel="noopener">$text$</a></span>
+                        $else$
+                        <span class="tag is-small custom-tag">$text$</span>
+                        $endif$
+                        $endfor$
+                    </div>
+                </div>
+            </div>
+            <div class="column pr-2">
+                <div class="favorite-category">
+                    <h3 class="title is-4"><i class="fas fa-horse mr-2"></i>好きなパークコンテンツ</h3>
+                    <div class="tag-list">
+                        $for(favorite-park-contents)$
+                        $if(link)$
+                        <span class="tag is-small custom-tag"><a href="$link$" target="_blank" rel="noopener">$text$</a></span>
+                        $else$
+                        <span class="tag is-small custom-tag">$text$</span>
+                        $endif$
+                        $endfor$
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="favorite-category mt-2">
+        <h3 class="title is-4 mb-3">
+            <i class="fas fa-wand-magic-sparkles"></i>体験歴
+            <button class="button is-small is-info ml-2" id="toggle-tag-filter">
+                <span class="icon">
+                    <i class="fas fa-filter"></i>
+                </span>
+                <span>タグで絞り込み</span>
+            </button>
+        </h3>
+        <div class="tag-filter mb-3" style="display: none;">
+            <div class="tag-filter-buttons">
+                $for(unique-tags)$
+                <button class="button is-small is-outlined tag-filter-btn" data-tag="$name$" style="border-color: $color$; color: $color$; --tag-color: $color$;">
+                    <span class="icon">
+                        <i class="fas fa-tag"></i>
+                    </span>
+                    <span>$name$</span>
+                </button>
+                $endfor$
+            </div>
+            <div class="selected-tags mt-2" style="display: none;">
+                <span class="is-size-7 has-text-grey">選択中: </span>
+                <span class="selected-tags-list"></span>
+                <button class="button is-small is-danger is-outlined ml-2" id="clear-selection">
+                    <span class="icon">
+                        <i class="fas fa-xmark"></i>
+                    </span>
+                    <span>クリア</span>
+                </button>
+            </div>
+        </div>
+        <div class="logs">
+            $for(disney-logs)$
+            <article class="log-entry" data-tags="$for(disney-tags-list)$$name$$sep$,$endfor$">
+                <h2 class="log-title">$title$</h2>
+                $if(disney-tags-list)$
+                <div class="log-tags">
+                    $for(disney-tags-list)$
+                    <span class="tag is-small" style="background-color: $color$; color: white;">
+                        <a href="$link$" target="_blank" rel="noopener">$name$</a>
+                    </span>
+                    $endfor$
+                </div>
+                $endif$
+                <div class="log-date">
+                    <span>$date$</span>
+                    $if(youtube-links)$
+                    $for(youtube-links)$
+                    <a href="$url$" target="_blank" rel="noopener" title="YouTube"><i class="fab fa-youtube fa-sm"></i></a>
+                    $endfor$
+                    $endif$
+                    $if(instagram-links)$
+                    $for(instagram-links)$
+                    <a href="$url$" target="_blank" rel="noopener" title="Instagram"><i class="fab fa-instagram fa-sm"></i></a>
+                    $endfor$
+                    $endif$
+                    $if(x-links)$
+                    $for(x-links)$
+                    <a href="$url$" target="_blank" rel="noopener" title="X (Twitter)"><i class="fab fa-x-twitter fa-sm"></i></a>
+                    $endfor$
+                    $endif$
+                    $if(note-links)$
+                    $for(note-links)$
+                    <a href="$url$" target="_blank" rel="noopener" title="Note"><i class="fas fa-note-sticky fa-sm"></i></a>
+                    $endfor$
+                    $endif$
+                </div>
+                <div class="log-body">$log-body$</div>
+            </article>
+            $endfor$
+        </div>
+        </div>
+    </div>
+</div>
+</div>
+
+<script>
+// プレビューモードかどうかを判定
+(function() {
+    try {
+        const lowerStr = '$is_preview$'.toLowerCase();
+        window.isPreview = lowerStr === 'true';
+    } catch (e) {
+        window.isPreview = false;
+    }
+})();
+</script>

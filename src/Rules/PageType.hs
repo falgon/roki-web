@@ -13,6 +13,7 @@ data PageConf = PageConf {
     pcWriterOpt   :: WriterOptions
   , pcKaTeXRender :: KaTeXRender
   , pcFaIcons     :: FA.FontAwesomeIcons
+  , pcIsPreview   :: Bool
   }
 
 type PageConfReader = ReaderT PageConf

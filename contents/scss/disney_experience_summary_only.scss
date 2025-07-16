@@ -1,0 +1,541 @@
+@font-face {
+    font-family: 'Waltograph';
+    src: url('../fonts/waltograph42.otf') format('opentype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+// ローディング画面のスタイル
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #E3F2FE 0%, #BBDEFB 50%, #90CAF9 100%);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    transition: opacity 0.5s ease, visibility 0.5s ease;
+    
+    &.hidden {
+        opacity: 0;
+        visibility: hidden;
+    }
+    
+    .loading-content {
+        text-align: center;
+        color: #083963;
+        
+        .loading-title {
+            font-size: 2rem;
+            margin-bottom: 2rem;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(8, 57, 99, 0.2);
+            border-top: 4px solid #083963;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 2rem;
+        }
+        
+        .loading-text {
+            font-size: 1.1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .loading-details {
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+            opacity: 0.8;
+        }
+        
+        .progress-container {
+            width: 300px;
+            max-width: 80vw;
+            background-color: rgba(8, 57, 99, 0.1);
+            border-radius: 10px;
+            padding: 3px;
+            margin: 0 auto;
+            
+            .progress-bar {
+                height: 20px;
+                background: linear-gradient(90deg, #3CAADF, #083963);
+                border-radius: 8px;
+                width: 0%;
+                transition: width 0.3s ease;
+                position: relative;
+                overflow: hidden;
+                
+                &::after {
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    left: -100%;
+                    width: 100%;
+                    height: 100%;
+                    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+                    animation: shimmer 2s infinite;
+                }
+            }
+        }
+        
+        .progress-text {
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+            opacity: 0.8;
+        }
+    }
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+@keyframes shimmer {
+    0% { left: -100%; }
+    100% { left: 100%; }
+}
+
+// メインコンテンツの初期状態
+.disney-experience-summary {
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    
+    &.loaded {
+        opacity: 1;
+    }
+    
+    .disney-title {
+        font-family: 'Waltograph', serif;
+        font-size: 2.5rem;
+        text-align: center;
+        color: #083963;
+        margin: 0 0 2rem 0;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .log-entry {
+        margin: 1rem 0;
+        padding: 1rem;
+        background-color: #E3F2FE;
+        border-radius: 8px;
+    }
+
+    .log-title {
+        font-size: 1.2rem;
+        font-weight: bold;
+        color: #083963;
+        margin-bottom: 0.3rem;
+    }
+
+    .log-date {
+        color: #6b7280;
+        font-size: 0.8rem;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        
+        a {
+            color: #6b7280;
+            text-decoration: none;
+            transition: color 0.3s ease;
+            
+            &:hover {
+                color: #3CAADF;
+            }
+            
+            &.fa-youtube:hover {
+                color: #FF0000;
+            }
+            
+            &.fa-instagram:hover {
+                color: #E4405F;
+            }
+            
+            &.fa-x-twitter:hover {
+                color: #000000;
+            }
+        }
+    }
+
+    .log-body {
+        line-height: 1.5;
+        font-size: 0.95rem;
+    }
+
+    .container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 0 1rem;
+        color: #083963;
+    }
+
+    .about-section {
+        padding: 1.5rem;
+        background-color: #E3F2FE;
+        border-radius: 8px;
+        text-align: center;
+    }
+
+    .favorites-section {
+        margin-top: 4rem;
+        
+        .columns {
+            margin: 0;
+        }
+        
+        .column {
+            padding: 0;
+        }
+    }
+
+    .favorite-category {
+        margin-bottom: 0;
+        
+        h3 {
+            color: #083963;
+            margin-bottom: 0.5rem;
+            padding-left: 2rem;
+            position: relative;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            
+            svg {
+                position: absolute;
+                left: 0;
+                top: 0.1rem;
+            }
+            
+            .button {
+                display: inline-flex !important;
+                align-items: center !important;
+                line-height: 1 !important;
+                border-width: 1px !important;
+                box-sizing: border-box !important;
+                padding: 0.25em 0.5em !important;
+                min-height: 1.8em !important;
+                font-size: 0.75rem !important;
+                transition: color 0.3s ease, background-color 0.3s ease !important;
+                background-color: transparent !important;
+                border-color: #3e8ed0 !important;
+                color: #3e8ed0 !important;
+                
+                &:hover {
+                    color: #fff !important;
+                    background-color: #3e8ed0 !important;
+                    border-color: #3e8ed0 !important;
+                }
+                
+                .icon {
+                    display: inline-flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                    width: 1em !important;
+                    height: 1em !important;
+                    flex-shrink: 0 !important;
+                    line-height: 1 !important;
+                    margin-right: 0.3rem !important;
+                    transition: none !important;
+                    
+                    i, svg {
+                        font-size: 0.875em !important;
+                        line-height: 1 !important;
+                        display: inline-block !important;
+                        vertical-align: middle !important;
+                        width: 1em !important;
+                        height: 1em !important;
+                        transition: none !important;
+                    }
+                    
+                    svg {
+                        position: relative !important;
+                        top: 0 !important;
+                        transform: translateY(0) !important;
+                        margin: 0 !important;
+                        padding: 0 !important;
+                    }
+                }
+                
+                span:not(.icon) {
+                    line-height: 1 !important;
+                    display: inline-block !important;
+                    vertical-align: middle !important;
+                    transition: none !important;
+                }
+            }
+        }
+    }
+
+    .tag-list {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+
+    .profile-section {
+        text-align: center;
+    }
+
+    .sns-links {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        
+        ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        a {
+            color: #3CAADF;
+            text-decoration: none;
+            transition: color 0.3s ease;
+            
+            &:hover {
+                color: rgba(60, 170, 223, 0.6);
+            }
+        }
+    }
+
+    .tag {
+        a {
+            color: inherit;
+            text-decoration: none;
+            
+            &:hover {
+                text-decoration: none;
+            }
+        }
+    }
+
+    .custom-tag {
+        background-color: #E3F2FE !important;
+        color: #083963 !important;
+        transition: all 0.3s ease;
+        
+        &:hover {
+            background-color: rgba(227, 242, 254, 0.6) !important;
+            color: #083963 !important;
+        }
+    }
+
+    .logs {
+        max-height: 600px;
+        overflow-y: auto;
+        
+        &::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        &::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+        
+        &::-webkit-scrollbar-thumb {
+            background: #E3F2FE;
+            border-radius: 4px;
+            
+            &:hover {
+                background: rgba(227, 242, 254, 0.6);
+            }
+        }
+    }
+
+    .log-tags {
+        margin-bottom: 0.5rem;
+        
+        .tag {
+            margin-right: 0.2rem;
+            margin-bottom: 0.2rem;
+            display: inline-flex;
+            align-items: center;
+            font-size: 0.75em;
+            padding: 0.2em 0.6em;
+            
+            a {
+                color: white !important;
+                text-decoration: none;
+                
+                &:hover {
+                    color: white !important;
+                    text-decoration: none;
+                }
+            }
+        }
+    }
+
+    .tag-filter {
+        .tag-filter-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            justify-content: center;
+            padding: 0.5rem 0;
+            
+            .tag-filter-btn {
+                transition: all 0.3s ease;
+                border-radius: 20px;
+                font-size: 0.8rem;
+                display: inline-flex !important;
+                align-items: center !important;
+                line-height: 1 !important;
+                border-width: 1px !important;
+                box-sizing: border-box !important;
+                padding: 0.375em 0.75em !important;
+                min-height: 2.25em !important;
+                
+                &:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+                    color: #fff !important;
+                    background-color: var(--tag-color, #3e8ed0) !important;
+                }
+                
+                &.active {
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+                }
+                
+                .icon {
+                    margin-right: 0.3rem !important;
+                    display: inline-flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                    width: 1em !important;
+                    height: 1em !important;
+                    flex-shrink: 0 !important;
+                    line-height: 1 !important;
+                    transition: none !important;
+                    
+                    i {
+                        font-size: 0.875em !important;
+                        line-height: 1 !important;
+                        display: inline-block !important;
+                        vertical-align: middle !important;
+                        width: auto !important;
+                        height: auto !important;
+                        transition: none !important;
+                    }
+                }
+                
+                span:not(.icon) {
+                    line-height: 1 !important;
+                    display: inline-block !important;
+                    vertical-align: middle !important;
+                    transition: none !important;
+                }
+            }
+        }
+        
+        .selected-tags {
+            text-align: center;
+            padding: 0.5rem;
+            background-color: #f5f5f5;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            
+            .selected-tags-list {
+                display: inline-block;
+                
+                .tag {
+                    margin-right: 0.5rem;
+                    margin-bottom: 0.2rem;
+                    font-size: 0.75rem;
+                    padding: 0.2em 0.6em;
+                }
+            }
+            
+            #clear-selection {
+                font-size: 0.75rem;
+                padding: 0.2em 0.6em;
+                height: auto;
+                border-radius: 12px;
+                display: inline-flex !important;
+                align-items: center !important;
+                border-width: 1px !important;
+                box-sizing: border-box !important;
+                transition: background-color 0.3s ease !important;
+                line-height: 1 !important;
+                vertical-align: middle !important;
+                
+                &:hover {
+                    transform: translateY(-1px);
+                    background-color: #f14668 !important;
+                    color: #fff !important;
+                    border-color: #f14668 !important;
+                }
+                
+                .icon {
+                    display: inline-flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                    width: 1em !important;
+                    height: 1em !important;
+                    flex-shrink: 0 !important;
+                    line-height: 1 !important;
+                    margin-right: 0.3rem !important;
+                    transition: none !important;
+                    
+                    i {
+                        font-size: 0.875em !important;
+                        line-height: 1 !important;
+                        display: inline-block !important;
+                        vertical-align: middle !important;
+                        width: auto !important;
+                        height: auto !important;
+                        transition: none !important;
+                    }
+                }
+                
+                span:not(.icon) {
+                    line-height: 1 !important;
+                    display: inline-block !important;
+                    vertical-align: middle !important;
+                    transition: none !important;
+                }
+            }
+        }
+    }
+
+    .log-entry {
+        transition: opacity 0.3s ease, transform 0.3s ease;
+        
+        &.filtered-out {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+    }
+}
+
+@media screen and (max-width: 768px) {
+    .disney-experience-summary {
+        .favorites-section {
+            .column:first-child,
+            .column:nth-child(2) {
+                margin-bottom: 2rem;
+            }
+        }
+        
+        .favorite-category.mt-2 {
+            margin-top: 2rem !important;
+        }
+    }
+} 
