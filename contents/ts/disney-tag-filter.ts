@@ -541,6 +541,13 @@ document.addEventListener('DOMContentLoaded', (): void => {
         updateSelectedTagsDisplay();
     };
 
+    // HTMLエスケープ関数
+    const escapeHtml = (text: string): string => {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    };
+
     // 選択されたタグの表示を更新する関数
     const updateSelectedTagsDisplay = (): void => {
         if (!selectedTagsContainer || !selectedTagsList) return;
@@ -550,9 +557,9 @@ document.addEventListener('DOMContentLoaded', (): void => {
         } else {
             selectedTagsContainer.style.display = 'block';
             const tagButtons: string = Array.from(selectedTags).map((tag: string): string => {
-                const button: TagButton | null = document.querySelector(`[data-tag="${tag}"]`) as TagButton;
+                const button: TagButton | null = document.querySelector(`[data-tag="${escapeHtml(tag)}"]`) as TagButton;
                 const color: string = button?.style.borderColor || button?.style.color || '#363636';
-                return `<span class="tag is-small" style="background-color: ${color}; color: white; margin-right: 0.5rem;">${tag}</span>`;
+                return `<span class="tag is-small" style="background-color: ${escapeHtml(color)}; color: white; margin-right: 0.5rem;">${escapeHtml(tag)}</span>`;
             }).join('');
             selectedTagsList.innerHTML = tagButtons;
         }
