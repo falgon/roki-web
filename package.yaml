@@ -51,6 +51,7 @@ library:
       - mtl
       - containers
       - basic-prelude
+      - directory
 
 executables:
     site:
