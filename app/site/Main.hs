@@ -242,6 +242,7 @@ main = do
             Page.pcWriterOpt = writer
           , Page.pcKaTeXRender = if optPreviewFlag opts then KaTeX.render else pure
           , Page.pcFaIcons = faIcons
+          , Page.pcIsPreview = optPreviewFlag opts
           }
         mapM_ (runReaderT $ Blog.rules faIcons) blogConfs
         mapM_ (flip runReaderT pageConf) [TopPage.rules blogConfs, Resume.rules, DisneyExperienceSummary.rules]

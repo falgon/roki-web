@@ -145,6 +145,7 @@ rules = do
             ]
     mapM_ (mdRule disneyExperienceSummarySnapshot) items
     faIcons <- asks pcFaIcons
+    isPreview <- asks pcIsPreview
     favorites <- lift $ preprocess loadDisneyFavorites
     tagConfig <- lift $ preprocess tagConfigMap
     lift $ do
@@ -170,6 +171,7 @@ rules = do
                 disneyExperienceSummaryCtx <- mconcatM [
                     pure $ constField "title" "Ponchi's Disney Journey"
                   , pure $ constField "font_path" "../fonts/waltograph42.otf"
+                  , pure $ constField "is_preview" (show isPreview)
                   , pure $ listField "additional-css" (field "css" (return . itemBody)) (return $ map (\css -> Item (fromString css) css) ["../style/disney_experience_summary_only.css"])
                   , pure $ listField "additional-js" (field "js" (return . itemBody)) (return $ map (\js -> Item (fromString js) js) ["../js/disney-tag-filter.js"])
                   , pure siteCtx

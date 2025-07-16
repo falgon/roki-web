@@ -161,3 +161,15 @@
     </div>
 </div>
 </div>
+
+<script>
+// プレビューモードかどうかを判定
+(function() {
+    try {
+        const lowerStr = '$is_preview$'.toLowerCase();
+        window.isPreview = lowerStr === 'true';
+    } catch (e) {
+        window.isPreview = false;
+    }
+})();
+</script>

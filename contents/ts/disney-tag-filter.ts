@@ -8,6 +8,16 @@ const initLoadingScreen = (): void => {
     
     if (!loadingOverlay || !mainContent || !progressBar || !progressText || !loadingDetails) return;
     
+    // プレビューモードかどうかを確認
+    const isPreview = (window as any).isPreview === true;
+    
+    // ログ出力関数（プレビューモードでのみ出力）
+    const log = (message: string): void => {
+        if (isPreview) {
+            console.log(message);
+        }
+    };
+    
     let progress: number = 0;
     const progressInterval: ReturnType<typeof setInterval> = setInterval((): void => {
         progress += Math.random() * 2;
@@ -18,10 +28,13 @@ const initLoadingScreen = (): void => {
     
     // すべてのリソースの読み込み完了を検知
     const waitForAllResources = async (): Promise<void> => {
+        log('Starting resource loading detection...');
         const promises: Promise<void>[] = [];
         
         // フォントの読み込み完了を待つ
+        log('Waiting for fonts to load...');
         promises.push(document.fonts.ready.then((): void => {
+            log('Fonts loaded');
             progress = 90;
             progressBar.style.width = '90%';
             progressText.textContent = '90%';
@@ -30,87 +43,350 @@ const initLoadingScreen = (): void => {
         
         // 画像の読み込み完了を待つ
         const images: NodeListOf<HTMLImageElement> = document.querySelectorAll('img');
-        const imagePromises: Promise<void>[] = Array.from(images).map((img: HTMLImageElement): Promise<void> => {
-            if (img.complete && img.naturalHeight !== 0) {
-                return Promise.resolve();
-            } else {
+        log(`Found ${images.length} images to load`);
+        
+        if (images.length === 0) {
+            // 画像がない場合は即座に完了
+            promises.push(Promise.resolve().then((): void => {
+                progress = 95;
+                progressBar.style.width = '95%';
+                progressText.textContent = '95%';
+                loadingDetails.textContent = 'Loading stylesheets...';
+            }));
+        } else {
+            const imagePromises: Promise<void>[] = Array.from(images).map((img: HTMLImageElement, index: number): Promise<void> => {
                 return new Promise((resolve: () => void): void => {
-                    img.onload = resolve;
-                    img.onerror = resolve; // エラーでも続行
+                    log(`Image ${index + 1}/${images.length}: ${img.src}, complete: ${img.complete}, naturalHeight: ${img.naturalHeight}`);
+                    
+                    // 画像が既に読み込まれている場合
+                    if (img.complete && img.naturalHeight !== 0) {
+                        log(`Image ${index + 1} already loaded`);
+                        resolve();
+                        return;
+                    }
+                    
+                    // 画像が読み込み中またはエラーの場合
+                    const onLoad = (): void => {
+                        log(`Image ${index + 1} loaded successfully`);
+                        img.removeEventListener('load', onLoad);
+                        img.removeEventListener('error', onError);
+                        resolve();
+                    };
+                    
+                    const onError = (): void => {
+                        log(`Image ${index + 1} failed to load`);
+                        img.removeEventListener('load', onLoad);
+                        img.removeEventListener('error', onError);
+                        resolve(); // エラーでも続行
+                    };
+                    
+                    img.addEventListener('load', onLoad);
+                    img.addEventListener('error', onError);
+                    
+                    // 既に読み込みが完了している場合のフォールバック
+                    if (img.complete) {
+                        setTimeout((): void => {
+                            if (!img.complete || img.naturalHeight === 0) {
+                                log(`Image ${index + 1} fallback: treating as loaded`);
+                                resolve();
+                            }
+                        }, 100);
+                    }
                 });
-            }
-        });
-        promises.push(Promise.all(imagePromises).then((): void => {
-            progress = 95;
-            progressBar.style.width = '95%';
-            progressText.textContent = '95%';
-            loadingDetails.textContent = 'Loading stylesheets...';
-        }));
+            });
+            
+            promises.push(Promise.all(imagePromises).then((): void => {
+                log('All images loaded');
+                progress = 95;
+                progressBar.style.width = '95%';
+                progressText.textContent = '95%';
+                loadingDetails.textContent = 'Loading stylesheets...';
+            }));
+        }
         
         // CSSの読み込み完了を待つ
         const stylesheets: NodeListOf<HTMLLinkElement> = document.querySelectorAll('link[rel="stylesheet"]');
-        const cssPromises: Promise<void>[] = Array.from(stylesheets).map((link: HTMLLinkElement): Promise<void> => {
-            if (link.sheet) {
-                return Promise.resolve();
-            } else {
+        log(`Found ${stylesheets.length} stylesheets to load`);
+        
+        if (stylesheets.length === 0) {
+            // CSSがない場合は即座に完了
+            promises.push(Promise.resolve().then((): void => {
+                progress = 97;
+                progressBar.style.width = '97%';
+                progressText.textContent = '97%';
+                loadingDetails.textContent = 'Loading JavaScript...';
+            }));
+        } else {
+            const cssPromises: Promise<void>[] = Array.from(stylesheets).map((link: HTMLLinkElement, index: number): Promise<void> => {
                 return new Promise((resolve: () => void): void => {
-                    link.onload = resolve;
-                    link.onerror = resolve; // エラーでも続行
+                    log(`Stylesheet ${index + 1}/${stylesheets.length}: ${link.href}, sheet: ${!!link.sheet}`);
+                    
+                    // CSSが既に読み込まれている場合
+                    if (link.sheet) {
+                        log(`Stylesheet ${index + 1} already loaded`);
+                        resolve();
+                        return;
+                    }
+                    
+                    // CSSが読み込み中またはエラーの場合
+                    const onLoad = (): void => {
+                        log(`Stylesheet ${index + 1} loaded successfully`);
+                        link.removeEventListener('load', onLoad);
+                        link.removeEventListener('error', onError);
+                        resolve();
+                    };
+                    
+                    const onError = (): void => {
+                        log(`Stylesheet ${index + 1} failed to load`);
+                        link.removeEventListener('load', onLoad);
+                        link.removeEventListener('error', onError);
+                        resolve(); // エラーでも続行
+                    };
+                    
+                    link.addEventListener('load', onLoad);
+                    link.addEventListener('error', onError);
+                    
+                    // 既に読み込みが完了している場合のフォールバック
+                    if (link.sheet) {
+                        setTimeout((): void => {
+                            if (!link.sheet) {
+                                log(`Stylesheet ${index + 1} fallback: treating as loaded`);
+                                resolve();
+                            }
+                        }, 100);
+                    }
                 });
-            }
-        });
-        promises.push(Promise.all(cssPromises).then((): void => {
-            progress = 97;
-            progressBar.style.width = '97%';
-            progressText.textContent = '97%';
-            loadingDetails.textContent = 'Loading JavaScript...';
-        }));
+            });
+            
+            promises.push(Promise.all(cssPromises).then((): void => {
+                log('All stylesheets loaded');
+                progress = 97;
+                progressBar.style.width = '97%';
+                progressText.textContent = '97%';
+                loadingDetails.textContent = 'Loading JavaScript...';
+            }));
+        }
         
         // JavaScriptの読み込み完了を待つ
         const scripts: NodeListOf<HTMLScriptElement> = document.querySelectorAll('script[src]');
-        const scriptPromises: Promise<void>[] = Array.from(scripts).map((script: HTMLScriptElement): Promise<void> => {
-            return new Promise((resolve: () => void): void => {
-                // readyStateプロパティの型安全性を確保
-                const scriptElement = script as HTMLScriptElement & { readyState?: string };
-                if (scriptElement.readyState === 'complete' || scriptElement.readyState === 'loaded') {
-                    resolve();
-                } else {
-                    script.onload = resolve;
-                    script.onerror = resolve; // エラーでも続行
-                }
+        log(`Found ${scripts.length} scripts to load`);
+        
+        if (scripts.length === 0) {
+            // JavaScriptがない場合は即座に完了
+            promises.push(Promise.resolve().then((): void => {
+                progress = 98;
+                progressBar.style.width = '98%';
+                progressText.textContent = '98%';
+                loadingDetails.textContent = 'Initializing page...';
+            }));
+        } else {
+            const scriptPromises: Promise<void>[] = Array.from(scripts).map((script: HTMLScriptElement, index: number): Promise<void> => {
+                return new Promise((resolve: () => void): void => {
+                    // 複数の方法でスクリプトの読み込み状況を確認
+                    const readyState = (script as any).readyState;
+                    const isAsync = script.async;
+                    const isDefer = script.defer;
+                    
+                    log(`Script ${index + 1}/${scripts.length}: ${script.src}`);
+                    log(`  - readyState: ${readyState}`);
+                    log(`  - async: ${isAsync}`);
+                    log(`  - defer: ${isDefer}`);
+                    
+                    let resolved = false;
+                    
+                    const onLoad = (): void => {
+                        if (resolved) return;
+                        resolved = true;
+                        log(`Script ${index + 1} loaded successfully`);
+                        script.removeEventListener('load', onLoad);
+                        script.removeEventListener('error', onError);
+                        resolve();
+                    };
+                    
+                    const onError = (): void => {
+                        if (resolved) return;
+                        resolved = true;
+                        log(`Script ${index + 1} failed to load`);
+                        script.removeEventListener('load', onLoad);
+                        script.removeEventListener('error', onError);
+                        resolve(); // エラーでも続行
+                    };
+                    
+                    // イベントリスナーを設定
+                    script.addEventListener('load', onLoad);
+                    script.addEventListener('error', onError);
+                    
+                    // スクリプトが既に読み込まれているかを確定的に判断する関数
+                    const isScriptAlreadyLoaded = (): boolean => {
+                        const scriptSrc = script.src;
+                        
+                        // 方法1: readyStateが有効な値の場合
+                        if (readyState === 'complete' || readyState === 'loaded') {
+                            log(`Script ${index + 1} already loaded (readyState: ${readyState})`);
+                            return true;
+                        }
+                        
+                        // 方法2: 同じsrcのスクリプトが既に存在する場合
+                        const existingScripts = Array.from(document.scripts);
+                        const duplicateScripts = existingScripts.filter((existingScript: HTMLScriptElement): boolean => {
+                            return existingScript.src === scriptSrc && existingScript !== script;
+                        });
+                        
+                        if (duplicateScripts.length > 0) {
+                            log(`Script ${index + 1} appears to be already loaded (duplicate found)`);
+                            return true;
+                        }
+                        
+                        // 方法3: スクリプトの実行状態を確認
+                        try {
+                            // スクリプトが実行可能な状態かどうかを確認
+                            const scriptReadyState = (script as any).readyState;
+                            if (scriptReadyState === 'complete' || scriptReadyState === 'loaded') {
+                                log(`Script ${index + 1} already loaded (execution ready)`);
+                                return true;
+                            }
+                        } catch (e) {
+                            // readyStateプロパティにアクセスできない場合
+                        }
+                        
+                        // 方法4: スクリプトの読み込み時間を確認
+                        const loadStartTime = performance.now();
+                        const navigationStart = (performance as any).timing?.navigationStart || 0;
+                        const timeSincePageLoad = loadStartTime - navigationStart;
+                        
+                        // ページ読み込みから一定時間経過している場合、既に読み込まれている可能性が高い
+                        if (timeSincePageLoad > 1000) { // 1秒以上経過
+                            log(`Script ${index + 1} likely already loaded (page load time: ${timeSincePageLoad.toFixed(0)}ms)`);
+                            return true;
+                        }
+                        
+                        return false;
+                    };
+                    
+                    // 既に読み込まれているかチェック
+                    if (isScriptAlreadyLoaded()) {
+                        setTimeout((): void => {
+                            if (!resolved) {
+                                resolved = true;
+                                script.removeEventListener('load', onLoad);
+                                script.removeEventListener('error', onError);
+                                resolve();
+                            }
+                        }, 100);
+                        return;
+                    }
+                    
+                    // readyStateがundefinedの場合の処理
+                    if (readyState === undefined) {
+                        log(`Script ${index + 1} readyState is undefined, checking if already loaded...`);
+                        
+                        // 非同期スクリプトの場合は短いタイムアウト
+                        if (isAsync) {
+                            log(`Script ${index + 1} is async, using short timeout`);
+                            setTimeout((): void => {
+                                if (!resolved) {
+                                    log(`Script ${index + 1} async script timeout`);
+                                    resolved = true;
+                                    script.removeEventListener('load', onLoad);
+                                    script.removeEventListener('error', onError);
+                                    resolve();
+                                }
+                            }, 1000); // 1秒でタイムアウト
+                            return;
+                        }
+                        
+                        // readyStateがundefinedで非同期でない場合、既に読み込まれている可能性が高い
+                        log(`Script ${index + 1} readyState undefined and not async, likely already loaded`);
+                        setTimeout((): void => {
+                            if (!resolved) {
+                                log(`Script ${index + 1} treating as already loaded`);
+                                resolved = true;
+                                script.removeEventListener('load', onLoad);
+                                script.removeEventListener('error', onError);
+                                resolve();
+                            }
+                        }, 500); // 0.5秒で完了判定
+                        return;
+                    }
+                    
+                    // フォールバック: 一定時間後に強制的に完了とする
+                    setTimeout((): void => {
+                        if (!resolved) {
+                            log(`Script ${index + 1} fallback: treating as loaded after timeout`);
+                            resolved = true;
+                            script.removeEventListener('load', onLoad);
+                            script.removeEventListener('error', onError);
+                            resolve();
+                        }
+                    }, 1000); // 1秒でタイムアウト
+                });
             });
-        });
-        promises.push(Promise.all(scriptPromises).then((): void => {
-            progress = 98;
-            progressBar.style.width = '98%';
-            progressText.textContent = '98%';
-            loadingDetails.textContent = 'Initializing page...';
-        }));
+            
+            promises.push(Promise.all(scriptPromises).then((): void => {
+                log('All scripts loaded');
+                progress = 98;
+                progressBar.style.width = '98%';
+                progressText.textContent = '98%';
+                loadingDetails.textContent = 'Initializing page...';
+            }));
+        }
         
         // DOMContentLoadedイベントを待つ
+        log('Waiting for DOMContentLoaded...');
         promises.push(new Promise<void>((resolve: () => void): void => {
             if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', resolve);
+                document.addEventListener('DOMContentLoaded', (): void => {
+                    log('DOMContentLoaded fired');
+                    resolve();
+                });
             } else {
+                log('DOMContentLoaded already fired');
                 resolve();
             }
         }));
         
         // loadイベントを待つ
+        log('Waiting for load event...');
         promises.push(new Promise<void>((resolve: () => void): void => {
             if (document.readyState === 'complete') {
+                log('Load event already fired');
                 resolve();
             } else {
-                window.addEventListener('load', resolve);
+                window.addEventListener('load', (): void => {
+                    log('Load event fired');
+                    resolve();
+                });
             }
         }));
         
+        // 追加: すべてのリソースが読み込まれるまで待機
+        log('Waiting for all resources to be ready...');
+        promises.push(new Promise<void>((resolve: () => void): void => {
+            const checkReady = (): void => {
+                log(`Current document.readyState: ${document.readyState}`);
+                if (document.readyState === 'complete') {
+                    log('Document is completely loaded');
+                    resolve();
+                } else {
+                    // まだ読み込み中の場合は少し待ってから再チェック
+                    setTimeout(checkReady, 50); // 50ms間隔でチェック
+                }
+            };
+            checkReady();
+        }));
+        
         // すべてのリソースの読み込み完了を待つ
+        log('Waiting for all resources to complete...');
         await Promise.all(promises);
+        log('All resources loaded successfully');
     };
     
     // リソース読み込み完了後の処理
     waitForAllResources().then((): void => {
+        log('Starting final loading completion...');
+        // プログレスインターバルを停止
+        clearInterval(progressInterval);
+        
         // プログレスを100%にする
         progress = 100;
         progressBar.style.width = '100%';
@@ -119,12 +395,37 @@ const initLoadingScreen = (): void => {
         
         // 少し待ってからローディング画面を隠す
         setTimeout((): void => {
+            log('Hiding loading overlay...');
             loadingOverlay.classList.add('hidden');
             mainContent.classList.add('loaded');
             
             // ローディング画面を完全に削除
             setTimeout((): void => {
+                log('Removing loading overlay...');
                 loadingOverlay.remove();
+                log('Loading process completed successfully!');
+            }, 500);
+        }, 500);
+    }).catch((error: Error): void => {
+        if (isPreview) {
+            console.error('Error during resource loading:', error);
+        }
+        // プログレスインターバルを停止
+        clearInterval(progressInterval);
+        
+        // エラーが発生した場合もローディング画面を隠す
+        progress = 100;
+        progressBar.style.width = '100%';
+        progressText.textContent = '100%';
+        loadingDetails.textContent = 'Done!';
+        
+        setTimeout((): void => {
+            loadingOverlay.classList.add('hidden');
+            mainContent.classList.add('loaded');
+            
+            setTimeout((): void => {
+                loadingOverlay.remove();
+                log('Loading process completed with errors');
             }, 500);
         }, 500);
     });
