@@ -1,3 +1,154 @@
+// ローディング機能
+const initLoadingScreen = (): void => {
+    const loadingOverlay: HTMLElement | null = document.getElementById('loading-overlay');
+    const mainContent: HTMLElement | null = document.getElementById('main-content');
+    const progressBar: HTMLElement | null = document.getElementById('progress-bar');
+    const progressText: HTMLElement | null = document.getElementById('progress-text');
+    const loadingDetails: HTMLElement | null = document.getElementById('loading-details');
+    
+    if (!loadingOverlay || !mainContent || !progressBar || !progressText || !loadingDetails) return;
+    
+    let progress: number = 0;
+    const progressInterval: ReturnType<typeof setInterval> = setInterval((): void => {
+        progress += Math.random() * 2;
+        if (progress > 85) progress = 85; // 85%で止める
+        progressBar.style.width = progress + '%';
+        progressText.textContent = Math.floor(progress) + '%';
+    }, 50);
+    
+    // すべてのリソースの読み込み完了を検知
+    const waitForAllResources = async (): Promise<void> => {
+        const promises: Promise<void>[] = [];
+        
+        // フォントの読み込み完了を待つ
+        promises.push(document.fonts.ready.then((): void => {
+            progress = 90;
+            progressBar.style.width = '90%';
+            progressText.textContent = '90%';
+            loadingDetails.textContent = 'Loading images...';
+        }));
+        
+        // 画像の読み込み完了を待つ
+        const images: NodeListOf<HTMLImageElement> = document.querySelectorAll('img');
+        const imagePromises: Promise<void>[] = Array.from(images).map((img: HTMLImageElement): Promise<void> => {
+            if (img.complete && img.naturalHeight !== 0) {
+                return Promise.resolve();
+            } else {
+                return new Promise((resolve: () => void): void => {
+                    img.onload = resolve;
+                    img.onerror = resolve; // エラーでも続行
+                });
+            }
+        });
+        promises.push(Promise.all(imagePromises).then((): void => {
+            progress = 95;
+            progressBar.style.width = '95%';
+            progressText.textContent = '95%';
+            loadingDetails.textContent = 'Loading stylesheets...';
+        }));
+        
+        // CSSの読み込み完了を待つ
+        const stylesheets: NodeListOf<HTMLLinkElement> = document.querySelectorAll('link[rel="stylesheet"]');
+        const cssPromises: Promise<void>[] = Array.from(stylesheets).map((link: HTMLLinkElement): Promise<void> => {
+            if (link.sheet) {
+                return Promise.resolve();
+            } else {
+                return new Promise((resolve: () => void): void => {
+                    link.onload = resolve;
+                    link.onerror = resolve; // エラーでも続行
+                });
+            }
+        });
+        promises.push(Promise.all(cssPromises).then((): void => {
+            progress = 97;
+            progressBar.style.width = '97%';
+            progressText.textContent = '97%';
+            loadingDetails.textContent = 'Loading JavaScript...';
+        }));
+        
+        // JavaScriptの読み込み完了を待つ
+        const scripts: NodeListOf<HTMLScriptElement> = document.querySelectorAll('script[src]');
+        const scriptPromises: Promise<void>[] = Array.from(scripts).map((script: HTMLScriptElement): Promise<void> => {
+            return new Promise((resolve: () => void): void => {
+                // readyStateプロパティの型安全性を確保
+                const scriptElement = script as HTMLScriptElement & { readyState?: string };
+                if (scriptElement.readyState === 'complete' || scriptElement.readyState === 'loaded') {
+                    resolve();
+                } else {
+                    script.onload = resolve;
+                    script.onerror = resolve; // エラーでも続行
+                }
+            });
+        });
+        promises.push(Promise.all(scriptPromises).then((): void => {
+            progress = 98;
+            progressBar.style.width = '98%';
+            progressText.textContent = '98%';
+            loadingDetails.textContent = 'Initializing page...';
+        }));
+        
+        // DOMContentLoadedイベントを待つ
+        promises.push(new Promise<void>((resolve: () => void): void => {
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', resolve);
+            } else {
+                resolve();
+            }
+        }));
+        
+        // loadイベントを待つ
+        promises.push(new Promise<void>((resolve: () => void): void => {
+            if (document.readyState === 'complete') {
+                resolve();
+            } else {
+                window.addEventListener('load', resolve);
+            }
+        }));
+        
+        // すべてのリソースの読み込み完了を待つ
+        await Promise.all(promises);
+    };
+    
+    // リソース読み込み完了後の処理
+    waitForAllResources().then((): void => {
+        // プログレスを100%にする
+        progress = 100;
+        progressBar.style.width = '100%';
+        progressText.textContent = '100%';
+        loadingDetails.textContent = 'Done!';
+        
+        // 少し待ってからローディング画面を隠す
+        setTimeout((): void => {
+            loadingOverlay.classList.add('hidden');
+            mainContent.classList.add('loaded');
+            
+            // ローディング画面を完全に削除
+            setTimeout((): void => {
+                loadingOverlay.remove();
+            }, 500);
+        }, 500);
+    });
+    
+    // フォールバック: 15秒後に強制的にローディング完了
+    setTimeout((): void => {
+        if (!mainContent.classList.contains('loaded')) {
+            clearInterval(progressInterval);
+            progress = 100;
+            progressBar.style.width = '100%';
+            progressText.textContent = '100%';
+            
+            setTimeout((): void => {
+                loadingOverlay.classList.add('hidden');
+                mainContent.classList.add('loaded');
+                
+                setTimeout((): void => {
+                    loadingOverlay.remove();
+                }, 500);
+            }, 500);
+        }
+    }, 15000);
+};
+
 interface TagButton extends HTMLElement {
     getAttribute(name: string): string | null;
 }
@@ -7,6 +158,9 @@ interface LogEntry extends HTMLElement {
 }
 
 document.addEventListener('DOMContentLoaded', (): void => {
+    // ローディング画面を初期化
+    initLoadingScreen();
+    
     const tagFilterButtons: HTMLCollectionOf<Element> = document.getElementsByClassName('tag-filter-btn');
     const logEntries: HTMLCollectionOf<Element> = document.getElementsByClassName('log-entry');
     const selectedTagsContainer: HTMLElement | null = document.getElementsByClassName('selected-tags')[0] as HTMLElement;

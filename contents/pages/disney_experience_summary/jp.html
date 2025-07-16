@@ -1,4 +1,18 @@
-<div class="disney-experience-summary">
+<!-- ローディング画面 -->
+<div id="loading-overlay" class="loading-overlay">
+    <div class="loading-content">
+        <div class="loading-title">$title$</div>
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Loading...</div>
+        <div class="loading-details" id="loading-details">Loading fonts...</div>
+        <div class="progress-container">
+            <div id="progress-bar" class="progress-bar"></div>
+        </div>
+        <div id="progress-text" class="progress-text">0%</div>
+    </div>
+</div>
+
+<div class="disney-experience-summary" id="main-content">
 <div class="container">
     <h1 class="disney-title">$title$</h1>
     <div class="profile-section">
@@ -143,6 +157,7 @@
             </article>
             $endfor$
         </div>
+        </div>
     </div>
 </div>
-</div> 
+</div>
