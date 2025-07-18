@@ -15,7 +15,8 @@
         "katex": "^0.16.22",
         "svgo": "^4.0.0",
         "typescript": "^5.7.2",
-        "terser": "^5.29.2"
+        "terser": "^5.29.2",
+        "tsx": "^4.19.2"
     },
     "dependencies": {
         "@mermaid-js/mermaid-cli": "^11.6.0",
