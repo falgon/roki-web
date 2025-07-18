@@ -35,4 +35,4 @@ elif is_set && ! cmp_expect "$(node --version)"; then
     fail
 fi
 
-node --max-old-space-size=$MAX_OLD_SPACE_SIZE "$BASEDIR/ts-stdin-compile.js" 
+npx tsx --max-old-space-size=$MAX_OLD_SPACE_SIZE "$BASEDIR/ts-stdin-compile.ts" 
