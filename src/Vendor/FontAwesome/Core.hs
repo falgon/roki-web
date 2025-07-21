@@ -26,7 +26,7 @@ instance FromJSON Elem where
 type FontAwesomeIcons = M.HashMap String (M.HashMap String Elem)
 
 loadFontAwesome :: IO (Maybe FontAwesomeIcons)
-loadFontAwesome = decode . B.pack <$> readProcess "./tools/fontawesome.js" [] ""
+loadFontAwesome = decode . B.pack <$> readProcess "npx" ["tsx", "./tools/fontawesome.ts"] ""
 
 fontAwesome :: FontAwesomeIcons -> String -> String -> Maybe (TagTree String)
 fontAwesome db prefix name = toTagTree <$> (M.lookup prefix db >>= M.lookup name)
