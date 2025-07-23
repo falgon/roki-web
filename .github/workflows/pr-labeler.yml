@@ -5,6 +5,7 @@ on:
       - opened
 jobs:
   label:
+    if: github.repository == 'roki/roki-web'
     permissions:
       contents: read
       pull-requests: write
