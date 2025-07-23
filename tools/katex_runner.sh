@@ -50,7 +50,7 @@ run_katex_with_retry() {
             sleep $RETRY_DELAY
         fi
         
-        if node --max-old-space-size=$MAX_OLD_SPACE_SIZE "$BASEDIR/katex.js" "$@"; then
+        if npx tsx --max-old-space-size=$MAX_OLD_SPACE_SIZE "$BASEDIR/katex.ts" "$@"; then
             exit_code=0
         else
             exit_code=$?
