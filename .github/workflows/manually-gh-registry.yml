@@ -78,7 +78,7 @@ jobs:
       id: enable_notify_step
       run: echo "flag=$ENABLE_NOTIFY" >> $GITHUB_OUTPUT
   build-env-image:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     needs: setup
     if: github.repository == 'falgon/roki-web'
     steps:
@@ -107,7 +107,7 @@ jobs:
         name: env_img
         path: /tmp/env_img.tar.gz
   build-dev-image:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     needs: setup
     if: github.repository == 'falgon/roki-web'
     steps:
@@ -136,7 +136,7 @@ jobs:
         name: dev_img
         path: /tmp/dev_img.tar.gz
   notify-line:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     needs: [setup, build-env-image, build-dev-image]
     if: ${{ needs.setup.outputs.enable_notify == 'true' && github.repository == 'falgon/roki-web' }}
     steps:
@@ -151,7 +151,7 @@ jobs:
           -H "Authorization: Bearer $LINE_NOTIFY_TOKEN" \
           -d "message=roki.dev docker image build completed!%0a$ACTIONS_URL"
   push:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     needs: [setup, build-env-image, build-dev-image]
     if: ${{ needs.setup.outputs.to_push == 'true' && github.repository == 'falgon/roki-web' }}
     steps:
