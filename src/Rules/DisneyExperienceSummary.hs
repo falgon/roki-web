@@ -192,7 +192,8 @@ rules = do
                     >>= FA.render faIcons
 
         createRedirects [
-            (fromFilePath $ joinPath ["disney_experience_summary", "index.html"], joinPath ["/", "disney_experience_summary", "jp.html"])
+            (fromFilePath $ joinPath ["disney_experience_summary", "index.html"], joinPath ["/", "disney_experience_summary", "jp.html"]),
+            (fromFilePath $ joinPath ["disney", "index.html"], joinPath ["/", "disney_experience_summary", "jp.html"])
           ]
     where
         disneyExperienceSummarySnapshot = "disneyExperienceSummarySS"
