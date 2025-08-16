@@ -3,7 +3,7 @@ module Rules.DisneyExperienceSummary (rules) where
 
 import           Control.Monad.Reader  (asks)
 import           Control.Monad.Trans   (MonadTrans (..))
-import           Data.List             (nub, sortBy)
+import           Data.List             (nub, sort, sortBy)
 import qualified Data.Map              as M
 import           Data.Ord              (comparing)
 import           Data.String           (IsString (..))
@@ -81,7 +81,7 @@ disneyTagsField :: M.Map String (String, String) -> Context String
 disneyTagsField tagConfig = listFieldWith "disney-tags-list" tagCtx $ \item -> do
     mTags <- getMetadataField (itemIdentifier item) "disney-tags"
     case mTags of
-        Just tagsStr -> return $ map (\tag -> Item (fromString tag) tag) $ filter (not . null) $ map trimMeta (splitAll "," tagsStr)
+        Just tagsStr -> return $ map (\tag -> Item (fromString tag) tag) $ sort $ filter (not . null) $ map trimMeta (splitAll "," tagsStr)
         Nothing      -> return []
   where
     tagCtx = field "name" (return . itemBody)
@@ -166,7 +166,7 @@ rules = do
                             Just tagsStr -> return $ map trimMeta $ filter (not . null) $ splitAll "," tagsStr
                             Nothing      -> return []
                         ) disneyLogs
-                    return $ nub $ concat allTags
+                    return $ sort $ nub $ concat allTags
 
                 disneyExperienceSummaryCtx <- mconcatM [
                     pure $ constField "title" "Ponchi's Disney Journey"
