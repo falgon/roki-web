@@ -1,4 +1,4 @@
-FROM ubuntu:24.04
+FROM ubuntu:24.10
 SHELL ["/bin/bash", "-c"]
 LABEL maintainer="Roki <falgon53@yahoo.co.jp>"
 LABEL org.opencontainers.image.authors="Roki <falgon53@yahoo.co.jp>"
