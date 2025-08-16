@@ -1,4 +1,4 @@
-FROM ubuntu:24.04 as bin
+FROM ubuntu:24.10 as bin
 SHELL ["/bin/bash", "-c"]
 LABEL maintainer="Roki <falgon53@yahoo.co.jp>"
 LABEL org.opencontainers.image.authors="Roki <falgon53@yahoo.co.jp>"
@@ -44,7 +44,7 @@ RUN source "$HOME/.ghcup/env" \
     && stack --no-terminal --allow-different-user --local-bin-path=/root/dist install \
     && cp -r ./package.json ./package-lock.json ./tools ./.nvmrc /root/dist
 
-FROM ubuntu:24.04
+FROM ubuntu:24.10
 SHELL ["/bin/bash", "-c"]
 LABEL maintainer="Roki <falgon53@gmail.com>"
 LABEL org.opencontainers.image.authors="Roki <falgon53@yahoo.co.jp>"
