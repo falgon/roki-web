@@ -107,7 +107,7 @@ optsParser = OA.info (OA.helper <*> programOptions) $ mconcat [
     OA.fullDesc
   , OA.header "NotifyBuildCompletion - GitHub Actions email notification tool"
   , OA.progDesc "Sends email notification about Docker image build completion"
-  , OA.footerDoc $ Just $ OA.vsep $ map OA.string [
+  , OA.footerDoc $ Just $ OA.vsep $ map OA.text [
       "Environment variables:"
     , "  GMAIL_SENDER           - Sender Gmail address"
     , "  GMAIL_APP_PASSWORD     - Gmail app password"
