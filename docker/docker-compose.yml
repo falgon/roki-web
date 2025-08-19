@@ -10,7 +10,8 @@ services:
     working_dir: /home/rw-c/bin
     build:
       context: ../
-      dockerfile: ./docker/contents/Dockerfile
+      dockerfile: ./docker/Dockerfile
+      target: apps
     command: /bin/bash -c './site build --preview'
   preview:
     image: $ROKI_WEB_ENV_IMAGE_NAME:$ROKI_WEB_ENV_IMAGE_TAG
@@ -23,7 +24,8 @@ services:
     working_dir: /home/rw-c/bin
     build:
       context: ../
-      dockerfile: ./docker/contents/Dockerfile
+      dockerfile: ./docker/Dockerfile
+      target: apps
     command: /bin/bash -c './site watch --preview --port 8888 --host 0.0.0.0'
   spa:
     image: $ROKI_WEB_ENV_IMAGE_NAME:$ROKI_WEB_ENV_IMAGE_TAG
@@ -35,7 +37,8 @@ services:
     working_dir: /home/rw-c/bin
     build:
       context: ../
-      dockerfile: ./docker/contents/Dockerfile
+      dockerfile: ./docker/Dockerfile
+      target: apps
     command: /bin/bash -c './spa yaml -d ${DATE:-""} -b ${BRANCH_NAME:-""} -y'
   clean:
     image: $ROKI_WEB_ENV_IMAGE_NAME:$ROKI_WEB_ENV_IMAGE_TAG
@@ -44,7 +47,8 @@ services:
     working_dir: /home/rw-c/bin
     build:
       context: ../
-      dockerfile: ./docker/contents/Dockerfile
+      dockerfile: ./docker/Dockerfile
+      target: apps
     command: /bin/bash -c './site clean'
   dev:
     image: $ROKI_WEB_DEV_IMAGE_NAME:$ROKI_WEB_DEV_IMAGE_TAG
@@ -57,4 +61,5 @@ services:
     working_dir: /home/rw-dev/src
     build:
       context: ../
-      dockerfile: ./docker/dev/Dockerfile
+      dockerfile: ./docker/Dockerfile
+      target: dev

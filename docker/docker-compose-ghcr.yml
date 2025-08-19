@@ -1,7 +1,7 @@
 services:
   build:
-    image: docker.pkg.github.com/falgon/roki-web/roki-web-env:latest
-    container_name: roki-web-build-ghpr
+    image: ghcr.io/falgon/roki-web/roki-web-env:latest
+    container_name: roki-web-build-ghcr
     tty: true
     volumes:
       - "../contents:/home/rw-c/bin/contents"
@@ -10,15 +10,16 @@ services:
     working_dir: /home/rw-c/bin
     build:
       context: ../
-      dockerfile: ./docker/contents/Dockerfile
+      dockerfile: ./docker/Dockerfile
+      target: apps
     command: /bin/bash -c './site build --preview'
     deploy:
       resources:
         limits:
           memory: 4G
   preview:
-    image: docker.pkg.github.com/falgon/roki-web/roki-web-env:latest
-    container_name: roki-web-preview-ghpr
+    image: ghcr.io/falgon/roki-web/roki-web-env:latest
+    container_name: roki-web-preview-ghcr
     tty: true
     volumes:
       - "../contents:/home/rw-c/bin/contents"
@@ -27,15 +28,16 @@ services:
     working_dir: /home/rw-c/bin
     build:
       context: ../
-      dockerfile: ./docker/contents/Dockerfile
+      dockerfile: ./docker/Dockerfile
+      target: apps
     command: /bin/bash -c './site watch --preview --port 8888 --host 0.0.0.0'
     deploy:
       resources:
         limits:
           memory: 4G
   spa:
-    image: docker.pkg.github.com/falgon/roki-web/roki-web-env:latest
-    container_name: roki-web-spa-ghpr
+    image: ghcr.io/falgon/roki-web/roki-web-env:latest
+    container_name: roki-web-spa-ghcr
     tty: true
     volumes:
       - "../contents:/home/rw-c/bin/contents"
@@ -43,20 +45,22 @@ services:
     working_dir: /home/rw-c/bin
     build:
       context: ../
-      dockerfile: ./docker/contents/Dockerfile
+      dockerfile: ./docker/Dockerfile
+      target: apps
     command: /bin/bash -c './spa yaml -d ${DATE:-""} -b ${BRANCH_NAME:-""} -y'
   clean:
-    image: docker.pkg.github.com/falgon/roki-web/roki-web-env:latest
-    container_name: roki-web-clean-ghpr
+    image: ghcr.io/falgon/roki-web/roki-web-env:latest
+    container_name: roki-web-clean-ghcr
     tty: true
     working_dir: /home/rw-c/bin
     build:
       context: ../
-      dockerfile: ./docker/contents/Dockerfile
+      dockerfile: ./docker/Dockerfile
+      target: apps
     command: /bin/bash -c './site clean'
   dev:
-    image: docker.pkg.github.com/falgon/roki-web/roki-web-dev:latest
-    container_name: roki-web-dev-ghpr
+    image: ghcr.io/falgon/roki-web/roki-web-dev:latest
+    container_name: roki-web-dev-ghcr
     tty: true
     volumes:
       - "../:/home/rw-dev/src"
@@ -65,7 +69,8 @@ services:
     working_dir: /home/rw-dev/src
     build:
       context: ../
-      dockerfile: ./docker/dev/Dockerfile
+      dockerfile: ./docker/Dockerfile
+      target: dev
     deploy:
       resources:
         limits:
