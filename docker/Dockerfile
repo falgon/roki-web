@@ -82,6 +82,7 @@ RUN export BOOTSTRAP_HASKELL_GHC_VERSION="$(yq '.compiler' ./stack.yaml | cut -f
     && stack config set install-ghc false --global \
     && stack config set system-ghc true --global \
     && mkdir -p /root/dist \
+    && stack --no-terminal --allow-different-user build --only-dependencies \
     && stack --no-terminal --allow-different-user --local-bin-path=/root/dist install \
     && cp -r ./package.json ./package-lock.json ./tools ./.nvmrc /root/dist
 
