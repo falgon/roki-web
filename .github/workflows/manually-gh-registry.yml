@@ -135,21 +135,58 @@ jobs:
       with:
         name: dev_img
         path: /tmp/dev_img.tar.gz
-  notify-line:
+  notify-email:
     runs-on: ubuntu-24.04
     needs: [setup, build-env-image, build-dev-image]
     if: ${{ needs.setup.outputs.enable_notify == 'true' && github.repository == 'falgon/roki-web' }}
+    environment:
+      name: manually-gh-registry
     steps:
-    - name: Notify LINE
-      shell: bash
-      env:
-        API_ENDPOINT: https://notify-api.line.me/api/notify
-        LINE_NOTIFY_TOKEN: ${{ secrets.LINE_NOTIFY_TOKEN }}
-        ACTIONS_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        sparse-checkout: |
+          tools/github-actions
+    - name: Setup Haskell
+      uses: haskell-actions/setup@v2
+      with:
+        enable-stack: true
+        stack-version: 'latest'
+    - name: Cache Stack dependencies
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.stack
+          ~/.stack-work
+          tools/github-actions/.stack-work
+        key: ${{ runner.os }}-stack-notify-${{ hashFiles('tools/github-actions/NotifyBuildCompletion.hs') }}
+        restore-keys: |
+          ${{ runner.os }}-stack-notify-
+          ${{ runner.os }}-stack-
+    - name: Cache Stack package index
+      uses: actions/cache@v4
+      with:
+        path: ~/.stack/pantry
+        key: ${{ runner.os }}-stack-pantry-${{ hashFiles('tools/github-actions/NotifyBuildCompletion.hs') }}
+        restore-keys: |
+          ${{ runner.os }}-stack-pantry-
+    - name: Install dependencies
       run: |
-        curl -X POST "$API_ENDPOINT" \
-          -H "Authorization: Bearer $LINE_NOTIFY_TOKEN" \
-          -d "message=roki.dev docker image build completed!%0a$ACTIONS_URL"
+        # Extract packages from the script header
+        PACKAGES=$(grep -o "package [a-z-]*" tools/github-actions/NotifyBuildCompletion.hs | sed 's/package //' | tr '\n' ' ')
+        # Pre-install packages to populate cache
+        stack --resolver lts-22.33 build $PACKAGES --only-dependencies
+    - name: Send Email Notification
+      env:
+        GMAIL_SENDER: ${{ secrets.GMAIL_SENDER }}
+        GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+        NOTIFICATION_TO_EMAIL: ${{ secrets.NOTIFICATION_TO_EMAIL }}
+      run: |
+        stack tools/github-actions/NotifyBuildCompletion.hs \
+          --repository "${{ github.repository }}" \
+          --image-tag "${{ needs.setup.outputs.img_tag }}" \
+          --run-id "${{ github.run_id }}" \
+          --actions-url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
   push:
     runs-on: ubuntu-24.04
     needs: [setup, build-env-image, build-dev-image]
