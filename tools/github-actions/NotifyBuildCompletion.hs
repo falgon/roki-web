@@ -10,7 +10,6 @@ import qualified Data.Text.Lazy                  as LT
 import           Network.Mail.Mime               (simpleMail')
 import           Network.Mail.SMTP               (sendMailWithLoginSTARTTLS)
 import qualified Options.Applicative             as OA
-import qualified Options.Applicative.Help.Pretty as OA
 import           System.Environment              (getEnv, lookupEnv)
 import           System.Exit                     (exitFailure, exitSuccess)
 
@@ -107,12 +106,6 @@ optsParser = OA.info (OA.helper <*> programOptions) $ mconcat [
     OA.fullDesc
   , OA.header "NotifyBuildCompletion - GitHub Actions email notification tool"
   , OA.progDesc "Sends email notification about Docker image build completion"
-  , OA.footerDoc $ Just $ OA.vsep [
-      OA.string "Environment variables:"
-    , OA.string "  GMAIL_SENDER           - Sender Gmail address"
-    , OA.string "  GMAIL_APP_PASSWORD     - Gmail app password"
-    , OA.string "  NOTIFICATION_TO_EMAIL  - Recipient email address"
-    ]
   ]
 
 getEmailConfig :: Opts -> IO (LT.Text, LT.Text, String)
