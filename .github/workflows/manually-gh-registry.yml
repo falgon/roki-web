@@ -222,6 +222,6 @@ jobs:
     - name: Push to GitHub Package Registry
       shell: bash
       run: |
-        docker tag ${{ needs.setup.outputs.env_img_name }} ${{ needs.setup.outputs.env_gh_registry }}
-        docker tag ${{ needs.setup.outputs.dev_img_name }} ${{ needs.setup.outputs.dev_gh_registry }}
+        docker tag ${{ needs.setup.outputs.env_img_name }}:${{ needs.setup.outputs.img_tag }} ${{ needs.setup.outputs.env_gh_registry }}
+        docker tag ${{ needs.setup.outputs.dev_img_name }}:${{ needs.setup.outputs.img_tag }} ${{ needs.setup.outputs.dev_gh_registry }}
         parallel 'docker push {}' ::: ${{ needs.setup.outputs.env_gh_registry }} ${{ needs.setup.outputs.dev_gh_registry }}
