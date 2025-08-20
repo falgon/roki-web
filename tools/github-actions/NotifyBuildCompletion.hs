@@ -4,14 +4,14 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Main where
 
-import           Control.Exception               (SomeException, catch)
-import           Data.String                     (IsString (..))
-import qualified Data.Text.Lazy                  as LT
-import           Network.Mail.Mime               (simpleMail')
-import           Network.Mail.SMTP               (sendMailWithLoginSTARTTLS)
-import qualified Options.Applicative             as OA
-import           System.Environment              (getEnv, lookupEnv)
-import           System.Exit                     (exitFailure, exitSuccess)
+import           Control.Exception   (SomeException, catch)
+import           Data.String         (IsString (..))
+import qualified Data.Text.Lazy      as LT
+import           Network.Mail.Mime   (simpleMail')
+import           Network.Mail.SMTP   (sendMailWithLoginSTARTTLS)
+import qualified Options.Applicative as OA
+import           System.Environment  (getEnv, lookupEnv)
+import           System.Exit         (exitFailure, exitSuccess)
 
 messageText :: LT.Text -> LT.Text -> LT.Text -> LT.Text -> LT.Text
 messageText repository imageTag runId actionsURL = LT.unlines [
@@ -167,7 +167,6 @@ main = do
     catch (do
         sendEmail (optSubject opts) message fromEmail toEmail password
         putStrLn $ "✅ Email sent successfully (To: " ++ LT.unpack toEmail ++ ")"
-        exitSuccess
       ) (\e -> do
         let err = show (e :: SomeException)
         putStrLn $ "❌ Failed to send email: " ++ err
