@@ -56,11 +56,9 @@ jobs:
       id: img_tag_step
       run: echo "name=$IMAGE_TAG" >> $GITHUB_OUTPUT
     - name: Set env image outputs
-      if: ${{ env.TO_PUSH == 'true' }}
       id: env_img_step
       run: echo "name=$ENV_IMAGE_NAME" >> $GITHUB_OUTPUT
     - name: Set dev image outputs
-      if: ${{ env.TO_PUSH == 'true' }}
       id: dev_img_step
       run: echo "name=$DEV_IMAGE_NAME" >> $GITHUB_OUTPUT
     - name: Set env registry outputs
