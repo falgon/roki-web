@@ -86,28 +86,41 @@ jobs:
       uses: actions/checkout@v4
       with:
         submodules: true
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v3
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
     - name: Adjustment docker volumes
       run: |
         docker system prune -a --volumes -f
         sudo rm -rf "/usr/local/share/boost" "$AGENT_TOOLSDIRECTORY"
         sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
         df -h
-    - name: Build the env image
-      shell: bash
+    - name: Login to GitHub Package Registry
+      if: ${{ needs.setup.outputs.to_push == 'true' }}
+      run: echo ${{ secrets.GITHUB_TOKEN }} | docker login docker.pkg.github.com -u ${{ github.actor }} --password-stdin
+    - name: Build and conditionally push the env image
       run: |
-        export ROKI_WEB_ENV_IMAGE_TAG="${{ needs.setup.outputs.img_tag }}"
-        export ROKI_WEB_DEV_IMAGE_TAG="${{ needs.setup.outputs.img_tag }}"
-        cd ./docker
-        docker compose build --no-cache preview
-    - name: Save images with tar
-      if: ${{ needs.setup.outputs.to_push == 'true' }}
-      run: docker save ${{ needs.setup.outputs.env_img_name }} | gzip -c > /tmp/env_img.tar.gz
-    - name: Upload the env image
-      if: ${{ needs.setup.outputs.to_push == 'true' }}
-      uses: actions/upload-artifact@v4
-      with:
-        name: env_img
-        path: /tmp/env_img.tar.gz
+        if [[ "${{ needs.setup.outputs.to_push }}" == "true" ]]; then
+          docker buildx build \
+            --platform linux/amd64,linux/arm64 \
+            --target apps \
+            --tag ${{ needs.setup.outputs.env_gh_registry }} \
+            --push \
+            --cache-from type=gha \
+            --cache-to type=gha,mode=max \
+            -f ./docker/Dockerfile \
+            .
+        else
+          docker buildx build \
+            --platform linux/amd64,linux/arm64 \
+            --target apps \
+            --tag ${{ needs.setup.outputs.env_img_name }}:${{ needs.setup.outputs.img_tag }} \
+            --cache-from type=gha \
+            --cache-to type=gha,mode=max \
+            -f ./docker/Dockerfile \
+            .
+        fi
   build-dev-image:
     runs-on: ubuntu-24.04
     needs: setup
@@ -117,26 +130,39 @@ jobs:
       uses: actions/checkout@v4
       with:
         submodules: true
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v3
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
     - name: Adjustment docker volumes
       run: |
         docker system prune -a --volumes -f
         sudo rm -rfv "/usr/local/share/boost" "$AGENT_TOOLSDIRECTORY"
-    - name: Build the dev image
-      shell: bash
+    - name: Login to GitHub Package Registry
+      if: ${{ needs.setup.outputs.to_push == 'true' }}
+      run: echo ${{ secrets.GITHUB_TOKEN }} | docker login docker.pkg.github.com -u ${{ github.actor }} --password-stdin
+    - name: Build and conditionally push the dev image
       run: |
-        export ROKI_WEB_ENV_IMAGE_TAG="${{ needs.setup.outputs.img_tag }}"
-        export ROKI_WEB_DEV_IMAGE_TAG="${{ needs.setup.outputs.img_tag }}"
-        cd ./docker
-        docker compose build --no-cache dev
-    - name: Save images with tar
-      if: ${{ needs.setup.outputs.to_push == 'true' }}
-      run: docker save ${{ needs.setup.outputs.dev_img_name }} | gzip -c > /tmp/dev_img.tar.gz
-    - name: Upload the dev image
-      if: ${{ needs.setup.outputs.to_push == 'true' }}
-      uses: actions/upload-artifact@v4
-      with:
-        name: dev_img
-        path: /tmp/dev_img.tar.gz
+        if [[ "${{ needs.setup.outputs.to_push }}" == "true" ]]; then
+          docker buildx build \
+            --platform linux/amd64,linux/arm64 \
+            --target dev \
+            --tag ${{ needs.setup.outputs.dev_gh_registry }} \
+            --push \
+            --cache-from type=gha \
+            --cache-to type=gha,mode=max \
+            -f ./docker/Dockerfile \
+            .
+        else
+          docker buildx build \
+            --platform linux/amd64,linux/arm64 \
+            --target dev \
+            --tag ${{ needs.setup.outputs.dev_img_name }}:${{ needs.setup.outputs.img_tag }} \
+            --cache-from type=gha \
+            --cache-to type=gha,mode=max \
+            -f ./docker/Dockerfile \
+            .
+        fi
   notify-email:
     runs-on: ubuntu-24.04
     needs: [setup, build-env-image, build-dev-image]
@@ -189,39 +215,3 @@ jobs:
           --image-tag "${{ needs.setup.outputs.img_tag }}" \
           --run-id "${{ github.run_id }}" \
           --actions-url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-  push:
-    runs-on: ubuntu-24.04
-    needs: [setup, build-env-image, build-dev-image]
-    if: ${{ needs.setup.outputs.to_push == 'true' && github.repository == 'falgon/roki-web' }}
-    steps:
-    - name: Adjustment docker volumes
-      run: |
-        docker system prune -a --volumes -f
-        sudo rm -rfv "/usr/local/share/boost" "$AGENT_TOOLSDIRECTORY"
-    - name: Install tools
-      uses: awalsh128/cache-apt-pkgs-action@v1
-      with:
-        packages: parallel
-        version: 1.0
-    - name: Download the env image
-      uses: actions/download-artifact@v4
-      with:
-        name: env_img
-        path: /tmp
-    - name: Download the dev image
-      uses: actions/download-artifact@v4
-      with:
-        name: dev_img
-        path: /tmp
-    - name: Load images
-      shell: bash
-      run: |
-        parallel 'cat /tmp/{}_img.tar.gz | gzip -d | docker load' ::: env dev
-    - name: Login GitHub Registry
-      run: echo ${{ secrets.GITHUB_TOKEN }} | docker login docker.pkg.github.com -u owner --password-stdin
-    - name: Push to GitHub Package Registry
-      shell: bash
-      run: |
-        docker tag ${{ needs.setup.outputs.env_img_name }}:${{ needs.setup.outputs.img_tag }} ${{ needs.setup.outputs.env_gh_registry }}
-        docker tag ${{ needs.setup.outputs.dev_img_name }}:${{ needs.setup.outputs.img_tag }} ${{ needs.setup.outputs.dev_gh_registry }}
-        parallel 'docker push {}' ::: ${{ needs.setup.outputs.env_gh_registry }} ${{ needs.setup.outputs.dev_gh_registry }}
