@@ -62,7 +62,7 @@ RUN curl -sSo- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.0/install.sh |
     && stack config set install-ghc false --global \
     && stack config set system-ghc true --global \
     && stack update \
-    && stack --no-terminal build --only-dependencies
+    && stack --no-terminal build --only-dependencies --retry
 
 # Build stage (builds the apps from source)
 FROM base AS build
