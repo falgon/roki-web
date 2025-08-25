@@ -109,7 +109,7 @@ jobs:
         path: './docs'
         key: docs-v2-${{ runner.os }}
     - name: Generate mermaid test file for dependabot mermaid-cli PR
-      if: startsWith(github.head_ref, 'dependabot/npm_and_yarn/') && contains(github.head_ref, 'mermaid-cli')
+      if: startsWith(github.head_ref, 'dependabot/npm_and_yarn/') && contains(github.head_ref, 'mermaid-')
       env:
         MERMAID_TEST_PATH: "contents/roki.log/1970/01/01/mermaid-test"
       run: |

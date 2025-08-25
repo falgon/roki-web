@@ -16,7 +16,7 @@
         "svgo": "^4.0.0",
         "typescript": "^5.9.2",
         "terser": "^5.29.2",
-        "tsx": "^4.20.4"
+        "tsx": "^4.20.5"
     },
     "dependencies": {
         "@mermaid-js/mermaid-cli": "^11.9.0",
