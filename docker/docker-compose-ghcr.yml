@@ -1,6 +1,7 @@
 services:
   build:
     image: docker.pkg.github.com/falgon/roki-web/roki-web-env:${ROKI_WEB_ENV_IMAGE_TAG:-latest}
+    platform: ${DOCKER_DEFAULT_PLATFORM:-linux/amd64}
     container_name: roki-web-build-ghcr
     tty: true
     volumes:
@@ -19,6 +20,7 @@ services:
           memory: 4G
   preview:
     image: docker.pkg.github.com/falgon/roki-web/roki-web-env:${ROKI_WEB_ENV_IMAGE_TAG:-latest}
+    platform: ${DOCKER_DEFAULT_PLATFORM:-linux/amd64}
     container_name: roki-web-preview-ghcr
     tty: true
     volumes:
@@ -37,6 +39,7 @@ services:
           memory: 4G
   spa:
     image: docker.pkg.github.com/falgon/roki-web/roki-web-env:${ROKI_WEB_ENV_IMAGE_TAG:-latest}
+    platform: ${DOCKER_DEFAULT_PLATFORM:-linux/amd64}
     container_name: roki-web-spa-ghcr
     tty: true
     volumes:
@@ -50,6 +53,7 @@ services:
     command: /bin/bash -c './spa yaml -d ${DATE:-""} -b ${BRANCH_NAME:-""} -y'
   clean:
     image: docker.pkg.github.com/falgon/roki-web/roki-web-env:${ROKI_WEB_ENV_IMAGE_TAG:-latest}
+    platform: ${DOCKER_DEFAULT_PLATFORM:-linux/amd64}
     container_name: roki-web-clean-ghcr
     tty: true
     working_dir: /home/rw-c/bin
@@ -60,6 +64,7 @@ services:
     command: /bin/bash -c './site clean'
   dev:
     image: docker.pkg.github.com/falgon/roki-web/roki-web-dev:${ROKI_WEB_DEV_IMAGE_TAG:-latest}
+    platform: ${DOCKER_DEFAULT_PLATFORM:-linux/amd64}
     container_name: roki-web-dev-ghcr
     tty: true
     volumes:

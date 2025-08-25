@@ -75,7 +75,49 @@ jobs:
     - name: Set enable_notify flag outputs
       id: enable_notify_step
       run: echo "flag=$ENABLE_NOTIFY" >> $GITHUB_OUTPUT
-  build-env-image:
+  build-env-image-amd64:
+    runs-on: ubuntu-24.04
+    needs: setup
+    if: github.repository == 'falgon/roki-web'
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        submodules: true
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    - name: Adjustment docker volumes
+      run: |
+        docker system prune -a --volumes -f
+        sudo rm -rf "/usr/local/share/boost" "$AGENT_TOOLSDIRECTORY"
+        sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
+        df -h
+    - name: Login to GitHub Package Registry
+      if: ${{ needs.setup.outputs.to_push == 'true' }}
+      run: echo ${{ secrets.GITHUB_TOKEN }} | docker login docker.pkg.github.com -u ${{ github.actor }} --password-stdin
+    - name: Build and conditionally push the AMD64 env image
+      run: |
+        if [[ "${{ needs.setup.outputs.to_push }}" == "true" ]]; then
+          docker buildx build \
+            --platform linux/amd64 \
+            --target apps \
+            --tag ${{ needs.setup.outputs.env_gh_registry }}-amd64 \
+            --push \
+            --cache-from type=gha,scope=env-amd64 \
+            --cache-to type=gha,mode=max,scope=env-amd64 \
+            -f ./docker/Dockerfile \
+            .
+        else
+          docker buildx build \
+            --platform linux/amd64 \
+            --target apps \
+            --tag ${{ needs.setup.outputs.env_img_name }}:${{ needs.setup.outputs.img_tag }}-amd64 \
+            --cache-from type=gha,scope=env-amd64 \
+            --cache-to type=gha,mode=max,scope=env-amd64 \
+            -f ./docker/Dockerfile \
+            .
+        fi
+  build-env-image-arm64:
     runs-on: ubuntu-24.04
     needs: setup
     if: github.repository == 'falgon/roki-web'
@@ -97,29 +139,69 @@ jobs:
     - name: Login to GitHub Package Registry
       if: ${{ needs.setup.outputs.to_push == 'true' }}
       run: echo ${{ secrets.GITHUB_TOKEN }} | docker login docker.pkg.github.com -u ${{ github.actor }} --password-stdin
-    - name: Build and conditionally push the env image
+    - name: Build and conditionally push the ARM64 env image
       run: |
         if [[ "${{ needs.setup.outputs.to_push }}" == "true" ]]; then
           docker buildx build \
-            --platform linux/amd64,linux/arm64 \
+            --platform linux/arm64 \
             --target apps \
-            --tag ${{ needs.setup.outputs.env_gh_registry }} \
+            --tag ${{ needs.setup.outputs.env_gh_registry }}-arm64 \
             --push \
-            --cache-from type=gha \
-            --cache-to type=gha,mode=max \
+            --cache-from type=gha,scope=env-arm64 \
+            --cache-to type=gha,mode=max,scope=env-arm64 \
             -f ./docker/Dockerfile \
             .
         else
           docker buildx build \
-            --platform linux/amd64,linux/arm64 \
+            --platform linux/arm64 \
             --target apps \
-            --tag ${{ needs.setup.outputs.env_img_name }}:${{ needs.setup.outputs.img_tag }} \
-            --cache-from type=gha \
-            --cache-to type=gha,mode=max \
+            --tag ${{ needs.setup.outputs.env_img_name }}:${{ needs.setup.outputs.img_tag }}-arm64 \
+            --cache-from type=gha,scope=env-arm64 \
+            --cache-to type=gha,mode=max,scope=env-arm64 \
             -f ./docker/Dockerfile \
             .
         fi
-  build-dev-image:
+  build-dev-image-amd64:
+    runs-on: ubuntu-24.04
+    needs: setup
+    if: github.repository == 'falgon/roki-web'
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        submodules: true
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    - name: Adjustment docker volumes
+      run: |
+        docker system prune -a --volumes -f
+        sudo rm -rfv "/usr/local/share/boost" "$AGENT_TOOLSDIRECTORY"
+    - name: Login to GitHub Package Registry
+      if: ${{ needs.setup.outputs.to_push == 'true' }}
+      run: echo ${{ secrets.GITHUB_TOKEN }} | docker login docker.pkg.github.com -u ${{ github.actor }} --password-stdin
+    - name: Build and conditionally push the AMD64 dev image
+      run: |
+        if [[ "${{ needs.setup.outputs.to_push }}" == "true" ]]; then
+          docker buildx build \
+            --platform linux/amd64 \
+            --target dev \
+            --tag ${{ needs.setup.outputs.dev_gh_registry }}-amd64 \
+            --push \
+            --cache-from type=gha,scope=dev-amd64 \
+            --cache-to type=gha,mode=max,scope=dev-amd64 \
+            -f ./docker/Dockerfile \
+            .
+        else
+          docker buildx build \
+            --platform linux/amd64 \
+            --target dev \
+            --tag ${{ needs.setup.outputs.dev_img_name }}:${{ needs.setup.outputs.img_tag }}-amd64 \
+            --cache-from type=gha,scope=dev-amd64 \
+            --cache-to type=gha,mode=max,scope=dev-amd64 \
+            -f ./docker/Dockerfile \
+            .
+        fi
+  build-dev-image-arm64:
     runs-on: ubuntu-24.04
     needs: setup
     if: github.repository == 'falgon/roki-web'
@@ -139,31 +221,50 @@ jobs:
     - name: Login to GitHub Package Registry
       if: ${{ needs.setup.outputs.to_push == 'true' }}
       run: echo ${{ secrets.GITHUB_TOKEN }} | docker login docker.pkg.github.com -u ${{ github.actor }} --password-stdin
-    - name: Build and conditionally push the dev image
+    - name: Build and conditionally push the ARM64 dev image
       run: |
         if [[ "${{ needs.setup.outputs.to_push }}" == "true" ]]; then
           docker buildx build \
-            --platform linux/amd64,linux/arm64 \
+            --platform linux/arm64 \
             --target dev \
-            --tag ${{ needs.setup.outputs.dev_gh_registry }} \
+            --tag ${{ needs.setup.outputs.dev_gh_registry }}-arm64 \
             --push \
-            --cache-from type=gha \
-            --cache-to type=gha,mode=max \
+            --cache-from type=gha,scope=dev-arm64 \
+            --cache-to type=gha,mode=max,scope=dev-arm64 \
             -f ./docker/Dockerfile \
             .
         else
           docker buildx build \
-            --platform linux/amd64,linux/arm64 \
+            --platform linux/arm64 \
             --target dev \
-            --tag ${{ needs.setup.outputs.dev_img_name }}:${{ needs.setup.outputs.img_tag }} \
-            --cache-from type=gha \
-            --cache-to type=gha,mode=max \
+            --tag ${{ needs.setup.outputs.dev_img_name }}:${{ needs.setup.outputs.img_tag }}-arm64 \
+            --cache-from type=gha,scope=dev-arm64 \
+            --cache-to type=gha,mode=max,scope=dev-arm64 \
             -f ./docker/Dockerfile \
             .
         fi
+  create-manifest:
+    runs-on: ubuntu-24.04
+    needs: [setup, build-env-image-amd64, build-env-image-arm64, build-dev-image-amd64, build-dev-image-arm64]
+    if: ${{ needs.setup.outputs.to_push == 'true' && github.repository == 'falgon/roki-web' }}
+    steps:
+    - name: Login to GitHub Package Registry
+      run: echo ${{ secrets.GITHUB_TOKEN }} | docker login docker.pkg.github.com -u ${{ github.actor }} --password-stdin
+    - name: Create and push multi-arch manifest for env image
+      run: |
+        docker manifest create ${{ needs.setup.outputs.env_gh_registry }} \
+          ${{ needs.setup.outputs.env_gh_registry }}-amd64 \
+          ${{ needs.setup.outputs.env_gh_registry }}-arm64
+        docker manifest push ${{ needs.setup.outputs.env_gh_registry }}
+    - name: Create and push multi-arch manifest for dev image
+      run: |
+        docker manifest create ${{ needs.setup.outputs.dev_gh_registry }} \
+          ${{ needs.setup.outputs.dev_gh_registry }}-amd64 \
+          ${{ needs.setup.outputs.dev_gh_registry }}-arm64
+        docker manifest push ${{ needs.setup.outputs.dev_gh_registry }}
   notify-email:
     runs-on: ubuntu-24.04
-    needs: [setup, build-env-image, build-dev-image]
+    needs: [setup, build-env-image-amd64, build-env-image-arm64, build-dev-image-amd64, build-dev-image-arm64]
     if: ${{ needs.setup.outputs.enable_notify == 'true' && github.repository == 'falgon/roki-web' }}
     environment:
       name: manually-gh-registry
