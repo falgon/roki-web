@@ -62,7 +62,11 @@ RUN curl -sSo- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.0/install.sh |
     && stack config set install-ghc false --global \
     && stack config set system-ghc true --global \
     && stack update \
-    && stack --no-terminal build --only-dependencies --retry
+    && export STACK_YAML=stack.yaml \
+    && for i in {1..3}; do \
+        stack --no-terminal build --only-dependencies && break || \
+        (echo "Retry $i failed, waiting..." && sleep 10); \
+       done
 
 # Build stage (builds the apps from source)
 FROM base AS build
@@ -84,7 +88,10 @@ RUN export BOOTSTRAP_HASKELL_GHC_VERSION="$(yq '.compiler' ./stack.yaml | cut -f
     && stack config set system-ghc true --global \
     && mkdir -p /root/dist \
     && stack update \
-    && stack --no-terminal --allow-different-user build --only-dependencies \
+    && for i in {1..3}; do \
+        stack --no-terminal --allow-different-user build --only-dependencies && break || \
+        (echo "Retry $i failed, waiting..." && sleep 10); \
+       done \
     && stack --no-terminal --allow-different-user --local-bin-path=/root/dist install \
     && cp -r ./package.json ./package-lock.json ./tools ./.nvmrc /root/dist
 
