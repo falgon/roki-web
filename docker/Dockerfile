@@ -61,12 +61,17 @@ RUN curl -sSo- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.0/install.sh |
     && source "$HOME/.ghcup/env" \
     && stack config set install-ghc false --global \
     && stack config set system-ghc true --global \
+    && stack config set connection-count 1 --global \
+    && stack config set retry-count 3 --global \
     && stack update \
     && export STACK_YAML=stack.yaml \
+    && echo "Starting Stack dependency build..." \
     && for i in {1..3}; do \
-        stack --no-terminal build --only-dependencies && break || \
-        (echo "Retry $i failed, waiting..." && sleep 10); \
-       done
+        echo "Attempt $i of 3..." && \
+        timeout 3600 stack --no-terminal build --only-dependencies && \
+        echo "Successfully built dependencies on attempt $i" && break || \
+        (echo "Attempt $i failed, waiting 30 seconds before retry..." && sleep 30); \
+       done || (echo "All attempts failed" && exit 1)
 
 # Build stage (builds the apps from source)
 FROM base AS build
@@ -86,12 +91,17 @@ RUN export BOOTSTRAP_HASKELL_GHC_VERSION="$(yq '.compiler' ./stack.yaml | cut -f
     && source "$HOME/.ghcup/env" \
     && stack config set install-ghc false --global \
     && stack config set system-ghc true --global \
+    && stack config set connection-count 1 --global \
+    && stack config set retry-count 3 --global \
     && mkdir -p /root/dist \
     && stack update \
+    && echo "Starting Stack dependency build..." \
     && for i in {1..3}; do \
-        stack --no-terminal --allow-different-user build --only-dependencies && break || \
-        (echo "Retry $i failed, waiting..." && sleep 10); \
-       done \
+        echo "Attempt $i of 3..." && \
+        timeout 3600 stack --no-terminal --allow-different-user build --only-dependencies && \
+        echo "Successfully built dependencies on attempt $i" && break || \
+        (echo "Attempt $i failed, waiting 30 seconds before retry..." && sleep 30); \
+       done || (echo "All attempts failed" && exit 1) \
     && stack --no-terminal --allow-different-user --local-bin-path=/root/dist install \
     && cp -r ./package.json ./package-lock.json ./tools ./.nvmrc /root/dist
 
