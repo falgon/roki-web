@@ -148,11 +148,13 @@ RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.0/install.sh | b
     && nvm use \
     && npm ci \
     && NODE_VERSION=$(node -v | sed 's/v//') \
-    && ln -s "$NVM_DIR/versions/node/v$NODE_VERSION/bin/node" /home/rw-c/bin/node \
-    && ln -s "$NVM_DIR/versions/node/v$NODE_VERSION/bin/npm" /home/rw-c/bin/npm \
-    && ln -s "$NVM_DIR/versions/node/v$NODE_VERSION/bin/npx" /home/rw-c/bin/npx
+    && ln -sf "$NVM_DIR/versions/node/v$NODE_VERSION/bin/node" /home/rw-c/bin/node \
+    && ln -sf "$NVM_DIR/versions/node/v$NODE_VERSION/bin/npm" /home/rw-c/bin/npm \
+    && ln -sf "$NVM_DIR/versions/node/v$NODE_VERSION/bin/npx" /home/rw-c/bin/npx \
+    && ln -sf "$NVM_DIR/versions/node/v$NODE_VERSION/bin/tsx" /home/rw-c/bin/tsx 2>/dev/null || true \
+    && npm list -g tsx || npm install -g tsx
 
 # Set up PATH and nvm environment
 ENV NVM_DIR="/home/rw-c/.nvm"
-ENV PATH="/home/rw-c/bin:$PATH"
+ENV PATH="/home/rw-c/bin:/home/rw-c/.nvm/versions/node/v*/bin:$PATH"
 EXPOSE 8888
