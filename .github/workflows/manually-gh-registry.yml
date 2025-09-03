@@ -119,6 +119,7 @@ jobs:
         fi
   build-env-image-arm64:
     runs-on: ubuntu-24.04
+    timeout-minutes: 480  # 8時間のタイムアウト
     needs: setup
     if: github.repository == 'falgon/roki-web'
     steps:
@@ -203,6 +204,7 @@ jobs:
         fi
   build-dev-image-arm64:
     runs-on: ubuntu-24.04
+    timeout-minutes: 480  # 8時間のタイムアウト
     needs: setup
     if: github.repository == 'falgon/roki-web'
     steps:
