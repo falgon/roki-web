@@ -61,8 +61,6 @@ RUN curl -sSo- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.0/install.sh |
     && source "$HOME/.ghcup/env" \
     && stack config set install-ghc false --global \
     && stack config set system-ghc true --global \
-    && stack config set connection-count 1 --global \
-    && stack config set retry-count 3 --global \
     && stack update \
     && export STACK_YAML=stack.yaml \
     && echo "Starting Stack dependency build..." \
@@ -91,8 +89,6 @@ RUN export BOOTSTRAP_HASKELL_GHC_VERSION="$(yq '.compiler' ./stack.yaml | cut -f
     && source "$HOME/.ghcup/env" \
     && stack config set install-ghc false --global \
     && stack config set system-ghc true --global \
-    && stack config set connection-count 1 --global \
-    && stack config set retry-count 3 --global \
     && mkdir -p /root/dist \
     && stack update \
     && echo "Starting Stack dependency build..." \
