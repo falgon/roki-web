@@ -42,10 +42,10 @@ When using a pre-built image (Requires PAT with `read:packages` permission)
 
 ```sh
 # Login to GitHub Package Registry
-echo $GITHUB_TOKEN | docker login docker.pkg.github.com -u <username> --password-stdin
+echo $GITHUB_TOKEN | docker login ghcr.io -u <username> --password-stdin
 
 # Pull the image (automatically selects appropriate architecture)
-docker pull docker.pkg.github.com/falgon/roki-web/roki-web-env:latest
+docker pull ghcr.io/falgon/roki-web-env:latest
 
 # Set image tag (optional, defaults to 'latest')
 export ROKI_WEB_ENV_IMAGE_TAG=latest
@@ -82,10 +82,10 @@ When using a pre-built image (Requires PAT with `read:packages` permission)
 
 ```sh
 # Login to GitHub Package Registry
-echo $GITHUB_TOKEN | docker login docker.pkg.github.com -u <username> --password-stdin
+echo $GITHUB_TOKEN | docker login ghcr.io -u <username> --password-stdin
 
 # Pull the dev image
-docker pull docker.pkg.github.com/falgon/roki-web/roki-web-dev:latest
+docker pull ghcr.io/falgon/roki-web-dev:latest
 
 # Set image tag and platform (optional)
 export ROKI_WEB_DEV_IMAGE_TAG=latest
