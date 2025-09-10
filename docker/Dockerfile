@@ -49,7 +49,9 @@ RUN mkdir /home/rw-dev/src
 COPY --chown=rw-dev:rw-dev . /home/rw-dev/src
 WORKDIR /home/rw-dev/src
 
-RUN curl -sSo- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.0/install.sh | bash \
+RUN --mount=type=cache,target=/home/rw-dev/.stack \
+    --mount=type=cache,target=/home/rw-dev/.ghcup/cache \
+    curl -sSo- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.0/install.sh | bash \
     && export NVM_DIR="${HOME}/.nvm" \
     && [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" || true \
     && export NPM_CONFIG_UPDATE_NOTIFIER=false \
@@ -66,7 +68,7 @@ RUN curl -sSo- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.0/install.sh |
     && echo "Starting Stack dependency build..." \
     && for i in {1..3}; do \
         echo "Attempt $i of 3..." && \
-        timeout 3600 stack --no-terminal build --only-dependencies && \
+        timeout 3600 stack --no-terminal build --only-dependencies -j2 && \
         echo "Successfully built dependencies on attempt $i" && break || \
         (echo "Attempt $i failed, waiting 30 seconds before retry..." && sleep 30); \
        done || (echo "All attempts failed" && exit 1)
@@ -79,7 +81,9 @@ COPY . /opt/src
 WORKDIR /opt/src
 
 # Install GHCup and Stack dependencies
-RUN export BOOTSTRAP_HASKELL_GHC_VERSION="$(yq '.compiler' ./stack.yaml | cut -f2 -d-)" \
+RUN --mount=type=cache,target=/root/.stack \
+    --mount=type=cache,target=/root/.ghcup/cache \
+    export BOOTSTRAP_HASKELL_GHC_VERSION="$(yq '.compiler' ./stack.yaml | cut -f2 -d-)" \
     && export BOOTSTRAP_HASKELL_ADJUST_BASHRC=P \
     && export BOOTSTRAP_HASKELL_INSTALL_STACK=1 \
     && export BOOTSTRAP_HASKELL_INSTALL_HLS=0 \
@@ -94,11 +98,11 @@ RUN export BOOTSTRAP_HASKELL_GHC_VERSION="$(yq '.compiler' ./stack.yaml | cut -f
     && echo "Starting Stack dependency build..." \
     && for i in {1..3}; do \
         echo "Attempt $i of 3..." && \
-        timeout 3600 stack --no-terminal --allow-different-user build --only-dependencies && \
+        timeout 3600 stack --no-terminal --allow-different-user build --only-dependencies -j2 && \
         echo "Successfully built dependencies on attempt $i" && break || \
         (echo "Attempt $i failed, waiting 30 seconds before retry..." && sleep 30); \
        done || (echo "All attempts failed" && exit 1) \
-    && stack --no-terminal --allow-different-user --local-bin-path=/root/dist install \
+    && stack --no-terminal --allow-different-user --local-bin-path=/root/dist install -j2 \
     && cp -r ./package.json ./package-lock.json ./tools ./.nvmrc /root/dist
 
 # Final production stage (apps)
