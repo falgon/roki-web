@@ -50,7 +50,7 @@ COPY --chown=rw-dev:rw-dev . /home/rw-dev/src
 WORKDIR /home/rw-dev/src
 
 RUN --mount=type=cache,target=/home/rw-dev/.stack,uid=61000,gid=61000 \
-    --mount=type=cache,target=/home/rw-dev/.ghcup/cache,uid=61000,gid=61000 \
+    --mount=type=cache,target=/home/rw-dev/.ghcup,uid=61000,gid=61000 \
     curl -sSo- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.0/install.sh | bash \
     && export NVM_DIR="${HOME}/.nvm" \
     && [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" || true \
@@ -82,7 +82,7 @@ WORKDIR /opt/src
 
 # Install GHCup and Stack dependencies
 RUN --mount=type=cache,target=/root/.stack \
-    --mount=type=cache,target=/root/.ghcup/cache \
+    --mount=type=cache,target=/root/.ghcup \
     export BOOTSTRAP_HASKELL_GHC_VERSION="$(yq '.compiler' ./stack.yaml | cut -f2 -d-)" \
     && export BOOTSTRAP_HASKELL_ADJUST_BASHRC=P \
     && export BOOTSTRAP_HASKELL_INSTALL_STACK=1 \
