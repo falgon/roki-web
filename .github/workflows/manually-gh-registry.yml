@@ -104,7 +104,13 @@ jobs:
             --tag ${{ needs.setup.outputs.env_gh_registry }}-amd64 \
             --push \
             --cache-from type=gha,scope=env-amd64 \
+            --cache-from type=gha,scope=base-amd64 \
+            --cache-from type=gha,scope=deps-amd64 \
+            --cache-from type=gha,scope=build-amd64 \
             --cache-to type=gha,mode=max,scope=env-amd64 \
+            --cache-to type=gha,mode=max,scope=base-amd64 \
+            --cache-to type=gha,mode=max,scope=deps-amd64 \
+            --cache-to type=gha,mode=max,scope=build-amd64 \
             -f ./docker/Dockerfile \
             .
         else
@@ -113,7 +119,13 @@ jobs:
             --target apps \
             --tag ${{ needs.setup.outputs.env_img_name }}:${{ needs.setup.outputs.img_tag }}-amd64 \
             --cache-from type=gha,scope=env-amd64 \
+            --cache-from type=gha,scope=base-amd64 \
+            --cache-from type=gha,scope=deps-amd64 \
+            --cache-from type=gha,scope=build-amd64 \
             --cache-to type=gha,mode=max,scope=env-amd64 \
+            --cache-to type=gha,mode=max,scope=base-amd64 \
+            --cache-to type=gha,mode=max,scope=deps-amd64 \
+            --cache-to type=gha,mode=max,scope=build-amd64 \
             -f ./docker/Dockerfile \
             .
         fi
@@ -150,9 +162,11 @@ jobs:
             --push \
             --cache-from type=gha,scope=env-arm64 \
             --cache-from type=gha,scope=base-arm64 \
+            --cache-from type=gha,scope=deps-arm64 \
             --cache-from type=gha,scope=build-arm64 \
             --cache-to type=gha,mode=max,scope=env-arm64 \
             --cache-to type=gha,mode=max,scope=base-arm64 \
+            --cache-to type=gha,mode=max,scope=deps-arm64 \
             --cache-to type=gha,mode=max,scope=build-arm64 \
             -f ./docker/Dockerfile \
             .
@@ -163,9 +177,11 @@ jobs:
             --tag ${{ needs.setup.outputs.env_img_name }}:${{ needs.setup.outputs.img_tag }}-arm64 \
             --cache-from type=gha,scope=env-arm64 \
             --cache-from type=gha,scope=base-arm64 \
+            --cache-from type=gha,scope=deps-arm64 \
             --cache-from type=gha,scope=build-arm64 \
             --cache-to type=gha,mode=max,scope=env-arm64 \
             --cache-to type=gha,mode=max,scope=base-arm64 \
+            --cache-to type=gha,mode=max,scope=deps-arm64 \
             --cache-to type=gha,mode=max,scope=build-arm64 \
             -f ./docker/Dockerfile \
             .

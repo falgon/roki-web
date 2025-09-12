@@ -68,19 +68,21 @@ RUN --mount=type=cache,target=/home/rw-dev/.stack,uid=61000,gid=61000 \
     && echo "Starting Stack dependency build..." \
     && for i in {1..3}; do \
         echo "Attempt $i of 3..." && \
-        timeout 3600 stack --no-terminal build --only-dependencies -j2 && \
+        timeout 3600 stack --no-terminal build --only-dependencies -j4 && \
         echo "Successfully built dependencies on attempt $i" && break || \
         (echo "Attempt $i failed, waiting 30 seconds before retry..." && sleep 30); \
        done || (echo "All attempts failed" && exit 1)
 
-# Build stage (builds the apps from source)
-FROM base AS build
-LABEL org.opencontainers.image.description="Build stage for the website roki.dev"
+# Dependencies build stage (builds only dependencies, shared across builds)
+FROM base AS deps
+LABEL org.opencontainers.image.description="Dependencies stage for the website roki.dev"
 
-COPY . /opt/src
+# Copy only files needed for dependency resolution
+COPY stack.yaml stack.yaml.lock package.yaml /opt/src/
+COPY roki-web.cabal /opt/src/
 WORKDIR /opt/src
 
-# Install GHCup and Stack dependencies
+# Install GHCup and build Stack dependencies only
 RUN --mount=type=cache,target=/root/.stack \
     --mount=type=cache,target=/root/.ghcup \
     export BOOTSTRAP_HASKELL_GHC_VERSION="$(yq '.compiler' ./stack.yaml | cut -f2 -d-)" \
@@ -88,21 +90,33 @@ RUN --mount=type=cache,target=/root/.stack \
     && export BOOTSTRAP_HASKELL_INSTALL_STACK=1 \
     && export BOOTSTRAP_HASKELL_INSTALL_HLS=0 \
     && export BOOTSTRAP_HASKELL_NONINTERACTIVE=1 \
-    && export PUPPETEER_EXECUTABLE_PATH="$(which chromium)" \
     && curl --proto '=https' --tlsv1.2 -sSf https://get-ghcup.haskell.org | sh \
     && source "$HOME/.ghcup/env" \
     && stack config set install-ghc false --global \
     && stack config set system-ghc true --global \
-    && mkdir -p /root/dist \
     && stack update \
     && echo "Starting Stack dependency build..." \
     && for i in {1..3}; do \
         echo "Attempt $i of 3..." && \
-        timeout 3600 stack --no-terminal --allow-different-user build --only-dependencies -j2 && \
+        timeout 3600 stack --no-terminal --allow-different-user build --only-dependencies -j4 && \
         echo "Successfully built dependencies on attempt $i" && break || \
         (echo "Attempt $i failed, waiting 30 seconds before retry..." && sleep 30); \
-       done || (echo "All attempts failed" && exit 1) \
-    && stack --no-terminal --allow-different-user --local-bin-path=/root/dist install -j2 \
+       done || (echo "All attempts failed" && exit 1)
+
+# Build stage (builds the apps from source, uses deps stage)
+FROM deps AS build
+LABEL org.opencontainers.image.description="Build stage for the website roki.dev"
+
+# Now copy the full source
+COPY . /opt/src
+WORKDIR /opt/src
+
+# Build the application (dependencies already built in deps stage)
+RUN --mount=type=cache,target=/root/.stack \
+    --mount=type=cache,target=/root/.ghcup \
+    source "$HOME/.ghcup/env" \
+    && mkdir -p /root/dist \
+    && stack --no-terminal --allow-different-user --local-bin-path=/root/dist install -j4 \
     && cp -r ./package.json ./package-lock.json ./tools ./.nvmrc /root/dist
 
 # Final production stage (apps)
