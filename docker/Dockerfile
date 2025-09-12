@@ -1,5 +1,5 @@
 # Base stage with common dependencies
-FROM ubuntu:24.10 AS base
+FROM ubuntu:24.04 AS base
 SHELL ["/bin/bash", "-c"]
 LABEL maintainer="Roki <falgon53@yahoo.co.jp>"
 LABEL org.opencontainers.image.authors="Roki <falgon53@yahoo.co.jp>"
@@ -121,7 +121,7 @@ RUN --mount=type=cache,target=/root/.stack \
 
 # Final production stage (apps)
 # Use Ubuntu instead of Alpine for better compatibility with Haskell binaries
-FROM ubuntu:24.10 AS apps
+FROM ubuntu:24.04 AS apps
 SHELL ["/bin/bash", "-c"]
 LABEL maintainer="Roki <falgon53@gmail.com>"
 LABEL org.opencontainers.image.authors="Roki <falgon53@yahoo.co.jp>"
