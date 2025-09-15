@@ -7,7 +7,8 @@ import           Data.List             (nub, sort, sortBy)
 import qualified Data.Map              as M
 import           Data.Ord              (comparing)
 import           Data.String           (IsString (..))
-import           Dhall                 (FromDhall, Generic, Natural, auto, input)
+import           Dhall                 (FromDhall, Generic, Natural, auto,
+                                        input)
 import           Hakyll
 import           System.FilePath       (joinPath, (</>))
 import           System.FilePath.Posix (takeBaseName)
@@ -30,10 +31,10 @@ instance FromDhall Favorite
 
 -- ホテル情報のデータ構造
 data Hotel = Hotel {
-    hotelCode     :: String
-  , stays         :: Natural
-  , details       :: [String]
-  , hotelColor    :: String
+    hotelCode  :: String
+  , stays      :: Natural
+  , details    :: [String]
+  , hotelColor :: String
   } deriving (Generic, Show)
 
 instance FromDhall Hotel
