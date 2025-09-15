@@ -523,6 +523,144 @@
             transform: translateY(20px);
         }
     }
+    
+    // 宿泊概算セクション
+    .hotel-summary-section {
+        margin-top: 3rem;
+        margin-bottom: 3rem;
+        
+        h3 {
+            color: #083963;
+            margin-bottom: 1.5rem;
+            padding-left: 2rem;
+            position: relative;
+            display: flex;
+            align-items: center;
+            
+            svg, i {
+                position: absolute;
+                left: 0;
+                top: 0.15rem;
+                font-size: 1.1rem;
+            }
+            
+            .hotel-summary-total-inline {
+                margin-left: auto;
+                padding: 0.4rem 1rem;
+                background: linear-gradient(135deg, #3CAADF 0%, #083963 100%);
+                border-radius: 20px;
+                display: inline-flex;
+                align-items: center;
+                gap: 0.4rem;
+                box-shadow: 0 3px 8px rgba(8, 57, 99, 0.3);
+                
+                .total-label {
+                    font-size: 0.75rem;
+                    color: white;
+                    font-weight: 500;
+                    opacity: 0.9;
+                }
+                
+                .total-value {
+                    font-size: 0.95rem;
+                    color: white;
+                    font-weight: bold;
+                    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+                }
+            }
+        }
+        
+        .hotel-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .hotel-card {
+            background: linear-gradient(to right, #ffffff 0%, #f8f9fa 100%);
+            border-radius: 12px;
+            padding: 1.2rem;
+            border-left: 4px solid;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            
+            &:hover {
+                transform: translateY(-3px);
+                box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+            }
+            
+            .hotel-header {
+                display: flex;
+                align-items: center;
+                gap: 1rem;
+                margin-bottom: 1rem;
+                
+                .hotel-badge {
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    min-width: 50px;
+                    padding: 0.3rem 0.6rem;
+                    border-radius: 6px;
+                    color: white;
+                    font-weight: bold;
+                    font-size: 0.85rem;
+                    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+                }
+                
+                .hotel-title {
+                    flex: 1;
+                    
+                    .stays-count {
+                        display: inline-block;
+                        font-size: 0.95rem;
+                        color: #083963;
+                        font-weight: 600;
+                    }
+                }
+            }
+            
+            .hotel-details {
+                display: flex;
+                flex-direction: column;
+                gap: 0.25rem;
+                
+                .hotel-detail-item {
+                    font-size: 0.82rem;
+                    color: #2d3748;
+                    padding-left: 1.2rem;
+                    position: relative;
+                    line-height: 1.6;
+                    
+                    &::before {
+                        content: "•";
+                        position: absolute;
+                        left: 0;
+                        color: #2d3748;
+                        font-weight: bold;
+                        font-size: 1.1em;
+                    }
+                    
+                    // インデントされたアイテム（全角スペースで始まる）
+                    &.hotel-detail-indented {
+                        padding-left: 2.8rem;
+                        font-size: 0.78rem;
+                        color: #4a5568;
+                        
+                        &::before {
+                            content: "◦";
+                            left: 1.6rem;
+                            color: #718096;
+                            font-weight: normal;
+                            font-size: 0.9em;
+                        }
+                    }
+                }
+            }
+        }
+        
+    }
 }
 
 @media screen and (max-width: 768px) {

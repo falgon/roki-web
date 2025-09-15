@@ -7,7 +7,7 @@ import           Data.List             (nub, sort, sortBy)
 import qualified Data.Map              as M
 import           Data.Ord              (comparing)
 import           Data.String           (IsString (..))
-import           Dhall                 (FromDhall, Generic, auto, input)
+import           Dhall                 (FromDhall, Generic, Natural, auto, input)
 import           Hakyll
 import           System.FilePath       (joinPath, (</>))
 import           System.FilePath.Posix (takeBaseName)
@@ -27,6 +27,16 @@ data Favorite = Favorite {
   } deriving (Generic, Show)
 
 instance FromDhall Favorite
+
+-- ホテル情報のデータ構造
+data Hotel = Hotel {
+    hotelCode     :: String
+  , stays         :: Natural
+  , details       :: [String]
+  , hotelColor    :: String
+  } deriving (Generic, Show)
+
+instance FromDhall Hotel
 
 -- タグ設定のデータ構造
 data TagConfig = TagConfig {
@@ -126,6 +136,10 @@ mdRule ss pat = do
 loadDisneyFavorites :: IO [Favorite]
 loadDisneyFavorites = input auto "./contents/config/disney/Favorites.dhall"
 
+-- Dhallファイルからホテル情報を読み込み
+loadDisneyHotels :: IO [Hotel]
+loadDisneyHotels = input auto "./contents/config/disney/Hotels.dhall"
+
 -- ログエントリ用のコンテキストを作成
 disneyLogCtx :: M.Map String (String, String) -> Context String
 disneyLogCtx tagConfig = mconcat
@@ -138,6 +152,25 @@ disneyLogCtx tagConfig = mconcat
     , disneyTagsField tagConfig
     ]
 
+-- ホテル情報用のコンテキストを作成
+hotelCtx :: Context Hotel
+hotelCtx = mconcat
+    [ field "hotel-code" (return . hotelCode . itemBody)
+    , field "stays-count" (return . show . stays . itemBody)
+    , field "hotel-color" (return . hotelColor . itemBody)
+    , listFieldWith "hotel-details" detailCtx $ \item ->
+        return $ map (\d -> Item (fromString d) d) (details $ itemBody item)
+    ]
+  where
+    detailCtx = mconcat
+        [ field "detail" (return . itemBody)
+        , field "indent-class" $ \item ->
+            let text = itemBody item
+            in return $ if "　" `isPrefixOf` text then "hotel-detail-indented" else ""
+        ]
+      where
+        isPrefixOf prefix str = take (length prefix) str == prefix
+
 rules :: PageConfReader Rules ()
 rules = do
     let items = disneyLogsPattern : map (fromList . (:[]))
@@ -147,6 +180,7 @@ rules = do
     faIcons <- asks pcFaIcons
     isPreview <- asks pcIsPreview
     favorites <- lift $ preprocess loadDisneyFavorites
+    hotels <- lift $ preprocess loadDisneyHotels
     tagConfig <- lift $ preprocess tagConfigMap
     lift $ do
         -- フォントファイルのコピー
@@ -183,6 +217,7 @@ rules = do
                   , pure $ listField "favorite-works" (field "text" (return . text . itemBody) <> field "link" (return . maybe "" id . link . itemBody)) (return $ map (\f -> Item (fromString $ text f) f) $ filter ((== "works") . category) favorites)
                   , pure $ listField "favorite-characters" (field "text" (return . text . itemBody) <> field "link" (return . maybe "" id . link . itemBody)) (return $ map (\f -> Item (fromString $ text f) f) $ filter ((== "characters") . category) favorites)
                   , pure $ listField "favorite-park-contents" (field "text" (return . text . itemBody) <> field "link" (return . maybe "" id . link . itemBody)) (return $ map (\f -> Item (fromString $ text f) f) $ filter ((== "park-contents") . category) favorites)
+                  , pure $ listField "hotel-stays" hotelCtx (return $ map (\h -> Item (fromString $ hotelCode h) h) hotels)
                       ]
                 getResourceBody
                     >>= applyAsTemplate disneyExperienceSummaryCtx

@@ -158,6 +158,34 @@
             $endfor$
         </div>
         </div>
+        
+    <!-- 宿泊概算セクション -->
+    <div class="hotel-summary-section">
+        <h3 class="title is-4 mb-3">
+            <i class="fas fa-bed"></i>宿泊概算
+            <span class="hotel-summary-total-inline">
+                <span class="total-label">合計:</span>
+                <span class="total-value">15泊</span>
+            </span>
+        </h3>
+        <div class="hotel-cards">
+            $for(hotel-stays)$
+            <div class="hotel-card" style="border-left-color: $hotel-color$;">
+                <div class="hotel-header">
+                    <span class="hotel-badge" style="background-color: $hotel-color$;">$hotel-code$</span>
+                    <div class="hotel-title">
+                        <span class="stays-count">$stays-count$泊</span>
+                    </div>
+                </div>
+                <div class="hotel-details">
+                    $for(hotel-details)$
+                    <span class="hotel-detail-item $indent-class$">$detail$</span>
+                    $endfor$
+                </div>
+            </div>
+            $endfor$
+        </div>
+    </div>
     </div>
 </div>
 </div>
