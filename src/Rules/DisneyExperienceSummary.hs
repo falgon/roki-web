@@ -7,9 +7,11 @@ import           Data.List             (nub, sort, sortBy)
 import qualified Data.Map              as M
 import           Data.Ord              (comparing)
 import           Data.String           (IsString (..))
+import           Data.Time             (defaultTimeLocale, formatTime)
 import           Dhall                 (FromDhall, Generic, Natural, auto,
                                         input)
 import           Hakyll
+import           System.Directory      (getModificationTime)
 import           System.FilePath       (joinPath, (</>))
 import           System.FilePath.Posix (takeBaseName)
 
@@ -149,6 +151,12 @@ loadDisneyFavorites = input auto "./contents/config/disney/Favorites.dhall"
 loadDisneyHotels :: IO [Hotel]
 loadDisneyHotels = input auto "./contents/config/disney/Hotels.dhall"
 
+-- Hotels.dhallの最終更新日を取得
+getHotelsLastModified :: IO String
+getHotelsLastModified = do
+    modTime <- getModificationTime "./contents/config/disney/Hotels.dhall"
+    return $ formatTime defaultTimeLocale "%Y/%m/%d" modTime
+
 -- ログエントリ用のコンテキストを作成
 disneyLogCtx :: M.Map String (String, String) -> Context String
 disneyLogCtx tagConfig = mconcat
@@ -196,7 +204,9 @@ rules = do
     isPreview <- asks pcIsPreview
     favorites <- lift $ preprocess loadDisneyFavorites
     hotels <- lift $ preprocess loadDisneyHotels
+    hotelsLastModified <- lift $ preprocess getHotelsLastModified
     tagConfig <- lift $ preprocess tagConfigMap
+    let totalStays = sum $ map stays hotels
     lift $ do
         -- フォントファイルのコピー
         match (fromGlob $ joinPath [contentsRoot, "fonts", "*.otf"]) $ do
@@ -233,6 +243,8 @@ rules = do
                   , pure $ listField "favorite-characters" (field "text" (return . text . itemBody) <> field "link" (return . maybe "" id . link . itemBody)) (return $ map (\f -> Item (fromString $ text f) f) $ filter ((== "characters") . category) favorites)
                   , pure $ listField "favorite-park-contents" (field "text" (return . text . itemBody) <> field "link" (return . maybe "" id . link . itemBody)) (return $ map (\f -> Item (fromString $ text f) f) $ filter ((== "park-contents") . category) favorites)
                   , pure $ listField "hotel-stays" hotelCtx (return $ map (\h -> Item (fromString $ hotelCode h) h) hotels)
+                  , pure $ constField "hotels-last-modified" hotelsLastModified
+                  , pure $ constField "hotels-total-stays" (show totalStays)
                       ]
                 getResourceBody
                     >>= applyAsTemplate disneyExperienceSummaryCtx
