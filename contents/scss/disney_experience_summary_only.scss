@@ -166,6 +166,24 @@
                 color: #000000;
             }
         }
+        
+        .ai-generated-badge {
+            margin-left: auto;
+            padding: 0.15rem 0.5rem;
+            background: linear-gradient(135deg, #3CAADF 0%, #3e8ed0 100%);
+            color: white;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            box-shadow: 0 2px 4px rgba(60, 170, 223, 0.3);
+            
+            i {
+                font-size: 0.75rem;
+            }
+        }
     }
 
     .log-body {
