@@ -7,7 +7,8 @@ import           Data.List             (nub, sort, sortBy)
 import qualified Data.Map              as M
 import           Data.Ord              (comparing)
 import           Data.String           (IsString (..))
-import           Dhall                 (FromDhall, Generic, Natural, auto, input)
+import           Dhall                 (FromDhall, Generic, Natural, auto,
+                                        input)
 import           Hakyll
 import           System.FilePath       (joinPath, (</>))
 import           System.FilePath.Posix (takeBaseName)
@@ -29,7 +30,7 @@ data Favorite = Favorite {
 instance FromDhall Favorite
 
 -- ホテルの詳細情報の階層構造（シンプル版：2階層まで）
-data HotelDetail 
+data HotelDetail
   = HDText String
   | HDNode { hdLabel :: String, hdChildren :: [String] }
   deriving (Generic, Show)
@@ -38,10 +39,10 @@ instance FromDhall HotelDetail
 
 -- ホテル情報のデータ構造
 data Hotel = Hotel {
-    hotelCode     :: String
-  , stays         :: Natural
-  , details       :: [HotelDetail]
-  , hotelColor    :: String
+    hotelCode  :: String
+  , stays      :: Natural
+  , details    :: [HotelDetail]
+  , hotelColor :: String
   } deriving (Generic, Show)
 
 instance FromDhall Hotel
@@ -166,23 +167,23 @@ hotelCtx = mconcat
     [ field "hotel-code" (return . hotelCode . itemBody)
     , field "stays-count" (return . show . stays . itemBody)
     , field "hotel-color" (return . hotelColor . itemBody)
-    , field "hotel-details-html" $ \item -> 
+    , field "hotel-details-html" $ \item ->
         return $ renderHotelDetails (details $ itemBody item)
     ]
   where
     -- 階層構造をHTMLに変換
     renderHotelDetails :: [HotelDetail] -> String
     renderHotelDetails = concat . map renderDetail
-    
+
     renderDetail :: HotelDetail -> String
-    renderDetail (HDText text) = 
+    renderDetail (HDText text) =
         "<span class=\"hotel-detail-item hotel-detail-level-0\">" ++ text ++ "</span>"
-    renderDetail (HDNode {hdLabel = lbl, hdChildren = chldn}) = 
+    renderDetail (HDNode {hdLabel = lbl, hdChildren = chldn}) =
         "<span class=\"hotel-detail-item hotel-detail-level-0\">" ++ lbl ++ "</span>" ++
         concat (map renderChild chldn)
-    
+
     renderChild :: String -> String
-    renderChild text = 
+    renderChild text =
         "<span class=\"hotel-detail-item hotel-detail-level-1\">" ++ text ++ "</span>"
 
 rules :: PageConfReader Rules ()
