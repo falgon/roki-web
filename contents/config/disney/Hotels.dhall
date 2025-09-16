@@ -16,7 +16,9 @@ in  [ { hotelCode = "FSH"
         [ HotelDetail.HDText "ファンタジーシャトー"
         , HotelDetail.HDNode { hdLabel = "スプリングスサイド", hdChildren = [ "バルアル" ] }
         , HotelDetail.HDNode
-            { hdLabel = "ローズコートサイド", hdChildren = [ "スーペリア ×2", "スーペリア・アルコーヴ" ] }
+            { hdLabel = "ローズコートサイド"
+            , hdChildren = [ "スーペリア ×2", "スーペリア・アルコーヴ" ]
+            }
         ]
       , hotelColor = "#854454"
       }
