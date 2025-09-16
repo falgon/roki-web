@@ -202,6 +202,10 @@
     .favorite-category {
         margin-bottom: 0;
         
+        &.mt-4 {
+            margin-top: 3rem !important;
+        }
+        
         h3 {
             color: #083963;
             margin-bottom: 0.5rem;
@@ -211,10 +215,11 @@
             align-items: center;
             flex-wrap: wrap;
             
-            svg {
+            svg, i:not(.fa-filter) {
                 position: absolute;
                 left: 0;
-                top: 0.1rem;
+                top: 50%;
+                transform: translateY(-50%);
             }
             
             .button {
@@ -272,6 +277,62 @@
                     display: inline-block !important;
                     vertical-align: middle !important;
                     transition: none !important;
+                }
+            }
+            
+            // 体験歴の統計情報バッジ
+            .logs-summary-total-inline {
+                margin-left: auto;
+                padding: 0.5rem 1rem;
+                background: linear-gradient(135deg, #3CAADF 0%, #083963 100%);
+                border-radius: 20px;
+                display: inline-flex;
+                align-items: center;
+                box-shadow: 0 3px 8px rgba(8, 57, 99, 0.3);
+                
+                .logs-summary-stats {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 0.2rem;
+                    align-items: flex-end;
+                }
+                
+                .stat-total {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.4rem;
+                    
+                    .total-label {
+                        font-size: 0.75rem;
+                        color: white;
+                        font-weight: 500;
+                        opacity: 0.9;
+                    }
+                    
+                    .total-value {
+                        font-size: 0.95rem;
+                        color: white;
+                        font-weight: bold;
+                        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+                    }
+                }
+                
+                .stat-updated {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.3rem;
+                    
+                    .updated-label {
+                        font-size: 0.65rem;
+                        color: rgba(255, 255, 255, 0.8);
+                        font-weight: 400;
+                    }
+                    
+                    .updated-value {
+                        font-size: 0.7rem;
+                        color: rgba(255, 255, 255, 0.95);
+                        font-weight: 500;
+                    }
                 }
             }
         }

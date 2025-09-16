@@ -11,7 +11,7 @@ import           Data.Time             (defaultTimeLocale, formatTime)
 import           Dhall                 (FromDhall, Generic, Natural, auto,
                                         input)
 import           Hakyll
-import           System.Directory      (getModificationTime)
+import           System.Directory      (getModificationTime, listDirectory)
 import           System.FilePath       (joinPath, (</>))
 import           System.FilePath.Posix (takeBaseName)
 
@@ -157,6 +157,18 @@ getHotelsLastModified = do
     modTime <- getModificationTime "./contents/config/disney/Hotels.dhall"
     return $ formatTime defaultTimeLocale "%Y/%m/%d" modTime
 
+-- ディズニーログの最終更新日を取得（最も新しいファイルの日付）
+getLogsLastModified :: IO String
+getLogsLastModified = do
+    let logsDir = joinPath [contentsRoot, "disney_experience_summary", "logs"]
+    files <- listDirectory logsDir
+    let mdFiles = filter (\f -> ".md" `isSuffixOf` f) files
+    modTimes <- mapM (\f -> getModificationTime (logsDir </> f)) mdFiles
+    let latestTime = maximum modTimes
+    return $ formatTime defaultTimeLocale "%Y/%m/%d" latestTime
+  where
+    isSuffixOf suffix str = drop (length str - length suffix) str == suffix
+
 -- ログエントリ用のコンテキストを作成
 disneyLogCtx :: M.Map String (String, String) -> Context String
 disneyLogCtx tagConfig = mconcat
@@ -205,6 +217,7 @@ rules = do
     favorites <- lift $ preprocess loadDisneyFavorites
     hotels <- lift $ preprocess loadDisneyHotels
     hotelsLastModified <- lift $ preprocess getHotelsLastModified
+    logsLastModified <- lift $ preprocess getLogsLastModified
     tagConfig <- lift $ preprocess tagConfigMap
     let totalStays = sum $ map stays hotels
     lift $ do
@@ -217,6 +230,7 @@ rules = do
             route $ gsubRoute (contentsRoot </> "pages/") (const mempty)
             compile $ do
                 disneyLogs <- sortByNum <$> loadAllSnapshots disneyLogsPattern disneyExperienceSummarySnapshot
+                let totalLogs = length disneyLogs
                 -- ユニークなタグリストを作成
                 uniqueTags <- do
                     allTags <- sequence $ map (\logItem -> do
@@ -245,6 +259,8 @@ rules = do
                   , pure $ listField "hotel-stays" hotelCtx (return $ map (\h -> Item (fromString $ hotelCode h) h) hotels)
                   , pure $ constField "hotels-last-modified" hotelsLastModified
                   , pure $ constField "hotels-total-stays" (show totalStays)
+                  , pure $ constField "logs-total-count" (show totalLogs)
+                  , pure $ constField "logs-last-modified" logsLastModified
                       ]
                 getResourceBody
                     >>= applyAsTemplate disneyExperienceSummaryCtx
