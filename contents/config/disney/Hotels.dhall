@@ -1,39 +1,64 @@
+-- ホテルの詳細情報を階層的に表現する型（シンプル版）
+-- 子要素はテキストのリストとして表現
+let HotelDetail = 
+      < HDText : Text
+      | HDNode : { hdLabel : Text, hdChildren : List Text }
+      >
+
 let Hotel =
       { hotelCode : Text
       , stays : Natural
-      , details : List Text
+      , details : List HotelDetail
       , hotelColor : Text
       }
 
 in  [ { hotelCode = "FSH"
       , stays = 4
       , details = 
-        [ "ファンタジーシャトー"
-        , "　スプリングスサイド: バルアル"
-        , "　ローズコートサイド: スーペリアx2, スーペリア・アルコーヴ"
+        [ HotelDetail.HDText "ファンタジーシャトー"
+        , HotelDetail.HDNode 
+          { hdLabel = "スプリングスサイド"
+          , hdChildren = [ "バルアル" ]
+          }
+        , HotelDetail.HDNode 
+          { hdLabel = "ローズコートサイド"
+          , hdChildren = [ "スーペリアx2", "スーペリア・アルコーヴ" ]
+          }
         ]
       , hotelColor = "#854454"
       }
     , { hotelCode = "DHM"
       , stays = 4
       , details = 
-        [ "スイート: ハバテラx2, ピアバル"
-        , "ポルトパラディーゾ: スーペリアルームハーバービュー"
+        [ HotelDetail.HDNode 
+          { hdLabel = "スイート"
+          , hdChildren = [ "ハバテラx2", "ピアバル" ]
+          }
+        , HotelDetail.HDNode 
+          { hdLabel = "ポルトパラディーゾ"
+          , hdChildren = [ "スーペリアルームハーバービュー" ]
+          }
         ]
       , hotelColor = "#8A7501"
       }
     , { hotelCode = "TDH"
       , stays = 4
       , details = 
-        [ "キャラ: 美女野獣, シンデレラ"
-        , "スーペリア: コーナールーム, パークグランドビュー"
+        [ HotelDetail.HDNode 
+          { hdLabel = "キャラ"
+          , hdChildren = [ "美女野獣", "シンデレラ" ]
+          }
+        , HotelDetail.HDNode 
+          { hdLabel = "スーペリア"
+          , hdChildren = [ "コーナールーム", "パークグランドビュー" ]
+          }
         ]
       , hotelColor = "#B95C00"
       }
     , { hotelCode = "TSH"
       , stays = 3
       , details = 
-        [ "スタンダードルーム x3"
+        [ HotelDetail.HDText "スタンダードルーム x3"
         ]
       , hotelColor = "#C28A02"
       }

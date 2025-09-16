@@ -627,32 +627,68 @@
                 gap: 0.25rem;
                 
                 .hotel-detail-item {
-                    font-size: 0.82rem;
-                    color: #2d3748;
-                    padding-left: 1.2rem;
+                    display: block;
                     position: relative;
                     line-height: 1.6;
                     
-                    &::before {
-                        content: "•";
-                        position: absolute;
-                        left: 0;
+                    // レベル0（最上位）
+                    &.hotel-detail-level-0 {
+                        font-size: 0.82rem;
                         color: #2d3748;
-                        font-weight: bold;
-                        font-size: 1.1em;
+                        padding-left: 1.2rem;
+                        
+                        &::before {
+                            content: "•";
+                            position: absolute;
+                            left: 0;
+                            color: #2d3748;
+                            font-weight: bold;
+                            font-size: 1.1em;
+                        }
                     }
                     
-                    // インデントされたアイテム（全角スペースで始まる）
-                    &.hotel-detail-indented {
-                        padding-left: 2.8rem;
+                    // レベル1（第2階層）
+                    &.hotel-detail-level-1 {
                         font-size: 0.78rem;
                         color: #4a5568;
+                        padding-left: 2.8rem;
                         
                         &::before {
                             content: "◦";
+                            position: absolute;
                             left: 1.6rem;
                             color: #718096;
                             font-weight: normal;
+                            font-size: 0.9em;
+                        }
+                    }
+                    
+                    // レベル2（第3階層）
+                    &.hotel-detail-level-2 {
+                        font-size: 0.75rem;
+                        color: #718096;
+                        padding-left: 4.2rem;
+                        
+                        &::before {
+                            content: "▪";
+                            position: absolute;
+                            left: 3.2rem;
+                            color: #a0aec0;
+                            font-size: 0.8em;
+                        }
+                    }
+                    
+                    // レベル3以降（第4階層以降）
+                    &.hotel-detail-level-3 {
+                        font-size: 0.72rem;
+                        color: #a0aec0;
+                        padding-left: 5.6rem;
+                        
+                        &::before {
+                            content: "-";
+                            position: absolute;
+                            left: 4.8rem;
+                            color: #cbd5e0;
                             font-size: 0.9em;
                         }
                     }

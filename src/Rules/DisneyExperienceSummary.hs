@@ -28,11 +28,19 @@ data Favorite = Favorite {
 
 instance FromDhall Favorite
 
+-- ホテルの詳細情報の階層構造（シンプル版：2階層まで）
+data HotelDetail 
+  = HDText String
+  | HDNode { hdLabel :: String, hdChildren :: [String] }
+  deriving (Generic, Show)
+
+instance FromDhall HotelDetail
+
 -- ホテル情報のデータ構造
 data Hotel = Hotel {
     hotelCode     :: String
   , stays         :: Natural
-  , details       :: [String]
+  , details       :: [HotelDetail]
   , hotelColor    :: String
   } deriving (Generic, Show)
 
@@ -158,18 +166,24 @@ hotelCtx = mconcat
     [ field "hotel-code" (return . hotelCode . itemBody)
     , field "stays-count" (return . show . stays . itemBody)
     , field "hotel-color" (return . hotelColor . itemBody)
-    , listFieldWith "hotel-details" detailCtx $ \item ->
-        return $ map (\d -> Item (fromString d) d) (details $ itemBody item)
+    , field "hotel-details-html" $ \item -> 
+        return $ renderHotelDetails (details $ itemBody item)
     ]
   where
-    detailCtx = mconcat
-        [ field "detail" (return . itemBody)
-        , field "indent-class" $ \item ->
-            let text = itemBody item
-            in return $ if "　" `isPrefixOf` text then "hotel-detail-indented" else ""
-        ]
-      where
-        isPrefixOf prefix str = take (length prefix) str == prefix
+    -- 階層構造をHTMLに変換
+    renderHotelDetails :: [HotelDetail] -> String
+    renderHotelDetails = concat . map renderDetail
+    
+    renderDetail :: HotelDetail -> String
+    renderDetail (HDText text) = 
+        "<span class=\"hotel-detail-item hotel-detail-level-0\">" ++ text ++ "</span>"
+    renderDetail (HDNode {hdLabel = lbl, hdChildren = chldn}) = 
+        "<span class=\"hotel-detail-item hotel-detail-level-0\">" ++ lbl ++ "</span>" ++
+        concat (map renderChild chldn)
+    
+    renderChild :: String -> String
+    renderChild text = 
+        "<span class=\"hotel-detail-item hotel-detail-level-1\">" ++ text ++ "</span>"
 
 rules :: PageConfReader Rules ()
 rules = do
