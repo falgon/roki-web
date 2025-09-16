@@ -16,7 +16,7 @@ in  [ { hotelCode = "FSH"
         [ HotelDetail.HDText "ファンタジーシャトー"
         , HotelDetail.HDNode { hdLabel = "スプリングスサイド", hdChildren = [ "バルアル" ] }
         , HotelDetail.HDNode
-            { hdLabel = "ローズコートサイド", hdChildren = [ "スーペリアx2", "スーペリア・アルコーヴ" ] }
+            { hdLabel = "ローズコートサイド", hdChildren = [ "スーペリア ×2", "スーペリア・アルコーヴ" ] }
         ]
       , hotelColor = "#854454"
       }
@@ -24,7 +24,7 @@ in  [ { hotelCode = "FSH"
       , stays = 4
       , details =
         [ HotelDetail.HDNode
-            { hdLabel = "スイート", hdChildren = [ "ハバテラx2", "ピアバル" ] }
+            { hdLabel = "スイート", hdChildren = [ "ハバテラ ×2", "ピアバル" ] }
         , HotelDetail.HDNode
             { hdLabel = "ポルトパラディーゾ", hdChildren = [ "スーペリアルームハーバービュー" ] }
         ]
@@ -42,7 +42,7 @@ in  [ { hotelCode = "FSH"
       }
     , { hotelCode = "TSH"
       , stays = 3
-      , details = [ HotelDetail.HDText "スタンダードルーム x3" ]
+      , details = [ HotelDetail.HDText "スタンダードルーム ×3" ]
       , hotelColor = "#C28A02"
       }
     ]
