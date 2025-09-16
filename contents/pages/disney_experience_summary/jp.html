@@ -152,6 +152,11 @@
                     <a href="$url$" target="_blank" rel="noopener" title="Note"><i class="fas fa-note-sticky fa-sm"></i></a>
                     $endfor$
                     $endif$
+                    $for(ai-generated-badges)$
+                    <span class="ai-generated-badge">
+                        <i class="fas fa-robot"></i> $badge-text$
+                    </span>
+                    $endfor$
                 </div>
                 <div class="log-body">$log-body$</div>
             </article>
