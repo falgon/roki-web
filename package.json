@@ -9,20 +9,20 @@
     },
     "devDependencies": {
         "@creativebulma/bulma-tooltip": "^1.2.0",
-        "@fortawesome/fontawesome-svg-core": "^7.0.0",
-        "@fortawesome/free-brands-svg-icons": "^7.0.0",
-        "@fortawesome/free-solid-svg-icons": "^7.0.0",
+        "@fortawesome/fontawesome-svg-core": "^7.0.1",
+        "@fortawesome/free-brands-svg-icons": "^7.0.1",
+        "@fortawesome/free-solid-svg-icons": "^7.0.1",
         "katex": "^0.16.22",
         "svgo": "^4.0.0",
         "typescript": "^5.9.2",
-        "terser": "^5.29.2",
-        "tsx": "^4.20.4"
+        "terser": "^5.44.0",
+        "tsx": "^4.20.5"
     },
     "dependencies": {
-        "@mermaid-js/mermaid-cli": "^11.9.0",
+        "@mermaid-js/mermaid-cli": "^11.10.1",
         "bulma": "^1.0.4",
         "d3": "^7.9.0",
-        "mathjs": "^14.6.0",
-        "sass": "^1.90.0"
+        "mathjs": "^14.7.0",
+        "sass": "^1.92.1"
     }
 }
