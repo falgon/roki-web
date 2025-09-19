@@ -131,7 +131,7 @@ jobs:
         fi
   build-env-image-arm64:
     runs-on: ubuntu-24.04
-    timeout-minutes: 350  # 5時間50分のタイムアウト（6時間制限前に終了）
+    timeout-minutes: 360  # 6時間のタイムアウト (GitHub Actions最大値)
     needs: setup
     if: github.repository == 'falgon/roki-web'
     steps:
@@ -154,6 +154,11 @@ jobs:
       run: echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
     - name: Build and conditionally push the ARM64 env image
       run: |
+        # Try to maximize cache usage and reduce build time
+        # Export Docker Buildx variables for better caching
+        export DOCKER_BUILDKIT=1
+        export BUILDKIT_PROGRESS=plain
+        
         if [[ "${{ needs.setup.outputs.to_push }}" == "true" ]]; then
           docker buildx build \
             --platform linux/arm64 \
@@ -164,10 +169,12 @@ jobs:
             --cache-from type=gha,scope=base-arm64 \
             --cache-from type=gha,scope=deps-arm64 \
             --cache-from type=gha,scope=build-arm64 \
+            --cache-from type=registry,ref=ghcr.io/${{ github.repository_owner }}/roki-web-env:latest-arm64 \
             --cache-to type=gha,mode=max,scope=env-arm64 \
             --cache-to type=gha,mode=max,scope=base-arm64 \
             --cache-to type=gha,mode=max,scope=deps-arm64 \
             --cache-to type=gha,mode=max,scope=build-arm64 \
+            --build-arg BUILDKIT_INLINE_CACHE=1 \
             -f ./docker/Dockerfile \
             .
         else
@@ -179,10 +186,12 @@ jobs:
             --cache-from type=gha,scope=base-arm64 \
             --cache-from type=gha,scope=deps-arm64 \
             --cache-from type=gha,scope=build-arm64 \
+            --cache-from type=registry,ref=ghcr.io/${{ github.repository_owner }}/roki-web-env:latest-arm64 \
             --cache-to type=gha,mode=max,scope=env-arm64 \
             --cache-to type=gha,mode=max,scope=base-arm64 \
             --cache-to type=gha,mode=max,scope=deps-arm64 \
             --cache-to type=gha,mode=max,scope=build-arm64 \
+            --build-arg BUILDKIT_INLINE_CACHE=1 \
             -f ./docker/Dockerfile \
             .
         fi
