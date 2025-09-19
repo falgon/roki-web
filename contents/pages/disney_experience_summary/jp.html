@@ -85,7 +85,7 @@
         </div>
     </div>
     
-    <div class="favorite-category mt-2">
+    <div class="favorite-category mt-4">
         <h3 class="title is-4 mb-3">
             <i class="fas fa-wand-magic-sparkles"></i>体験歴
             <button class="button is-small is-info ml-2" id="toggle-tag-filter">
@@ -94,6 +94,18 @@
                 </span>
                 <span>タグで絞り込み</span>
             </button>
+            <span class="logs-summary-total-inline">
+                <div class="logs-summary-stats">
+                    <div class="stat-total">
+                        <span class="total-label">コンテンツ数:</span>
+                        <span class="total-value">$logs-total-count$</span>
+                    </div>
+                    <div class="stat-updated">
+                        <span class="updated-label">最終更新日:</span>
+                        <span class="updated-value">$logs-last-modified$</span>
+                    </div>
+                </div>
+            </span>
         </h3>
         <div class="tag-filter mb-3" style="display: none;">
             <div class="tag-filter-buttons">
@@ -152,12 +164,51 @@
                     <a href="$url$" target="_blank" rel="noopener" title="Note"><i class="fas fa-note-sticky fa-sm"></i></a>
                     $endfor$
                     $endif$
+                    $for(ai-generated-badges)$
+                    <span class="ai-generated-badge">
+                        <i class="fas fa-robot"></i> $badge-text$
+                    </span>
+                    $endfor$
                 </div>
                 <div class="log-body">$log-body$</div>
             </article>
             $endfor$
         </div>
         </div>
+        
+    <!-- 宿泊概算セクション -->
+    <div class="hotel-summary-section">
+        <h3 class="title is-4 mb-3">
+            <i class="fas fa-bed"></i>宿泊概算
+            <span class="hotel-summary-total-inline">
+                <div class="hotel-summary-stats">
+                    <div class="stat-total">
+                        <span class="total-label">合計:</span>
+                        <span class="total-value">$hotels-total-stays$泊</span>
+                    </div>
+                    <div class="stat-updated">
+                        <span class="updated-label">最終更新日:</span>
+                        <span class="updated-value">$hotels-last-modified$</span>
+                    </div>
+                </div>
+            </span>
+        </h3>
+        <div class="hotel-cards">
+            $for(hotel-stays)$
+            <div class="hotel-card" style="border-left-color: $hotel-color$;">
+                <div class="hotel-header">
+                    <span class="hotel-badge" style="background-color: $hotel-color$;">$hotel-code$</span>
+                    <div class="hotel-title">
+                        <span class="stays-count">$stays-count$泊</span>
+                    </div>
+                </div>
+                <div class="hotel-details">
+                    $hotel-details-html$
+                </div>
+            </div>
+            $endfor$
+        </div>
+    </div>
     </div>
 </div>
 </div>
