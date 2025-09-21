@@ -79,6 +79,8 @@ jobs:
     runs-on: ubuntu-24.04
     needs: setup
     if: github.repository == 'falgon/roki-web'
+    outputs:
+      success: ${{ steps.build_status.outputs.success }}
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -96,6 +98,8 @@ jobs:
       if: ${{ needs.setup.outputs.to_push == 'true' }}
       run: echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
     - name: Build and conditionally push the AMD64 env image
+      id: build
+      continue-on-error: true
       run: |
         if [[ "${{ needs.setup.outputs.to_push }}" == "true" ]]; then
           docker buildx build \
@@ -129,11 +133,26 @@ jobs:
             -f ./docker/Dockerfile \
             .
         fi
+    - name: Set build success output
+      id: build_status
+      if: always()
+      run: |
+        STATUS="${{ steps.build.outcome }}"
+        if [[ "$STATUS" == "success" ]]; then
+          echo "success=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "success=false" >> "$GITHUB_OUTPUT"
+        fi
+    - name: Record build failure without stopping workflow
+      if: ${{ steps.build.outcome != 'success' }}
+      run: echo "AMD64 env image build failed; continuing for partial manifest handling." >&2
   build-env-image-arm64:
     runs-on: ubuntu-24.04
-    timeout-minutes: 360  # 6時間のタイムアウト (GitHub Actions最大値)
+    timeout-minutes: 330  # 5時間30分で早期終了
     needs: setup
     if: github.repository == 'falgon/roki-web'
+    outputs:
+      success: ${{ steps.build_status.outputs.success }}
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -141,8 +160,22 @@ jobs:
         submodules: true
     - name: Set up QEMU
       uses: docker/setup-qemu-action@v3
+    - name: Prepare BuildKit config
+      id: buildkit_config
+      run: |
+        cat <<'EOF' > "$RUNNER_TEMP/buildkitd-arm64.toml"
+        [worker.oci]
+          gc = true
+          gckeepstorage = 20000
+        EOF
+        echo "path=$RUNNER_TEMP/buildkitd-arm64.toml" >> "$GITHUB_OUTPUT"
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
+      with:
+        buildkitd-config: ${{ steps.buildkit_config.outputs.path }}
+        driver-opts: |
+          image=moby/buildkit:buildx-stable-1
+          network=host
     - name: Adjustment docker volumes
       run: |
         docker system prune -a --volumes -f
@@ -153,12 +186,14 @@ jobs:
       if: ${{ needs.setup.outputs.to_push == 'true' }}
       run: echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
     - name: Build and conditionally push the ARM64 env image
+      id: build
+      continue-on-error: true
       run: |
         # Try to maximize cache usage and reduce build time
         # Export Docker Buildx variables for better caching
         export DOCKER_BUILDKIT=1
         export BUILDKIT_PROGRESS=plain
-        
+
         if [[ "${{ needs.setup.outputs.to_push }}" == "true" ]]; then
           docker buildx build \
             --platform linux/arm64 \
@@ -195,10 +230,25 @@ jobs:
             -f ./docker/Dockerfile \
             .
         fi
+    - name: Set build success output
+      id: build_status
+      if: always()
+      run: |
+        STATUS="${{ steps.build.outcome }}"
+        if [[ "$STATUS" == "success" ]]; then
+          echo "success=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "success=false" >> "$GITHUB_OUTPUT"
+        fi
+    - name: Record build failure without stopping workflow
+      if: ${{ steps.build.outcome != 'success' }}
+      run: echo "ARM64 env image build failed; continuing for partial manifest handling." >&2
   build-dev-image-amd64:
     runs-on: ubuntu-24.04
     needs: setup
     if: github.repository == 'falgon/roki-web'
+    outputs:
+      success: ${{ steps.build_status.outputs.success }}
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -214,6 +264,8 @@ jobs:
       if: ${{ needs.setup.outputs.to_push == 'true' }}
       run: echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
     - name: Build and conditionally push the AMD64 dev image
+      id: build
+      continue-on-error: true
       run: |
         if [[ "${{ needs.setup.outputs.to_push }}" == "true" ]]; then
           docker buildx build \
@@ -235,11 +287,26 @@ jobs:
             -f ./docker/Dockerfile \
             .
         fi
+    - name: Set build success output
+      id: build_status
+      if: always()
+      run: |
+        STATUS="${{ steps.build.outcome }}"
+        if [[ "$STATUS" == "success" ]]; then
+          echo "success=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "success=false" >> "$GITHUB_OUTPUT"
+        fi
+    - name: Record build failure without stopping workflow
+      if: ${{ steps.build.outcome != 'success' }}
+      run: echo "AMD64 dev image build failed; continuing for partial manifest handling." >&2
   build-dev-image-arm64:
     runs-on: ubuntu-24.04
     timeout-minutes: 350  # 5時間50分のタイムアウト（6時間制限前に終了）
     needs: setup
     if: github.repository == 'falgon/roki-web'
+    outputs:
+      success: ${{ steps.build_status.outputs.success }}
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -247,8 +314,22 @@ jobs:
         submodules: true
     - name: Set up QEMU
       uses: docker/setup-qemu-action@v3
+    - name: Prepare BuildKit config
+      id: buildkit_config
+      run: |
+        cat <<'EOF' > "$RUNNER_TEMP/buildkitd-dev-arm64.toml"
+        [worker.oci]
+          gc = true
+          gckeepstorage = 20000
+        EOF
+        echo "path=$RUNNER_TEMP/buildkitd-dev-arm64.toml" >> "$GITHUB_OUTPUT"
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
+      with:
+        buildkitd-config: ${{ steps.buildkit_config.outputs.path }}
+        driver-opts: |
+          image=moby/buildkit:buildx-stable-1
+          network=host
     - name: Adjustment docker volumes
       run: |
         docker system prune -a --volumes -f
@@ -257,6 +338,8 @@ jobs:
       if: ${{ needs.setup.outputs.to_push == 'true' }}
       run: echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
     - name: Build and conditionally push the ARM64 dev image
+      id: build
+      continue-on-error: true
       run: |
         if [[ "${{ needs.setup.outputs.to_push }}" == "true" ]]; then
           docker buildx build \
@@ -278,29 +361,80 @@ jobs:
             -f ./docker/Dockerfile \
             .
         fi
+    - name: Set build success output
+      id: build_status
+      if: always()
+      run: |
+        STATUS="${{ steps.build.outcome }}"
+        if [[ "$STATUS" == "success" ]]; then
+          echo "success=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "success=false" >> "$GITHUB_OUTPUT"
+        fi
+    - name: Record build failure without stopping workflow
+      if: ${{ steps.build.outcome != 'success' }}
+      run: echo "ARM64 dev image build failed; continuing for partial manifest handling." >&2
   create-manifest:
     runs-on: ubuntu-24.04
     needs: [setup, build-env-image-amd64, build-env-image-arm64, build-dev-image-amd64, build-dev-image-arm64]
-    if: ${{ needs.setup.outputs.to_push == 'true' && github.repository == 'falgon/roki-web' }}
+    if: ${{ always() && github.repository == 'falgon/roki-web' && needs.setup.result == 'success' &&
+      needs.setup.outputs.to_push == 'true' }}
     steps:
     - name: Login to GitHub Container Registry
       run: echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
     - name: Create and push multi-arch manifest for env image
       run: |
-        docker manifest create ${{ needs.setup.outputs.env_gh_registry }} \
-          ${{ needs.setup.outputs.env_gh_registry }}-amd64 \
-          ${{ needs.setup.outputs.env_gh_registry }}-arm64
-        docker manifest push ${{ needs.setup.outputs.env_gh_registry }}
+        set -euo pipefail
+        env_refs=()
+        if [[ "${{ needs['build-env-image-amd64'].outputs.success }}" == 'true' ]]; then
+          env_refs+=("${{ needs.setup.outputs.env_gh_registry }}-amd64")
+        fi
+        if [[ "${{ needs['build-env-image-arm64'].outputs.success }}" == 'true' ]]; then
+          env_refs+=("${{ needs.setup.outputs.env_gh_registry }}-arm64")
+        fi
+        if [ ${#env_refs[@]} -eq 0 ]; then
+          echo "Skipping env manifest because no architectures built successfully."
+        else
+          docker manifest create --amend "${{ needs.setup.outputs.env_gh_registry }}" "${env_refs[@]}"
+          docker manifest push "${{ needs.setup.outputs.env_gh_registry }}"
+        fi
     - name: Create and push multi-arch manifest for dev image
       run: |
-        docker manifest create ${{ needs.setup.outputs.dev_gh_registry }} \
-          ${{ needs.setup.outputs.dev_gh_registry }}-amd64 \
-          ${{ needs.setup.outputs.dev_gh_registry }}-arm64
-        docker manifest push ${{ needs.setup.outputs.dev_gh_registry }}
+        set -euo pipefail
+        dev_refs=()
+        if [[ "${{ needs['build-dev-image-amd64'].outputs.success }}" == 'true' ]]; then
+          dev_refs+=("${{ needs.setup.outputs.dev_gh_registry }}-amd64")
+        fi
+        if [[ "${{ needs['build-dev-image-arm64'].outputs.success }}" == 'true' ]]; then
+          dev_refs+=("${{ needs.setup.outputs.dev_gh_registry }}-arm64")
+        fi
+        if [ ${#dev_refs[@]} -eq 0 ]; then
+          echo "Skipping dev manifest because no architectures built successfully."
+        else
+          docker manifest create --amend "${{ needs.setup.outputs.dev_gh_registry }}" "${dev_refs[@]}"
+          docker manifest push "${{ needs.setup.outputs.dev_gh_registry }}"
+        fi
+    - name: Fail workflow when builds are missing
+      if: always()
+      run: |
+        set -euo pipefail
+        failures=()
+        [[ "${{ needs['build-env-image-amd64'].outputs.success }}" != 'true' ]] && failures+=("build-env-image-amd64")
+        [[ "${{ needs['build-env-image-arm64'].outputs.success }}" != 'true' ]] && failures+=("build-env-image-arm64")
+        [[ "${{ needs['build-dev-image-amd64'].outputs.success }}" != 'true' ]] && failures+=("build-dev-image-amd64")
+        [[ "${{ needs['build-dev-image-arm64'].outputs.success }}" != 'true' ]] && failures+=("build-dev-image-arm64")
+        if [ ${#failures[@]} -gt 0 ]; then
+          echo "::error::One or more builds failed: ${failures[*]}"
+          exit 1
+        fi
   notify-email:
     runs-on: ubuntu-24.04
     needs: [setup, build-env-image-amd64, build-env-image-arm64, build-dev-image-amd64, build-dev-image-arm64]
-    if: ${{ needs.setup.outputs.enable_notify == 'true' && github.repository == 'falgon/roki-web' }}
+    if: ${{ needs.setup.result == 'success' && needs.setup.outputs.enable_notify == 'true' && github.repository == 'falgon/roki-web' &&
+      needs['build-env-image-amd64'].outputs.success == 'true' &&
+      needs['build-env-image-arm64'].outputs.success == 'true' &&
+      needs['build-dev-image-amd64'].outputs.success == 'true' &&
+      needs['build-dev-image-arm64'].outputs.success == 'true' }}
     environment:
       name: manually-gh-registry
     steps:
