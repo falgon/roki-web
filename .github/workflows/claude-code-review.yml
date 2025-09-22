@@ -1,4 +1,4 @@
-name: Claude Code Review
+name: Claude Code Review for Bot PRs
 
 on:
   pull_request:
@@ -12,12 +12,11 @@ on:
 
 jobs:
   claude-review:
-    # Optional: Filter by PR author
-    # if: |
-    #   github.event.pull_request.user.login == 'external-contributor' ||
-    #   github.event.pull_request.user.login == 'new-developer' ||
-    #   github.event.pull_request.author_association == 'FIRST_TIME_CONTRIBUTOR'
-    
+    # Only run for PRs created by dependabot or github-actions bot
+    if: |
+      github.event.pull_request.user.login == 'dependabot[bot]' ||
+      github.event.pull_request.user.login == 'github-actions[bot]'
+
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -37,21 +36,22 @@ jobs:
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
 
-          allowed_bots: "dependabot"
+          allowed_bots: "dependabot,github-actions"
 
           # Optional: Specify model (defaults to Claude Sonnet 4, uncomment for Claude Opus 4.1)
           model: "claude-opus-4-1-20250805"
 
           # Direct prompt for automated review (no @claude mention needed)
           direct_prompt: |
-            Please review this pull request and provide feedback on:
-            - Code quality and best practices
-            - Potential bugs or issues
-            - Performance considerations
-            - Security concerns
-            - Test coverage
-            
-            Be constructive and helpful in your feedback.
+            このプルリクエストを日本語でレビューし、以下の観点からフィードバックを提供してください：
+            - コード品質とベストプラクティス
+            - 潜在的なバグや問題
+            - パフォーマンスに関する考慮事項
+            - セキュリティ上の懸念
+            - テストカバレッジ
+
+            すべてのコメントは日本語で記述してください。
+            フィードバックは建設的かつ有益なものにしてください。
 
           # Optional: Use sticky comments to make Claude reuse the same comment on subsequent pushes to the same PR
           # use_sticky_comment: true
