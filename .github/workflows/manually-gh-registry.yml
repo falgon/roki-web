@@ -80,7 +80,7 @@ jobs:
     needs: setup
     if: github.repository == 'falgon/roki-web'
     outputs:
-      success: ${{ steps.build_status.outputs.success }}
+      success: ${{ steps.build.outputs.outcome == 'success' }}
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -88,71 +88,54 @@ jobs:
         submodules: true
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
-    - name: Adjustment docker volumes
+    - name: Clear disk space
       run: |
         docker system prune -a --volumes -f
         sudo rm -rf "/usr/local/share/boost" "$AGENT_TOOLSDIRECTORY"
         sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
         df -h
     - name: Login to GitHub Container Registry
-      if: ${{ needs.setup.outputs.to_push == 'true' }}
-      run: echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-    - name: Build and conditionally push the AMD64 env image
+      if: needs.setup.outputs.to_push == 'true'
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    - name: Build and push AMD64 env image
       id: build
       continue-on-error: true
-      run: |
-        if [[ "${{ needs.setup.outputs.to_push }}" == "true" ]]; then
-          docker buildx build \
-            --platform linux/amd64 \
-            --target apps \
-            --tag ${{ needs.setup.outputs.env_gh_registry }}-amd64 \
-            --push \
-            --cache-from type=gha,scope=env-amd64 \
-            --cache-from type=gha,scope=base-amd64 \
-            --cache-from type=gha,scope=deps-amd64 \
-            --cache-from type=gha,scope=build-amd64 \
-            --cache-to type=gha,mode=max,scope=env-amd64 \
-            --cache-to type=gha,mode=max,scope=base-amd64 \
-            --cache-to type=gha,mode=max,scope=deps-amd64 \
-            --cache-to type=gha,mode=max,scope=build-amd64 \
-            -f ./docker/Dockerfile \
-            .
-        else
-          docker buildx build \
-            --platform linux/amd64 \
-            --target apps \
-            --tag ${{ needs.setup.outputs.env_img_name }}:${{ needs.setup.outputs.img_tag }}-amd64 \
-            --cache-from type=gha,scope=env-amd64 \
-            --cache-from type=gha,scope=base-amd64 \
-            --cache-from type=gha,scope=deps-amd64 \
-            --cache-from type=gha,scope=build-amd64 \
-            --cache-to type=gha,mode=max,scope=env-amd64 \
-            --cache-to type=gha,mode=max,scope=base-amd64 \
-            --cache-to type=gha,mode=max,scope=deps-amd64 \
-            --cache-to type=gha,mode=max,scope=build-amd64 \
-            -f ./docker/Dockerfile \
-            .
-        fi
-    - name: Set build success output
-      id: build_status
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./docker/Dockerfile
+        platforms: linux/amd64
+        target: apps
+        push: ${{ needs.setup.outputs.to_push == 'true' }}
+        tags: |
+          ${{ needs.setup.outputs.to_push == 'true' && format('{0}-amd64', needs.setup.outputs.env_gh_registry) || format('{0}:{1}-amd64', needs.setup.outputs.env_img_name, needs.setup.outputs.img_tag) }}
+        cache-from: |
+          type=gha,scope=env-amd64
+          type=gha,scope=base-amd64
+          type=gha,scope=deps-amd64
+          type=gha,scope=build-amd64
+        cache-to: |
+          type=gha,mode=max,scope=env-amd64
+          type=gha,mode=max,scope=base-amd64
+          type=gha,mode=max,scope=deps-amd64
+          type=gha,mode=max,scope=build-amd64
+    - name: Record build status
       if: always()
       run: |
-        STATUS="${{ steps.build.outcome }}"
-        if [[ "$STATUS" == "success" ]]; then
-          echo "success=true" >> "$GITHUB_OUTPUT"
-        else
-          echo "success=false" >> "$GITHUB_OUTPUT"
+        if [[ "${{ steps.build.outcome }}" != "success" ]]; then
+          echo "::warning::AMD64 env image build failed"
         fi
-    - name: Record build failure without stopping workflow
-      if: ${{ steps.build.outcome != 'success' }}
-      run: echo "AMD64 env image build failed; continuing for partial manifest handling." >&2
   build-env-image-arm64:
     runs-on: ubuntu-24.04
     timeout-minutes: 330  # 5時間30分で早期終了
     needs: setup
     if: github.repository == 'falgon/roki-web'
     outputs:
-      success: ${{ steps.build_status.outputs.success }}
+      success: ${{ steps.build.outputs.outcome == 'success' }}
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -160,95 +143,67 @@ jobs:
         submodules: true
     - name: Set up QEMU
       uses: docker/setup-qemu-action@v3
-    - name: Prepare BuildKit config
-      id: buildkit_config
-      run: |
-        cat <<'EOF' > "$RUNNER_TEMP/buildkitd-arm64.toml"
-        [worker.oci]
-          gc = true
-          gckeepstorage = 20000
-        EOF
-        echo "path=$RUNNER_TEMP/buildkitd-arm64.toml" >> "$GITHUB_OUTPUT"
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
       with:
-        buildkitd-config: ${{ steps.buildkit_config.outputs.path }}
+        buildkitd-config-inline: |
+          [worker.oci]
+            gc = true
+            gckeepstorage = 20000
         driver-opts: |
           image=moby/buildkit:buildx-stable-1
           network=host
-    - name: Adjustment docker volumes
+    - name: Clear disk space
       run: |
         docker system prune -a --volumes -f
         sudo rm -rf "/usr/local/share/boost" "$AGENT_TOOLSDIRECTORY"
         sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
         df -h
     - name: Login to GitHub Container Registry
-      if: ${{ needs.setup.outputs.to_push == 'true' }}
-      run: echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-    - name: Build and conditionally push the ARM64 env image
+      if: needs.setup.outputs.to_push == 'true'
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    - name: Build and push ARM64 env image
       id: build
       continue-on-error: true
-      run: |
-        # Try to maximize cache usage and reduce build time
-        # Export Docker Buildx variables for better caching
-        export DOCKER_BUILDKIT=1
-        export BUILDKIT_PROGRESS=plain
-
-        if [[ "${{ needs.setup.outputs.to_push }}" == "true" ]]; then
-          docker buildx build \
-            --platform linux/arm64 \
-            --target apps \
-            --tag ${{ needs.setup.outputs.env_gh_registry }}-arm64 \
-            --push \
-            --cache-from type=gha,scope=env-arm64 \
-            --cache-from type=gha,scope=base-arm64 \
-            --cache-from type=gha,scope=deps-arm64 \
-            --cache-from type=gha,scope=build-arm64 \
-            --cache-from type=registry,ref=ghcr.io/${{ github.repository_owner }}/roki-web-env:latest-arm64 \
-            --cache-to type=gha,mode=max,scope=env-arm64 \
-            --cache-to type=gha,mode=max,scope=base-arm64 \
-            --cache-to type=gha,mode=max,scope=deps-arm64 \
-            --cache-to type=gha,mode=max,scope=build-arm64 \
-            --build-arg BUILDKIT_INLINE_CACHE=1 \
-            -f ./docker/Dockerfile \
-            .
-        else
-          docker buildx build \
-            --platform linux/arm64 \
-            --target apps \
-            --tag ${{ needs.setup.outputs.env_img_name }}:${{ needs.setup.outputs.img_tag }}-arm64 \
-            --cache-from type=gha,scope=env-arm64 \
-            --cache-from type=gha,scope=base-arm64 \
-            --cache-from type=gha,scope=deps-arm64 \
-            --cache-from type=gha,scope=build-arm64 \
-            --cache-from type=registry,ref=ghcr.io/${{ github.repository_owner }}/roki-web-env:latest-arm64 \
-            --cache-to type=gha,mode=max,scope=env-arm64 \
-            --cache-to type=gha,mode=max,scope=base-arm64 \
-            --cache-to type=gha,mode=max,scope=deps-arm64 \
-            --cache-to type=gha,mode=max,scope=build-arm64 \
-            --build-arg BUILDKIT_INLINE_CACHE=1 \
-            -f ./docker/Dockerfile \
-            .
-        fi
-    - name: Set build success output
-      id: build_status
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./docker/Dockerfile
+        platforms: linux/arm64
+        target: apps
+        push: ${{ needs.setup.outputs.to_push == 'true' }}
+        tags: |
+          ${{ needs.setup.outputs.to_push == 'true' && format('{0}-arm64', needs.setup.outputs.env_gh_registry) || format('{0}:{1}-arm64', needs.setup.outputs.env_img_name, needs.setup.outputs.img_tag) }}
+        cache-from: |
+          type=gha,scope=env-arm64
+          type=gha,scope=base-arm64
+          type=gha,scope=deps-arm64
+          type=gha,scope=build-arm64
+          ${{ needs.setup.outputs.to_push == 'true' && format('type=registry,ref=ghcr.io/{0}/roki-web-env:cache-arm64', github.repository_owner) || '' }}
+        cache-to: |
+          type=gha,mode=max,scope=env-arm64
+          type=gha,mode=max,scope=base-arm64
+          type=gha,mode=max,scope=deps-arm64
+          type=gha,mode=max,scope=build-arm64
+          ${{ needs.setup.outputs.to_push == 'true' && format('type=registry,mode=max,ref=ghcr.io/{0}/roki-web-env:cache-arm64', github.repository_owner) || '' }}
+        build-args: |
+          BUILDKIT_INLINE_CACHE=1
+    - name: Record build status
       if: always()
       run: |
-        STATUS="${{ steps.build.outcome }}"
-        if [[ "$STATUS" == "success" ]]; then
-          echo "success=true" >> "$GITHUB_OUTPUT"
-        else
-          echo "success=false" >> "$GITHUB_OUTPUT"
+        if [[ "${{ steps.build.outcome }}" != "success" ]]; then
+          echo "::warning::ARM64 env image build failed"
         fi
-    - name: Record build failure without stopping workflow
-      if: ${{ steps.build.outcome != 'success' }}
-      run: echo "ARM64 env image build failed; continuing for partial manifest handling." >&2
   build-dev-image-amd64:
     runs-on: ubuntu-24.04
     needs: setup
     if: github.repository == 'falgon/roki-web'
     outputs:
-      success: ${{ steps.build_status.outputs.success }}
+      success: ${{ steps.build.outputs.outcome == 'success' }}
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -256,57 +211,44 @@ jobs:
         submodules: true
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
-    - name: Adjustment docker volumes
+    - name: Clear disk space
       run: |
         docker system prune -a --volumes -f
         sudo rm -rfv "/usr/local/share/boost" "$AGENT_TOOLSDIRECTORY"
     - name: Login to GitHub Container Registry
-      if: ${{ needs.setup.outputs.to_push == 'true' }}
-      run: echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-    - name: Build and conditionally push the AMD64 dev image
+      if: needs.setup.outputs.to_push == 'true'
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    - name: Build and push AMD64 dev image
       id: build
       continue-on-error: true
-      run: |
-        if [[ "${{ needs.setup.outputs.to_push }}" == "true" ]]; then
-          docker buildx build \
-            --platform linux/amd64 \
-            --target dev \
-            --tag ${{ needs.setup.outputs.dev_gh_registry }}-amd64 \
-            --push \
-            --cache-from type=gha,scope=dev-amd64 \
-            --cache-to type=gha,mode=max,scope=dev-amd64 \
-            -f ./docker/Dockerfile \
-            .
-        else
-          docker buildx build \
-            --platform linux/amd64 \
-            --target dev \
-            --tag ${{ needs.setup.outputs.dev_img_name }}:${{ needs.setup.outputs.img_tag }}-amd64 \
-            --cache-from type=gha,scope=dev-amd64 \
-            --cache-to type=gha,mode=max,scope=dev-amd64 \
-            -f ./docker/Dockerfile \
-            .
-        fi
-    - name: Set build success output
-      id: build_status
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./docker/Dockerfile
+        platforms: linux/amd64
+        target: dev
+        push: ${{ needs.setup.outputs.to_push == 'true' }}
+        tags: |
+          ${{ needs.setup.outputs.to_push == 'true' && format('{0}-amd64', needs.setup.outputs.dev_gh_registry) || format('{0}:{1}-amd64', needs.setup.outputs.dev_img_name, needs.setup.outputs.img_tag) }}
+        cache-from: type=gha,scope=dev-amd64
+        cache-to: type=gha,mode=max,scope=dev-amd64
+    - name: Record build status
       if: always()
       run: |
-        STATUS="${{ steps.build.outcome }}"
-        if [[ "$STATUS" == "success" ]]; then
-          echo "success=true" >> "$GITHUB_OUTPUT"
-        else
-          echo "success=false" >> "$GITHUB_OUTPUT"
+        if [[ "${{ steps.build.outcome }}" != "success" ]]; then
+          echo "::warning::AMD64 dev image build failed"
         fi
-    - name: Record build failure without stopping workflow
-      if: ${{ steps.build.outcome != 'success' }}
-      run: echo "AMD64 dev image build failed; continuing for partial manifest handling." >&2
   build-dev-image-arm64:
     runs-on: ubuntu-24.04
     timeout-minutes: 350  # 5時間50分のタイムアウト（6時間制限前に終了）
     needs: setup
     if: github.repository == 'falgon/roki-web'
     outputs:
-      success: ${{ steps.build_status.outputs.success }}
+      success: ${{ steps.build.outputs.outcome == 'success' }}
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -314,106 +256,82 @@ jobs:
         submodules: true
     - name: Set up QEMU
       uses: docker/setup-qemu-action@v3
-    - name: Prepare BuildKit config
-      id: buildkit_config
-      run: |
-        cat <<'EOF' > "$RUNNER_TEMP/buildkitd-dev-arm64.toml"
-        [worker.oci]
-          gc = true
-          gckeepstorage = 20000
-        EOF
-        echo "path=$RUNNER_TEMP/buildkitd-dev-arm64.toml" >> "$GITHUB_OUTPUT"
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
       with:
-        buildkitd-config: ${{ steps.buildkit_config.outputs.path }}
+        buildkitd-config-inline: |
+          [worker.oci]
+            gc = true
+            gckeepstorage = 20000
         driver-opts: |
           image=moby/buildkit:buildx-stable-1
           network=host
-    - name: Adjustment docker volumes
+    - name: Clear disk space
       run: |
         docker system prune -a --volumes -f
         sudo rm -rfv "/usr/local/share/boost" "$AGENT_TOOLSDIRECTORY"
     - name: Login to GitHub Container Registry
-      if: ${{ needs.setup.outputs.to_push == 'true' }}
-      run: echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-    - name: Build and conditionally push the ARM64 dev image
+      if: needs.setup.outputs.to_push == 'true'
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    - name: Build and push ARM64 dev image
       id: build
       continue-on-error: true
-      run: |
-        if [[ "${{ needs.setup.outputs.to_push }}" == "true" ]]; then
-          docker buildx build \
-            --platform linux/arm64 \
-            --target dev \
-            --tag ${{ needs.setup.outputs.dev_gh_registry }}-arm64 \
-            --push \
-            --cache-from type=gha,scope=dev-arm64 \
-            --cache-to type=gha,mode=max,scope=dev-arm64 \
-            -f ./docker/Dockerfile \
-            .
-        else
-          docker buildx build \
-            --platform linux/arm64 \
-            --target dev \
-            --tag ${{ needs.setup.outputs.dev_img_name }}:${{ needs.setup.outputs.img_tag }}-arm64 \
-            --cache-from type=gha,scope=dev-arm64 \
-            --cache-to type=gha,mode=max,scope=dev-arm64 \
-            -f ./docker/Dockerfile \
-            .
-        fi
-    - name: Set build success output
-      id: build_status
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./docker/Dockerfile
+        platforms: linux/arm64
+        target: dev
+        push: ${{ needs.setup.outputs.to_push == 'true' }}
+        tags: |
+          ${{ needs.setup.outputs.to_push == 'true' && format('{0}-arm64', needs.setup.outputs.dev_gh_registry) || format('{0}:{1}-arm64', needs.setup.outputs.dev_img_name, needs.setup.outputs.img_tag) }}
+        cache-from: type=gha,scope=dev-arm64
+        cache-to: type=gha,mode=max,scope=dev-arm64
+    - name: Record build status
       if: always()
       run: |
-        STATUS="${{ steps.build.outcome }}"
-        if [[ "$STATUS" == "success" ]]; then
-          echo "success=true" >> "$GITHUB_OUTPUT"
-        else
-          echo "success=false" >> "$GITHUB_OUTPUT"
+        if [[ "${{ steps.build.outcome }}" != "success" ]]; then
+          echo "::warning::ARM64 dev image build failed"
         fi
-    - name: Record build failure without stopping workflow
-      if: ${{ steps.build.outcome != 'success' }}
-      run: echo "ARM64 dev image build failed; continuing for partial manifest handling." >&2
   create-manifest:
     runs-on: ubuntu-24.04
     needs: [setup, build-env-image-amd64, build-env-image-arm64, build-dev-image-amd64, build-dev-image-arm64]
     if: ${{ always() && github.repository == 'falgon/roki-web' && needs.setup.result == 'success' &&
       needs.setup.outputs.to_push == 'true' }}
     steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        sparse-checkout: |
+          .github/scripts
     - name: Login to GitHub Container Registry
-      run: echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
     - name: Create and push multi-arch manifest for env image
       run: |
         set -euo pipefail
-        env_refs=()
-        if [[ "${{ needs['build-env-image-amd64'].outputs.success }}" == 'true' ]]; then
-          env_refs+=("${{ needs.setup.outputs.env_gh_registry }}-amd64")
-        fi
-        if [[ "${{ needs['build-env-image-arm64'].outputs.success }}" == 'true' ]]; then
-          env_refs+=("${{ needs.setup.outputs.env_gh_registry }}-arm64")
-        fi
-        if [ ${#env_refs[@]} -eq 0 ]; then
-          echo "Skipping env manifest because no architectures built successfully."
-        else
-          docker manifest create --amend "${{ needs.setup.outputs.env_gh_registry }}" "${env_refs[@]}"
-          docker manifest push "${{ needs.setup.outputs.env_gh_registry }}"
-        fi
+        source .github/scripts/docker-manifest-utils.sh
+
+        create_and_push_manifest \
+          "${{ needs.setup.outputs.env_gh_registry }}" \
+          "${{ needs['build-env-image-amd64'].outputs.success }}" \
+          "${{ needs['build-env-image-arm64'].outputs.success }}"
     - name: Create and push multi-arch manifest for dev image
       run: |
         set -euo pipefail
-        dev_refs=()
-        if [[ "${{ needs['build-dev-image-amd64'].outputs.success }}" == 'true' ]]; then
-          dev_refs+=("${{ needs.setup.outputs.dev_gh_registry }}-amd64")
-        fi
-        if [[ "${{ needs['build-dev-image-arm64'].outputs.success }}" == 'true' ]]; then
-          dev_refs+=("${{ needs.setup.outputs.dev_gh_registry }}-arm64")
-        fi
-        if [ ${#dev_refs[@]} -eq 0 ]; then
-          echo "Skipping dev manifest because no architectures built successfully."
-        else
-          docker manifest create --amend "${{ needs.setup.outputs.dev_gh_registry }}" "${dev_refs[@]}"
-          docker manifest push "${{ needs.setup.outputs.dev_gh_registry }}"
-        fi
+        source .github/scripts/docker-manifest-utils.sh
+
+        create_and_push_manifest \
+          "${{ needs.setup.outputs.dev_gh_registry }}" \
+          "${{ needs['build-dev-image-amd64'].outputs.success }}" \
+          "${{ needs['build-dev-image-arm64'].outputs.success }}"
     - name: Fail workflow when builds are missing
       if: always()
       run: |
