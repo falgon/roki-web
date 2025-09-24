@@ -80,7 +80,7 @@ jobs:
     needs: setup
     if: github.repository == 'falgon/roki-web'
     outputs:
-      success: ${{ steps.build.outcome == 'success' }}
+      success: ${{ steps.build.conclusion == 'success' }}
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -135,7 +135,7 @@ jobs:
     needs: setup
     if: github.repository == 'falgon/roki-web'
     outputs:
-      success: ${{ steps.build.outcome == 'success' }}
+      success: ${{ steps.build.conclusion == 'success' }}
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -203,7 +203,7 @@ jobs:
     needs: setup
     if: github.repository == 'falgon/roki-web'
     outputs:
-      success: ${{ steps.build.outcome == 'success' }}
+      success: ${{ steps.build.conclusion == 'success' }}
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -248,7 +248,7 @@ jobs:
     needs: setup
     if: github.repository == 'falgon/roki-web'
     outputs:
-      success: ${{ steps.build.outcome == 'success' }}
+      success: ${{ steps.build.conclusion == 'success' }}
     steps:
     - name: Checkout
       uses: actions/checkout@v4
