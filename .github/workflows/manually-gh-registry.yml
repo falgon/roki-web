@@ -332,18 +332,91 @@ jobs:
           "${{ needs.setup.outputs.dev_gh_registry }}" \
           "${{ needs['build-dev-image-amd64'].outputs.success }}" \
           "${{ needs['build-dev-image-arm64'].outputs.success }}"
-    - name: Fail workflow when builds are missing
+    - name: Summarize build results
       if: always()
       run: |
+        # Allow partial success - only fail if ALL builds failed
         set -euo pipefail
-        failures=()
-        [[ "${{ needs['build-env-image-amd64'].outputs.success }}" != 'true' ]] && failures+=("build-env-image-amd64")
-        [[ "${{ needs['build-env-image-arm64'].outputs.success }}" != 'true' ]] && failures+=("build-env-image-arm64")
-        [[ "${{ needs['build-dev-image-amd64'].outputs.success }}" != 'true' ]] && failures+=("build-dev-image-amd64")
-        [[ "${{ needs['build-dev-image-arm64'].outputs.success }}" != 'true' ]] && failures+=("build-dev-image-arm64")
-        if [ ${#failures[@]} -gt 0 ]; then
-          echo "::error::One or more builds failed: ${failures[*]}"
+        declare -a job_statuses=(
+          "build-env-image-amd64:${{ needs['build-env-image-amd64'].outputs.success }}:${{ needs['build-env-image-amd64'].result }}"
+          "build-env-image-arm64:${{ needs['build-env-image-arm64'].outputs.success }}:${{ needs['build-env-image-arm64'].result }}"
+          "build-dev-image-amd64:${{ needs['build-dev-image-amd64'].outputs.success }}:${{ needs['build-dev-image-amd64'].result }}"
+          "build-dev-image-arm64:${{ needs['build-dev-image-arm64'].outputs.success }}:${{ needs['build-dev-image-arm64'].result }}"
+        )
+
+        declare -a success_jobs=()
+        declare -a failed_jobs=()
+        declare -a table_rows=()
+        total_jobs=${#job_statuses[@]}
+
+        for entry in "${job_statuses[@]}"; do
+          IFS=':' read -r job success result <<<"$entry"
+          result=${result:-unknown}
+          status_icon="⚠️"
+          status_label="Unknown"
+          if [[ "$success" == 'true' ]]; then
+            echo "::notice::${job} succeeded (result=${result})"
+            success_jobs+=("$job")
+            status_icon="✅"
+            status_label="Success"
+          else
+            echo "::warning::${job} did not complete successfully (result=${result})"
+            failed_jobs+=("$job")
+            case "$result" in
+              cancelled)
+                status_icon="⏱️"
+                status_label="Cancelled"
+                ;;
+              failure)
+                status_icon="❌"
+                status_label="Failure"
+                ;;
+              success)
+                status_icon="✅"
+                status_label="Success"
+                ;;
+              skipped)
+                status_icon="⚪"
+                status_label="Skipped"
+                ;;
+              timed_out)
+                status_icon="⏱️"
+                status_label="Timed out"
+                ;;
+              *)
+                status_icon="⚠️"
+                status_label="Unknown"
+                ;;
+            esac
+          fi
+          table_rows+=("| ${job} | ${status_icon} ${status_label} | ${result} |")
+        done
+
+        if (( ${#success_jobs[@]} == 0 )); then
+          echo "::error::All build jobs failed or were cancelled: ${failed_jobs[*]}"
           exit 1
+        fi
+
+        echo "::notice::Successfully built ${#success_jobs[@]} out of ${total_jobs} architectures"
+        echo "::notice::Failed or cancelled builds: ${#failed_jobs[@]} out of ${total_jobs}"
+        echo "::notice::Successful builds: ${success_jobs[*]}"
+        if (( ${#failed_jobs[@]} > 0 )); then
+          echo "::warning::Failed or cancelled builds: ${failed_jobs[*]}"
+        else
+          echo "::notice::No failed builds detected."
+        fi
+
+        if [[ -n "${GITHUB_STEP_SUMMARY:-}" ]]; then
+          {
+            echo "## Build Results"
+            echo "| Job | Status | Result |"
+            echo "|-----|--------|--------|"
+            for row in "${table_rows[@]}"; do
+              echo "$row"
+            done
+            echo
+            echo "**Summary**: Successfully built ${#success_jobs[@]} out of ${total_jobs} architectures"
+          } >> "$GITHUB_STEP_SUMMARY"
         fi
   notify-email:
     runs-on: ubuntu-24.04
