@@ -59,8 +59,8 @@ buildHotelDetails :: [[String]] -> [HotelDetail]
 buildHotelDetails = foldl' (flip insertPath) []
 
 insertPath :: [String] -> [HotelDetail] -> [HotelDetail]
-insertPath [] forest = forest
-insertPath [leaf] forest = insertLeaf leaf forest
+insertPath [] forest           = forest
+insertPath [leaf] forest       = insertLeaf leaf forest
 insertPath (label:rest) forest = insertBranch label rest forest
 
 insertLeaf :: String -> [HotelDetail] -> [HotelDetail]
