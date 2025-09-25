@@ -21,3 +21,11 @@ docker:
 pages:
   - changed-files:
     - any-glob-to-any-file: 'contents/pages/**'
+
+'roki.log/post update':
+  - changed-files:
+    - any-glob-to-any-file: 'contents/roki.log/**'
+
+'roki.diary/post update':
+  - changed-files:
+    - any-glob-to-any-file: 'contents/roki.diary/**'
