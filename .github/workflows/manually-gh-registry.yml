@@ -123,6 +123,8 @@ jobs:
           type=gha,mode=max,scope=base-amd64
           type=gha,mode=max,scope=deps-amd64
           type=gha,mode=max,scope=build-amd64
+        provenance: false
+        sbom: false
     - name: Record build status
       if: always()
       run: |
@@ -192,6 +194,8 @@ jobs:
           ${{ needs.setup.outputs.to_push == 'true' && format('type=registry,mode=max,ref=ghcr.io/{0}/roki-web-env:cache-arm64', github.repository_owner) || '' }}
         build-args: |
           BUILDKIT_INLINE_CACHE=1
+        provenance: false
+        sbom: false
     - name: Record build status
       if: always()
       run: |
@@ -236,6 +240,8 @@ jobs:
           ${{ needs.setup.outputs.to_push == 'true' && format('{0}-amd64', needs.setup.outputs.dev_gh_registry) || format('{0}:{1}-amd64', needs.setup.outputs.dev_img_name, needs.setup.outputs.img_tag) }}
         cache-from: type=gha,scope=dev-amd64
         cache-to: type=gha,mode=max,scope=dev-amd64
+        provenance: false
+        sbom: false
     - name: Record build status
       if: always()
       run: |
@@ -291,6 +297,8 @@ jobs:
           ${{ needs.setup.outputs.to_push == 'true' && format('{0}-arm64', needs.setup.outputs.dev_gh_registry) || format('{0}:{1}-arm64', needs.setup.outputs.dev_img_name, needs.setup.outputs.img_tag) }}
         cache-from: type=gha,scope=dev-arm64
         cache-to: type=gha,mode=max,scope=dev-arm64
+        provenance: false
+        sbom: false
     - name: Record build status
       if: always()
       run: |

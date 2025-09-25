@@ -35,6 +35,7 @@ resolve_manifest_digest() {
 
     if ! docker manifest inspect "$ref" >"$tmp" 2>/dev/null; then
         rm -f "$tmp"
+        # マニフェストが存在しない場合は単純にイメージタグとして返す
         echo "$ref"
         return
     fi
@@ -52,6 +53,7 @@ with open(path, 'r', encoding='utf-8') as fp:
 
 media_type = data.get('mediaType', '')
 if media_type == 'application/vnd.docker.distribution.manifest.list.v2+json':
+    # This is a manifest list - should not happen with provenance/sbom disabled
     for manifest in data.get('manifests', []):
         platform = manifest.get('platform', {})
         if platform.get('architecture') == arch:
@@ -59,14 +61,20 @@ if media_type == 'application/vnd.docker.distribution.manifest.list.v2+json':
             if digest:
                 print(digest)
             break
+elif media_type in ['application/vnd.docker.distribution.manifest.v2+json',
+                    'application/vnd.oci.image.manifest.v1+json']:
+    # This is a single image manifest - use as is
+    pass
 PYTHON_SCRIPT
 )
     rm -f "$tmp"
 
     digest="${digest//$'\n'/}"  # 改行を削除
     if [[ -n "$digest" ]]; then
+        # マニフェストリストから特定のdigestを抽出した
         echo "${ref%@*}@${digest}"
     else
+        # 単一イメージまたはフォールバック
         echo "$ref"
     fi
 }
@@ -88,10 +96,17 @@ create_and_push_manifest() {
         return 0
     fi
 
-    # 各アーキテクチャの参照を解決
+    # 各アーキテクチャの参照を解決（既存のマニフェストリストをクリーンアップ）
     local resolved_refs=()
     for arch in "${archs[@]}"; do
         local arch_ref="${target_image}-${arch}"
+
+        # アーキテクチャ固有タグの既存マニフェストを削除（エラーは無視）
+        if docker manifest inspect "$arch_ref" >/dev/null 2>&1; then
+            echo "::warning::Removing existing manifest for $arch_ref (should be single image, not manifest list)..."
+            docker manifest rm "$arch_ref" 2>/dev/null || true
+        fi
+
         local resolved_ref
         resolved_ref=$(resolve_manifest_digest "$arch_ref" "$arch")
         echo "Resolved ${arch} image reference: ${resolved_ref}"
