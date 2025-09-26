@@ -1,5 +1,7 @@
 # Base stage with common dependencies
 FROM ubuntu:24.04 AS base
+# APTミラーを設定可能に（デフォルトは日本のミラー）
+ARG APT_MIRROR=ftp.jaist.ac.jp/pub/Linux
 SHELL ["/bin/bash", "-c"]
 LABEL maintainer="Roki <falgon53@yahoo.co.jp>"
 LABEL org.opencontainers.image.authors="Roki <falgon53@yahoo.co.jp>"
@@ -7,7 +9,9 @@ ENV DEBIAN_FRONTEND=noninteractive \
     DEBCONF_NOWARNINGS=yes \
     BOOTSTRAP_HASKELL_NONINTERACTIVE=1
 
-RUN sed -i 's@archive.ubuntu.com@ftp.jaist.ac.jp/pub/Linux@g' /etc/apt/sources.list \
+RUN if [ -n "$APT_MIRROR" ]; then \
+        sed -i "s@archive.ubuntu.com@${APT_MIRROR}@g" /etc/apt/sources.list; \
+    fi \
     && apt-get -qq -o=Dpkg::Use-Pty=0 update \
     && apt-get -y -o=Dpkg::Use-Pty=0 -qq install --no-install-recommends \
         curl \
@@ -27,8 +31,11 @@ RUN sed -i 's@archive.ubuntu.com@ftp.jaist.ac.jp/pub/Linux@g' /etc/apt/sources.l
         git \
     && apt-get -y -qq autoremove \
     && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* \
-    && curl -sSLJ https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -o \
+    && rm -rf /var/lib/apt/lists/*
+
+# yqバージョンを固定化
+ARG YQ_VERSION=v4.35.2
+RUN curl -sSLJ "https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/yq_linux_amd64" -o \
         /usr/local/bin/yq \
     && chmod a+x /usr/local/bin/yq
 
@@ -39,19 +46,24 @@ ENV LANG=ja_JP.UTF-8 \
 
 # Development stage
 FROM base AS dev
+# UID/GIDを設定可能に
+ARG USER_ID=61000
+ARG GROUP_ID=61000
 LABEL org.opencontainers.image.description="Development image from the website roki.dev"
 
-RUN groupadd -g 61000 rw-dev \
-    && useradd -g 61000 -l -m -s /bin/bash -u 61000 rw-dev
+RUN groupadd -g ${GROUP_ID} rw-dev \
+    && useradd -g ${GROUP_ID} -l -m -s /bin/bash -u ${USER_ID} rw-dev
 
 USER rw-dev
 RUN mkdir /home/rw-dev/src
 COPY --chown=rw-dev:rw-dev . /home/rw-dev/src
 WORKDIR /home/rw-dev/src
 
+# NVMバージョンを固定化
+ARG NVM_VERSION=v0.40.0
 RUN --mount=type=cache,target=/home/rw-dev/.stack,uid=61000,gid=61000 \
     --mount=type=cache,target=/home/rw-dev/.ghcup,uid=61000,gid=61000 \
-    curl -sSo- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.0/install.sh | bash \
+    curl -sSo- "https://raw.githubusercontent.com/nvm-sh/nvm/${NVM_VERSION}/install.sh" | bash \
     && export NVM_DIR="${HOME}/.nvm" \
     && [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" || true \
     && export NPM_CONFIG_UPDATE_NOTIFIER=false \
@@ -68,10 +80,10 @@ RUN --mount=type=cache,target=/home/rw-dev/.stack,uid=61000,gid=61000 \
     && echo "Starting Stack dependency build..." \
     && for i in {1..3}; do \
         echo "Attempt $i of 3..." && \
-        timeout 3600 stack --no-terminal build --only-dependencies -j4 && \
+        timeout --preserve-status 3600 stack --no-terminal build --only-dependencies -j4 && \
         echo "Successfully built dependencies on attempt $i" && break || \
-        (echo "Attempt $i failed, waiting 30 seconds before retry..." && sleep 30); \
-       done || (echo "All attempts failed" && exit 1)
+        ([ $? -eq 124 ] && echo "Attempt $i timed out after 1 hour, waiting 30 seconds before retry..." || echo "Attempt $i failed with error, waiting 30 seconds before retry..."; sleep 30); \
+       done || (echo "All attempts failed after 3 retries" && exit 1)
 
 # Dependencies build stage (builds only dependencies, shared across builds)
 FROM base AS deps
@@ -99,10 +111,10 @@ RUN --mount=type=cache,target=/root/.stack \
     && export STACK_BUILD_PARALLELISM=4 \
     && for i in {1..3}; do \
         echo "Attempt $i of 3..." && \
-        timeout 3600 stack --no-terminal --allow-different-user build --only-dependencies -j$STACK_BUILD_PARALLELISM && \
+        timeout --preserve-status 3600 stack --no-terminal --allow-different-user build --only-dependencies -j$STACK_BUILD_PARALLELISM && \
         echo "Successfully built dependencies on attempt $i" && break || \
-        (echo "Attempt $i failed, waiting 30 seconds before retry..." && sleep 30); \
-       done || (echo "All attempts failed" && exit 1)
+        ([ $? -eq 124 ] && echo "Attempt $i timed out after 1 hour, waiting 30 seconds before retry..." || echo "Attempt $i failed with error, waiting 30 seconds before retry..."; sleep 30); \
+       done || (echo "All attempts failed after 3 retries" && exit 1)
 
 # Build stage (builds the apps from source, uses deps stage)
 FROM deps AS build
@@ -128,10 +140,14 @@ SHELL ["/bin/bash", "-c"]
 LABEL maintainer="Roki <falgon53@gmail.com>"
 LABEL org.opencontainers.image.authors="Roki <falgon53@yahoo.co.jp>"
 LABEL org.opencontainers.image.description="Production image from the website roki.dev"
+# APTミラーを設定可能に（デフォルトは日本のミラー）
+ARG APT_MIRROR=ftp.jaist.ac.jp/pub/Linux
 ENV DEBIAN_FRONTEND=noninteractive \
     DEBCONF_NOWARNINGS=yes
 
-RUN sed -i 's@archive.ubuntu.com@ftp.jaist.ac.jp/pub/Linux@g' /etc/apt/sources.list \
+RUN if [ -n "$APT_MIRROR" ]; then \
+        sed -i "s@archive.ubuntu.com@${APT_MIRROR}@g" /etc/apt/sources.list; \
+    fi \
     && apt-get -qq -o=Dpkg::Use-Pty=0 update \
     && apt-get -y -o=Dpkg::Use-Pty=0 -qq install --no-install-recommends \
         curl \
@@ -143,9 +159,13 @@ RUN sed -i 's@archive.ubuntu.com@ftp.jaist.ac.jp/pub/Linux@g' /etc/apt/sources.l
         zlib1g \
     && apt-get -y -qq autoremove \
     && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* \
-    && groupadd -g 61000 rw-c \
-    && useradd -g 61000 -l -m -s /bin/bash -u 61000 rw-c
+    && rm -rf /var/lib/apt/lists/*
+
+# UID/GIDを設定可能に
+ARG USER_ID=61000
+ARG GROUP_ID=61000
+RUN groupadd -g ${GROUP_ID} rw-c \
+    && useradd -g ${GROUP_ID} -l -m -s /bin/bash -u ${USER_ID} rw-c
 
 USER rw-c
 ENV LANG=ja_JP.UTF-8 \
@@ -156,7 +176,8 @@ COPY --chown=rw-c:rw-c --from=build /root/dist /home/rw-c/bin
 WORKDIR /home/rw-c/bin
 
 # Install Node.js using nvm and create symlinks
-RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.0/install.sh | bash \
+ARG NVM_VERSION=v0.40.0
+RUN curl -o- "https://raw.githubusercontent.com/nvm-sh/nvm/${NVM_VERSION}/install.sh" | bash \
     && export NVM_DIR="$([ -z "${XDG_CONFIG_HOME-}" ] && printf %s "${HOME}/.nvm" || printf %s "${XDG_CONFIG_HOME}/nvm")" \
     && [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" || true \
     && export NPM_CONFIG_UPDATE_NOTIFIER=false \
@@ -167,7 +188,7 @@ RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.0/install.sh | b
     && ln -sf "$NVM_DIR/versions/node/v$NODE_VERSION/bin/node" /home/rw-c/bin/node \
     && ln -sf "$NVM_DIR/versions/node/v$NODE_VERSION/bin/npm" /home/rw-c/bin/npm \
     && ln -sf "$NVM_DIR/versions/node/v$NODE_VERSION/bin/npx" /home/rw-c/bin/npx \
-    && ln -sf "$NVM_DIR/versions/node/v$NODE_VERSION/bin/tsx" /home/rw-c/bin/tsx 2>/dev/null || true \
+    && (ln -sf "$NVM_DIR/versions/node/v$NODE_VERSION/bin/tsx" /home/rw-c/bin/tsx 2>&1 || echo "Warning: tsx symlink creation skipped (tsx may not be installed yet)") \
     && npm list -g tsx || npm install -g tsx
 
 # Set up PATH and nvm environment
