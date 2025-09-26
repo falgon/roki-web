@@ -4,6 +4,7 @@ init:
 	@nvm install
 	@nvm use
 	@npm i
+	@stack build --only-dependencies
 	@stack build
 
 watch:
