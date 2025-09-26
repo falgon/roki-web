@@ -83,7 +83,6 @@ COPY roki-web.cabal /opt/src/
 WORKDIR /opt/src
 
 # Install GHCup and build Stack dependencies only
-# Use more aggressive parallelism for ARM64 builds
 RUN --mount=type=cache,target=/root/.stack \
     --mount=type=cache,target=/root/.ghcup \
     export BOOTSTRAP_HASKELL_GHC_VERSION="$(yq '.compiler' ./stack.yaml | cut -f2 -d-)" \
@@ -97,7 +96,7 @@ RUN --mount=type=cache,target=/root/.stack \
     && stack config set system-ghc true --global \
     && stack update \
     && echo "Starting Stack dependency build..." \
-    && export STACK_BUILD_PARALLELISM="$([ $(uname -m) = 'aarch64' ] && echo 2 || echo 4)" \
+    && export STACK_BUILD_PARALLELISM=4 \
     && for i in {1..3}; do \
         echo "Attempt $i of 3..." && \
         timeout 3600 stack --no-terminal --allow-different-user build --only-dependencies -j$STACK_BUILD_PARALLELISM && \
@@ -114,12 +113,11 @@ COPY . /opt/src
 WORKDIR /opt/src
 
 # Build the application (dependencies already built in deps stage)
-# Use reduced parallelism for ARM64 to avoid memory issues
 RUN --mount=type=cache,target=/root/.stack \
     --mount=type=cache,target=/root/.ghcup \
     source "$HOME/.ghcup/env" \
     && mkdir -p /root/dist \
-    && export STACK_BUILD_PARALLELISM="$([ $(uname -m) = 'aarch64' ] && echo 2 || echo 4)" \
+    && export STACK_BUILD_PARALLELISM=4 \
     && stack --no-terminal --allow-different-user --local-bin-path=/root/dist install -j$STACK_BUILD_PARALLELISM \
     && cp -r ./package.json ./package-lock.json ./tools ./.nvmrc /root/dist
 

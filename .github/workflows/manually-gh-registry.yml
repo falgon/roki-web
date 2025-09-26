@@ -75,7 +75,7 @@ jobs:
     - name: Set enable_notify flag outputs
       id: enable_notify_step
       run: echo "flag=$ENABLE_NOTIFY" >> $GITHUB_OUTPUT
-  build-env-image-amd64:
+  build-env-image:
     runs-on: ubuntu-24.04
     needs: setup
     if: github.repository == 'falgon/roki-web'
@@ -112,97 +112,26 @@ jobs:
         target: apps
         push: ${{ needs.setup.outputs.to_push == 'true' }}
         tags: |
-          ${{ needs.setup.outputs.to_push == 'true' && format('{0}-amd64', needs.setup.outputs.env_gh_registry) || format('{0}:{1}-amd64', needs.setup.outputs.env_img_name, needs.setup.outputs.img_tag) }}
+          ${{ needs.setup.outputs.to_push == 'true' && needs.setup.outputs.env_gh_registry || format('{0}:{1}', needs.setup.outputs.env_img_name, needs.setup.outputs.img_tag) }}
         cache-from: |
-          type=gha,scope=env-amd64
-          type=gha,scope=base-amd64
-          type=gha,scope=deps-amd64
-          type=gha,scope=build-amd64
+          type=gha,scope=env
+          type=gha,scope=base
+          type=gha,scope=deps
+          type=gha,scope=build
         cache-to: |
-          type=gha,mode=max,scope=env-amd64
-          type=gha,mode=max,scope=base-amd64
-          type=gha,mode=max,scope=deps-amd64
-          type=gha,mode=max,scope=build-amd64
+          type=gha,mode=max,scope=env
+          type=gha,mode=max,scope=base
+          type=gha,mode=max,scope=deps
+          type=gha,mode=max,scope=build
         provenance: false
         sbom: false
     - name: Record build status
       if: always()
       run: |
         if [[ "${{ steps.build.outcome }}" != "success" ]]; then
-          echo "::warning::AMD64 env image build failed"
+          echo "::warning::Env image build failed"
         fi
-  build-env-image-arm64:
-    runs-on: ubuntu-24.04
-    timeout-minutes: 330  # 5時間30分で早期終了
-    needs: setup
-    if: github.repository == 'falgon/roki-web'
-    outputs:
-      success: ${{ steps.build.conclusion == 'success' }}
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v4
-      with:
-        submodules: true
-    - name: Set up QEMU
-      uses: docker/setup-qemu-action@v3
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
-      with:
-        buildkitd-config-inline: |
-          [worker.oci]
-            gc = true
-            gckeepstorage = 20000
-        driver-opts: |
-          image=moby/buildkit:buildx-stable-1
-          network=host
-    - name: Clear disk space
-      run: |
-        docker system prune -a --volumes -f
-        sudo rm -rf "/usr/local/share/boost" "$AGENT_TOOLSDIRECTORY"
-        sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
-        df -h
-    - name: Login to GitHub Container Registry
-      if: needs.setup.outputs.to_push == 'true'
-      uses: docker/login-action@v3
-      with:
-        registry: ghcr.io
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
-    - name: Build and push ARM64 env image
-      id: build
-      continue-on-error: true
-      uses: docker/build-push-action@v5
-      with:
-        context: .
-        file: ./docker/Dockerfile
-        platforms: linux/arm64
-        target: apps
-        push: ${{ needs.setup.outputs.to_push == 'true' }}
-        tags: |
-          ${{ needs.setup.outputs.to_push == 'true' && format('{0}-arm64', needs.setup.outputs.env_gh_registry) || format('{0}:{1}-arm64', needs.setup.outputs.env_img_name, needs.setup.outputs.img_tag) }}
-        cache-from: |
-          type=gha,scope=env-arm64
-          type=gha,scope=base-arm64
-          type=gha,scope=deps-arm64
-          type=gha,scope=build-arm64
-          ${{ needs.setup.outputs.to_push == 'true' && format('type=registry,ref=ghcr.io/{0}/roki-web-env:cache-arm64', github.repository_owner) || '' }}
-        cache-to: |
-          type=gha,mode=max,scope=env-arm64
-          type=gha,mode=max,scope=base-arm64
-          type=gha,mode=max,scope=deps-arm64
-          type=gha,mode=max,scope=build-arm64
-          ${{ needs.setup.outputs.to_push == 'true' && format('type=registry,mode=max,ref=ghcr.io/{0}/roki-web-env:cache-arm64', github.repository_owner) || '' }}
-        build-args: |
-          BUILDKIT_INLINE_CACHE=1
-        provenance: false
-        sbom: false
-    - name: Record build status
-      if: always()
-      run: |
-        if [[ "${{ steps.build.outcome }}" != "success" ]]; then
-          echo "::warning::ARM64 env image build failed"
-        fi
-  build-dev-image-amd64:
+  build-dev-image:
     runs-on: ubuntu-24.04
     needs: setup
     if: github.repository == 'falgon/roki-web'
@@ -237,203 +166,23 @@ jobs:
         target: dev
         push: ${{ needs.setup.outputs.to_push == 'true' }}
         tags: |
-          ${{ needs.setup.outputs.to_push == 'true' && format('{0}-amd64', needs.setup.outputs.dev_gh_registry) || format('{0}:{1}-amd64', needs.setup.outputs.dev_img_name, needs.setup.outputs.img_tag) }}
-        cache-from: type=gha,scope=dev-amd64
-        cache-to: type=gha,mode=max,scope=dev-amd64
+          ${{ needs.setup.outputs.to_push == 'true' && needs.setup.outputs.dev_gh_registry || format('{0}:{1}', needs.setup.outputs.dev_img_name, needs.setup.outputs.img_tag) }}
+        cache-from: type=gha,scope=dev
+        cache-to: type=gha,mode=max,scope=dev
         provenance: false
         sbom: false
     - name: Record build status
       if: always()
       run: |
         if [[ "${{ steps.build.outcome }}" != "success" ]]; then
-          echo "::warning::AMD64 dev image build failed"
-        fi
-  build-dev-image-arm64:
-    runs-on: ubuntu-24.04
-    timeout-minutes: 350  # 5時間50分のタイムアウト（6時間制限前に終了）
-    needs: setup
-    if: github.repository == 'falgon/roki-web'
-    outputs:
-      success: ${{ steps.build.conclusion == 'success' }}
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v4
-      with:
-        submodules: true
-    - name: Set up QEMU
-      uses: docker/setup-qemu-action@v3
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
-      with:
-        buildkitd-config-inline: |
-          [worker.oci]
-            gc = true
-            gckeepstorage = 20000
-        driver-opts: |
-          image=moby/buildkit:buildx-stable-1
-          network=host
-    - name: Clear disk space
-      run: |
-        docker system prune -a --volumes -f
-        sudo rm -rfv "/usr/local/share/boost" "$AGENT_TOOLSDIRECTORY"
-    - name: Login to GitHub Container Registry
-      if: needs.setup.outputs.to_push == 'true'
-      uses: docker/login-action@v3
-      with:
-        registry: ghcr.io
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
-    - name: Build and push ARM64 dev image
-      id: build
-      continue-on-error: true
-      uses: docker/build-push-action@v5
-      with:
-        context: .
-        file: ./docker/Dockerfile
-        platforms: linux/arm64
-        target: dev
-        push: ${{ needs.setup.outputs.to_push == 'true' }}
-        tags: |
-          ${{ needs.setup.outputs.to_push == 'true' && format('{0}-arm64', needs.setup.outputs.dev_gh_registry) || format('{0}:{1}-arm64', needs.setup.outputs.dev_img_name, needs.setup.outputs.img_tag) }}
-        cache-from: type=gha,scope=dev-arm64
-        cache-to: type=gha,mode=max,scope=dev-arm64
-        provenance: false
-        sbom: false
-    - name: Record build status
-      if: always()
-      run: |
-        if [[ "${{ steps.build.outcome }}" != "success" ]]; then
-          echo "::warning::ARM64 dev image build failed"
-        fi
-  create-manifest:
-    runs-on: ubuntu-24.04
-    needs: [setup, build-env-image-amd64, build-env-image-arm64, build-dev-image-amd64, build-dev-image-arm64]
-    if: ${{ always() && github.repository == 'falgon/roki-web' && needs.setup.result == 'success' &&
-      needs.setup.outputs.to_push == 'true' }}
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-      with:
-        sparse-checkout: |
-          .github/scripts
-    - name: Login to GitHub Container Registry
-      uses: docker/login-action@v3
-      with:
-        registry: ghcr.io
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
-    - name: Create and push multi-arch manifest for env image
-      run: |
-        set -euo pipefail
-        source .github/scripts/docker-manifest-utils.sh
-
-        create_and_push_manifest \
-          "${{ needs.setup.outputs.env_gh_registry }}" \
-          "${{ needs['build-env-image-amd64'].outputs.success }}" \
-          "${{ needs['build-env-image-arm64'].outputs.success }}"
-    - name: Create and push multi-arch manifest for dev image
-      run: |
-        set -euo pipefail
-        source .github/scripts/docker-manifest-utils.sh
-
-        create_and_push_manifest \
-          "${{ needs.setup.outputs.dev_gh_registry }}" \
-          "${{ needs['build-dev-image-amd64'].outputs.success }}" \
-          "${{ needs['build-dev-image-arm64'].outputs.success }}"
-    - name: Summarize build results
-      if: always()
-      run: |
-        # Allow partial success - only fail if ALL builds failed
-        set -euo pipefail
-        declare -a job_statuses=(
-          "build-env-image-amd64:${{ needs['build-env-image-amd64'].outputs.success }}:${{ needs['build-env-image-amd64'].result }}"
-          "build-env-image-arm64:${{ needs['build-env-image-arm64'].outputs.success }}:${{ needs['build-env-image-arm64'].result }}"
-          "build-dev-image-amd64:${{ needs['build-dev-image-amd64'].outputs.success }}:${{ needs['build-dev-image-amd64'].result }}"
-          "build-dev-image-arm64:${{ needs['build-dev-image-arm64'].outputs.success }}:${{ needs['build-dev-image-arm64'].result }}"
-        )
-
-        declare -a success_jobs=()
-        declare -a failed_jobs=()
-        declare -a table_rows=()
-        total_jobs=${#job_statuses[@]}
-
-        for entry in "${job_statuses[@]}"; do
-          IFS=':' read -r job success result <<<"$entry"
-          result=${result:-unknown}
-          status_icon="⚠️"
-          status_label="Unknown"
-          if [[ "$success" == 'true' ]]; then
-            echo "::notice::${job} succeeded (result=${result})"
-            success_jobs+=("$job")
-            status_icon="✅"
-            status_label="Success"
-          else
-            echo "::warning::${job} did not complete successfully (result=${result})"
-            failed_jobs+=("$job")
-            case "$result" in
-              cancelled)
-                status_icon="⏱️"
-                status_label="Cancelled"
-                ;;
-              failure)
-                status_icon="❌"
-                status_label="Failure"
-                ;;
-              success)
-                status_icon="✅"
-                status_label="Success"
-                ;;
-              skipped)
-                status_icon="⚪"
-                status_label="Skipped"
-                ;;
-              timed_out)
-                status_icon="⏱️"
-                status_label="Timed out"
-                ;;
-              *)
-                status_icon="⚠️"
-                status_label="Unknown"
-                ;;
-            esac
-          fi
-          table_rows+=("| ${job} | ${status_icon} ${status_label} | ${result} |")
-        done
-
-        if (( ${#success_jobs[@]} == 0 )); then
-          echo "::error::All build jobs failed or were cancelled: ${failed_jobs[*]}"
-          exit 1
-        fi
-
-        echo "::notice::Successfully built ${#success_jobs[@]} out of ${total_jobs} architectures"
-        echo "::notice::Failed or cancelled builds: ${#failed_jobs[@]} out of ${total_jobs}"
-        echo "::notice::Successful builds: ${success_jobs[*]}"
-        if (( ${#failed_jobs[@]} > 0 )); then
-          echo "::warning::Failed or cancelled builds: ${failed_jobs[*]}"
-        else
-          echo "::notice::No failed builds detected."
-        fi
-
-        if [[ -n "${GITHUB_STEP_SUMMARY:-}" ]]; then
-          {
-            echo "## Build Results"
-            echo "| Job | Status | Result |"
-            echo "|-----|--------|--------|"
-            for row in "${table_rows[@]}"; do
-              echo "$row"
-            done
-            echo
-            echo "**Summary**: Successfully built ${#success_jobs[@]} out of ${total_jobs} architectures"
-          } >> "$GITHUB_STEP_SUMMARY"
+          echo "::warning::Dev image build failed"
         fi
   notify-email:
     runs-on: ubuntu-24.04
-    needs: [setup, build-env-image-amd64, build-env-image-arm64, build-dev-image-amd64, build-dev-image-arm64]
+    needs: [setup, build-env-image, build-dev-image]
     if: ${{ needs.setup.result == 'success' && needs.setup.outputs.enable_notify == 'true' && github.repository == 'falgon/roki-web' &&
-      needs['build-env-image-amd64'].outputs.success == 'true' &&
-      needs['build-env-image-arm64'].outputs.success == 'true' &&
-      needs['build-dev-image-amd64'].outputs.success == 'true' &&
-      needs['build-dev-image-arm64'].outputs.success == 'true' }}
+      needs['build-env-image'].outputs.success == 'true' &&
+      needs['build-dev-image'].outputs.success == 'true' }}
     environment:
       name: manually-gh-registry
     steps:
