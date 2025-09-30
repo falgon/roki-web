@@ -8,14 +8,16 @@ import           Data.List.Extra      (mconcatMap)
 import           Data.Time.Format     (formatTime)
 import           Hakyll
 import           System.FilePath      (joinPath, (</>))
+import           Text.Pandoc.Walk     (walkM)
 
 import           Config               (contentsRoot, defaultTimeLocale',
-                                       siteName)
+                                       readerOptions, siteName)
 import           Config.Blog
 import           Config.Contributions
 import           Config.TopPage
 import           Contexts             (siteCtx)
 import qualified Contexts.Blog        as CtxBlog
+import           Media.SVG            (mermaidTransform)
 import           Rules.Blog.Type
 import           Rules.PageType
 import           Utils                (mconcatM, modifyExternalLinkAttr)
@@ -50,27 +52,45 @@ mkBlogCtx = do
       , pure defaultContext
       ]
 
+aboutSnapshot :: Snapshot
+aboutSnapshot = "aboutSS"
+
 rules :: [BlogConfig m] -> PageConfReader Rules ()
 rules bcs = do
     faIcons <- asks pcFaIcons
+    wOpt <- asks pcWriterOpt
     projs <- lift $ preprocess renderProjectsList
     conts <- lift $ preprocess renderContributionsTable
-    let baseCtx = mconcatMap (uncurry constField) [
-            ("title", siteName)
-          , ("projs", projs)
-          , ("contable", conts)
-          ]
-    lift $ match indexPath $ do
-        route $ gsubRoute (contentsRoot </> "pages/") (const mempty)
-        compile $ do
-            topCtx <- mappend baseCtx <$> mconcatMapM (runReaderT mkBlogCtx) bcs
-            getResourceBody
-                >>= applyAsTemplate topCtx
-                >>= loadAndApplyTemplate rootTemplate topCtx
-                >>= modifyExternalLinkAttr
-                >>= relativizeUrls
-                >>= FA.render faIcons
+    lift $ do
+        match aboutPattern $ compile $
+            pandocCompilerWithTransformM readerOptions wOpt (walkM mermaidTransform)
+                >>= saveSnapshot aboutSnapshot
+        match indexPath $ do
+            route $ gsubRoute (contentsRoot </> "pages/") (const mempty)
+            compile $ do
+                let baseCtx = mconcatMap (uncurry constField) [
+                        ("title", siteName)
+                      , ("projs", projs)
+                      , ("contable", conts)
+                      ]
+                topCtx <- mconcatM [
+                        pure baseCtx
+                      , mconcatMapM (runReaderT mkBlogCtx) bcs
+                      , constField "sitemap-body"
+                            <$> loadSnapshotBody sitemapIdent aboutSnapshot
+                      , constField "updates-body"
+                            <$> loadSnapshotBody updatesIdent aboutSnapshot
+                      ]
+                getResourceBody
+                    >>= applyAsTemplate topCtx
+                    >>= loadAndApplyTemplate rootTemplate topCtx
+                    >>= modifyExternalLinkAttr
+                    >>= relativizeUrls
+                    >>= FA.render faIcons
     where
+        aboutPattern = fromGlob $ joinPath [contentsRoot, "about", "*.md"]
+        sitemapIdent = fromFilePath $ joinPath [contentsRoot, "about", "sitemap.md"]
+        updatesIdent = fromFilePath $ joinPath [contentsRoot, "about", "updates.md"]
         indexPath = fromGlob $ joinPath [contentsRoot, "pages", "index.html"]
         rootTemplate = fromFilePath $ joinPath [contentsRoot, "templates", "site", "default.html"]
 
