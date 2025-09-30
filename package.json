@@ -16,13 +16,13 @@
         "svgo": "^4.0.0",
         "typescript": "^5.9.2",
         "terser": "^5.44.0",
-        "tsx": "^4.20.5"
+        "tsx": "^4.20.6"
     },
     "dependencies": {
         "@mermaid-js/mermaid-cli": "^11.12.0",
         "bulma": "^1.0.4",
         "d3": "^7.9.0",
-        "mathjs": "^14.8.0",
+        "mathjs": "^14.8.1",
         "sass": "^1.93.2"
     }
 }

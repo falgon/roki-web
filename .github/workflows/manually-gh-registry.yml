@@ -46,8 +46,8 @@ jobs:
         [[ "${{ github.ref }}" = "refs/tags/"* ]] && VERSION=$(echo $VERSION | sed -e 's/^v//')
         IMAGE_TAG=$(test $VERSION = master && echo latest || echo $VERSION)
         echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
-        echo "ENV_GH_REGISTRY=docker.pkg.github.com/${{ github.repository }}/$(echo $ENV_IMAGE_NAME | cut -f2 -d/):$IMAGE_TAG" >> $GITHUB_ENV
-        echo "DEV_GH_REGISTRY=docker.pkg.github.com/${{ github.repository }}/$(echo $DEV_IMAGE_NAME | cut -f2 -d/):$IMAGE_TAG" >> $GITHUB_ENV
+        echo "ENV_GH_REGISTRY=ghcr.io/${{ github.repository_owner }}/$(echo $ENV_IMAGE_NAME | cut -f2 -d/):$IMAGE_TAG" >> $GITHUB_ENV
+        echo "DEV_GH_REGISTRY=ghcr.io/${{ github.repository_owner }}/$(echo $DEV_IMAGE_NAME | cut -f2 -d/):$IMAGE_TAG" >> $GITHUB_ENV
         [[ "${{ github.event_name }}" = "push" ]] && TO_PUSH=true || TO_PUSH=${{ github.event.inputs.to_push }}
         echo "TO_PUSH=$TO_PUSH" >> $GITHUB_ENV
         [[ "${{ github.event_name }}" = "push" ]] && ENABLE_NOTIFY=false || ENABLE_NOTIFY=${{ github.event.inputs.enable_notify }}
@@ -56,11 +56,9 @@ jobs:
       id: img_tag_step
       run: echo "name=$IMAGE_TAG" >> $GITHUB_OUTPUT
     - name: Set env image outputs
-      if: ${{ env.TO_PUSH == 'true' }}
       id: env_img_step
       run: echo "name=$ENV_IMAGE_NAME" >> $GITHUB_OUTPUT
     - name: Set dev image outputs
-      if: ${{ env.TO_PUSH == 'true' }}
       id: dev_img_step
       run: echo "name=$DEV_IMAGE_NAME" >> $GITHUB_OUTPUT
     - name: Set env registry outputs
@@ -81,108 +79,155 @@ jobs:
     runs-on: ubuntu-24.04
     needs: setup
     if: github.repository == 'falgon/roki-web'
+    outputs:
+      success: ${{ steps.build.conclusion == 'success' }}
     steps:
     - name: Checkout
       uses: actions/checkout@v4
       with:
         submodules: true
-    - name: Adjustment docker volumes
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    - name: Clear disk space
       run: |
         docker system prune -a --volumes -f
         sudo rm -rf "/usr/local/share/boost" "$AGENT_TOOLSDIRECTORY"
-    - name: Build the env image
-      shell: bash
-      run: |
-        export ROKI_WEB_ENV_IMAGE_TAG="${{ needs.setup.outputs.img_tag }}"
-        export ROKI_WEB_DEV_IMAGE_TAG="${{ needs.setup.outputs.img_tag }}"
-        cd ./docker
-        docker compose build --no-cache preview
-    - name: Save images with tar
-      if: ${{ needs.setup.outputs.to_push == 'true' }}
-      run: docker save ${{ needs.setup.outputs.env_img_name }} | gzip -c > /tmp/env_img.tar.gz
-    - name: Upload the env image
-      if: ${{ needs.setup.outputs.to_push == 'true' }}
-      uses: actions/upload-artifact@v4
+        sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
+        df -h
+    - name: Login to GitHub Container Registry
+      if: needs.setup.outputs.to_push == 'true'
+      uses: docker/login-action@v3
       with:
-        name: env_img
-        path: /tmp/env_img.tar.gz
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    - name: Build and push AMD64 env image
+      id: build
+      continue-on-error: true
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./docker/Dockerfile
+        platforms: linux/amd64
+        target: apps
+        push: ${{ needs.setup.outputs.to_push == 'true' }}
+        tags: |
+          ${{ needs.setup.outputs.to_push == 'true' && needs.setup.outputs.env_gh_registry || format('{0}:{1}', needs.setup.outputs.env_img_name, needs.setup.outputs.img_tag) }}
+        cache-from: |
+          type=gha,scope=env
+          type=gha,scope=base
+          type=gha,scope=deps
+          type=gha,scope=build
+        cache-to: |
+          type=gha,mode=max,scope=env
+          type=gha,mode=max,scope=base
+          type=gha,mode=max,scope=deps
+          type=gha,mode=max,scope=build
+        provenance: false
+        sbom: false
+    - name: Record build status
+      if: always()
+      run: |
+        if [[ "${{ steps.build.outcome }}" != "success" ]]; then
+          echo "::warning::Env image build failed"
+        fi
   build-dev-image:
     runs-on: ubuntu-24.04
     needs: setup
     if: github.repository == 'falgon/roki-web'
+    outputs:
+      success: ${{ steps.build.conclusion == 'success' }}
     steps:
     - name: Checkout
       uses: actions/checkout@v4
       with:
         submodules: true
-    - name: Adjustment docker volumes
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    - name: Clear disk space
       run: |
         docker system prune -a --volumes -f
         sudo rm -rfv "/usr/local/share/boost" "$AGENT_TOOLSDIRECTORY"
-    - name: Build the dev image
-      shell: bash
-      run: |
-        export ROKI_WEB_ENV_IMAGE_TAG="${{ needs.setup.outputs.img_tag }}"
-        export ROKI_WEB_DEV_IMAGE_TAG="${{ needs.setup.outputs.img_tag }}"
-        cd ./docker
-        docker compose build --no-cache dev
-    - name: Save images with tar
-      if: ${{ needs.setup.outputs.to_push == 'true' }}
-      run: docker save ${{ needs.setup.outputs.dev_img_name }} | gzip -c > /tmp/dev_img.tar.gz
-    - name: Upload the dev image
-      if: ${{ needs.setup.outputs.to_push == 'true' }}
-      uses: actions/upload-artifact@v4
+    - name: Login to GitHub Container Registry
+      if: needs.setup.outputs.to_push == 'true'
+      uses: docker/login-action@v3
       with:
-        name: dev_img
-        path: /tmp/dev_img.tar.gz
-  notify-line:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    - name: Build and push AMD64 dev image
+      id: build
+      continue-on-error: true
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./docker/Dockerfile
+        platforms: linux/amd64
+        target: dev
+        push: ${{ needs.setup.outputs.to_push == 'true' }}
+        tags: |
+          ${{ needs.setup.outputs.to_push == 'true' && needs.setup.outputs.dev_gh_registry || format('{0}:{1}', needs.setup.outputs.dev_img_name, needs.setup.outputs.img_tag) }}
+        cache-from: type=gha,scope=dev
+        cache-to: type=gha,mode=max,scope=dev
+        provenance: false
+        sbom: false
+    - name: Record build status
+      if: always()
+      run: |
+        if [[ "${{ steps.build.outcome }}" != "success" ]]; then
+          echo "::warning::Dev image build failed"
+        fi
+  notify-email:
     runs-on: ubuntu-24.04
     needs: [setup, build-env-image, build-dev-image]
-    if: ${{ needs.setup.outputs.enable_notify == 'true' && github.repository == 'falgon/roki-web' }}
+    if: ${{ needs.setup.result == 'success' && needs.setup.outputs.enable_notify == 'true' && github.repository == 'falgon/roki-web' &&
+      needs['build-env-image'].outputs.success == 'true' &&
+      needs['build-dev-image'].outputs.success == 'true' }}
+    environment:
+      name: manually-gh-registry
     steps:
-    - name: Notify LINE
-      shell: bash
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        sparse-checkout: |
+          tools/github-actions
+    - name: Setup Haskell
+      uses: haskell-actions/setup@v2
+      with:
+        enable-stack: true
+        stack-version: 'latest'
+    - name: Cache Stack dependencies
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.stack
+          ~/.stack-work
+          tools/github-actions/.stack-work
+        key: ${{ runner.os }}-stack-notify-v2-${{ hashFiles('tools/github-actions/NotifyBuildCompletion.hs') }}
+        restore-keys: |
+          ${{ runner.os }}-stack-notify-v2-
+          ${{ runner.os }}-stack-
+    - name: Cache Stack package index
+      uses: actions/cache@v4
+      with:
+        path: ~/.stack/pantry
+        key: ${{ runner.os }}-stack-pantry-v2-${{ hashFiles('tools/github-actions/NotifyBuildCompletion.hs') }}
+        restore-keys: |
+          ${{ runner.os }}-stack-pantry-v2-
+    - name: Install dependencies
+      run: |
+        # Extract packages from the script header
+        PACKAGES=$(grep -o "package [a-z-]*" tools/github-actions/NotifyBuildCompletion.hs | sed 's/package //' | tr '\n' ' ')
+        # Pre-install packages to populate cache
+        stack --resolver lts-22.33 build $PACKAGES --only-dependencies
+    - name: Send Email Notification
       env:
-        API_ENDPOINT: https://notify-api.line.me/api/notify
-        LINE_NOTIFY_TOKEN: ${{ secrets.LINE_NOTIFY_TOKEN }}
-        ACTIONS_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        GMAIL_SENDER: ${{ secrets.GMAIL_SENDER }}
+        GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+        NOTIFICATION_TO_EMAIL: ${{ secrets.NOTIFICATION_TO_EMAIL }}
       run: |
-        curl -X POST "$API_ENDPOINT" \
-          -H "Authorization: Bearer $LINE_NOTIFY_TOKEN" \
-          -d "message=roki.dev docker image build completed!%0a$ACTIONS_URL"
-  push:
-    runs-on: ubuntu-24.04
-    needs: [setup, build-env-image, build-dev-image]
-    if: ${{ needs.setup.outputs.to_push == 'true' && github.repository == 'falgon/roki-web' }}
-    steps:
-    - name: Adjustment docker volumes
-      run: |
-        docker system prune -a --volumes -f
-        sudo rm -rfv "/usr/local/share/boost" "$AGENT_TOOLSDIRECTORY"
-    - name: Install tools
-      uses: awalsh128/cache-apt-pkgs-action@v1
-      with:
-        packages: parallel
-        version: 1.0
-    - name: Download the env image
-      uses: actions/download-artifact@v4
-      with:
-        name: env_img
-        path: /tmp
-    - name: Download the dev image
-      uses: actions/download-artifact@v4
-      with:
-        name: dev_img
-        path: /tmp
-    - name: Load images
-      shell: bash
-      run: |
-        parallel 'cat /tmp/{}_img.tar.gz | gzip -d | docker load' ::: env dev
-    - name: Login GitHub Registry
-      run: echo ${{ secrets.GITHUB_TOKEN }} | docker login docker.pkg.github.com -u owner --password-stdin
-    - name: Push to GitHub Package Registry
-      shell: bash
-      run: |
-        docker tag ${{ needs.setup.outputs.env_img_name }} ${{ needs.setup.outputs.env_gh_registry }}
-        docker tag ${{ needs.setup.outputs.dev_img_name }} ${{ needs.setup.outputs.dev_gh_registry }}
-        parallel 'docker push {}' ::: ${{ needs.setup.outputs.env_gh_registry }} ${{ needs.setup.outputs.dev_gh_registry }}
+        stack tools/github-actions/NotifyBuildCompletion.hs \
+          --repository "${{ github.repository }}" \
+          --image-tag "${{ needs.setup.outputs.img_tag }}" \
+          --run-id "${{ github.run_id }}" \
+          --actions-url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
