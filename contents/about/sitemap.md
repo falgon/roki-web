@@ -4,7 +4,7 @@ graph TD;
     s[roki.dev]---b1[roki.log]
     s---b2[roki.diary]
     s---r[resume]
-    s---d[Disney Experience Summary]
+    s---d[Ponchi's Disney Journey]
     subgraph "Blogs"
     b1
     b2
