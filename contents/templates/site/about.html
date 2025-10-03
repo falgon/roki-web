@@ -1,0 +1,54 @@
+<style>
+.mermaid-diagram svg {
+  max-width: 100% !important;
+  width: 100% !important;
+  height: auto !important;
+}
+
+.mermaid-large-text svg foreignObject {
+  overflow: visible !important;
+  position: relative !important;
+}
+
+.mermaid-large-text svg foreignObject div {
+  font-size: 28px !important;
+  white-space: nowrap !important;
+  max-width: none !important;
+  position: absolute !important;
+  left: 50% !important;
+  top: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  width: auto !important;
+}
+</style>
+<div class="modal" id="modal-about">
+    <div class="modal-background"></div>
+    <div class="modal-card">
+        <header class="modal-card-head">
+            <p class="modal-card-title">
+                <i class="fas fa-sitemap fa-fw mr-2"></i>
+                Site Information
+            </p>
+            <button class="delete" aria-label="close"></button>
+        </header>
+        <section class="modal-card-body">
+            <h2 class="title is-3">
+                <i class="fas fa-sitemap fa-fw"></i>
+                Site Map
+            </h2>
+            <div class="content">
+                $sitemap-body$
+            </div>
+
+            <hr />
+
+            <h2 class="title is-3">
+                <i class="fas fa-clock-rotate-left fa-fw"></i>
+                System Updates
+            </h2>
+            <div class="content">
+                $updates-body$
+            </div>
+        </section>
+    </div>
+</div>
