@@ -228,7 +228,7 @@ jobs:
           ~/.skicka.tokencache.json
           ~/.skicka.config
           ~/.skicka.metadata.cache
-        key: go-${{ env.GO_VERSION }}-v3-${{ runner.os }}
+        key: go-${{ env.GO_VERSION }}-v4-${{ runner.os }}
     - name: Setup Go Path
       run: |
         echo "GOPATH=$HOME/.go" >> "$GITHUB_ENV"
