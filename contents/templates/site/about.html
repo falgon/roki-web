@@ -3,22 +3,23 @@
   max-width: 100% !important;
   width: 100% !important;
   height: auto !important;
+  overflow: visible !important;
 }
 
 .mermaid-large-text svg foreignObject {
   overflow: visible !important;
-  position: relative !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
 
 .mermaid-large-text svg foreignObject div {
-  font-size: 28px !important;
+  display: block !important;
+  font-size: 32px !important;
   white-space: nowrap !important;
   max-width: none !important;
-  position: absolute !important;
-  left: 50% !important;
-  top: 50% !important;
-  transform: translate(-50%, -50%) !important;
   width: auto !important;
+  text-align: center !important;
 }
 </style>
 <div class="modal" id="modal-about">
