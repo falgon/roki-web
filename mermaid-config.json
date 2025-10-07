@@ -5,10 +5,10 @@
     "nodeSpacing": 80,
     "rankSpacing": 80,
     "padding": 80,
-    "fontSize": 32
+    "fontSize": 28
   },
   "themeVariables": {
-    "fontSize": "32px",
+    "fontSize": "28px",
     "fontFamily": "trebuchet ms, verdana, arial, sans-serif",
     "primaryColor": "#e1d5e7",
     "primaryBorderColor": "#9673a6",
