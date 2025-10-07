@@ -3,3 +3,25 @@
 @import '../vendor/bulma/bulma-tooltip.min.css';
 @import '../vendor/fontawesome/style.css';
 @import '../vendor/katex/katex.min.css';
+
+.mermaid-diagram svg {
+  max-width: 100% !important;
+  width: 100% !important;
+  height: auto !important;
+}
+
+.mermaid-large-text svg foreignObject {
+  overflow: visible !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+.mermaid-large-text svg foreignObject div {
+  font-size: 24px !important;
+  white-space: nowrap !important;
+  max-width: none !important;
+  position: relative !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  width: auto !important;
+}
