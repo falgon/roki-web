@@ -3,7 +3,7 @@ module Rules.DisneyExperienceSummary (rules) where
 
 import           Control.Monad.Reader  (asks)
 import           Control.Monad.Trans   (MonadTrans (..))
-import           Data.List             (foldl', nub, sort, sortBy)
+import           Data.List             (foldl', nub, sort, sortBy, sortOn)
 import qualified Data.Map              as M
 import           Data.Ord              (comparing)
 import           Data.String           (IsString (..))
@@ -297,9 +297,9 @@ rules = do
                         <$> loadSnapshotBody aboutIdent disneyExperienceSummarySnapshot
                   , pure $ listField "disney-logs" (disneyLogCtx tagConfig) (return disneyLogs)
                   , pure $ listField "unique-tags" (field "name" (return . itemBody) <> field "color" (return . flip getTagColor tagConfig . itemBody) <> field "link" (return . flip getTagLink tagConfig . itemBody)) (return $ map (\tag -> Item (fromString tag) tag) uniqueTags)
-                  , pure $ listField "favorite-works" (field "text" (return . text . itemBody) <> field "link" (return . maybe "" id . link . itemBody)) (return $ map (\f -> Item (fromString $ text f) f) $ filter ((== "works") . category) favorites)
-                  , pure $ listField "favorite-characters" (field "text" (return . text . itemBody) <> field "link" (return . maybe "" id . link . itemBody)) (return $ map (\f -> Item (fromString $ text f) f) $ filter ((== "characters") . category) favorites)
-                  , pure $ listField "favorite-park-contents" (field "text" (return . text . itemBody) <> field "link" (return . maybe "" id . link . itemBody)) (return $ map (\f -> Item (fromString $ text f) f) $ filter ((== "park-contents") . category) favorites)
+                  , pure $ listField "favorite-works" (field "text" (return . text . itemBody) <> field "link" (return . maybe "" id . link . itemBody)) (return $ map (\f -> Item (fromString $ text f) f) $ sortOn text $ filter ((== "works") . category) favorites)
+                  , pure $ listField "favorite-characters" (field "text" (return . text . itemBody) <> field "link" (return . maybe "" id . link . itemBody)) (return $ map (\f -> Item (fromString $ text f) f) $ sortOn text $ filter ((== "characters") . category) favorites)
+                  , pure $ listField "favorite-park-contents" (field "text" (return . text . itemBody) <> field "link" (return . maybe "" id . link . itemBody)) (return $ map (\f -> Item (fromString $ text f) f) $ sortOn text $ filter ((== "park-contents") . category) favorites)
                   , pure $ listField "hotel-stays" hotelCtx (return $ map (\h -> Item (fromString $ hotelCode h) h) hotels)
                   , pure $ constField "hotels-last-modified" hotelsLastModified
                   , pure $ constField "hotels-total-stays" (show totalStays)
