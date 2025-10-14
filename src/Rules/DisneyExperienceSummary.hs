@@ -297,9 +297,9 @@ rules = do
                         <$> loadSnapshotBody aboutIdent disneyExperienceSummarySnapshot
                   , pure $ listField "disney-logs" (disneyLogCtx tagConfig) (return disneyLogs)
                   , pure $ listField "unique-tags" (field "name" (return . itemBody) <> field "color" (return . flip getTagColor tagConfig . itemBody) <> field "link" (return . flip getTagLink tagConfig . itemBody)) (return $ map (\tag -> Item (fromString tag) tag) uniqueTags)
-                  , pure $ listField "favorite-works" (field "text" (return . text . itemBody) <> field "link" (return . maybe "" id . link . itemBody)) (return $ map (\f -> Item (fromString $ text f) f) $ sortOn text $ filter ((== "works") . category) favorites)
-                  , pure $ listField "favorite-characters" (field "text" (return . text . itemBody) <> field "link" (return . maybe "" id . link . itemBody)) (return $ map (\f -> Item (fromString $ text f) f) $ sortOn text $ filter ((== "characters") . category) favorites)
-                  , pure $ listField "favorite-park-contents" (field "text" (return . text . itemBody) <> field "link" (return . maybe "" id . link . itemBody)) (return $ map (\f -> Item (fromString $ text f) f) $ sortOn text $ filter ((== "park-contents") . category) favorites)
+                  , pure $ favoritesListField "favorite-works" "works" favorites
+                  , pure $ favoritesListField "favorite-characters" "characters" favorites
+                  , pure $ favoritesListField "favorite-park-contents" "park-contents" favorites
                   , pure $ listField "hotel-stays" hotelCtx (return $ map (\h -> Item (fromString $ hotelCode h) h) hotels)
                   , pure $ constField "hotels-last-modified" hotelsLastModified
                   , pure $ constField "hotels-total-stays" (show totalStays)
@@ -321,3 +321,17 @@ rules = do
         disneyExperienceSummarySnapshot = "disneyExperienceSummarySS"
         disneyExperienceSummaryJPPath = fromGlob $ joinPath [contentsRoot, "pages", "disney_experience_summary", "jp.html"]
         rootTemplate = fromFilePath $ joinPath [contentsRoot, "templates", "site", "default.html"]
+
+        favoritesListField :: String -> String -> [Favorite] -> Context String
+        favoritesListField fieldName categoryName favs =
+            listField fieldName favoritesCtx $ return $ favoriteItems categoryName favs
+
+        favoritesCtx :: Context Favorite
+        favoritesCtx = field "text" (return . text . itemBody)
+            <> field "link" (return . maybe "" id . link . itemBody)
+
+        favoriteItems :: String -> [Favorite] -> [Item Favorite]
+        favoriteItems categoryName favs =
+            map (\f -> Item (fromString $ text f) f)
+                $ sortOn text
+                $ filter ((== categoryName) . category) favs
