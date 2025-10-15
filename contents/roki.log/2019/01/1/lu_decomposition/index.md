@@ -7,6 +7,8 @@ header-warn: この記事は, <a href="https://falgon.github.io/roki.log/">旧�
 
 LU 分解に関して初歩的な内容から網羅的にまとめた.
 
+<!--toc-->
+
 <!--more-->
 
 ## ガウスの消去法 
