@@ -179,6 +179,21 @@
 既に確率論の話題として<a href="../../../roki.log/2018/07/26/bayestheorem/">ベイズの定理</a>のエントリが存在するが,
 今後同様にして確率論の話題を本ブログで取り上げる際に,
 用語へのリファレンスを self-contained で張れるよう, 本エントリにて一度整理しておくこととした.</p>
+<h2 id="toc">目次</h2>
+<ol type="1">
+<li><a href="../../../roki.log/2018/10/28/probabilityTerms/#確率の定義">確率の定義</a>
+<ol type="1">
+<li><a href="../../../roki.log/2018/10/28/probabilityTerms/#古典的確率">古典的確率</a></li>
+<li><a href="../../../roki.log/2018/10/28/probabilityTerms/#統計的確率">統計的確率</a></li>
+<li><a href="../../../roki.log/2018/10/28/probabilityTerms/#公理的確率">公理的確率</a></li>
+<li><a href="../../../roki.log/2018/10/28/probabilityTerms/#基本的な言葉">基本的な言葉</a></li>
+</ol></li>
+<li><a href="../../../roki.log/2018/10/28/probabilityTerms/#不偏分散">不偏分散</a></li>
+<li><a href="../../../roki.log/2018/10/28/probabilityTerms/#正規分布-ガウス分布">正規分布, ガウス分布</a></li>
+<li><a href="../../../roki.log/2018/10/28/probabilityTerms/#大数の法則">大数の法則</a></li>
+<li><a href="../../../roki.log/2018/10/28/probabilityTerms/#中心極限定理">中心極限定理</a></li>
+<li><a href="../../../roki.log/2018/10/28/probabilityTerms/#参考文献">参考文献</a></li>
+</ol>
 
                         <div class="buttons is-centered mt-3 mb-0">
                             <a href="../../../roki.log/2018/10/28/probabilityTerms/index.html">
@@ -259,18 +274,19 @@
 暗に極座標での微小面積が <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>r</mi><mi>d</mi><mi>r</mi><mi>d</mi><mi>θ</mi></mrow><annotation encoding="application/x-tex">rdrd\theta</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal" style="margin-right:0.02778em;">r</span><span class="mord mathnormal">d</span><span class="mord mathnormal" style="margin-right:0.02778em;">r</span><span class="mord mathnormal">d</span><span class="mord mathnormal" style="margin-right:0.02778em;">θ</span></span></span></span>
 であるとして書いていたので, その内容についても一応書いておこうというのと,
 筆者自身の学習/再整理も兼ねて, ヤコビアンに関して書くこととした.</p>
-<h2 id="極座標の微小面積">極座標の微小面積</h2>
-<p>直交座標から極座標へ移行する際に, その微小面積はどうなるかについて考察する.</p>
-<figure>
-<img src="../../../roki.log/2018/10/4/jacobian/cube_and_cross_section.png" title="立方体とその断面" width="500" alt="立方体とその断面" />
-<figcaption aria-hidden="true">立方体とその断面</figcaption>
-</figure>
-<p>上図<a href="../../../roki.log/2018/10/4/jacobian/#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a>は, <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1</mn><mo>×</mo><mn>1</mn><mo>×</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">1\times 1\times 1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7278em;vertical-align:-0.0833em;"></span><span class="mord">1</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.7278em;vertical-align:-0.0833em;"></span><span class="mord">1</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">1</span></span></span></span> の立方体があって,
-その断面をそれぞれ極座標と直交座標で示しているだけであるが,
-この断面図のマスの広がり方を見るだけで, 少なくとも極座標における微小面積が <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>d</mi><mi>r</mi><mi>d</mi><mi>θ</mi></mrow><annotation encoding="application/x-tex">drd\theta</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal">d</span><span class="mord mathnormal" style="margin-right:0.02778em;">r</span><span class="mord mathnormal">d</span><span class="mord mathnormal" style="margin-right:0.02778em;">θ</span></span></span></span>
-とはならないことに納得できる.
-単に <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>d</mi><mi>r</mi><mi>d</mi><mi>θ</mi></mrow><annotation encoding="application/x-tex">drd\theta</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal">d</span><span class="mord mathnormal" style="margin-right:0.02778em;">r</span><span class="mord mathnormal">d</span><span class="mord mathnormal" style="margin-right:0.02778em;">θ</span></span></span></span> としてしまうと,
-<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>r</mi></mrow><annotation encoding="application/x-tex">r</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal" style="margin-right:0.02778em;">r</span></span></span></span> が大きくなればなるほど微小面積も伸びて大きくなっていってしまうだろうという想像がつく.</p>
+<h2 id="toc">目次</h2>
+<ol type="1">
+<li><a href="../../../roki.log/2018/10/4/jacobian/#極座標の微小面積">極座標の微小面積</a></li>
+<li><a href="../../../roki.log/2018/10/4/jacobian/#epsilon-delta-論法"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>ϵ</mi><mo>−</mo><mi>δ</mi></mrow><annotation encoding="application/x-tex">\epsilon-\delta</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6667em;vertical-align:-0.0833em;"></span><span class="mord mathnormal">ϵ</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal" style="margin-right:0.03785em;">δ</span></span></span></span> 論法</a></li>
+<li><a href="../../../roki.log/2018/10/4/jacobian/#より一般的な変数変換">より一般的な変数変換</a>
+<ol type="1">
+<li><a href="../../../roki.log/2018/10/4/jacobian/#異なる座標系への移行とは何か">異なる座標系への移行とは何か</a></li>
+<li><a href="../../../roki.log/2018/10/4/jacobian/#幾何学的なアプローチ">幾何学的なアプローチ</a></li>
+<li><a href="../../../roki.log/2018/10/4/jacobian/#全微分">全微分</a></li>
+<li><a href="../../../roki.log/2018/10/4/jacobian/#全積分とヤコビアン">全積分とヤコビアン</a></li>
+</ol></li>
+<li><a href="../../../roki.log/2018/10/4/jacobian/#参考文献">参考文献</a></li>
+</ol>
 
                         <div class="buttons is-centered mt-3 mb-0">
                             <a href="../../../roki.log/2018/10/4/jacobian/index.html">
