@@ -52,11 +52,12 @@ writerOptions = defaultHakyllWriterOptions {
 writerPreviewOptions :: WriterOptions
 writerPreviewOptions = defaultHakyllWriterOptions {
     writerHTMLMathMethod = MathJax mempty
- }
+  }
 
 readerOptions :: ReaderOptions
 readerOptions = defaultHakyllReaderOptions {
-    readerExtensions = enableExtension Ext_east_asian_line_breaks $
+    readerExtensions = enableExtension Ext_raw_html $
+        enableExtension Ext_east_asian_line_breaks $
         enableExtension Ext_emoji $
         enableExtension Ext_tex_math_double_backslash $
         disableExtension Ext_citations $

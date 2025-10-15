@@ -1,4 +1,4 @@
-{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE LambdaCase, OverloadedStrings #-}
 module Utils.Hakyll (
     absolutizeUrls
   , modifyExternalLinkAttr
@@ -6,14 +6,22 @@ module Utils.Hakyll (
   , sanitizeDisqusName
   , makePageIdentifier
   , getStringField
+  , injectTableOfContents
 ) where
 
-import           Control.Monad     (liftM2)
-import           Data.Char         (isAlphaNum, isSpace, toLower)
+import           Control.Monad            (liftM2)
+import           Data.Char                (isAlphaNum, isSpace, toLower)
+import           Data.List                (isInfixOf, isPrefixOf)
+import           Data.Text                (Text)
+import qualified Data.Text                as T
 import           Hakyll
-import           System.FilePath   (isRelative, normalise, takeDirectory,
-                                    takeFileName, (</>))
-import qualified Text.HTML.TagSoup as TS
+import           System.FilePath          (isRelative, normalise, takeDirectory,
+                                           takeFileName, (</>))
+import qualified Text.HTML.TagSoup        as TS
+import           Text.Pandoc.Definition
+import           Text.Pandoc.Options
+import           Text.Pandoc.Walk
+import           Text.Pandoc.Writers.HTML
 
 absolutizeUrls :: Item String -> Compiler (Item String)
 absolutizeUrls item = getUnderlying >>= fmap (maybe item (flip fmap item . withUrls . f)) . getRoute
@@ -50,4 +58,58 @@ getStringField key cs = unContext cs key mempty (Item (fromFilePath mempty) memp
 
 sanitizeDisqusName :: String -> String
 sanitizeDisqusName = map (\x -> if x == '.' then '-' else x)
+
+injectTableOfContents :: Pandoc -> Pandoc
+injectTableOfContents doc@(Pandoc meta blocks) =
+    let headers = query collectHeaders doc
+        toc = buildTOC 3 headers
+        updatedBlocks = replaceTOCMarker toc blocks
+    in Pandoc meta updatedBlocks
+    where
+        collectHeaders :: Block -> [Block]
+        collectHeaders h@(Header _ _ _) = [h]
+        collectHeaders _                = []
+
+        buildTOC :: Int -> [Block] -> [Block]
+        buildTOC maxDepth headers =
+            let filteredHeaders = filter ((<= maxDepth) . getLevel) headers
+            in case buildNestedList filteredHeaders of
+                []    -> []
+                items -> [Div ("toc", [], []) [
+                            Header 2 ("", [], []) [Str "目次"],
+                            OrderedList (1, Decimal, Period) items
+                         ]]
+
+        buildNestedList :: [Block] -> [[Block]]
+        buildNestedList = go []
+            where
+                go acc [] = reverse acc
+                go acc (h@(Header 2 _ _):rest) =
+                    let (h3s, remaining) = span isH3 rest
+                        item = if null h3s
+                               then [Plain [headerToLink h]]
+                               else [Plain [headerToLink h],
+                                     OrderedList (1, Decimal, Period) (map (\h3 -> [Plain [headerToLink h3]]) h3s)]
+                    in go (item : acc) remaining
+                go acc (_:rest) = go acc rest
+
+                isH3 (Header 3 _ _) = True
+                isH3 _              = False
+
+        getLevel :: Block -> Int
+        getLevel (Header level _ _) = level
+        getLevel _                  = 0
+
+        headerToLink :: Block -> Inline
+        headerToLink (Header _ (ident, _, _) inlines) =
+            Link nullAttr inlines ("#" <> ident, "")
+        headerToLink _ = Str ""
+
+        replaceTOCMarker :: [Block] -> [Block] -> [Block]
+        replaceTOCMarker toc = concatMap replaceBlock
+            where
+                replaceBlock b@(RawBlock (Format "html") text)
+                    | "<!--toc-->" `T.isInfixOf` text = toc
+                    | otherwise = [b]
+                replaceBlock b = [b]
 
