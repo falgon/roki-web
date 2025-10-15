@@ -10,9 +10,9 @@ header-warn: この記事は, <a href="https://falgon.github.io/roki.log/">旧�
 今後同様にして確率論の話題を本ブログで取り上げる際に, 
 用語へのリファレンスを self-contained で張れるよう, 本エントリにて一度整理しておくこととした.
 
-<!--more-->
-
 <!--toc-->
+
+<!--more-->
 
 ## 確率の定義
 
