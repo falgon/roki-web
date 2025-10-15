@@ -9,6 +9,8 @@ header-warn: この記事は, <a href="https://falgon.github.io/roki.log/">旧�
 
 <!--toc-->
 
+<!--more-->
+
 ## 一般的な関係
 
 いま, 二つの要素の順序体を $\left\lt a, b\right\gt$ と書くこととする.

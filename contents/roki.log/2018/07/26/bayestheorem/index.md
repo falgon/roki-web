@@ -9,6 +9,8 @@ header-warn: この記事は, <a href="https://falgon.github.io/roki.log/">旧�
 
 <!--toc-->
 
+<!--more-->
+
 ## ベイズの定理の導出
 
 事象 $A$

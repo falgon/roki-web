@@ -12,6 +12,8 @@ header-warn: この記事は, <a href="https://falgon.github.io/roki.log/">旧�
 
 <!--toc-->
 
+<!--more-->
+
 ## 極座標の微小面積
 
 直交座標から極座標へ移行する際に, その微小面積はどうなるかについて考察する.

@@ -9,6 +9,8 @@ header-warn: この記事は, <a href="https://falgon.github.io/roki.log/">旧�
 
 <!--toc-->
 
+<!--more-->
+
 ## 数論的関数
 
 数論的関数は, 定義域が正整数 $\mathbb{Z}^{+}$ である複素数を値にもつ関数である.
