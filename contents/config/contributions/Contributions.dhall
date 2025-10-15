@@ -63,5 +63,10 @@ in    [ { text = "cpprefjp: Fix typo #388"
         , genre = g.genreToText (g.Genre.Dhall {=})
         , date = { yyyy = 2020, mm = 9, dd = 11 }
         }
+      , { text = "jaspervdj/hakyll: Add example website"
+        , link = "https://github.com/jaspervdj/hakyll/pull/1082"
+        , genre = g.genreToText (g.Genre.Haskell {=})
+        , date = { yyyy = 2025, mm = 10, dd = 1 }
+        }
       ]
     : List ./Type/Contribute.dhall
