@@ -13,6 +13,8 @@ header-warn: この記事は, <a href="https://falgon.github.io/roki.log/">旧�
 
 <!--more-->
 
+<!--toc-->
+
 ## オイラーの定理
 
 いま, [フェルマーテスト](/roki.log/2018/07/13/elgamalEncryption/#fermattest)を定義したとき, 

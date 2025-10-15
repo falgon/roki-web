@@ -12,6 +12,8 @@ header-warn: この記事は, <a href="https://falgon.github.io/roki.log/">旧�
 
 <!--more-->
 
+<!--toc-->
+
 ## 確率の定義
 
 そもそも一言に「確率」といえども, それは古典的確率, 統計的確率, 公理的確率というように大別できる.
