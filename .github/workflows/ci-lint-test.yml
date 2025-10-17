@@ -23,6 +23,7 @@ jobs:
     runs-on: ubuntu-24.04
     permissions:
       contents: read
+      pull-requests: write
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -41,8 +42,12 @@ jobs:
     - name: Run TypeScript lint
       run: make check
 
-    - name: Run TypeScript tests
-      run: npm test
+    - name: Run TypeScript tests with coverage
+      run: npm run test:coverage
+
+    - name: Report TypeScript coverage to PR
+      if: github.event_name == 'pull_request'
+      uses: davelosert/vitest-coverage-report-action@v2
 
     - name: Get Haskell version
       run: |
@@ -83,5 +88,5 @@ jobs:
     - name: Build Haskell project
       run: stack build --test --no-run-tests
 
-    - name: Run Haskell tests
-      run: stack test
+    - name: Run Haskell tests with coverage
+      run: stack test --coverage
