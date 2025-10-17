@@ -1,8 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { initStringFormat, openLink, setupModal, setupNavBar } from "../components";
+import "../components";
 
 interface String {
     format(...args: unknown[]): string;
+}
+
+declare global {
+    function setupNavBar(): void;
+    function setupModal(): void;
+    function openLink(): void;
+    function initStringFormat(): void;
 }
 
 describe("components.ts", () => {

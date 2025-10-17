@@ -1,5 +1,10 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { escapeHtml } from "../disney-tag-filter";
+import "../disney-tag-filter";
+
+declare global {
+    function escapeHtml(text: string): string;
+    function initLoadingScreen(): void;
+}
 
 describe("disney-tag-filter.ts", () => {
     beforeEach(() => {

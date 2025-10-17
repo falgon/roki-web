@@ -1,5 +1,12 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { ACTIVE_CLASS, initTabs, updateActiveContent, updateActiveTab } from "../uniq_tab";
+import "../uniq_tab";
+
+declare global {
+    const ACTIVE_CLASS: string;
+    function updateActiveTab(tabs: Element[], selected: Element): void;
+    function updateActiveContent(content: Element[], selected: string): void;
+    function initTabs(): void;
+}
 
 describe("uniq_tab.ts", () => {
     beforeEach(() => {

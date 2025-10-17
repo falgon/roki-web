@@ -6,14 +6,14 @@ declare global {
 }
 
 // HTMLエスケープ関数
-export const escapeHtml = (text: string): string => {
+const escapeHtml = (text: string): string => {
     const div = document.createElement("div");
     div.textContent = text;
     return div.innerHTML;
 };
 
 // ローディング機能
-export const initLoadingScreen = (): void => {
+const initLoadingScreen = (): void => {
     const loadingOverlay: HTMLElement | null = document.getElementById("loading-overlay");
     const mainContent: HTMLElement | null = document.getElementById("main-content");
     const progressBar: HTMLElement | null = document.getElementById("progress-bar");
@@ -532,6 +532,18 @@ interface TagButton extends HTMLElement {
 
 interface LogEntry extends HTMLElement {
     getAttribute(name: string): string | null;
+}
+
+// Expose functions to global scope for testing
+if (typeof window !== "undefined") {
+    (
+        window as typeof window & {
+            escapeHtml: typeof escapeHtml;
+            initLoadingScreen: typeof initLoadingScreen;
+        }
+    ).escapeHtml = escapeHtml;
+    (window as typeof window & { initLoadingScreen: typeof initLoadingScreen }).initLoadingScreen =
+        initLoadingScreen;
 }
 
 if (typeof document !== "undefined") {
