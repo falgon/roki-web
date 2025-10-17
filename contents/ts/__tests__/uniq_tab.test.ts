@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
+import { ACTIVE_CLASS, initTabs, updateActiveContent, updateActiveTab } from "../uniq_tab";
 
 describe("uniq_tab.ts", () => {
     beforeEach(() => {
@@ -16,41 +17,73 @@ describe("uniq_tab.ts", () => {
         `;
     });
 
-    it("initializes with correct HTML structure", () => {
-        const tabs = document.querySelectorAll("#tabs li");
-        const content = document.querySelectorAll("#tab-content div");
+    describe("updateActiveTab", () => {
+        it("removes is-active from all tabs and adds to selected", () => {
+            const tabs = [...document.querySelectorAll("#tabs li")];
+            const secondTab = tabs[1];
 
-        expect(tabs.length).toBe(3);
-        expect(content.length).toBe(3);
+            expect(tabs[0].classList.contains(ACTIVE_CLASS)).toBe(true);
+            expect(secondTab.classList.contains(ACTIVE_CLASS)).toBe(false);
+
+            updateActiveTab(tabs, secondTab);
+
+            expect(tabs[0].classList.contains(ACTIVE_CLASS)).toBe(false);
+            expect(secondTab.classList.contains(ACTIVE_CLASS)).toBe(true);
+        });
     });
 
-    it("has is-active class on first tab and content", () => {
-        const activeTab = document.querySelector("#tabs li.is-active");
-        const activeContent = document.querySelector("#tab-content div.is-active");
+    describe("updateActiveContent", () => {
+        it("removes is-active from all content and adds to matching data-content", () => {
+            const content = [...document.querySelectorAll("#tab-content div")];
 
-        expect(activeTab).toBeTruthy();
-        expect(activeContent).toBeTruthy();
-        expect(activeTab?.getAttribute("data-tab")).toBe("tab1");
-        expect(activeContent?.getAttribute("data-content")).toBe("tab1");
+            expect(content[0].classList.contains(ACTIVE_CLASS)).toBe(true);
+            expect(content[1].classList.contains(ACTIVE_CLASS)).toBe(false);
+
+            updateActiveContent(content, "tab2");
+
+            expect(content[0].classList.contains(ACTIVE_CLASS)).toBe(false);
+            expect(content[1].classList.contains(ACTIVE_CLASS)).toBe(true);
+        });
+
+        it("handles content with no matching data-content", () => {
+            const content = [...document.querySelectorAll("#tab-content div")];
+
+            updateActiveContent(content, "nonexistent");
+
+            expect(content[0].classList.contains(ACTIVE_CLASS)).toBe(false);
+            expect(content[1].classList.contains(ACTIVE_CLASS)).toBe(false);
+            expect(content[2].classList.contains(ACTIVE_CLASS)).toBe(false);
+        });
     });
 
-    it("removes is-active class from elements", () => {
-        const tabs = document.querySelectorAll("#tabs li");
-        const firstTab = tabs[0];
+    describe("initTabs", () => {
+        it("sets up click handlers that switch tabs and content", () => {
+            const tabs = document.querySelectorAll<HTMLElement>("#tabs li");
+            const contents = document.querySelectorAll<HTMLElement>("#tab-content div");
 
-        expect(firstTab.classList.contains("is-active")).toBe(true);
+            initTabs();
 
-        firstTab.classList.remove("is-active");
-        expect(firstTab.classList.contains("is-active")).toBe(false);
-    });
+            expect(tabs[0].classList.contains(ACTIVE_CLASS)).toBe(true);
+            expect(contents[0].classList.contains(ACTIVE_CLASS)).toBe(true);
 
-    it("adds is-active class to elements", () => {
-        const tabs = document.querySelectorAll("#tabs li");
-        const secondTab = tabs[1] as HTMLElement;
+            tabs[1].click();
 
-        expect(secondTab.classList.contains("is-active")).toBe(false);
+            expect(tabs[0].classList.contains(ACTIVE_CLASS)).toBe(false);
+            expect(tabs[1].classList.contains(ACTIVE_CLASS)).toBe(true);
+            expect(contents[0].classList.contains(ACTIVE_CLASS)).toBe(false);
+            expect(contents[1].classList.contains(ACTIVE_CLASS)).toBe(true);
+        });
 
-        secondTab.classList.add("is-active");
-        expect(secondTab.classList.contains("is-active")).toBe(true);
+        it("handles clicking already active tab", () => {
+            const tabs = document.querySelectorAll<HTMLElement>("#tabs li");
+            const contents = document.querySelectorAll<HTMLElement>("#tab-content div");
+
+            initTabs();
+
+            tabs[0].click();
+
+            expect(tabs[0].classList.contains(ACTIVE_CLASS)).toBe(true);
+            expect(contents[0].classList.contains(ACTIVE_CLASS)).toBe(true);
+        });
     });
 });
