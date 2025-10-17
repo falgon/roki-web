@@ -1,7 +1,7 @@
 SHELL=/bin/bash
 
 format:
-	@git ls-files ./src -- '*.hs' | xargs stylish-haskell -i
+	@git ls-files ./src ./test -- '*.hs' | xargs stylish-haskell -i
 	@npm run format:ts
 
 check:
@@ -9,6 +9,7 @@ check:
 
 test:
 	@npm test
+	@stack test
 
 init:
 	@nvm install
