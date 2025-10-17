@@ -8,3 +8,4 @@ docs
 haddock
 .playwright-mcp
 coverage/
+hpc-report/

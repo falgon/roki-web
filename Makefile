@@ -14,6 +14,8 @@ test:
 test-coverage:
 	@npm run test:coverage
 	@stack test --coverage
+	@stack hpc report --all --destdir hpc-report
+	@echo "Haskell coverage report available at: hpc-report/hpc_index.html"
 
 init:
 	@nvm install
