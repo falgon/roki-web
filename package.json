@@ -8,6 +8,7 @@
         "url": "git+https://github.com/falgon/roki-web.git"
     },
     "devDependencies": {
+        "@biomejs/biome": "^1.9.4",
         "@creativebulma/bulma-tooltip": "^1.2.0",
         "@fortawesome/fontawesome-svg-core": "^7.1.0",
         "@fortawesome/free-brands-svg-icons": "^7.1.0",
@@ -17,6 +18,11 @@
         "typescript": "^5.9.3",
         "terser": "^5.44.0",
         "tsx": "^4.20.6"
+    },
+    "scripts": {
+        "format:ts": "biome check --write --unsafe contents/ts",
+        "lint:ts": "biome lint contents/ts",
+        "check:ts": "biome check contents/ts"
     },
     "dependencies": {
         "@mermaid-js/mermaid-cli": "^11.12.0",
