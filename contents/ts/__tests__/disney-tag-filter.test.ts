@@ -1,8 +1,47 @@
 import { beforeEach, describe, expect, it } from "vitest";
+import { escapeHtml } from "../disney-tag-filter";
 
 describe("disney-tag-filter.ts", () => {
     beforeEach(() => {
         document.body.innerHTML = "";
+    });
+
+    describe("escapeHtml", () => {
+        it("escapes HTML special characters", () => {
+            expect(escapeHtml("<script>alert('xss')</script>")).toBe(
+                "&lt;script&gt;alert('xss')&lt;/script&gt;",
+            );
+        });
+
+        it("escapes ampersands", () => {
+            expect(escapeHtml("Tom & Jerry")).toBe("Tom &amp; Jerry");
+        });
+
+        it("does not escape quotes when using textContent", () => {
+            expect(escapeHtml('"Hello World"')).toBe('"Hello World"');
+        });
+
+        it("does not escape single quotes", () => {
+            expect(escapeHtml("It's a test")).toBe("It's a test");
+        });
+
+        it("handles multiple special characters", () => {
+            expect(escapeHtml('<div class="test">A & B</div>')).toBe(
+                '&lt;div class="test"&gt;A &amp; B&lt;/div&gt;',
+            );
+        });
+
+        it("handles empty string", () => {
+            expect(escapeHtml("")).toBe("");
+        });
+
+        it("handles normal text without special characters", () => {
+            expect(escapeHtml("Hello World")).toBe("Hello World");
+        });
+
+        it("handles newlines and spaces", () => {
+            expect(escapeHtml("Line 1\nLine 2")).toBe("Line 1\nLine 2");
+        });
     });
 
     describe("DOM structure", () => {
