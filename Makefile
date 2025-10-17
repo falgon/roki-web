@@ -4,6 +4,12 @@ format:
 	@git ls-files ./src -- '*.hs' | xargs stylish-haskell -i
 	@npm run format:ts
 
+check:
+	@npm run lint:ts
+
+test:
+	@npm test
+
 init:
 	@nvm install
 	@nvm use
@@ -38,4 +44,4 @@ create-pr-master-develop:
 		-b "Merge the develop branch into the master branch and deploy" \
 		-H develop
 
-.PHONY: format init watch watch-prebuild stop-watch-prebuild create-pr-master-develop
+.PHONY: format test init watch watch-prebuild stop-watch-prebuild create-pr-master-develop
