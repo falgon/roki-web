@@ -18,6 +18,7 @@ extra-deps:
   - morpheus-graphql-code-gen-utils-0.28.1@sha256:3f0f15bbbfc7afe68996efa92aaba6ccb25c67de9a7586607ed3b34de8a8b73a,1570
   - morpheus-graphql-subscriptions-0.28.1@sha256:4c31a6487de940cecd3732f6413325f4b87084481467402666347752e2ca30bd,1784
   - morpheus-graphql-core-0.28.1@sha256:d257c2f9a251ead16e2b1156adf0bc4eca33c10de5635562c3de5093bfaac052,14209
+  - text-manipulate-0.3.1.0@sha256:aa2b074d0bba21a15e2d4b5b3ff439dea75f3b114b25436b75e615e7cebe9d66,1984
 build:
   haddock-arguments:
     haddock-args:
