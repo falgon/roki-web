@@ -1,0 +1,83 @@
+name: CI-lint-test
+
+on:
+  push:
+    branches: [develop, master]
+    paths-ignore:
+      - 'README.md'
+      - 'LICENSE'
+      - '.gitignore'
+      - 'contents/roki.log/**'
+      - 'contents/diary/**'
+  pull_request:
+    branches: [develop, master]
+    paths-ignore:
+      - 'README.md'
+      - 'LICENSE'
+      - '.gitignore'
+      - 'contents/roki.log/**'
+      - 'contents/diary/**'
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        submodules: true
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version-file: '.nvmrc'
+        cache: 'npm'
+
+    - name: Install npm dependencies
+      run: npm ci
+
+    - name: Run TypeScript lint
+      run: make check
+
+    - name: Run TypeScript tests
+      run: npm test
+
+    - name: Get Haskell version
+      run: |
+        curl -sSLJ \
+          "https://github.com/mikefarah/yq/releases/download/${{ env.yq_version }}/yq_linux_amd64.tar.gz" |
+          tar xzf - ./yq_linux_amd64
+        chmod +x ./yq_linux_amd64
+        echo "ghc_version=$(./yq_linux_amd64 '.compiler' ./stack.yaml | cut -f2 -d-)" >> "$GITHUB_ENV"
+        echo "stack_version=$(grep BOOTSTRAP_HASKELL_STACK_VERSION ./docker/.env | cut -f2 -d=)" >> "$GITHUB_ENV"
+      env:
+        yq_version: v4.44.3
+
+    - name: Setup Haskell
+      uses: haskell-actions/setup@v2
+      with:
+        ghc-version: ${{ env.ghc_version }}
+        enable-stack: true
+        stack-version: ${{ env.stack_version }}
+
+    - name: Stack cache
+      uses: actions/cache@v4
+      id: stack-cache
+      with:
+        path: ~/.stack
+        key: stack-test-v1-${{ runner.os }}-${{ hashFiles('stack.yaml') }}-${{ hashFiles('stack.yaml.lock') }}-${{ hashFiles('package.yaml') }}
+        restore-keys: |
+          stack-test-v1-${{ runner.os }}-${{ hashFiles('stack.yaml') }}-${{ hashFiles('stack.yaml.lock') }}-
+          stack-test-v1-${{ runner.os }}-${{ hashFiles('stack.yaml') }}-
+          stack-test-v1-${{ runner.os }}-
+
+    - name: Build Haskell dependencies
+      run: stack build --only-dependencies --test
+
+    - name: Build Haskell project
+      run: stack build --test --no-run-tests
+
+    - name: Run Haskell tests
+      run: stack test
