@@ -11,6 +11,10 @@ test:
 	@npm test
 	@stack test
 
+test-coverage:
+	@npm run test:coverage
+	@stack test --coverage
+
 init:
 	@nvm install
 	@nvm use
@@ -45,4 +49,4 @@ create-pr-master-develop:
 		-b "Merge the develop branch into the master branch and deploy" \
 		-H develop
 
-.PHONY: format test init watch watch-prebuild stop-watch-prebuild create-pr-master-develop
+.PHONY: format test test-coverage init watch watch-prebuild stop-watch-prebuild create-pr-master-develop
