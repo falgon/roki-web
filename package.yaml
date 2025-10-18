@@ -89,3 +89,18 @@ executables:
         - time
         - mtl
         - extra
+
+tests:
+    roki-web-test:
+        source-dirs: test
+        main: Spec.hs
+        ghc-options:
+        - -threaded
+        - -Wall
+        - -rtsopts
+        - -with-rtsopts=-N
+        dependencies:
+        - roki-web
+        - hspec
+        - hspec-discover
+        - text
