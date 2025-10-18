@@ -104,3 +104,4 @@ tests:
         - hspec
         - hspec-discover
         - text
+        - regex-tdfa
