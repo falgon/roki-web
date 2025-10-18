@@ -1,5 +1,6 @@
 module Utils.HakyllSpec (spec) where
 
+import           Hakyll
 import           Test.Hspec
 import           Utils.Hakyll
 
@@ -42,3 +43,28 @@ spec = do
 
         it "handles string with no dots" $
             sanitizeDisqusName "helloworld" `shouldBe` "helloworld"
+
+    describe "makePageIdentifier" $ do
+        it "returns original path for page 1" $ do
+            let result = makePageIdentifier "posts/index.html" 1
+            toFilePath result `shouldBe` "posts/index.html"
+
+        it "creates page directory for page 2" $ do
+            let result = makePageIdentifier "posts/index.html" 2
+            toFilePath result `shouldBe` "posts/page/2/index.html"
+
+        it "creates page directory for page 10" $ do
+            let result = makePageIdentifier "posts/index.html" 10
+            toFilePath result `shouldBe` "posts/page/10/index.html"
+
+        it "handles root path for page 1" $ do
+            let result = makePageIdentifier "index.html" 1
+            toFilePath result `shouldBe` "index.html"
+
+        it "handles root path for page 2" $ do
+            let result = makePageIdentifier "index.html" 2
+            toFilePath result `shouldBe` "page/2/index.html"
+
+        it "handles nested directories" $ do
+            let result = makePageIdentifier "blog/tech/posts.html" 3
+            toFilePath result `shouldBe` "blog/tech/page/3/posts.html"

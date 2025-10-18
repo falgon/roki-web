@@ -105,3 +105,4 @@ tests:
         - hspec-discover
         - text
         - regex-tdfa
+        - hakyll
