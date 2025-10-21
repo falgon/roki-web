@@ -1,9 +1,9 @@
 module Config.ProgramSpec (spec) where
 
 import           Config.Program
-import           Hakyll              (destinationDirectory, inMemoryCache,
-                                      previewHost, previewPort, storeDirectory,
-                                      tmpDirectory)
+import           Hakyll              (destinationDirectory, ignoreFile,
+                                      inMemoryCache, previewHost, previewPort,
+                                      storeDirectory, tmpDirectory)
 import           Test.Hspec
 import qualified Text.HTML.TagSoup   as T
 import           Text.Pandoc.Options (Extension (..), HTMLMathMethod (..),
@@ -42,6 +42,21 @@ spec = do
 
         it "has inMemoryCache enabled" $ do
             inMemoryCache hakyllConfig `shouldBe` True
+
+        it "ignores files starting with ." $ do
+            ignoreFile hakyllConfig ".hidden" `shouldBe` True
+
+        it "ignores files starting with #" $ do
+            ignoreFile hakyllConfig "#backup" `shouldBe` True
+
+        it "ignores files ending with ~" $ do
+            ignoreFile hakyllConfig "file~" `shouldBe` True
+
+        it "ignores files ending with .swp" $ do
+            ignoreFile hakyllConfig "file.swp" `shouldBe` True
+
+        it "does not ignore normal files" $ do
+            ignoreFile hakyllConfig "normal.md" `shouldBe` False
 
     describe "readerOptions" $ do
         it "has Ext_raw_html extension enabled" $ do
@@ -89,3 +104,6 @@ spec = do
 
         it "does not minimize div tags" $ do
             T.optMinimize tagSoupOption "div" `shouldBe` False
+
+        it "escapes HTML entities" $ do
+            T.optEscape tagSoupOption "<>&\"" `shouldContain` "&lt;"
