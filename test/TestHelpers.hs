@@ -4,11 +4,15 @@ module TestHelpers (
   , cleanupTestSite
 ) where
 
-import           Control.Exception (bracket)
+import           Control.Exception   (bracket, catch)
 import           Hakyll
-import           System.Directory  (createDirectoryIfMissing, removeDirectoryRecursive)
-import           System.FilePath   ((</>))
-import           System.IO.Temp    (createTempDirectory, getCanonicalTemporaryDirectory)
+import           Hakyll.Core.Runtime (RunMode (..))
+import           System.Directory    (createDirectoryIfMissing,
+                                      removeDirectoryRecursive)
+import           System.Exit         (ExitCode (..))
+import           System.FilePath     ((</>))
+import           System.IO.Temp      (createTempDirectory,
+                                      getCanonicalTemporaryDirectory)
 
 testConfig :: FilePath -> Configuration
 testConfig tmpDir = defaultConfiguration {
@@ -31,7 +35,11 @@ withTestSite action = do
         )
 
 testCompile :: Configuration -> Rules () -> IO ()
-testCompile cfg rules = hakyllWith cfg rules
+testCompile cfg rules =
+    catch (hakyllWithArgs cfg (Options False (Build RunModeNormal)) rules) handler
+  where
+    handler ExitSuccess = pure ()
+    handler e           = error $ "Hakyll build failed: " ++ show e
 
 cleanupTestSite :: FilePath -> IO ()
 cleanupTestSite = removeDirectoryRecursive

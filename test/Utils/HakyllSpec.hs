@@ -2,7 +2,10 @@ module Utils.HakyllSpec (spec) where
 
 import qualified Data.Text              as T
 import           Hakyll
+import           System.Directory       (createDirectoryIfMissing)
+import           System.FilePath        ((</>))
 import           Test.Hspec
+import           TestHelpers
 import           Text.Pandoc.Definition
 import           Utils.Hakyll
 
@@ -101,3 +104,103 @@ spec = do
                     tocId `shouldBe` T.pack "toc"
                     length tocBlocks `shouldBe` 2
                 _ -> expectationFailure "TOC not found"
+
+    describe "modifyExternalLinkAttr" $ do
+        it "adds target and rel attributes to external links" $ do
+            withTestSite $ \_ cfg -> do
+                let provDir = providerDirectory cfg
+                let testFile = provDir </> "test.html"
+                createDirectoryIfMissing True provDir
+                writeFile testFile "<a href=\"https://example.com\">External</a>"
+
+                testCompile cfg $ do
+                    match (fromGlob "test.html") $ do
+                        route idRoute
+                        compile $ getResourceString >>= modifyExternalLinkAttr
+
+                let outputFile = destinationDirectory cfg </> "test.html"
+                content <- readFile outputFile
+                content `shouldContain` "target=\"_blank\""
+                content `shouldContain` "rel=\"nofollow noopener\""
+
+        it "does not modify internal links" $ do
+            withTestSite $ \_ cfg -> do
+                let provDir = providerDirectory cfg
+                let testFile = provDir </> "test.html"
+                createDirectoryIfMissing True provDir
+                writeFile testFile "<a href=\"/page.html\">Internal</a>"
+
+                testCompile cfg $ do
+                    match (fromGlob "test.html") $ do
+                        route idRoute
+                        compile $ getResourceString >>= modifyExternalLinkAttr
+
+                let outputFile = destinationDirectory cfg </> "test.html"
+                content <- readFile outputFile
+                content `shouldNotContain` "target=\"_blank\""
+                content `shouldNotContain` "rel=\"nofollow noopener\""
+
+        it "handles mixed internal and external links" $ do
+            withTestSite $ \_ cfg -> do
+                let provDir = providerDirectory cfg
+                let testFile = provDir </> "test.html"
+                createDirectoryIfMissing True provDir
+                writeFile testFile "<a href=\"/page.html\">Internal</a><a href=\"https://example.com\">External</a>"
+
+                testCompile cfg $ do
+                    match (fromGlob "test.html") $ do
+                        route idRoute
+                        compile $ getResourceString >>= modifyExternalLinkAttr
+
+                let outputFile = destinationDirectory cfg </> "test.html"
+                content <- readFile outputFile
+                content `shouldContain` "target=\"_blank\""
+
+    describe "absolutizeUrls" $ do
+        it "converts relative URLs to absolute URLs" $ do
+            withTestSite $ \_ cfg -> do
+                let provDir = providerDirectory cfg
+                let testFile = provDir </> "test.html"
+                createDirectoryIfMissing True provDir
+                writeFile testFile "<a href=\"page.html\">Link</a>"
+
+                testCompile cfg $ do
+                    match (fromGlob "test.html") $ do
+                        route idRoute
+                        compile $ getResourceString >>= absolutizeUrls
+
+                let outputFile = destinationDirectory cfg </> "test.html"
+                content <- readFile outputFile
+                content `shouldContain` "href=\"/page.html\""
+
+        it "preserves absolute URLs" $ do
+            withTestSite $ \_ cfg -> do
+                let provDir = providerDirectory cfg
+                let testFile = provDir </> "test.html"
+                createDirectoryIfMissing True provDir
+                writeFile testFile "<a href=\"/absolute.html\">Link</a>"
+
+                testCompile cfg $ do
+                    match (fromGlob "test.html") $ do
+                        route idRoute
+                        compile $ getResourceString >>= absolutizeUrls
+
+                let outputFile = destinationDirectory cfg </> "test.html"
+                content <- readFile outputFile
+                content `shouldContain` "href=\"/absolute.html\""
+
+        it "preserves external URLs" $ do
+            withTestSite $ \_ cfg -> do
+                let provDir = providerDirectory cfg
+                let testFile = provDir </> "test.html"
+                createDirectoryIfMissing True provDir
+                writeFile testFile "<a href=\"https://example.com\">Link</a>"
+
+                testCompile cfg $ do
+                    match (fromGlob "test.html") $ do
+                        route idRoute
+                        compile $ getResourceString >>= absolutizeUrls
+
+                let outputFile = destinationDirectory cfg </> "test.html"
+                content <- readFile outputFile
+                content `shouldContain` "href=\"https://example.com\""
