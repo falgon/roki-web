@@ -1,10 +1,37 @@
 module Config.Blogs.UtilsSpec (spec) where
 
 import           Config.Blogs.Utils
+import           Hakyll
 import           Test.Hspec
 
 spec :: Spec
 spec = do
+    describe "entryPattern" $ do
+        it "matches valid blog post paths" $ do
+            let pattern = entryPattern "roki.log"
+            matches pattern (fromFilePath "contents/roki.log/2024/01/15/test-post/index.md") `shouldBe` True
+
+        it "does not match non-index files" $ do
+            let pattern = entryPattern "roki.log"
+            matches pattern (fromFilePath "contents/roki.log/2024/01/15/test-post/other.md") `shouldBe` False
+
+        it "does not match files without date structure" $ do
+            let pattern = entryPattern "roki.log"
+            matches pattern (fromFilePath "contents/roki.log/test-post/index.md") `shouldBe` False
+
+    describe "entryFilesPattern" $ do
+        it "matches all files in blog post directories" $ do
+            let pattern = entryFilesPattern "roki.log"
+            matches pattern (fromFilePath "contents/roki.log/2024/01/15/test-post/image.png") `shouldBe` True
+
+        it "matches index.md files" $ do
+            let pattern = entryFilesPattern "roki.log"
+            matches pattern (fromFilePath "contents/roki.log/2024/01/15/test-post/index.md") `shouldBe` True
+
+        it "does not match files outside date structure" $ do
+            let pattern = entryFilesPattern "roki.log"
+            matches pattern (fromFilePath "contents/roki.log/other.txt") `shouldBe` False
+
     describe "contentSnapshot" $ do
         it "generates correct snapshot name" $ do
             contentSnapshot "roki.log" `shouldBe` "roki.log.content"
