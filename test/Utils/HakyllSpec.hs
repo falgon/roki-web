@@ -105,6 +105,40 @@ spec = do
                     length tocBlocks `shouldBe` 2
                 _ -> expectationFailure "TOC not found"
 
+        it "does not add TOC when there are no headers" $ do
+            let doc = Pandoc nullMeta [
+                    RawBlock (Format (T.pack "html")) (T.pack "<!--toc-->")
+                  , Para [Str (T.pack "Some"), Space, Str (T.pack "text")]
+                  ]
+            let Pandoc _ blocks = injectTableOfContents doc
+            length blocks `shouldBe` 1
+
+        it "preserves RawBlock without TOC marker" $ do
+            let doc = Pandoc nullMeta [
+                    RawBlock (Format (T.pack "html")) (T.pack "<div>test</div>")
+                  , Para [Str (T.pack "Content")]
+                  ]
+            let result = injectTableOfContents doc
+            result `shouldBe` doc
+
+        it "creates nested TOC with H2 and H3 headers" $ do
+            let doc = Pandoc nullMeta [
+                    RawBlock (Format (T.pack "html")) (T.pack "<!--toc-->")
+                  , Header 2 (T.pack "h1", [], []) [Str (T.pack "Section"), Space, Str (T.pack "1")]
+                  , Header 3 (T.pack "h2", [], []) [Str (T.pack "Subsection"), Space, Str (T.pack "1.1")]
+                  , Header 3 (T.pack "h3", [], []) [Str (T.pack "Subsection"), Space, Str (T.pack "1.2")]
+                  , Header 2 (T.pack "h4", [], []) [Str (T.pack "Section"), Space, Str (T.pack "2")]
+                  ]
+            let Pandoc _ blocks = injectTableOfContents doc
+            case blocks of
+                (Div _ tocBlocks : _) -> do
+                    length tocBlocks `shouldBe` 2
+                    case tocBlocks of
+                        (Header _ _ _ : OrderedList _ items : _) -> do
+                            length items `shouldBe` 2
+                        _ -> expectationFailure "Expected Header and OrderedList"
+                _ -> expectationFailure "TOC not found"
+
     describe "modifyExternalLinkAttr" $ do
         it "adds target and rel attributes to external links" $ do
             withTestSite $ \_ cfg -> do
