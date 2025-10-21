@@ -33,3 +33,8 @@ spec = do
 
         it "has correct gSiteVerifyKey" $ do
             gSiteVerifyKey gSuiteConf `shouldBe` "13X5cycw11yFEsfZrhsQ0m_cSI90r7HucdErNDQ8Za8"
+
+    describe "GSuite" $ do
+        it "supports Show instance" $ do
+            show gSuiteConf `shouldContain` "GSuite"
+            show gSuiteConf `shouldContain` "002573853708615501531"
