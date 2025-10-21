@@ -5,6 +5,7 @@ import           Hakyll              (destinationDirectory, inMemoryCache,
                                       previewHost, previewPort, storeDirectory,
                                       tmpDirectory)
 import           Test.Hspec
+import qualified Text.HTML.TagSoup   as T
 import           Text.Pandoc.Options (Extension (..), HTMLMathMethod (..),
                                       ReaderOptions (..), WriterOptions (..),
                                       extensionEnabled)
@@ -69,3 +70,22 @@ spec = do
             case writerHTMLMathMethod writerPreviewOptions of
                 MathJax _ -> return ()
                 _         -> expectationFailure "Expected MathJax math method"
+
+    describe "tagSoupOption" $ do
+        it "treats script tags as raw" $ do
+            T.optRawTag tagSoupOption "script" `shouldBe` True
+
+        it "treats style tags as raw" $ do
+            T.optRawTag tagSoupOption "style" `shouldBe` True
+
+        it "does not treat div tags as raw" $ do
+            T.optRawTag tagSoupOption "div" `shouldBe` False
+
+        it "minimizes br tags" $ do
+            T.optMinimize tagSoupOption "br" `shouldBe` True
+
+        it "minimizes img tags" $ do
+            T.optMinimize tagSoupOption "img" `shouldBe` True
+
+        it "does not minimize div tags" $ do
+            T.optMinimize tagSoupOption "div" `shouldBe` False

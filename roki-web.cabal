@@ -194,6 +194,7 @@ test-suite roki-web-test
     , pandoc-types
     , regex-tdfa
     , roki-web
+    , tagsoup
     , temporary
     , text
     , time
