@@ -2,6 +2,8 @@
 module Config.Blogs.AnotherBlogSpec (spec) where
 
 import           Config.Blogs.AnotherBlog
+import           Hakyll                   (Identifier, Pattern, fromFilePath,
+                                           matches)
 import           Hakyll.Web.Feed.Extra    (FeedConfiguration (..))
 import           Test.Hspec
 
@@ -17,6 +19,17 @@ spec = do
 
         it "contains description text" $ do
             blogDesc `shouldContain` "is just a diary"
+
+    describe "entryPattern" $ do
+        it "matches valid blog post paths" $ do
+            matches entryPattern (fromFilePath "contents/roki.diary/2024/01/15/test-post/index.md") `shouldBe` True
+
+        it "does not match non-index files" $ do
+            matches entryPattern (fromFilePath "contents/roki.diary/2024/01/15/test-post/other.md") `shouldBe` False
+
+    describe "entryFilesPattern" $ do
+        it "matches all files in blog post directories" $ do
+            matches entryFilesPattern (fromFilePath "contents/roki.diary/2024/01/15/test-post/image.png") `shouldBe` True
 
     describe "contentSnapshot" $ do
         it "returns correct snapshot name" $ do
