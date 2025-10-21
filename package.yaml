@@ -106,3 +106,9 @@ tests:
         - text
         - regex-tdfa
         - hakyll
+        - time
+        - pandoc-types
+        - pandoc
+        - directory
+        - filepath
+        - temporary

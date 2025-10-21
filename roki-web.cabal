@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 62c02691b19343cdb6ff3fdef070c32e3e5e59430c7f978ab6f8e2afa68835e9
+-- hash: 04cfd063857319f784f62c6173e709acf7d7ad14b5e6086f25311a316331ee1c
 
 name:           roki-web
 version:        2.0.0.0
@@ -168,6 +168,16 @@ test-suite roki-web-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
+      Config.Blogs.AnotherBlogSpec
+      Config.Blogs.TechBlogSpec
+      Config.Blogs.UtilsSpec
+      Config.ProgramSpec
+      Config.RegexUtilsSpec
+      Config.SiteSpec
+      Config.TopPageSpec
+      Hakyll.Web.Feed.ExtraSpec
+      TestHelpers
+      Utils.BaseSpec
       Utils.HakyllSpec
       Paths_roki_web
   hs-source-dirs:
@@ -175,8 +185,16 @@ test-suite roki-web-test
   ghc-options: -threaded -Wall -rtsopts -with-rtsopts=-N
   build-depends:
       base
+    , directory
+    , filepath
+    , hakyll
     , hspec
     , hspec-discover
+    , pandoc
+    , pandoc-types
+    , regex-tdfa
     , roki-web
+    , temporary
     , text
+    , time
   default-language: Haskell2010

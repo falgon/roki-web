@@ -5,6 +5,13 @@ import           Test.Hspec
 
 spec :: Spec
 spec = do
+    describe "contentSnapshot" $ do
+        it "generates correct snapshot name" $ do
+            contentSnapshot "roki.log" `shouldBe` "roki.log.content"
+
+        it "handles different blog names" $ do
+            contentSnapshot "roki.diary" `shouldBe` "roki.diary.content"
+
     describe "tagPagesPath" $ do
         it "generates correct path for simple tag" $ do
             tagPagesPath "roki.log" "haskell" `shouldBe` "roki.log/tags/haskell/index.html"

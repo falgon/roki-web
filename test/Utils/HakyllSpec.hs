@@ -1,7 +1,9 @@
 module Utils.HakyllSpec (spec) where
 
+import qualified Data.Text              as T
 import           Hakyll
 import           Test.Hspec
+import           Text.Pandoc.Definition
 import           Utils.Hakyll
 
 spec :: Spec
@@ -68,3 +70,34 @@ spec = do
         it "handles nested directories" $ do
             let result = makePageIdentifier "blog/tech/posts.html" 3
             toFilePath result `shouldBe` "blog/tech/page/3/posts.html"
+
+    describe "injectTableOfContents" $ do
+        it "does not add TOC when no TOC marker exists" $ do
+            let doc = Pandoc nullMeta [
+                    Header 2 (T.pack "h1", [], []) [Str (T.pack "Header"), Space, Str (T.pack "1")]
+                  ]
+            let result = injectTableOfContents doc
+            result `shouldBe` doc
+
+        it "replaces TOC marker with table of contents" $ do
+            let doc = Pandoc nullMeta [
+                    RawBlock (Format (T.pack "html")) (T.pack "<!--toc-->")
+                  , Header 2 (T.pack "h1", [], []) [Str (T.pack "Section"), Space, Str (T.pack "1")]
+                  , Header 2 (T.pack "h2", [], []) [Str (T.pack "Section"), Space, Str (T.pack "2")]
+                  ]
+            let Pandoc _ blocks = injectTableOfContents doc
+            length blocks `shouldBe` 3
+
+        it "includes only headers up to depth 3" $ do
+            let doc = Pandoc nullMeta [
+                    RawBlock (Format (T.pack "html")) (T.pack "<!--toc-->")
+                  , Header 2 (T.pack "h1", [], []) [Str (T.pack "Level"), Space, Str (T.pack "2")]
+                  , Header 3 (T.pack "h2", [], []) [Str (T.pack "Level"), Space, Str (T.pack "3")]
+                  , Header 4 (T.pack "h3", [], []) [Str (T.pack "Level"), Space, Str (T.pack "4")]
+                  ]
+            let Pandoc _ blocks = injectTableOfContents doc
+            case blocks of
+                (Div (tocId, [], []) tocBlocks : _) -> do
+                    tocId `shouldBe` T.pack "toc"
+                    length tocBlocks `shouldBe` 2
+                _ -> expectationFailure "TOC not found"
