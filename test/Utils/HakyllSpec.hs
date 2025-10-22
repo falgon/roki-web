@@ -3,7 +3,8 @@ module Utils.HakyllSpec (spec) where
 import           Control.Concurrent.MVar (newEmptyMVar, putMVar, takeMVar)
 import qualified Data.Text               as T
 import           Hakyll
-import           System.Directory        (createDirectoryIfMissing)
+import           System.Directory        (createDirectoryIfMissing,
+                                          doesFileExist)
 import           System.FilePath         ((</>))
 import           Test.Hspec
 import           TestHelpers
@@ -199,6 +200,16 @@ spec = do
                         _ -> expectationFailure "Expected Header and OrderedList"
                 _ -> expectationFailure "TOC not found"
 
+        it "ignores orphaned H3 headers when no parent H2 exists" $ do
+            let doc = Pandoc nullMeta [
+                    RawBlock (Format (T.pack "html")) (T.pack "<!--toc-->")
+                  , Header 3 (T.pack "orphan", [], []) [Str (T.pack "Orphan")]
+                  ]
+            let Pandoc _ blocks = injectTableOfContents doc
+            blocks `shouldBe` [
+                Header 3 (T.pack "orphan", [], []) [Str (T.pack "Orphan")]
+              ]
+
     describe "modifyExternalLinkAttr" $ do
         it "adds target and rel attributes to external links" $ do
             withTestSite $ \_ cfg -> do
@@ -298,3 +309,18 @@ spec = do
                 let outputFile = destinationDirectory cfg </> "test.html"
                 content <- readFile outputFile
                 content `shouldContain` "href=\"https://example.com\""
+
+        it "leaves content unchanged when no route is defined" $ do
+            withTestSite $ \_ cfg -> do
+                let provDir = providerDirectory cfg
+                let testFile = provDir </> "orphan.html"
+                createDirectoryIfMissing True provDir
+                writeFile testFile "<a href=\"page.html\">Link</a>"
+
+                testCompile cfg $ do
+                    match (fromGlob "orphan.html") $
+                        compile $ getResourceString >>= absolutizeUrls
+
+                let outputFile = destinationDirectory cfg </> "orphan.html"
+                exists <- doesFileExist outputFile
+                exists `shouldBe` False
