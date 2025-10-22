@@ -1,9 +1,10 @@
 module Utils.HakyllSpec (spec) where
 
-import qualified Data.Text              as T
+import           Control.Concurrent.MVar (newEmptyMVar, putMVar, takeMVar)
+import qualified Data.Text               as T
 import           Hakyll
-import           System.Directory       (createDirectoryIfMissing)
-import           System.FilePath        ((</>))
+import           System.Directory        (createDirectoryIfMissing)
+import           System.FilePath         ((</>))
 import           Test.Hspec
 import           TestHelpers
 import           Text.Pandoc.Definition
@@ -73,6 +74,31 @@ spec = do
         it "handles nested directories" $ do
             let result = makePageIdentifier "blog/tech/posts.html" 3
             toFilePath result `shouldBe` "blog/tech/page/3/posts.html"
+
+    describe "getStringField" $ do
+        it "returns Just when the string field exists" $
+            withTestSite $ \_ cfg -> do
+                resultVar <- newEmptyMVar
+                testCompile cfg $ do
+                    create [fromFilePath "context"] $ compile $ do
+                        let ctx = constField "title" "Hello" <> defaultContext
+                        value <- getStringField "title" ctx
+                        unsafeCompiler $ putMVar resultVar value
+                        makeItem ("" :: String)
+                result <- takeMVar resultVar
+                result `shouldBe` Just "Hello"
+
+        it "returns Nothing when the field is not a string" $
+            withTestSite $ \_ cfg -> do
+                resultVar <- newEmptyMVar
+                testCompile cfg $ do
+                    create [fromFilePath "context-non-string"] $ compile $ do
+                        let listCtx = listField "title" defaultContext (pure ([] :: [Item String]))
+                        value <- getStringField "title" listCtx
+                        unsafeCompiler $ putMVar resultVar value
+                        makeItem ("" :: String)
+                result <- takeMVar resultVar
+                result `shouldBe` Nothing
 
     describe "injectTableOfContents" $ do
         it "does not add TOC when no TOC marker exists" $ do
