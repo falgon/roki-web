@@ -2,8 +2,7 @@
 module Config.Blogs.AnotherBlogSpec (spec) where
 
 import           Config.Blogs.AnotherBlog
-import           Hakyll                   (Identifier, Pattern, fromFilePath,
-                                           matches)
+import           Hakyll                   (fromFilePath, matches)
 import           Hakyll.Web.Feed.Extra    (FeedConfiguration (..))
 import           Test.Hspec
 
