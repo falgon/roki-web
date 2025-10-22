@@ -139,6 +139,40 @@ spec = do
                         _ -> expectationFailure "Expected Header and OrderedList"
                 _ -> expectationFailure "TOC not found"
 
+        it "creates TOC with H2 headers only (no H3)" $ do
+            let doc = Pandoc nullMeta [
+                    RawBlock (Format (T.pack "html")) (T.pack "<!--toc-->")
+                  , Header 2 (T.pack "h1", [], []) [Str (T.pack "Section"), Space, Str (T.pack "1")]
+                  , Header 2 (T.pack "h2", [], []) [Str (T.pack "Section"), Space, Str (T.pack "2")]
+                  ]
+            let Pandoc _ blocks = injectTableOfContents doc
+            case blocks of
+                (Div _ tocBlocks : _) -> do
+                    length tocBlocks `shouldBe` 2
+                    case tocBlocks of
+                        (Header _ _ _ : OrderedList _ items : _) -> do
+                            length items `shouldBe` 2
+                            all (\item -> length item == 1) items `shouldBe` True
+                        _ -> expectationFailure "Expected Header and OrderedList"
+                _ -> expectationFailure "TOC not found"
+
+        it "skips non-header blocks when building TOC" $ do
+            let doc = Pandoc nullMeta [
+                    RawBlock (Format (T.pack "html")) (T.pack "<!--toc-->")
+                  , Para [Str (T.pack "Intro")]
+                  , Header 2 (T.pack "h1", [], []) [Str (T.pack "Section"), Space, Str (T.pack "1")]
+                  , CodeBlock (T.pack "", [], []) (T.pack "code")
+                  , Header 2 (T.pack "h2", [], []) [Str (T.pack "Section"), Space, Str (T.pack "2")]
+                  ]
+            let Pandoc _ blocks = injectTableOfContents doc
+            case blocks of
+                (Div _ tocBlocks : _) -> do
+                    case tocBlocks of
+                        (Header _ _ _ : OrderedList _ items : _) -> do
+                            length items `shouldBe` 2
+                        _ -> expectationFailure "Expected Header and OrderedList"
+                _ -> expectationFailure "TOC not found"
+
     describe "modifyExternalLinkAttr" $ do
         it "adds target and rel attributes to external links" $ do
             withTestSite $ \_ cfg -> do
