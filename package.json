@@ -15,7 +15,7 @@
         "@fortawesome/free-solid-svg-icons": "^7.1.0",
         "@vitest/coverage-v8": "^4.0.4",
         "@vitest/ui": "^4.0.4",
-        "happy-dom": "^15.11.7",
+        "happy-dom": "^20.0.10",
         "katex": "^0.16.25",
         "svgo": "^4.0.0",
         "terser": "^5.44.0",
