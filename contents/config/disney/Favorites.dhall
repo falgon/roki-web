@@ -79,10 +79,5 @@ in    [ { text = "アナと雪の女王"
         , link = Some
             "https://www.tokyodisneyresort.jp/tds/attraction/detail/243/"
         }
-      , { text = "ウエスタンリバー鉄道"
-        , category = "park-contents"
-        , link = Some
-            "https://www.tokyodisneyresort.jp/tdl/attraction/detail/154/"
-        }
       ]
     : List t
