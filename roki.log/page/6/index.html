@@ -181,24 +181,6 @@
 また, その処理系を<a href="../../../roki.log/2018/07/13/elgamalEncryption/#impl">実装した</a>.
 本エントリでは, 同暗号プロトコルの話の前にまず前提を示し,
 その後, 実装の観点から見た要点を示す.</p>
-<h2 id="toc">目次</h2>
-<ol type="1">
-<li><a href="../../../roki.log/2018/07/13/elgamalEncryption/#ユークリッドの互除法">ユークリッドの互除法</a></li>
-<li><a href="../../../roki.log/2018/07/13/elgamalEncryption/#ガロア体">ガロア体</a></li>
-<li><a href="../../../roki.log/2018/07/13/elgamalEncryption/#オイラーの-phi-関数">オイラーの <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>ϕ</mi></mrow><annotation encoding="application/x-tex">\phi</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord mathnormal">ϕ</span></span></span></span> 関数</a></li>
-<li><a href="../../../roki.log/2018/07/13/elgamalEncryption/#フェルマーの小定理">フェルマーの小定理</a></li>
-<li><a href="../../../roki.log/2018/07/13/elgamalEncryption/#原始元">原始元</a></li>
-<li><a href="../../../roki.log/2018/07/13/elgamalEncryption/#離散対数問題">離散対数問題</a></li>
-<li><a href="../../../roki.log/2018/07/13/elgamalEncryption/#実装">実装</a>
-<ol type="1">
-<li><a href="../../../roki.log/2018/07/13/elgamalEncryption/#フェルマーテスト-miller-rabin-素数判定法">フェルマーテスト, Miller-Rabin 素数判定法</a></li>
-<li><a href="../../../roki.log/2018/07/13/elgamalEncryption/#原始根の生成">原始根の生成</a></li>
-<li><a href="../../../roki.log/2018/07/13/elgamalEncryption/#鍵と暗号文の生成">鍵と暗号文の生成</a></li>
-<li><a href="../../../roki.log/2018/07/13/elgamalEncryption/#暗号文の復号">暗号文の復号</a></li>
-<li><a href="../../../roki.log/2018/07/13/elgamalEncryption/#実行">実行</a></li>
-</ol></li>
-<li><a href="../../../roki.log/2018/07/13/elgamalEncryption/#参考文献">参考文献</a></li>
-</ol>
 
                         <div class="buttons is-centered mt-3 mb-0">
                             <a href="../../../roki.log/2018/07/13/elgamalEncryption/index.html">
@@ -276,15 +258,34 @@
                 <section class="content mt-5">
                     
                         <p>数論的関数の用語やその関連について整理したかったので書くことにした.</p>
-<h2 id="toc">目次</h2>
-<ol type="1">
-<li><a href="../../../roki.log/2018/07/9/arithmeticfunc/#数論的関数">数論的関数</a>
-<ol type="1">
-<li><a href="../../../roki.log/2018/07/9/arithmeticfunc/#加法的関数">加法的関数</a></li>
-<li><a href="../../../roki.log/2018/07/9/arithmeticfunc/#乗法的関数">乗法的関数</a></li>
-</ol></li>
-<li><a href="../../../roki.log/2018/07/9/arithmeticfunc/#参考文献">参考文献</a></li>
-</ol>
+<h2 id="数論的関数">数論的関数</h2>
+<p>数論的関数は, 定義域が正整数 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi mathvariant="double-struck">Z</mi><mo lspace="0em" rspace="0em">+</mo></msup></mrow><annotation encoding="application/x-tex">\mathbb{Z}^{+}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7713em;"></span><span class="mord"><span class="mord mathbb">Z</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.7713em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">+</span></span></span></span></span></span></span></span></span></span></span></span> である複素数を値にもつ関数である.
+すなわち</p>
+<div class="m-def">
+<header class="m-def-title">
+<p>
+数論的関数
+</p>
+</header>
+<div class="m-def-content">
+<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi mathvariant="double-struck">Z</mi><mo lspace="0em" rspace="0em">+</mo></msup></mrow><annotation encoding="application/x-tex">\mathbb{Z}^{+}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7713em;"></span><span class="mord"><span class="mord mathbb">Z</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.7713em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">+</span></span></span></span></span></span></span></span></span></span></span></span> から複素数 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="double-struck">C</mi></mrow><annotation encoding="application/x-tex">\mathbb{C}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6889em;"></span><span class="mord mathbb">C</span></span></span></span> への関数
+<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi mathvariant="double-struck">Z</mi><mo lspace="0em" rspace="0em">+</mo></msup><mo>→</mo><mi mathvariant="double-struck">C</mi></mrow><annotation encoding="application/x-tex">\mathbb{Z}^{+}\to\mathbb{C}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7713em;"></span><span class="mord"><span class="mord mathbb">Z</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.7713em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">+</span></span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">→</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6889em;"></span><span class="mord mathbb">C</span></span></span></span>
+</div>
+</div>
+<p>をいう.</p>
+<h3 id="加法的関数">加法的関数</h3>
+<p>加法的関数は以下で定義される.</p>
+<div class="m-def">
+<header class="m-def-title">
+<p>
+加法的関数
+</p>
+</header>
+<div class="m-def-content">
+<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>m</mi><mo>∈</mo><msup><mi mathvariant="double-struck">Z</mi><mo lspace="0em" rspace="0em">+</mo></msup><mo separator="true">,</mo><mi>n</mi><mo>∈</mo><msup><mi mathvariant="double-struck">Z</mi><mo lspace="0em" rspace="0em">+</mo></msup><mo separator="true">,</mo><mi>gcd</mi><mo>⁡</mo><mo stretchy="false">(</mo><mi>m</mi><mo separator="true">,</mo><mi>n</mi><mo stretchy="false">)</mo><mo>=</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">m\in\mathbb{Z}^{+}, n\in\mathbb{Z}^{+}, \gcd(m,n)=1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.5782em;vertical-align:-0.0391em;"></span><span class="mord mathnormal">m</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">∈</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.9658em;vertical-align:-0.1944em;"></span><span class="mord"><span class="mord mathbb">Z</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.7713em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">+</span></span></span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal">n</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">∈</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1.0213em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord mathbb">Z</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.7713em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">+</span></span></span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mop"><span style="margin-right:0.01389em;">g</span>cd</span><span class="mopen">(</span><span class="mord mathnormal">m</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal">n</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">1</span></span></span></span> について
+<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>f</mi><mo stretchy="false">(</mo><mi>m</mi><mi>n</mi><mo stretchy="false">)</mo><mo>=</mo><mi>f</mi><mo stretchy="false">(</mo><mi>m</mi><mo stretchy="false">)</mo><mo>+</mo><mi>f</mi><mo stretchy="false">(</mo><mi>n</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">f(mn)=f(m)+f(n)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.10764em;">f</span><span class="mopen">(</span><span class="mord mathnormal">mn</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.10764em;">f</span><span class="mopen">(</span><span class="mord mathnormal">m</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.10764em;">f</span><span class="mopen">(</span><span class="mord mathnormal">n</span><span class="mclose">)</span></span></span></span> を満たす数論的関数 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>f</mi><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">f(x)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.10764em;">f</span><span class="mopen">(</span><span class="mord mathnormal">x</span><span class="mclose">)</span></span></span></span>
+</div>
+</div>
 
                         <div class="buttons is-centered mt-3 mb-0">
                             <a href="../../../roki.log/2018/07/9/arithmeticfunc/index.html">

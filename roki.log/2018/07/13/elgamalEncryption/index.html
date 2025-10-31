@@ -6,8 +6,8 @@
         <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no" />
         <meta content="Roki" name="author" />
         
-        <meta content="エルガマル暗号が離散対数問題の応用であることは認知していたものの, きっちりと自分でまとめたことが無かったと思うので, それに関連する諸々の前提についてもふまえて, 一度書くことにした. また, その処理系を[実装した](#impl).本エントリでは, 同暗号プロトコルの話の前にまず前提を示し,その" name="description" />
-        <meta property="og:description" content="エルガマル暗号が離散対数問題の応用であることは認知していたものの, きっちりと自分でまとめたことが無かったと思うので, それに関連する諸々の前提についてもふまえて, 一度書くことにした. また, その処理系を[実装した](#impl).本エントリでは, 同暗号プロトコルの話の前にまず前提を示し,その" />
+        <meta content="エルガマル暗号が離散対数問題の応用であることは認知していたものの, きっちりと自分でまとめたことが無かったと思うので, それに関連する諸々の前提についてもふまえて, 一度書くことにした. また, その処理系を[実装した](#impl).本エントリでは, 同暗号プロトコルの話の前にまず前提を示し, そ" name="description" />
+        <meta property="og:description" content="エルガマル暗号が離散対数問題の応用であることは認知していたものの, きっちりと自分でまとめたことが無かったと思うので, それに関連する諸々の前提についてもふまえて, 一度書くことにした. また, その処理系を[実装した](#impl).本エントリでは, 同暗号プロトコルの話の前にまず前提を示し, そ" />
         
         <meta content="Hakyll" name="generator" />
         <meta property="twitter:card" content="summary" />
@@ -188,24 +188,6 @@
 また, その処理系を<a href="../../../../../roki.log/2018/07/13/elgamalEncryption/#impl">実装した</a>.
 本エントリでは, 同暗号プロトコルの話の前にまず前提を示し,
 その後, 実装の観点から見た要点を示す.</p>
-<h2 id="toc">目次</h2>
-<ol type="1">
-<li><a href="../../../../../roki.log/2018/07/13/elgamalEncryption/#ユークリッドの互除法">ユークリッドの互除法</a></li>
-<li><a href="../../../../../roki.log/2018/07/13/elgamalEncryption/#ガロア体">ガロア体</a></li>
-<li><a href="../../../../../roki.log/2018/07/13/elgamalEncryption/#オイラーの-phi-関数">オイラーの <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>ϕ</mi></mrow><annotation encoding="application/x-tex">\phi</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord mathnormal">ϕ</span></span></span></span> 関数</a></li>
-<li><a href="../../../../../roki.log/2018/07/13/elgamalEncryption/#フェルマーの小定理">フェルマーの小定理</a></li>
-<li><a href="../../../../../roki.log/2018/07/13/elgamalEncryption/#原始元">原始元</a></li>
-<li><a href="../../../../../roki.log/2018/07/13/elgamalEncryption/#離散対数問題">離散対数問題</a></li>
-<li><a href="../../../../../roki.log/2018/07/13/elgamalEncryption/#実装">実装</a>
-<ol type="1">
-<li><a href="../../../../../roki.log/2018/07/13/elgamalEncryption/#フェルマーテスト-miller-rabin-素数判定法">フェルマーテスト, Miller-Rabin 素数判定法</a></li>
-<li><a href="../../../../../roki.log/2018/07/13/elgamalEncryption/#原始根の生成">原始根の生成</a></li>
-<li><a href="../../../../../roki.log/2018/07/13/elgamalEncryption/#鍵と暗号文の生成">鍵と暗号文の生成</a></li>
-<li><a href="../../../../../roki.log/2018/07/13/elgamalEncryption/#暗号文の復号">暗号文の復号</a></li>
-<li><a href="../../../../../roki.log/2018/07/13/elgamalEncryption/#実行">実行</a></li>
-</ol></li>
-<li><a href="../../../../../roki.log/2018/07/13/elgamalEncryption/#参考文献">参考文献</a></li>
-</ol>
 <!--more-->
 <p><br><i>※ 内容にはできる限り注意を払っておりますが, 筆者は暗号プロトコル等に関する専門家ではないため, 注意してください. 間違った箇所, 不自然な箇所等があれば, ご報告いただけると幸いです.</i></p>
 <h2 id="ユークリッドの互除法">ユークリッドの互除法</h2>

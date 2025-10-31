@@ -6,8 +6,8 @@
         <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no" />
         <meta content="Roki" name="author" />
         
-        <meta content="放物運動に関する復習と再現.&lt;!--toc--&gt;&lt;!--more--&gt;## 等加速度運動をする物体の位置関数の導出時刻 \\(t=0\\) における物体の位置を ${\boldsymbol x_0}$, 速度を \\({\boldsymbol v_0}\\)とし, 加速度を考" name="description" />
-        <meta property="og:description" content="放物運動に関する復習と再現.&lt;!--toc--&gt;&lt;!--more--&gt;## 等加速度運動をする物体の位置関数の導出時刻 \\(t=0\\) における物体の位置を ${\boldsymbol x_0}$, 速度を \\({\boldsymbol v_0}\\)とし, 加速度を考" />
+        <meta content="放物運動に関する復習と再現.## 等加速度運動をする物体の位置関数の導出時刻 \\(t=0\\) における物体の位置を ${\boldsymbol x_0}$, 速度を \\({\boldsymbol v_0}\\)とし, 加速度を考慮しない等速運動の三次元空間上の一点に対する位置関数 \\({\b" name="description" />
+        <meta property="og:description" content="放物運動に関する復習と再現.## 等加速度運動をする物体の位置関数の導出時刻 \\(t=0\\) における物体の位置を ${\boldsymbol x_0}$, 速度を \\({\boldsymbol v_0}\\)とし, 加速度を考慮しない等速運動の三次元空間上の一点に対する位置関数 \\({\b" />
         
         <meta content="Hakyll" name="generator" />
         <meta property="twitter:card" content="summary" />
@@ -183,17 +183,6 @@
                     </article>
                     
                     <p>放物運動に関する復習と再現.</p>
-<h2 id="toc">目次</h2>
-<ol type="1">
-<li><a href="../../../../../roki.log/2019/03/7/ParabolicMotion/#等加速度運動をする物体の位置関数の導出">等加速度運動をする物体の位置関数の導出</a></li>
-<li><a href="../../../../../roki.log/2019/03/7/ParabolicMotion/#重力を踏まえた運動">重力を踏まえた運動</a>
-<ol type="1">
-<li><a href="../../../../../roki.log/2019/03/7/ParabolicMotion/#到達高度に達するとき-到達高度">到達高度に達するとき, 到達高度</a></li>
-<li><a href="../../../../../roki.log/2019/03/7/ParabolicMotion/#到達距離">到達距離</a></li>
-<li><a href="../../../../../roki.log/2019/03/7/ParabolicMotion/#放物運動のシミュレート">放物運動のシミュレート</a></li>
-</ol></li>
-</ol>
-<!--more-->
 <h2 id="等加速度運動をする物体の位置関数の導出">等加速度運動をする物体の位置関数の導出</h2>
 <p>時刻 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>t</mi><mo>=</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">t=0</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6151em;"></span><span class="mord mathnormal">t</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">0</span></span></span></span> における物体の位置を <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi mathvariant="bold-italic">x</mi><mn>0</mn></msub></mrow><annotation encoding="application/x-tex">{\boldsymbol x_0}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.5944em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord"><span class="mord"><span class="mord"><span class="mord boldsymbol">x</span></span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">0</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span></span>, 速度を <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi mathvariant="bold-italic">v</mi><mn>0</mn></msub></mrow><annotation encoding="application/x-tex">{\boldsymbol v_0}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.5944em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord"><span class="mord"><span class="mord"><span class="mord boldsymbol" style="margin-right:0.03704em;">v</span></span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">0</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span></span>
 とし, 加速度を考慮しない等速運動の三次元空間上の一点に対する位置関数 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="bold-italic">x</mi><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">{\boldsymbol x}(t)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord"><span class="mord"><span class="mord boldsymbol">x</span></span></span></span><span class="mopen">(</span><span class="mord mathnormal">t</span><span class="mclose">)</span></span></span></span> を
