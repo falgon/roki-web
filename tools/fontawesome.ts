@@ -1,10 +1,12 @@
 #!/usr/bin/env tsx
 
 import { icon } from "@fortawesome/fontawesome-svg-core";
+import * as freeBrandsSvgIcons from "@fortawesome/free-brands-svg-icons";
+import * as freeSolidSvgIcons from "@fortawesome/free-solid-svg-icons";
 
 const pkgs = [
-    require("@fortawesome/free-brands-svg-icons"),
-    require("@fortawesome/free-solid-svg-icons")
+    freeBrandsSvgIcons,
+    freeSolidSvgIcons
 ];
 
 interface IconObject {

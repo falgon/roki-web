@@ -296,7 +296,7 @@ const initLoadingScreen = (): void => {
                                     log(`Script ${index + 1} already loaded (execution ready)`);
                                     return true;
                                 }
-                            } catch (e) {
+                            } catch (_e) {
                                 // readyStateプロパティにアクセスできない場合
                             }
 

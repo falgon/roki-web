@@ -79,8 +79,8 @@ const initStringFormat = (): void => {
     if (!String.prototype.format) {
         String.prototype.format = function (...args: unknown[]): string {
             return this.replace(/{(\d+)}/g, (match: string, number: string) =>
-                typeof args[Number.parseInt(number)] !== "undefined"
-                    ? String(args[Number.parseInt(number)])
+                typeof args[Number.parseInt(number, 10)] !== "undefined"
+                    ? String(args[Number.parseInt(number, 10)])
                     : match,
             );
         };
