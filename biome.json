@@ -6,13 +6,7 @@
     "useIgnoreFile": true
   },
   "files": {
-    "ignoreUnknown": false,
-    "ignore": [
-      "node_modules",
-      "dist",
-      "_site",
-      "_cache"
-    ]
+    "ignoreUnknown": false
   },
   "formatter": {
     "enabled": true,
