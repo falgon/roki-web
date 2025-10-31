@@ -7,10 +7,6 @@ header-warn: この記事は, <a href="https://falgon.github.io/roki.log/">旧�
 
 放物運動に関する復習と再現.
 
-<!--toc-->
-
-<!--more-->
-
 ## 等加速度運動をする物体の位置関数の導出
 
 時刻 \\(t=0\\) における物体の位置を ${\boldsymbol x_0}$, 速度を \\({\boldsymbol v_0}\\)
