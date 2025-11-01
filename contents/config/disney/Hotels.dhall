@@ -99,7 +99,7 @@ let Hotel =
       }
 
 in  [ { hotelCodeRaw = "FSH"
-      , staysRaw = 4
+      , staysRaw = 5
       , detailsRaw =
           detailsToPaths
             [ makeNode
@@ -107,7 +107,7 @@ in  [ { hotelCodeRaw = "FSH"
                 [ makeNode "スプリングスサイド" [ makeText "バルアル" ]
                 , makeNode
                     "ローズコートサイド"
-                    [ makeText "スーペリア ×2", makeText "スーペリア・アルコーヴ" ]
+                    [ makeText "スーペリア ×2", makeText "スーペリア・アルコーヴ ×2" ]
                 ]
             ]
       , hotelColorRaw = "#854454"
@@ -122,11 +122,11 @@ in  [ { hotelCodeRaw = "FSH"
       , hotelColorRaw = "#8A7501"
       }
     , { hotelCodeRaw = "TDH"
-      , staysRaw = 4
+      , staysRaw = 5
       , detailsRaw =
           detailsToPaths
             [ makeNode "キャラ" [ makeText "美女野獣", makeText "シンデレラ" ]
-            , makeNode "スーペリア" [ makeText "コーナールーム", makeText "パークグランドビュー" ]
+            , makeNode "スーペリア" [ makeText "コーナールーム ×2", makeText "パークグランドビュー" ]
             ]
       , hotelColorRaw = "#B95C00"
       }
