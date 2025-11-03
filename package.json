@@ -22,7 +22,7 @@
         "terser": "^5.44.0",
         "tsx": "^4.20.6",
         "typescript": "^5.9.3",
-        "vitest": "^4.0.5"
+        "vitest": "^4.0.6"
     },
     "scripts": {
         "format:ts": "biome check --write --unsafe contents/ts",
