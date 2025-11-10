@@ -526,12 +526,14 @@ const initLoadingScreen = (): void => {
     }, 15000);
 };
 
-interface TagButton extends HTMLElement {
-    getAttribute(name: string): string | null;
-}
+declare global {
+    interface TagButton extends HTMLElement {
+        getAttribute(name: string): string | null;
+    }
 
-interface LogEntry extends HTMLElement {
-    getAttribute(name: string): string | null;
+    interface LogEntry extends HTMLElement {
+        getAttribute(name: string): string | null;
+    }
 }
 
 // Expose functions to global scope for testing

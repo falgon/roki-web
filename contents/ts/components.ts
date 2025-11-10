@@ -65,14 +65,16 @@ const openLink = (): void => {
 };
 
 // String.prototype.formatの型定義を拡張
-interface String {
-    format(...args: unknown[]): string;
-}
+declare global {
+    interface String {
+        format(...args: unknown[]): string;
+    }
 
-interface StringConstructor {
-    prototype: {
-        format?: (...args: unknown[]) => string;
-    };
+    interface StringConstructor {
+        prototype: {
+            format?: (...args: unknown[]) => string;
+        };
+    }
 }
 
 const initStringFormat = (): void => {
