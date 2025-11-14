@@ -1,5 +1,22 @@
 SHELL=/bin/bash
 
+format:
+	@git ls-files ./src ./test -- '*.hs' | xargs stylish-haskell -i
+	@npm run format:ts
+
+check:
+	@npm run lint:ts
+
+test:
+	@npm test
+	@stack test
+
+test-coverage:
+	@npm run test:coverage
+	@stack test --coverage
+	@stack hpc report --all --destdir hpc-report
+	@echo "Haskell coverage report available at: hpc-report/hpc_index.html"
+
 init:
 	@nvm install
 	@nvm use
@@ -34,4 +51,4 @@ create-pr-master-develop:
 		-b "Merge the develop branch into the master branch and deploy" \
 		-H develop
 
-.PHONY: init watch watch-prebuild stop-watch-prebuild create-pr-master-develop
+.PHONY: format test test-coverage init watch watch-prebuild stop-watch-prebuild create-pr-master-develop

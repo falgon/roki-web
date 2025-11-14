@@ -1,5 +1,6 @@
 {
     "name": "roki-web",
+    "type": "module",
     "description": "roki web page",
     "version": "0.1.0",
     "license": "BSD-3-Clause",
@@ -8,21 +9,35 @@
         "url": "git+https://github.com/falgon/roki-web.git"
     },
     "devDependencies": {
+        "@biomejs/biome": "^2.3.5",
         "@creativebulma/bulma-tooltip": "^1.2.0",
         "@fortawesome/fontawesome-svg-core": "^7.1.0",
         "@fortawesome/free-brands-svg-icons": "^7.1.0",
         "@fortawesome/free-solid-svg-icons": "^7.1.0",
+        "@vitest/coverage-v8": "^4.0.8",
+        "@vitest/ui": "^4.0.8",
+        "happy-dom": "^20.0.10",
         "katex": "^0.16.25",
         "svgo": "^4.0.0",
+        "terser": "^5.44.1",
+        "tsx": "^4.20.6",
         "typescript": "^5.9.3",
-        "terser": "^5.44.0",
-        "tsx": "^4.20.6"
+        "vitest": "^4.0.8"
+    },
+    "scripts": {
+        "format:ts": "biome check --write --unsafe contents/ts",
+        "lint:ts": "biome lint contents/ts",
+        "check:ts": "biome check contents/ts",
+        "test": "vitest run",
+        "test:watch": "vitest",
+        "test:ui": "vitest --ui",
+        "test:coverage": "vitest run --coverage"
     },
     "dependencies": {
         "@mermaid-js/mermaid-cli": "^11.12.0",
         "bulma": "^1.0.4",
         "d3": "^7.9.0",
-        "mathjs": "^15.0.0",
-        "sass": "^1.93.2"
+        "mathjs": "^15.1.0",
+        "sass": "^1.94.0"
     }
 }

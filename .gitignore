@@ -7,3 +7,6 @@ docs
 .envrc
 haddock
 .playwright-mcp
+coverage/
+hpc-report/
+.serena/
