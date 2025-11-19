@@ -14,7 +14,7 @@
         "@fortawesome/fontawesome-svg-core": "^7.1.0",
         "@fortawesome/free-brands-svg-icons": "^7.1.0",
         "@fortawesome/free-solid-svg-icons": "^7.1.0",
-        "@vitest/coverage-v8": "^4.0.8",
+        "@vitest/coverage-v8": "^4.0.10",
         "@vitest/ui": "^4.0.10",
         "happy-dom": "^20.0.10",
         "katex": "^0.16.25",
@@ -22,7 +22,7 @@
         "terser": "^5.44.1",
         "tsx": "^4.20.6",
         "typescript": "^5.9.3",
-        "vitest": "^4.0.8"
+        "vitest": "^4.0.10"
     },
     "scripts": {
         "format:ts": "biome check --write --unsafe contents/ts",
