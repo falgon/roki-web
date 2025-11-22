@@ -14,8 +14,8 @@
         "@fortawesome/fontawesome-svg-core": "^7.1.0",
         "@fortawesome/free-brands-svg-icons": "^7.1.0",
         "@fortawesome/free-solid-svg-icons": "^7.1.0",
-        "@vitest/coverage-v8": "^4.0.10",
-        "@vitest/ui": "^4.0.10",
+        "@vitest/coverage-v8": "^4.0.12",
+        "@vitest/ui": "^4.0.12",
         "happy-dom": "^20.0.10",
         "katex": "^0.16.25",
         "svgo": "^4.0.0",
@@ -38,6 +38,6 @@
         "bulma": "^1.0.4",
         "d3": "^7.9.0",
         "mathjs": "^15.1.0",
-        "sass": "^1.94.1"
+        "sass": "^1.94.2"
     }
 }
