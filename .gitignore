@@ -10,3 +10,4 @@ haddock
 coverage/
 hpc-report/
 .serena/
+.mcp.json
