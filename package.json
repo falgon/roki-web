@@ -16,11 +16,11 @@
         "@fortawesome/free-solid-svg-icons": "^7.1.0",
         "@vitest/coverage-v8": "^4.0.14",
         "@vitest/ui": "^4.0.14",
-        "happy-dom": "^20.0.10",
+        "happy-dom": "^20.0.11",
         "katex": "^0.16.25",
         "svgo": "^4.0.0",
         "terser": "^5.44.1",
-        "tsx": "^4.20.6",
+        "tsx": "^4.21.0",
         "typescript": "^5.9.3",
         "vitest": "^4.0.14"
     },

@@ -144,11 +144,38 @@
         display: flex;
         align-items: center;
         gap: 0.5rem;
+        overflow-x: auto;
+        overflow-y: hidden;
+        
+        // スクロールバーのスタイリング
+        &::-webkit-scrollbar {
+            height: 4px;
+        }
+        
+        &::-webkit-scrollbar-track {
+            background: rgba(107, 114, 128, 0.1);
+            border-radius: 2px;
+        }
+        
+        &::-webkit-scrollbar-thumb {
+            background: rgba(107, 114, 128, 0.3);
+            border-radius: 2px;
+            
+            &:hover {
+                background: rgba(107, 114, 128, 0.5);
+            }
+        }
+        
+        // 日付テキストも縮小しないように
+        > span:first-child {
+            flex-shrink: 0;
+        }
         
         a {
             color: #6b7280;
             text-decoration: none;
             transition: color 0.3s ease;
+            flex-shrink: 0;  // リンクが縮小しないように
             
             &:hover {
                 color: #3CAADF;
@@ -169,6 +196,7 @@
         
         .ai-generated-badge {
             margin-left: auto;
+            flex-shrink: 0;  // バッジも縮小しないように
             padding: 0.15rem 0.5rem;
             background: linear-gradient(135deg, #3CAADF 0%, #3e8ed0 100%);
             color: white;
