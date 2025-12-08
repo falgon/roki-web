@@ -20,3 +20,8 @@ updates:
       - "automerge"
     pull-request-branch-name:
       separator: "/"
+    groups:
+      vitest:
+        patterns:
+          - "vitest"
+          - "@vitest/*"
