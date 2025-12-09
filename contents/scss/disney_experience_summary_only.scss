@@ -485,6 +485,16 @@
         }
     }
 
+    .search-input-wrapper {
+        display: inline-block;
+        margin-left: 1rem;
+        margin-right: 0.5rem;
+    }
+
+    #search-input {
+        width: 200px;
+    }
+
     .tag-filter {
         .tag-filter-buttons {
             display: flex;

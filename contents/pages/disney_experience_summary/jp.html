@@ -88,6 +88,16 @@
     <div class="favorite-category mt-4">
         <h3 class="title is-4 mb-3">
             <i class="fas fa-wand-magic-sparkles"></i>体験歴
+            <!-- 検索入力欄を追加 -->
+            <div class="search-input-wrapper">
+                <input
+                    type="text"
+                    id="search-input"
+                    class="input is-small"
+                    placeholder="検索..."
+                    aria-label="体験歴を検索"
+                />
+            </div>
             <button class="button is-small is-info ml-2" id="toggle-tag-filter">
                 <span class="icon">
                     <i class="fas fa-filter"></i>
@@ -131,7 +141,7 @@
         </div>
         <div class="logs">
             $for(disney-logs)$
-            <article class="log-entry" data-tags="$for(disney-tags-list)$$name$$sep$,$endfor$">
+            <article class="log-entry" data-tags="$for(disney-tags-list)$$name$$sep$,$endfor$" data-search-content="$title$ $log-body$">
                 <h2 class="log-title">$title$</h2>
                 $if(disney-tags-list)$
                 <div class="log-tags">
