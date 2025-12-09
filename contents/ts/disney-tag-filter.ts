@@ -575,12 +575,46 @@ if (typeof document !== "undefined") {
         const tagFilterContainer: HTMLElement | null = document.getElementsByClassName(
             "tag-filter",
         )[0] as HTMLElement;
+        const toggleSearchFilterBtn: HTMLElement | null =
+            document.getElementById("toggle-search-filter");
+        const searchFilterContainer: HTMLElement | null = document.getElementById("search-filter");
         const searchInput: HTMLInputElement | null = document.getElementById(
             "search-input",
         ) as HTMLInputElement;
 
         const selectedTags: Set<string> = new Set();
         let searchQuery: string = ""; // 検索クエリの状態管理を追加
+
+        // 検索フィルターの表示/非表示切り替え
+        if (toggleSearchFilterBtn && searchFilterContainer) {
+            toggleSearchFilterBtn.addEventListener("click", (): void => {
+                const isVisible: boolean = searchFilterContainer.style.display !== "none";
+
+                if (!isVisible) {
+                    // 検索フィルターを表示
+                    searchFilterContainer.style.display = "block";
+                    toggleSearchFilterBtn.setAttribute("aria-expanded", "true");
+                    toggleSearchFilterBtn.className = toggleSearchFilterBtn.className.replace(
+                        "is-outlined",
+                        "is-info",
+                    );
+                    if (!toggleSearchFilterBtn.className.includes("is-info")) {
+                        toggleSearchFilterBtn.className += " is-info";
+                    }
+                } else {
+                    // 検索フィルターを非表示
+                    searchFilterContainer.style.display = "none";
+                    toggleSearchFilterBtn.setAttribute("aria-expanded", "false");
+                    toggleSearchFilterBtn.className = toggleSearchFilterBtn.className.replace(
+                        "is-info",
+                        "is-outlined",
+                    );
+                    if (!toggleSearchFilterBtn.className.includes("is-outlined")) {
+                        toggleSearchFilterBtn.className += " is-outlined";
+                    }
+                }
+            });
+        }
 
         // タグフィルターの表示/非表示切り替え
         if (toggleTagFilterBtn && tagFilterContainer) {
@@ -590,6 +624,7 @@ if (typeof document !== "undefined") {
                 if (!isVisible) {
                     // フィルターを表示
                     tagFilterContainer.style.display = "block";
+                    toggleTagFilterBtn.setAttribute("aria-expanded", "true");
                     toggleTagFilterBtn.className = toggleTagFilterBtn.className.replace(
                         "is-outlined",
                         "is-info",
@@ -600,6 +635,7 @@ if (typeof document !== "undefined") {
                 } else {
                     // フィルターを非表示
                     tagFilterContainer.style.display = "none";
+                    toggleTagFilterBtn.setAttribute("aria-expanded", "false");
                     toggleTagFilterBtn.className = toggleTagFilterBtn.className.replace(
                         "is-info",
                         "is-outlined",
@@ -675,11 +711,6 @@ if (typeof document !== "undefined") {
         // 選択をクリアする関数
         const clearSelection = (): void => {
             selectedTags.clear();
-            searchQuery = ""; // 検索クエリもクリア
-
-            if (searchInput) {
-                searchInput.value = ""; // 検索入力欄をクリア
-            }
 
             for (const btn of Array.from(tagFilterButtons)) {
                 btn.classList.remove("active");
@@ -734,13 +765,20 @@ if (typeof document !== "undefined") {
                     }
                 }
 
-                // 検索フィルタリングの判定
+                // 検索フィルタリングの判定（スペース区切りでアンド条件）
                 let passesSearchFilter = true;
                 if (normalizedSearchQuery !== "") {
                     const searchContent: string | null = entry.getAttribute("data-search-content");
                     if (searchContent) {
                         const normalizedContent = normalizeString(searchContent);
-                        passesSearchFilter = normalizedContent.includes(normalizedSearchQuery);
+                        // スペースで分割し、空文字列を除外
+                        const keywords: string[] = normalizedSearchQuery
+                            .split(/\s+/)
+                            .filter((k: string): boolean => k.length > 0);
+                        // 全てのキーワードが含まれているかチェック（AND条件）
+                        passesSearchFilter = keywords.every((keyword: string): boolean =>
+                            normalizedContent.includes(keyword),
+                        );
                     } else {
                         passesSearchFilter = false;
                     }

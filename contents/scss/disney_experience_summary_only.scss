@@ -485,17 +485,29 @@
         }
     }
 
-    .search-input-wrapper {
-        display: inline-block;
-        margin-left: 1rem;
-        margin-right: 0.5rem;
-    }
+    .search-filter {
+        display: none;
+        padding: 1rem;
+        background-color: #f5f5f5;
+        border-radius: 8px;
+        border: 1px solid #dbdbdb;
 
-    #search-input {
-        width: 200px;
+        &.is-visible {
+            display: block;
+        }
+
+        #search-input {
+            width: 100%;
+            max-width: 400px;
+        }
     }
 
     .tag-filter {
+        padding: 1rem;
+        background-color: #f5f5f5;
+        border-radius: 8px;
+        border: 1px solid #dbdbdb;
+
         .tag-filter-buttons {
             display: flex;
             flex-wrap: wrap;

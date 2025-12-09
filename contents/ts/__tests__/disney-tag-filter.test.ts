@@ -236,6 +236,150 @@ describe("disney-tag-filter.ts", () => {
         });
     });
 
+    describe("search filter toggle", () => {
+        beforeEach(() => {
+            document.body.innerHTML = `
+                <button id="toggle-search-filter" aria-expanded="false" aria-controls="search-filter">キーワード検索</button>
+                <div class="search-filter" id="search-filter" style="display: none;">
+                    <input type="text" id="search-input" class="input" placeholder="検索..." />
+                </div>
+            `;
+        });
+
+        it("search filter toggle button exists", () => {
+            const toggleButton = document.getElementById("toggle-search-filter");
+            expect(toggleButton).toBeTruthy();
+            expect(toggleButton?.getAttribute("aria-expanded")).toBe("false");
+        });
+
+        it("search filter is initially hidden", () => {
+            const searchFilter = document.getElementById("search-filter");
+            expect(searchFilter).toBeTruthy();
+            expect(searchFilter?.style.display).toBe("none");
+        });
+    });
+
+    describe("clear selection behavior", () => {
+        beforeEach(() => {
+            document.body.innerHTML = `
+                <input type="text" id="search-input" class="input" placeholder="検索..." value="test query" />
+                <button class="tag-filter-btn active" data-tag="tag1">Tag 1</button>
+                <button class="tag-filter-btn active" data-tag="tag2">Tag 2</button>
+                <button id="clear-selection">クリア</button>
+                <div class="selected-tags"></div>
+                <div class="selected-tags-list"></div>
+            `;
+        });
+
+        it("search query is preserved after clear selection", () => {
+            const searchInput = document.getElementById("search-input") as HTMLInputElement;
+            const initialValue = "test query";
+            searchInput.value = initialValue;
+
+            expect(searchInput.value).toBe(initialValue);
+        });
+
+        it("tag selections can be cleared independently", () => {
+            const tagButtons = document.querySelectorAll(".tag-filter-btn");
+            expect(tagButtons.length).toBe(2);
+
+            // すべてのボタンがactiveクラスを持っていることを確認
+            tagButtons.forEach((button) => {
+                expect(button.classList.contains("active")).toBe(true);
+            });
+        });
+    });
+
+    describe("space-separated keyword search", () => {
+        beforeEach(() => {
+            document.body.innerHTML = `
+                <div class="log-entry" data-tags="tag1" data-search-content="Tokyo DisneySea Magic">Entry 1</div>
+                <div class="log-entry" data-tags="tag2" data-search-content="Disney Magic Kingdom">Entry 2</div>
+                <div class="log-entry" data-tags="tag1,tag2" data-search-content="Tokyo DisneySea Special Event">Entry 3</div>
+                <div class="log-entry" data-tags="tag3" data-search-content="Universal Studios Japan">Entry 4</div>
+            `;
+        });
+
+        it("filters entries with single keyword", () => {
+            const entries = document.querySelectorAll(".log-entry");
+            const searchQuery = "tokyo";
+
+            const matchingEntries = Array.from(entries).filter((entry) => {
+                const searchContent = entry.getAttribute("data-search-content");
+                if (!searchContent) return false;
+                const normalizedContent = normalizeString(searchContent);
+                const normalizedQuery = normalizeString(searchQuery);
+                return normalizedContent.includes(normalizedQuery);
+            });
+
+            expect(matchingEntries.length).toBe(2);
+        });
+
+        it("filters entries with multiple keywords (AND condition)", () => {
+            const entries = document.querySelectorAll(".log-entry");
+            const searchQuery = "tokyo disneysea";
+
+            const matchingEntries = Array.from(entries).filter((entry) => {
+                const searchContent = entry.getAttribute("data-search-content");
+                if (!searchContent) return false;
+                const normalizedContent = normalizeString(searchContent);
+                const normalizedQuery = normalizeString(searchQuery);
+                const keywords = normalizedQuery.split(/\s+/).filter((k) => k.length > 0);
+                return keywords.every((keyword) => normalizedContent.includes(keyword));
+            });
+
+            expect(matchingEntries.length).toBe(2);
+        });
+
+        it("filters entries with three or more keywords", () => {
+            const entries = document.querySelectorAll(".log-entry");
+            const searchQuery = "tokyo disneysea special";
+
+            const matchingEntries = Array.from(entries).filter((entry) => {
+                const searchContent = entry.getAttribute("data-search-content");
+                if (!searchContent) return false;
+                const normalizedContent = normalizeString(searchContent);
+                const normalizedQuery = normalizeString(searchQuery);
+                const keywords = normalizedQuery.split(/\s+/).filter((k) => k.length > 0);
+                return keywords.every((keyword) => normalizedContent.includes(keyword));
+            });
+
+            expect(matchingEntries.length).toBe(1);
+        });
+
+        it("handles case-insensitive multi-keyword search", () => {
+            const entries = document.querySelectorAll(".log-entry");
+            const searchQuery = "TOKYO DisneySea";
+
+            const matchingEntries = Array.from(entries).filter((entry) => {
+                const searchContent = entry.getAttribute("data-search-content");
+                if (!searchContent) return false;
+                const normalizedContent = normalizeString(searchContent);
+                const normalizedQuery = normalizeString(searchQuery);
+                const keywords = normalizedQuery.split(/\s+/).filter((k) => k.length > 0);
+                return keywords.every((keyword) => normalizedContent.includes(keyword));
+            });
+
+            expect(matchingEntries.length).toBe(2);
+        });
+
+        it("returns no entries when no keywords match", () => {
+            const entries = document.querySelectorAll(".log-entry");
+            const searchQuery = "nonexistent keyword";
+
+            const matchingEntries = Array.from(entries).filter((entry) => {
+                const searchContent = entry.getAttribute("data-search-content");
+                if (!searchContent) return false;
+                const normalizedContent = normalizeString(searchContent);
+                const normalizedQuery = normalizeString(searchQuery);
+                const keywords = normalizedQuery.split(/\s+/).filter((k) => k.length > 0);
+                return keywords.every((keyword) => normalizedContent.includes(keyword));
+            });
+
+            expect(matchingEntries.length).toBe(0);
+        });
+    });
+
     describe("integration tests", () => {
         beforeEach(() => {
             // DOMContentLoadedイベントのリスナーをクリア

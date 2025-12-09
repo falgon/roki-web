@@ -88,17 +88,13 @@
     <div class="favorite-category mt-4">
         <h3 class="title is-4 mb-3">
             <i class="fas fa-wand-magic-sparkles"></i>体験歴
-            <!-- 検索入力欄を追加 -->
-            <div class="search-input-wrapper">
-                <input
-                    type="text"
-                    id="search-input"
-                    class="input is-small"
-                    placeholder="検索..."
-                    aria-label="体験歴を検索"
-                />
-            </div>
-            <button class="button is-small is-info ml-2" id="toggle-tag-filter">
+            <button class="button is-small is-info ml-2" id="toggle-search-filter" aria-expanded="false" aria-controls="search-filter">
+                <span class="icon">
+                    <i class="fas fa-search"></i>
+                </span>
+                <span>キーワード検索</span>
+            </button>
+            <button class="button is-small is-info ml-2" id="toggle-tag-filter" aria-expanded="false" aria-controls="tag-filter">
                 <span class="icon">
                     <i class="fas fa-filter"></i>
                 </span>
@@ -117,6 +113,15 @@
                 </div>
             </span>
         </h3>
+        <div class="search-filter mb-3" id="search-filter" style="display: none;">
+            <input
+                type="text"
+                id="search-input"
+                class="input is-small"
+                placeholder="検索..."
+                aria-label="体験歴を検索"
+            />
+        </div>
         <div class="tag-filter mb-3" style="display: none;">
             <div class="tag-filter-buttons">
                 $for(unique-tags)$
