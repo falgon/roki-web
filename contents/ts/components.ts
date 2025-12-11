@@ -121,9 +121,24 @@ let isSetupDone = false;
 
 const setupOnce = (): void => {
     if (!isSetupDone) {
-        setupNavBar();
-        setupModal();
-        isSetupDone = true;
+        if (document.readyState === "loading") {
+            // DOM読み込み中の場合は DOMContentLoaded を待つ
+            const handler = (): void => {
+                if (!isSetupDone) {
+                    // 二重チェック
+                    setupNavBar();
+                    setupModal();
+                    isSetupDone = true;
+                }
+                document.removeEventListener("DOMContentLoaded", handler);
+            };
+            document.addEventListener("DOMContentLoaded", handler);
+        } else {
+            // DOMが既に読み込まれている場合はすぐに実行
+            setupNavBar();
+            setupModal();
+            isSetupDone = true;
+        }
     }
 };
 
