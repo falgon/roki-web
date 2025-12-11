@@ -306,7 +306,7 @@ $button-small-font-size-mobile: 0.65rem;
                     height: 1em !important;
                     flex-shrink: 0 !important;
                     line-height: 1 !important;
-                    margin-right: 0.3rem !important;
+                    margin-right: 0.5rem !important;
                     transition: none !important;
                     
                     i, svg {
@@ -932,14 +932,14 @@ $button-small-font-size-mobile: 0.65rem;
                     .icon {
                         width: 0.9em !important;
                         height: 0.9em !important;
-                        margin-right: 0.2rem !important;
+                        margin-right: 0.3rem !important;
                     }
                     
                     .icon i {
                         font-size: 1em !important;
                     }
                 }
-                
+
                 .logs-summary-total-inline {
                     padding: 0.3rem 0.5rem;
                     
@@ -968,6 +968,16 @@ $button-small-font-size-mobile: 0.65rem;
                         }
                     }
                 }
+            }
+            
+            // タグフィルターボタンのモバイル対応
+            .tag-filter-buttons .tag-filter-btn .icon {
+                margin-right: 0.2rem !important;
+            }
+
+            // クリアボタンのモバイル対応
+            #clear-selection .icon {
+                margin-right: 0.2rem !important;
             }
         }
         
