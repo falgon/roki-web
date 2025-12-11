@@ -116,10 +116,32 @@ if (typeof window !== "undefined") {
     ).initStringFormat = initStringFormat;
 }
 
-if (typeof document !== "undefined") {
-    document.addEventListener("DOMContentLoaded", () => {
+// セットアップの重複実行を防ぐフラグ
+let isSetupDone = false;
+
+const setupOnce = (): void => {
+    if (!isSetupDone) {
         setupNavBar();
         setupModal();
+        isSetupDone = true;
+    }
+};
+
+// 後方互換性のためのエイリアス
+const addEventNavBar = setupOnce;
+const addEventModal = setupOnce;
+
+// グローバルスコープに公開
+if (typeof window !== "undefined") {
+    (window as typeof window & { addEventNavBar: typeof addEventNavBar }).addEventNavBar =
+        addEventNavBar;
+    (window as typeof window & { addEventModal: typeof addEventModal }).addEventModal =
+        addEventModal;
+}
+
+if (typeof document !== "undefined") {
+    document.addEventListener("DOMContentLoaded", () => {
+        setupOnce(); // setupNavBar() と setupModal() の代わりに setupOnce() を呼び出す
     });
     initStringFormat();
 }

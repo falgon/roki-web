@@ -508,6 +508,7 @@ $button-small-font-size-mobile: 0.65rem;
         background-color: #f5f5f5;
         border-radius: 8px;
         border: 1px solid #dbdbdb;
+        text-align: center;
 
         &.is-visible {
             display: block;
@@ -516,6 +517,8 @@ $button-small-font-size-mobile: 0.65rem;
         #search-input {
             width: 100%;
             max-width: 400px;
+            margin: 0 auto;
+            display: block;
         }
     }
 
