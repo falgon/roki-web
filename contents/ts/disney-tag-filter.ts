@@ -12,6 +12,11 @@ const escapeHtml = (text: string): string => {
     return div.innerHTML;
 };
 
+// 文字列を正規化する関数（検索やフィルタリングに使用）
+const normalizeString = (str: string): string => {
+    return str.toLowerCase().trim();
+};
+
 // ローディング機能
 const initLoadingScreen = (): void => {
     const loadingOverlay: HTMLElement | null = document.getElementById("loading-overlay");
@@ -536,14 +541,133 @@ declare global {
     }
 }
 
+// 検索フィルターの表示/非表示切り替えを初期化
+const initializeSearchFilter = (
+    toggleSearchFilterBtn: HTMLElement,
+    searchFilterContainer: HTMLElement,
+): void => {
+    toggleSearchFilterBtn.addEventListener("click", (): void => {
+        const isVisible: boolean = searchFilterContainer.style.display !== "none";
+
+        if (!isVisible) {
+            // 検索フィルターを表示
+            searchFilterContainer.style.display = "block";
+            toggleSearchFilterBtn.setAttribute("aria-expanded", "true");
+            toggleSearchFilterBtn.classList.remove("is-outlined");
+            toggleSearchFilterBtn.classList.add("is-info");
+        } else {
+            // 検索フィルターを非表示
+            searchFilterContainer.style.display = "none";
+            toggleSearchFilterBtn.setAttribute("aria-expanded", "false");
+            toggleSearchFilterBtn.classList.remove("is-info");
+            toggleSearchFilterBtn.classList.add("is-outlined");
+        }
+    });
+};
+
+// タグフィルターの表示/非表示切り替えを初期化
+const initializeTagFilter = (
+    toggleTagFilterBtn: HTMLElement,
+    tagFilterContainer: HTMLElement,
+): void => {
+    toggleTagFilterBtn.addEventListener("click", (): void => {
+        const isVisible: boolean = tagFilterContainer.style.display !== "none";
+
+        if (!isVisible) {
+            // フィルターを表示
+            tagFilterContainer.style.display = "block";
+            toggleTagFilterBtn.setAttribute("aria-expanded", "true");
+            toggleTagFilterBtn.classList.remove("is-outlined");
+            toggleTagFilterBtn.classList.add("is-info");
+        } else {
+            // フィルターを非表示
+            tagFilterContainer.style.display = "none";
+            toggleTagFilterBtn.setAttribute("aria-expanded", "false");
+            toggleTagFilterBtn.classList.remove("is-info");
+            toggleTagFilterBtn.classList.add("is-outlined");
+        }
+    });
+};
+
+// タグフィルターボタンのイベントハンドラーを初期化
+const initializeTagButtons = (
+    tagFilterButtons: HTMLCollectionOf<Element>,
+    selectedTags: Set<string>,
+    updateSelectedTagsDisplay: () => void,
+    filterLogEntries: () => void,
+): void => {
+    for (const button of Array.from(tagFilterButtons)) {
+        button.addEventListener("click", function (this: TagButton): void {
+            const clickedTag: string | null = this.getAttribute("data-tag");
+
+            if (clickedTag) {
+                if (this.classList.contains("active")) {
+                    // タグの選択を解除
+                    this.classList.remove("active");
+                    this.classList.add("is-outlined");
+                    selectedTags.delete(clickedTag);
+                } else {
+                    // タグを選択
+                    this.classList.add("active");
+                    this.classList.remove("is-outlined");
+                    selectedTags.add(clickedTag);
+                }
+
+                updateSelectedTagsDisplay();
+                filterLogEntries();
+            }
+        });
+    }
+};
+
+// クリアボタンのイベントハンドラーを初期化
+const initializeClearButton = (
+    clearSelectionBtn: HTMLElement,
+    clearSelection: () => void,
+    filterLogEntries: () => void,
+): void => {
+    clearSelectionBtn.addEventListener("click", (): void => {
+        clearSelection();
+        filterLogEntries();
+    });
+};
+
+// 検索入力のイベントハンドラーを初期化
+const initializeSearchInput = (
+    searchInput: HTMLInputElement,
+    searchQueryRef: { value: string },
+    filterLogEntries: () => void,
+): void => {
+    // デバウンス用のタイマー
+    let searchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+
+    searchInput.addEventListener("input", (event: Event): void => {
+        const target = event.target as HTMLInputElement;
+        searchQueryRef.value = target.value;
+
+        // デバウンス処理
+        if (searchDebounceTimer) {
+            clearTimeout(searchDebounceTimer);
+        }
+
+        searchDebounceTimer = setTimeout((): void => {
+            filterLogEntries();
+            searchDebounceTimer = null;
+        }, 300); // 300ms の遅延
+    });
+};
+
 // Expose functions to global scope for testing
 if (typeof window !== "undefined") {
     (
         window as typeof window & {
             escapeHtml: typeof escapeHtml;
+            normalizeString: typeof normalizeString;
             initLoadingScreen: typeof initLoadingScreen;
         }
     ).escapeHtml = escapeHtml;
+    (window as typeof window & { normalizeString: typeof normalizeString }).normalizeString =
+        normalizeString;
     (window as typeof window & { initLoadingScreen: typeof initLoadingScreen }).initLoadingScreen =
         initLoadingScreen;
 }
@@ -567,76 +691,20 @@ if (typeof document !== "undefined") {
         const tagFilterContainer: HTMLElement | null = document.getElementsByClassName(
             "tag-filter",
         )[0] as HTMLElement;
+        const toggleSearchFilterBtn: HTMLElement | null =
+            document.getElementById("toggle-search-filter");
+        const searchFilterContainer: HTMLElement | null = document.getElementById("search-filter");
+        const searchInput: HTMLInputElement | null = document.getElementById(
+            "search-input",
+        ) as HTMLInputElement;
 
         const selectedTags: Set<string> = new Set();
-
-        // タグフィルターの表示/非表示切り替え
-        if (toggleTagFilterBtn && tagFilterContainer) {
-            toggleTagFilterBtn.addEventListener("click", (): void => {
-                const isVisible: boolean = tagFilterContainer.style.display !== "none";
-
-                if (!isVisible) {
-                    // フィルターを表示
-                    tagFilterContainer.style.display = "block";
-                    toggleTagFilterBtn.className = toggleTagFilterBtn.className.replace(
-                        "is-outlined",
-                        "is-info",
-                    );
-                    if (!toggleTagFilterBtn.className.includes("is-info")) {
-                        toggleTagFilterBtn.className += " is-info";
-                    }
-                } else {
-                    // フィルターを非表示
-                    tagFilterContainer.style.display = "none";
-                    toggleTagFilterBtn.className = toggleTagFilterBtn.className.replace(
-                        "is-info",
-                        "is-outlined",
-                    );
-                    if (!toggleTagFilterBtn.className.includes("is-outlined")) {
-                        toggleTagFilterBtn.className += " is-outlined";
-                    }
-                    // フィルターを閉じる際は選択をクリア
-                    clearSelection();
-                    filterLogEntries();
-                }
-            });
-        }
-
-        // タグフィルターボタンのクリックイベント
-        for (const button of Array.from(tagFilterButtons)) {
-            button.addEventListener("click", function (this: TagButton): void {
-                const clickedTag: string | null = this.getAttribute("data-tag");
-
-                if (clickedTag) {
-                    if (this.classList.contains("active")) {
-                        // タグの選択を解除
-                        this.classList.remove("active");
-                        this.classList.add("is-outlined");
-                        selectedTags.delete(clickedTag);
-                    } else {
-                        // タグを選択
-                        this.classList.add("active");
-                        this.classList.remove("is-outlined");
-                        selectedTags.add(clickedTag);
-                    }
-
-                    updateSelectedTagsDisplay();
-                    filterLogEntries();
-                }
-            });
-        }
-
-        // クリアボタンのクリックイベント
-        if (clearSelectionBtn) {
-            clearSelectionBtn.addEventListener("click", (): void => {
-                clearSelection();
-                filterLogEntries();
-            });
-        }
+        const searchQueryRef = { value: "" }; // 検索クエリの状態管理（参照渡し用）
 
         // 選択をクリアする関数
         const clearSelection = (): void => {
             selectedTags.clear();
+
             for (const btn of Array.from(tagFilterButtons)) {
                 btn.classList.remove("active");
                 btn.classList.add("is-outlined");
@@ -669,34 +737,53 @@ if (typeof document !== "undefined") {
 
         // ログエントリのフィルタリング関数
         const filterLogEntries = (): void => {
+            const normalizedSearchQuery = normalizeString(searchQueryRef.value);
+
             for (const entry of Array.from(logEntries)) {
                 const htmlEntry = entry as HTMLElement;
-                if (selectedTags.size === 0) {
-                    // タグが選択されていない場合はすべて表示
-                    htmlEntry.style.display = "block";
-                    entry.classList.remove("filtered-out");
-                } else {
-                    // 選択されたタグに基づいてフィルタリング（かつ条件）
+
+                // タグフィルタリングの判定
+                let passesTagFilter = true;
+                if (selectedTags.size > 0) {
                     const entryTags: string | null = entry.getAttribute("data-tags");
                     if (entryTags) {
                         const entryTagArray: string[] = entryTags
                             .split(",")
                             .map((tag: string): string => tag.trim());
-                        const hasAllSelectedTags: boolean = Array.from(selectedTags).every(
+                        passesTagFilter = Array.from(selectedTags).every(
                             (selectedTag: string): boolean => entryTagArray.includes(selectedTag),
                         );
-
-                        if (hasAllSelectedTags) {
-                            htmlEntry.style.display = "block";
-                            entry.classList.remove("filtered-out");
-                        } else {
-                            htmlEntry.style.display = "none";
-                            entry.classList.add("filtered-out");
-                        }
                     } else {
-                        htmlEntry.style.display = "none";
-                        entry.classList.add("filtered-out");
+                        passesTagFilter = false;
                     }
+                }
+
+                // 検索フィルタリングの判定（スペース区切りでアンド条件）
+                let passesSearchFilter = true;
+                if (normalizedSearchQuery !== "") {
+                    const searchContent: string | null = entry.getAttribute("data-search-content");
+                    if (searchContent) {
+                        const normalizedContent = normalizeString(searchContent);
+                        // スペースで分割し、空文字列を除外
+                        const keywords: string[] = normalizedSearchQuery
+                            .split(/\s+/)
+                            .filter((k: string): boolean => k.length > 0);
+                        // 全てのキーワードが含まれているかチェック（AND条件）
+                        passesSearchFilter = keywords.every((keyword: string): boolean =>
+                            normalizedContent.includes(keyword),
+                        );
+                    } else {
+                        passesSearchFilter = false;
+                    }
+                }
+
+                // 両方の条件を満たす場合のみ表示（AND条件）
+                if (passesTagFilter && passesSearchFilter) {
+                    htmlEntry.style.display = "block";
+                    entry.classList.remove("filtered-out");
+                } else {
+                    htmlEntry.style.display = "none";
+                    entry.classList.add("filtered-out");
                 }
             }
 
@@ -710,17 +797,48 @@ if (typeof document !== "undefined") {
                 (entry: Element): boolean => !entry.classList.contains("filtered-out"),
             );
 
-            for (const [index, entry] of visibleEntries.entries()) {
+            visibleEntries.forEach((entry: Element, index: number) => {
                 const htmlEntry = entry as HTMLElement;
                 htmlEntry.style.opacity = "0";
                 htmlEntry.style.transform = "translateY(20px)";
 
-                setTimeout((): void => {
-                    htmlEntry.style.transition = "opacity 0.3s ease, transform 0.3s ease";
-                    htmlEntry.style.opacity = "1";
-                    htmlEntry.style.transform = "translateY(0)";
-                }, index * 50);
-            }
+                requestAnimationFrame(() => {
+                    setTimeout((): void => {
+                        htmlEntry.style.transition = "opacity 0.3s ease, transform 0.3s ease";
+                        htmlEntry.style.opacity = "1";
+                        htmlEntry.style.transform = "translateY(0)";
+                    }, index * 50);
+                });
+            });
         };
+
+        // 各機能の初期化
+        if (toggleSearchFilterBtn && searchFilterContainer) {
+            initializeSearchFilter(toggleSearchFilterBtn, searchFilterContainer);
+        }
+
+        if (toggleTagFilterBtn && tagFilterContainer) {
+            initializeTagFilter(toggleTagFilterBtn, tagFilterContainer);
+        }
+
+        initializeTagButtons(
+            tagFilterButtons,
+            selectedTags,
+            updateSelectedTagsDisplay,
+            filterLogEntries,
+        );
+
+        if (clearSelectionBtn) {
+            initializeClearButton(clearSelectionBtn, clearSelection, filterLogEntries);
+        }
+
+        if (searchInput) {
+            initializeSearchInput(searchInput, searchQueryRef, filterLogEntries);
+        } else {
+            // プレビューモードでのみログ出力
+            if (window.isPreview === true) {
+                console.warn("Search input element not found");
+            }
+        }
     });
 }
