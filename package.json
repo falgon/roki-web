@@ -14,7 +14,7 @@
         "@fortawesome/fontawesome-svg-core": "^7.1.0",
         "@fortawesome/free-brands-svg-icons": "^7.1.0",
         "@fortawesome/free-solid-svg-icons": "^7.1.0",
-        "@vitest/coverage-v8": "^4.0.15",
+        "@vitest/coverage-v8": "^4.0.16",
         "@vitest/ui": "^4.0.15",
         "happy-dom": "^20.0.11",
         "katex": "^0.16.27",
