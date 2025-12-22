@@ -1,32 +1,34 @@
 {-# LANGUAGE DeriveGeneric, DuplicateRecordFields, OverloadedStrings #-}
 module Rules.DisneyExperienceSummary (rules) where
 
-import           Control.Monad.Reader         (asks)
-import           Control.Monad.Trans          (MonadTrans (..))
-import           Data.Aeson                   (encode)
-import qualified Data.ByteString.Lazy         as BL
+import           Control.Monad.Reader             (asks)
+import           Control.Monad.Trans              (MonadTrans (..))
+import           Data.Aeson                       (encode)
+import qualified Data.ByteString.Lazy             as BL
 import           Data.Disney.Experience.Generator
-import           Data.List                    (foldl', nub, sort, sortBy,
-                                               sortOn)
-import qualified Data.Map                     as M
-import           Data.Ord                     (comparing)
-import           Data.String                  (IsString (..))
-import           Data.Time                    (defaultTimeLocale, formatTime)
-import           Dhall                        (FromDhall, Generic, Natural,
-                                               auto, input)
+import           Data.List                        (foldl', nub, sort, sortBy,
+                                                   sortOn)
+import qualified Data.Map                         as M
+import           Data.Ord                         (comparing)
+import           Data.String                      (IsString (..))
+import           Data.Time                        (defaultTimeLocale,
+                                                   formatTime)
+import           Dhall                            (FromDhall, Generic, Natural,
+                                                   auto, input)
 import           Hakyll
-import           System.Directory             (getModificationTime,
-                                               listDirectory)
-import           System.FilePath              (joinPath, (</>))
-import           System.FilePath.Posix        (takeBaseName)
+import           System.Directory                 (getModificationTime,
+                                                   listDirectory)
+import           System.FilePath                  (joinPath, (</>))
+import           System.FilePath.Posix            (takeBaseName)
 
-import           Config                       (contentsRoot, readerOptions)
-import           Contexts                     (siteCtx)
-import           Media.SVG                    (mermaidTransform)
+import           Config                           (contentsRoot, readerOptions)
+import           Contexts                         (siteCtx)
+import           Media.SVG                        (mermaidTransform)
 import           Rules.PageType
-import           Text.Pandoc.Walk             (walkM)
-import           Utils                        (mconcatM, modifyExternalLinkAttr)
-import qualified Vendor.FontAwesome           as FA
+import           Text.Pandoc.Walk                 (walkM)
+import           Utils                            (mconcatM,
+                                                   modifyExternalLinkAttr)
+import qualified Vendor.FontAwesome               as FA
 
 data Favorite = Favorite {
     text     :: String

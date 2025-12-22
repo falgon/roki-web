@@ -1,5 +1,4 @@
-{-# LANGUAGE DeriveGeneric     #-}
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE DeriveGeneric, OverloadedStrings #-}
 
 -- | Disney体験記録のデータ構造を定義するモジュール
 -- このモジュールは、Disney体験記録の型定義とJSON変換のためのインスタンスを提供する
@@ -44,11 +43,11 @@ instance FromJSON SNSLinks where
 
 -- | 体験記録の構造
 data ExperienceRecord = ExperienceRecord
-    { title        :: Text
-    , date         :: Day
-    , disneyTags   :: [Text]
-    , snsLinks     :: SNSLinks
-    , aiGenerated  :: Bool
+    { title       :: Text
+    , date        :: Day
+    , disneyTags  :: [Text]
+    , snsLinks    :: SNSLinks
+    , aiGenerated :: Bool
     } deriving (Eq, Show, Generic)
 
 instance ToJSON ExperienceRecord where
