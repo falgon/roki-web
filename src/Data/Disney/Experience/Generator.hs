@@ -10,16 +10,16 @@ module Data.Disney.Experience.Generator
     , parseLogMetadata
     ) where
 
-import           Control.Monad           (forM)
-import           Data.Aeson              (encode)
-import qualified Data.ByteString.Lazy    as BL
+import           Control.Monad          (forM)
+import           Data.Aeson             (encode)
+import qualified Data.ByteString.Lazy   as BL
 import           Data.Disney.Experience
-import           Data.List               (foldl', sort)
-import qualified Data.Map.Strict         as M
-import           Data.Maybe              (fromMaybe)
-import           Data.Text               (Text)
-import qualified Data.Text               as T
-import           Data.Time               (Day, defaultTimeLocale, parseTimeM)
+import           Data.List              (foldl', sort)
+import qualified Data.Map.Strict        as M
+import           Data.Maybe             (fromMaybe)
+import           Data.Text              (Text)
+import qualified Data.Text              as T
+import           Data.Time              (Day, defaultTimeLocale, parseTimeM)
 import           Hakyll
 
 -- | メタデータから体験記録をパースする
