@@ -3,25 +3,27 @@
  * タグ訪問頻度を円グラフで表示
  */
 
-import * as d3 from "d3";
-import type { CircleNode, TagStats } from "../types/disney-experience";
 import {
     createCategoricalColorScale,
     createGroup,
     createSVG,
     createTooltip,
     hideTooltip,
-    type SVGConfig,
     showTooltip,
 } from "./base";
 
-/**
- * サークルパッキングの設定
- */
-export interface CirclePackingConfig extends SVGConfig {
-    minRadius: number; // 最小円の半径
-    maxRadius: number; // 最大円の半径
-    padding: number; // 円間の余白
+// D3.jsのグローバル変数を宣言
+declare const d3: any;
+
+declare global {
+    /**
+     * サークルパッキングの設定
+     */
+    interface CirclePackingConfig extends SVGConfig {
+        minRadius: number; // 最小円の半径
+        maxRadius: number; // 最大円の半径
+        padding: number; // 円間の余白
+    }
 }
 
 /**
@@ -39,12 +41,12 @@ const defaultCirclePackingConfig: CirclePackingConfig = {
 /**
  * サークルパッキングクラス
  */
-export class CirclePacking {
+class CirclePacking {
     private container: string;
     private config: CirclePackingConfig;
-    private svg: d3.Selection<SVGSVGElement, unknown, HTMLElement, unknown> | null = null;
-    private tooltip: d3.Selection<HTMLDivElement, unknown, HTMLElement, unknown> | null = null;
-    private zoom: d3.ZoomBehavior<SVGSVGElement, unknown> | null = null;
+    private svg: any = null;
+    private tooltip: any = null;
+    private zoom: any = null;
 
     /**
      * コンストラクタ
@@ -297,3 +299,6 @@ export class CirclePacking {
         }
     }
 }
+
+// テスト環境用のexport
+export { CirclePacking };

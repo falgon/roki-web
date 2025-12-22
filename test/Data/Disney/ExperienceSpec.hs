@@ -4,7 +4,6 @@ module Data.Disney.ExperienceSpec (spec) where
 
 import           Data.Aeson             (decode, encode)
 import           Data.Disney.Experience
-import           Data.Text              (Text)
 import           Data.Time              (fromGregorian)
 import           Test.Hspec
 
@@ -12,24 +11,24 @@ spec :: Spec
 spec = do
     describe "SNSLinks" $ do
         it "SNSLinksをJSONにエンコード/デコードできる" $ do
-            let snsLinks = SNSLinks
+            let snsLinks1 = SNSLinks
                     { youtube   = ["https://youtube.com/1"]
                     , instagram = ["https://instagram.com/1"]
                     , x         = ["https://x.com/1"]
                     , note      = ["https://note.com/1"]
                     }
-            let encoded = encode snsLinks
-            decode encoded `shouldBe` Just snsLinks
+            let encoded = encode snsLinks1
+            decode encoded `shouldBe` Just snsLinks1
 
         it "空のSNSLinksをJSONにエンコード/デコードできる" $ do
-            let snsLinks = SNSLinks
+            let snsLinks2 = SNSLinks
                     { youtube   = []
                     , instagram = []
                     , x         = []
                     , note      = []
                     }
-            let encoded = encode snsLinks
-            decode encoded `shouldBe` Just snsLinks
+            let encoded = encode snsLinks2
+            decode encoded `shouldBe` Just snsLinks2
 
     describe "ExperienceRecord" $ do
         it "ExperienceRecordをJSONにエンコード/デコードできる" $ do
@@ -103,20 +102,20 @@ spec = do
 
     describe "TagStats" $ do
         it "TagStatsをJSONにエンコード/デコードできる" $ do
-            let tagStats = TagStats
+            let tagStats1 = TagStats
                     { tags =
                         [ TagCount "TDL" 45
                         , TagCount "TDS" 30
                         , TagCount "DHM" 10
                         ]
                     }
-            let encoded = encode tagStats
-            decode encoded `shouldBe` Just tagStats
+            let encoded = encode tagStats1
+            decode encoded `shouldBe` Just tagStats1
 
         it "空のTagStatsをエンコード/デコードできる" $ do
-            let tagStats = TagStats { tags = [] }
-            let encoded = encode tagStats
-            decode encoded `shouldBe` Just tagStats
+            let tagStats2 = TagStats { tags = [] }
+            let encoded = encode tagStats2
+            decode encoded `shouldBe` Just tagStats2
 
     describe "VisualizationData" $ do
         it "VisualizationDataをJSONにエンコード/デコードできる" $ do

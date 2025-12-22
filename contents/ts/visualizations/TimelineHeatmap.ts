@@ -3,24 +3,20 @@
  * GitHub Contributions風のヒートマップを作成
  */
 
-import * as d3 from "d3";
-import type { DailyCount, HeatmapCell, TimeSeriesData } from "../types/disney-experience";
-import {
-    createGroup,
-    createSVG,
-    createTooltip,
-    hideTooltip,
-    type SVGConfig,
-    showTooltip,
-} from "./base";
+import { createGroup, createSVG, createTooltip, hideTooltip, showTooltip } from "./base";
 
-/**
- * ヒートマップの設定
- */
-export interface HeatmapConfig extends SVGConfig {
-    cellSize: number; // セルのサイズ
-    cellPadding: number; // セル間の余白
-    colorRange: [string, string]; // カラーレンジ [最小値の色, 最大値の色]
+// D3.jsのグローバル変数を宣言
+declare const d3: any;
+
+declare global {
+    /**
+     * ヒートマップの設定
+     */
+    interface HeatmapConfig extends SVGConfig {
+        cellSize: number; // セルのサイズ
+        cellPadding: number; // セル間の余白
+        colorRange: [string, string]; // カラーレンジ [最小値の色, 最大値の色]
+    }
 }
 
 /**
@@ -38,11 +34,11 @@ const defaultHeatmapConfig: HeatmapConfig = {
 /**
  * タイムラインヒートマップクラス
  */
-export class TimelineHeatmap {
+class TimelineHeatmap {
     private container: string;
     private config: HeatmapConfig;
-    private svg: d3.Selection<SVGSVGElement, unknown, HTMLElement, unknown> | null = null;
-    private tooltip: d3.Selection<HTMLDivElement, unknown, HTMLElement, unknown> | null = null;
+    private svg: any = null;
+    private tooltip: any = null;
 
     /**
      * コンストラクタ
@@ -270,11 +266,7 @@ export class TimelineHeatmap {
      * @param colorScale カラースケール
      * @param maxCount 最大カウント
      */
-    private addLegend(
-        g: d3.Selection<SVGGElement, unknown, HTMLElement, unknown>,
-        colorScale: d3.ScaleLinear<string, string>,
-        maxCount: number,
-    ): void {
+    private addLegend(g: any, colorScale: any, maxCount: number): void {
         const legendData = [
             { label: "少", value: 0 },
             { label: "", value: maxCount * 0.25 },
@@ -343,3 +335,6 @@ export class TimelineHeatmap {
         }
     }
 }
+
+// テスト環境用のexport
+export { TimelineHeatmap };

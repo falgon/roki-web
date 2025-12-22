@@ -4,8 +4,6 @@ module Data.Disney.Experience.GeneratorSpec (spec) where
 
 import           Data.Disney.Experience
 import           Data.Disney.Experience.Generator
-import qualified Data.Map                         as M
-import           Data.Text                        (Text)
 import           Data.Time                        (fromGregorian)
 import           Test.Hspec
 

@@ -3,15 +3,17 @@
  * 共通ユーティリティ関数とSVG要素の作成を提供
  */
 
-import * as d3 from "d3";
-import type { VisualizationData } from "../types/disney-experience";
+// D3.jsのグローバル変数を宣言
+declare const d3: any;
 
-type VisualizationErrorType = "network" | "timeout" | "http" | "parse";
+declare global {
+    type VisualizationErrorType = "network" | "timeout" | "http" | "parse";
 
-interface VisualizationError extends Error {
-    type: VisualizationErrorType;
-    status?: number;
-    detail?: string;
+    interface VisualizationError extends Error {
+        type: VisualizationErrorType;
+        status?: number;
+        detail?: string;
+    }
 }
 
 const RETRY_DELAYS_MS = [1000, 2000, 4000];
@@ -140,24 +142,26 @@ function wait(ms: number): Promise<void> {
     });
 }
 
-/**
- * SVG要素の基本設定
- */
-export interface SVGConfig {
-    width: number; // SVGの幅
-    height: number; // SVGの高さ
-    margin: {
-        top: number;
-        right: number;
-        bottom: number;
-        left: number;
-    };
+declare global {
+    /**
+     * SVG要素の基本設定
+     */
+    interface SVGConfig {
+        width: number; // SVGの幅
+        height: number; // SVGの高さ
+        margin: {
+            top: number;
+            right: number;
+            bottom: number;
+            left: number;
+        };
+    }
 }
 
 /**
  * デフォルトのSVG設定
  */
-export const defaultSVGConfig: SVGConfig = {
+const defaultSVGConfig: SVGConfig = {
     width: 800,
     height: 600,
     margin: { top: 20, right: 20, bottom: 30, left: 40 },
@@ -168,7 +172,7 @@ export const defaultSVGConfig: SVGConfig = {
  * @param url JSONファイルのURL
  * @returns 可視化データのPromise
  */
-export async function loadVisualizationData(url: string): Promise<VisualizationData> {
+async function loadVisualizationData(url: string): Promise<VisualizationData> {
     try {
         const response = await fetchWithRetry(url);
         try {
@@ -193,10 +197,7 @@ export async function loadVisualizationData(url: string): Promise<VisualizationD
  * @param config SVG設定
  * @returns D3セレクション
  */
-export function createSVG(
-    container: string,
-    config: SVGConfig = defaultSVGConfig,
-): d3.Selection<SVGSVGElement, unknown, HTMLElement, unknown> {
+function createSVG(container: string, config: SVGConfig = defaultSVGConfig): any {
     // 既存のSVGを削除
     d3.select(container).select("svg").remove();
 
@@ -217,10 +218,7 @@ export function createSVG(
  * @param config SVG設定
  * @returns グループセレクション
  */
-export function createGroup(
-    svg: d3.Selection<SVGSVGElement, unknown, HTMLElement, unknown>,
-    config: SVGConfig = defaultSVGConfig,
-): d3.Selection<SVGGElement, unknown, HTMLElement, unknown> {
+function createGroup(svg: any, config: SVGConfig = defaultSVGConfig): any {
     return svg
         .append("g")
         .attr("transform", `translate(${config.margin.left}, ${config.margin.top})`);
@@ -231,9 +229,7 @@ export function createGroup(
  * @param container コンテナのセレクタ
  * @returns ツールチップのD3セレクション
  */
-export function createTooltip(
-    container: string,
-): d3.Selection<HTMLDivElement, unknown, HTMLElement, unknown> {
+function createTooltip(container: string): any {
     // 既存のツールチップを削除
     d3.select(container).select(".visualization-tooltip").remove();
 
@@ -259,11 +255,7 @@ export function createTooltip(
  * @param content 表示するコンテンツ
  * @param event マウスイベント
  */
-export function showTooltip(
-    tooltip: d3.Selection<HTMLDivElement, unknown, HTMLElement, unknown>,
-    content: string,
-    event: MouseEvent,
-): void {
+function showTooltip(tooltip: any, content: string, event: MouseEvent): void {
     tooltip
         .html(content)
         .style("visibility", "visible")
@@ -275,9 +267,7 @@ export function showTooltip(
  * ツールチップを非表示にする
  * @param tooltip ツールチップのD3セレクション
  */
-export function hideTooltip(
-    tooltip: d3.Selection<HTMLDivElement, unknown, HTMLElement, unknown>,
-): void {
+function hideTooltip(tooltip: any): void {
     tooltip.style("visibility", "hidden");
 }
 
@@ -287,7 +277,7 @@ export function hideTooltip(
  * @param aspectRatio アスペクト比 (高さ / 幅)
  * @returns SVG設定
  */
-export function calculateResponsiveSize(containerSelector: string, aspectRatio = 0.75): SVGConfig {
+function calculateResponsiveSize(containerSelector: string, aspectRatio = 0.75): SVGConfig {
     const container = document.querySelector(containerSelector);
     if (!container) {
         return defaultSVGConfig;
@@ -314,7 +304,7 @@ export function calculateResponsiveSize(containerSelector: string, aspectRatio =
  * @param domain ドメイン配列
  * @returns D3カラースケール
  */
-export function createCategoricalColorScale(domain: string[]): d3.ScaleOrdinal<string, string> {
+function createCategoricalColorScale(domain: string[]): any {
     return d3.scaleOrdinal<string>().domain(domain).range(d3.schemeCategory10);
 }
 
@@ -324,10 +314,10 @@ export function createCategoricalColorScale(domain: string[]): d3.ScaleOrdinal<s
  * @param range カラーレンジ
  * @returns D3カラースケール
  */
-export function createSequentialColorScale(
+function createSequentialColorScale(
     domain: [number, number],
     range: [string, string] = ["#f0f0f0", "#d62728"],
-): d3.ScaleLinear<string, string> {
+): any {
     return d3.scaleLinear<string>().domain(domain).range(range);
 }
 
@@ -336,7 +326,7 @@ export function createSequentialColorScale(
  * @param container コンテナのセレクタ
  * @param message エラーメッセージ
  */
-export function showError(container: string, message: string): void {
+function showError(container: string, message: string): void {
     d3.select(container)
         .append("div")
         .attr("class", "visualization-error")
@@ -346,3 +336,18 @@ export function showError(container: string, message: string): void {
         .style("text-align", "center")
         .text(message);
 }
+
+// テスト環境用のexport
+export {
+    loadVisualizationData,
+    createSVG,
+    createGroup,
+    createTooltip,
+    showTooltip,
+    hideTooltip,
+    calculateResponsiveSize,
+    createCategoricalColorScale,
+    createSequentialColorScale,
+    showError,
+    defaultSVGConfig,
+};

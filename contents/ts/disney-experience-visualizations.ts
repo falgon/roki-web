@@ -3,16 +3,15 @@
  * タイムラインヒートマップとサークルパッキングを初期化
  */
 
-import type { VisualizationData } from "./types/disney-experience";
 import { loadVisualizationData, showError } from "./visualizations/base";
 import { CirclePacking } from "./visualizations/CirclePacking";
 import { TimelineHeatmap } from "./visualizations/TimelineHeatmap";
 
-type VisualizationErrorType = "network" | "timeout" | "http" | "parse";
-
-interface VisualizationErrorInfo {
-    type?: VisualizationErrorType;
-    status?: number;
+declare global {
+    interface VisualizationErrorInfo {
+        type?: VisualizationErrorType;
+        status?: number;
+    }
 }
 
 const DEFAULT_ERROR_MESSAGE = "データの読み込みに失敗しました。ページをリロードしてください。";
