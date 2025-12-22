@@ -5,6 +5,12 @@
     font-style: normal;
 }
 
+// ボタンとバッジの共通サイズ変数
+$button-small-padding-desktop: 0.25em 0.5em;
+$button-small-padding-mobile: 0.2em 0.35em;
+$button-small-font-size-desktop: 0.75rem;
+$button-small-font-size-mobile: 0.65rem;
+
 // ローディング画面のスタイル
 .loading-overlay {
     position: fixed;
@@ -130,6 +136,40 @@
         border-radius: 8px;
     }
 
+    .log-title-row {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+        margin-bottom: 0.5rem;
+        
+        .log-title {
+            flex: 1;
+            min-width: 0;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            margin-bottom: 0;
+        }
+        
+        .ai-generated-badge {
+            flex-shrink: 0;
+            padding: 0.2rem 0.6rem;
+            background: linear-gradient(135deg, #3CAADF 0%, #3e8ed0 100%);
+            color: white;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            white-space: nowrap;
+            
+            i {
+                font-size: 0.75rem;
+            }
+        }
+    }
+
     .log-title {
         font-size: 1.2rem;
         font-weight: bold;
@@ -193,25 +233,6 @@
                 color: #000000;
             }
         }
-        
-        .ai-generated-badge {
-            margin-left: auto;
-            flex-shrink: 0;  // バッジも縮小しないように
-            padding: 0.15rem 0.5rem;
-            background: linear-gradient(135deg, #3CAADF 0%, #3e8ed0 100%);
-            color: white;
-            border-radius: 12px;
-            font-size: 0.7rem;
-            font-weight: 500;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.25rem;
-            box-shadow: 0 2px 4px rgba(60, 170, 223, 0.3);
-            
-            i {
-                font-size: 0.75rem;
-            }
-        }
     }
 
     .log-body {
@@ -259,13 +280,15 @@
             position: relative;
             display: flex;
             align-items: center;
-            flex-wrap: wrap;
+            flex-wrap: nowrap;
+            gap: 0.5rem;
             
-            svg, i:not(.fa-filter) {
+            svg, i:not(.fa-filter, .fa-search) {
                 position: absolute;
                 left: 0;
                 top: 50%;
                 transform: translateY(-50%);
+                flex-shrink: 0;
             }
             
             .button {
@@ -274,13 +297,15 @@
                 line-height: 1 !important;
                 border-width: 1px !important;
                 box-sizing: border-box !important;
-                padding: 0.25em 0.5em !important;
+                padding: $button-small-padding-desktop !important;
                 min-height: 1.8em !important;
-                font-size: 0.75rem !important;
+                font-size: $button-small-font-size-desktop !important;
                 transition: color 0.3s ease, background-color 0.3s ease !important;
                 background-color: transparent !important;
                 border-color: #3e8ed0 !important;
                 color: #3e8ed0 !important;
+                flex-shrink: 0 !important;
+                white-space: nowrap !important;
                 
                 &:hover {
                     color: #fff !important;
@@ -296,7 +321,8 @@
                     height: 1em !important;
                     flex-shrink: 0 !important;
                     line-height: 1 !important;
-                    margin-right: 0.3rem !important;
+                    margin-left: 0.1rem !important;
+                    margin-right: 0.35rem !important;
                     transition: none !important;
                     
                     i, svg {
@@ -325,6 +351,11 @@
                     transition: none !important;
                 }
             }
+
+            .button .icon i {
+                display: inline-block !important;
+                font-size: inherit !important;
+            }
             
             // 体験歴の統計情報バッジ
             .logs-summary-total-inline {
@@ -335,6 +366,8 @@
                 display: inline-flex;
                 align-items: center;
                 box-shadow: 0 3px 8px rgba(8, 57, 99, 0.3);
+                flex-shrink: 1;
+                min-width: 0;
                 
                 .logs-summary-stats {
                     display: flex;
@@ -485,7 +518,32 @@
         }
     }
 
+    .search-filter {
+        display: none;
+        padding: 1rem;
+        background-color: #f5f5f5;
+        border-radius: 8px;
+        border: 1px solid #dbdbdb;
+        text-align: center;
+
+        &.is-visible {
+            display: block;
+        }
+
+        #search-input {
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto;
+            display: block;
+        }
+    }
+
     .tag-filter {
+        padding: 1rem;
+        background-color: #f5f5f5;
+        border-radius: 8px;
+        border: 1px solid #dbdbdb;
+
         .tag-filter-buttons {
             display: flex;
             flex-wrap: wrap;
@@ -837,8 +895,115 @@
     }
 }
 
+// 超小型画面用メディアクエリ（max-width: 640px）
+@media screen and (max-width: 640px) {
+    .disney-experience-summary {
+        .favorite-category {
+            h3 {
+                .logs-summary-total-inline {
+                    padding: 0.25rem 0.3rem;
+                    font-size: 0.5rem;
+                    
+                    .logs-summary-stats {
+                        .stat-total {
+                            .total-value {
+                                font-size: 0.6rem;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// タブレット用メディアクエリ（769px - 1024px）
+@media screen and (min-width: 769px) and (max-width: 1024px) {
+    .disney-experience-summary {
+        .favorite-category {
+            h3 {
+                .button {
+                    font-size: 0.7rem !important;
+                }
+                
+                .logs-summary-total-inline {
+                    padding: 0.35rem 0.65rem;
+                }
+            }
+        }
+    }
+}
+
 @media screen and (max-width: 768px) {
     .disney-experience-summary {
+        .log-title-row {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+
+        .favorite-category {
+            h3 {
+                gap: 0.3rem;
+                
+                .button {
+                    padding: $button-small-padding-mobile !important;
+                    font-size: $button-small-font-size-mobile !important;
+                    min-height: 1.6em !important;
+                    
+                    .icon {
+                        width: 0.9em !important;
+                        height: 0.9em !important;
+                        margin-left: 0.15rem !important;
+                        margin-right: 0.3rem !important;
+                    }
+                    
+                    .icon i {
+                        font-size: 1em !important;
+                    }
+                }
+
+                .logs-summary-total-inline {
+                    padding: 0.3rem 0.5rem;
+                    
+                    .logs-summary-stats {
+                        flex-direction: column;
+                        gap: 0.1rem;
+                    }
+                    
+                    .stat-total {
+                        .total-label {
+                            font-size: 0.6rem;
+                        }
+                        
+                        .total-value {
+                            font-size: 0.75rem;
+                        }
+                    }
+                    
+                    .stat-updated {
+                        .updated-label {
+                            font-size: 0.55rem;
+                        }
+                        
+                        .updated-value {
+                            font-size: 0.6rem;
+                        }
+                    }
+                }
+            }
+            
+            // タグフィルターボタンのモバイル対応
+            .tag-filter-buttons .tag-filter-btn .icon {
+                margin-right: 0.2rem !important;
+            }
+
+            // クリアボタンのモバイル対応
+            #clear-selection .icon {
+                margin-right: 0.2rem !important;
+            }
+        }
+        
         .favorites-section {
             .column:first-child,
             .column:nth-child(2) {
