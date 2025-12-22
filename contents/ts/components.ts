@@ -116,10 +116,47 @@ if (typeof window !== "undefined") {
     ).initStringFormat = initStringFormat;
 }
 
+// セットアップの重複実行を防ぐフラグ
+let isSetupDone = false;
+
+const setupOnce = (): void => {
+    if (!isSetupDone) {
+        if (document.readyState === "loading") {
+            // DOM読み込み中の場合は DOMContentLoaded を待つ
+            const handler = (): void => {
+                if (!isSetupDone) {
+                    // 二重チェック
+                    setupNavBar();
+                    setupModal();
+                    isSetupDone = true;
+                }
+                document.removeEventListener("DOMContentLoaded", handler);
+            };
+            document.addEventListener("DOMContentLoaded", handler);
+        } else {
+            // DOMが既に読み込まれている場合はすぐに実行
+            setupNavBar();
+            setupModal();
+            isSetupDone = true;
+        }
+    }
+};
+
+// 後方互換性のためのエイリアス
+const addEventNavBar = setupOnce;
+const addEventModal = setupOnce;
+
+// グローバルスコープに公開
+if (typeof window !== "undefined") {
+    (window as typeof window & { addEventNavBar: typeof addEventNavBar }).addEventNavBar =
+        addEventNavBar;
+    (window as typeof window & { addEventModal: typeof addEventModal }).addEventModal =
+        addEventModal;
+}
+
 if (typeof document !== "undefined") {
     document.addEventListener("DOMContentLoaded", () => {
-        setupNavBar();
-        setupModal();
+        setupOnce(); // setupNavBar() と setupModal() の代わりに setupOnce() を呼び出す
     });
     initStringFormat();
 }
