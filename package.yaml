@@ -110,5 +110,8 @@ tests:
         - pandoc-types
         - pandoc
         - directory
+        - aeson
+        - containers
+        - tagsoup
         - filepath
         - temporary

@@ -1,27 +1,32 @@
 {-# LANGUAGE DeriveGeneric, DuplicateRecordFields, OverloadedStrings #-}
 module Rules.DisneyExperienceSummary (rules) where
 
-import           Control.Monad.Reader  (asks)
-import           Control.Monad.Trans   (MonadTrans (..))
-import           Data.List             (foldl', nub, sort, sortBy, sortOn)
-import qualified Data.Map              as M
-import           Data.Ord              (comparing)
-import           Data.String           (IsString (..))
-import           Data.Time             (defaultTimeLocale, formatTime)
-import           Dhall                 (FromDhall, Generic, Natural, auto,
-                                        input)
+import           Control.Monad.Reader         (asks)
+import           Control.Monad.Trans          (MonadTrans (..))
+import           Data.Aeson                   (encode)
+import qualified Data.ByteString.Lazy         as BL
+import           Data.Disney.Experience.Generator
+import           Data.List                    (foldl', nub, sort, sortBy,
+                                               sortOn)
+import qualified Data.Map                     as M
+import           Data.Ord                     (comparing)
+import           Data.String                  (IsString (..))
+import           Data.Time                    (defaultTimeLocale, formatTime)
+import           Dhall                        (FromDhall, Generic, Natural,
+                                               auto, input)
 import           Hakyll
-import           System.Directory      (getModificationTime, listDirectory)
-import           System.FilePath       (joinPath, (</>))
-import           System.FilePath.Posix (takeBaseName)
+import           System.Directory             (getModificationTime,
+                                               listDirectory)
+import           System.FilePath              (joinPath, (</>))
+import           System.FilePath.Posix        (takeBaseName)
 
-import           Config                (contentsRoot, readerOptions)
-import           Contexts              (siteCtx)
-import           Media.SVG             (mermaidTransform)
+import           Config                       (contentsRoot, readerOptions)
+import           Contexts                     (siteCtx)
+import           Media.SVG                    (mermaidTransform)
 import           Rules.PageType
-import           Text.Pandoc.Walk      (walkM)
-import           Utils                 (mconcatM, modifyExternalLinkAttr)
-import qualified Vendor.FontAwesome    as FA
+import           Text.Pandoc.Walk             (walkM)
+import           Utils                        (mconcatM, modifyExternalLinkAttr)
+import qualified Vendor.FontAwesome           as FA
 
 data Favorite = Favorite {
     text     :: String
@@ -270,6 +275,14 @@ rules = do
             route $ gsubRoute "contents/" $ const ""
             compile copyFileCompiler
 
+        -- JSON可視化データの生成
+        create [fromFilePath "data/disney-experience-visualization.json"] $ do
+            route idRoute
+            compile $ do
+                disneyLogs <- loadAllSnapshots disneyLogsPattern disneyExperienceSummarySnapshot :: Compiler [Item String]
+                vizData <- generateVisualizationData disneyLogs
+                makeItem $ BL.toStrict $ encode vizData
+
         match disneyExperienceSummaryJPPath $ do
             route $ gsubRoute (contentsRoot </> "pages/") (const mempty)
             compile $ do
@@ -290,7 +303,7 @@ rules = do
                   , pure $ constField "font_path" "../fonts/waltograph42.otf"
                   , pure $ constField "is_preview" (show isPreview)
                   , pure $ listField "additional-css" (field "css" (return . itemBody)) (return $ map (\css -> Item (fromString css) css) ["../style/disney_experience_summary_only.css"])
-                  , pure $ listField "additional-js" (field "js" (return . itemBody)) (return $ map (\js -> Item (fromString js) js) ["../js/disney-tag-filter.js"])
+                  , pure $ listField "additional-js" (field "js" (return . itemBody)) (return $ map (\js -> Item (fromString js) js) ["../js/disney-tag-filter.js", "../js/disney-experience-visualizations.js"])
                   , pure siteCtx
                   , pure defaultContext
                   , constField "about-body"
