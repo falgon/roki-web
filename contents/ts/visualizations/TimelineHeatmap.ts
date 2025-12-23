@@ -34,7 +34,7 @@ const defaultHeatmapConfig: HeatmapConfig = {
 /**
  * タイムラインヒートマップクラス
  */
-class TimelineHeatmap {
+export class TimelineHeatmap {
     private container: string;
     private config: HeatmapConfig;
     private svg: any = null;
@@ -335,6 +335,3 @@ class TimelineHeatmap {
         }
     }
 }
-
-// テスト環境用のexport
-export { TimelineHeatmap };

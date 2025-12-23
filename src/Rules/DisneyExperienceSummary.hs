@@ -305,7 +305,7 @@ rules = do
                   , pure $ constField "font_path" "../fonts/waltograph42.otf"
                   , pure $ constField "is_preview" (show isPreview)
                   , pure $ listField "additional-css" (field "css" (return . itemBody)) (return $ map (\css -> Item (fromString css) css) ["../style/disney_experience_summary_only.css"])
-                  , pure $ listField "additional-js" (field "js" (return . itemBody)) (return $ map (\js -> Item (fromString js) js) ["../js/disney-tag-filter.js", "../js/disney-experience-visualizations.js"])
+                 , pure $ listField "additional-js" (field "js" (return . itemBody)) (return $ map (\js -> Item (fromString js) js) ["https://d3js.org/d3.v7.min.js", "../js/disney-tag-filter.js", "../js/disney-experience-visualizations.js"])
                   , pure siteCtx
                   , pure defaultContext
                   , constField "about-body"

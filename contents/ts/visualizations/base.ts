@@ -172,7 +172,7 @@ const defaultSVGConfig: SVGConfig = {
  * @param url JSONファイルのURL
  * @returns 可視化データのPromise
  */
-async function loadVisualizationData(url: string): Promise<VisualizationData> {
+export async function loadVisualizationData(url: string): Promise<VisualizationData> {
     try {
         const response = await fetchWithRetry(url);
         try {
@@ -197,7 +197,7 @@ async function loadVisualizationData(url: string): Promise<VisualizationData> {
  * @param config SVG設定
  * @returns D3セレクション
  */
-function createSVG(container: string, config: SVGConfig = defaultSVGConfig): any {
+export function createSVG(container: string, config: SVGConfig = defaultSVGConfig): any {
     // 既存のSVGを削除
     d3.select(container).select("svg").remove();
 
@@ -218,7 +218,7 @@ function createSVG(container: string, config: SVGConfig = defaultSVGConfig): any
  * @param config SVG設定
  * @returns グループセレクション
  */
-function createGroup(svg: any, config: SVGConfig = defaultSVGConfig): any {
+export function createGroup(svg: any, config: SVGConfig = defaultSVGConfig): any {
     return svg
         .append("g")
         .attr("transform", `translate(${config.margin.left}, ${config.margin.top})`);
@@ -229,7 +229,7 @@ function createGroup(svg: any, config: SVGConfig = defaultSVGConfig): any {
  * @param container コンテナのセレクタ
  * @returns ツールチップのD3セレクション
  */
-function createTooltip(container: string): any {
+export function createTooltip(container: string): any {
     // 既存のツールチップを削除
     d3.select(container).select(".visualization-tooltip").remove();
 
@@ -255,7 +255,7 @@ function createTooltip(container: string): any {
  * @param content 表示するコンテンツ
  * @param event マウスイベント
  */
-function showTooltip(tooltip: any, content: string, event: MouseEvent): void {
+export function showTooltip(tooltip: any, content: string, event: MouseEvent): void {
     tooltip
         .html(content)
         .style("visibility", "visible")
@@ -267,7 +267,7 @@ function showTooltip(tooltip: any, content: string, event: MouseEvent): void {
  * ツールチップを非表示にする
  * @param tooltip ツールチップのD3セレクション
  */
-function hideTooltip(tooltip: any): void {
+export function hideTooltip(tooltip: any): void {
     tooltip.style("visibility", "hidden");
 }
 
@@ -277,7 +277,7 @@ function hideTooltip(tooltip: any): void {
  * @param aspectRatio アスペクト比 (高さ / 幅)
  * @returns SVG設定
  */
-function calculateResponsiveSize(containerSelector: string, aspectRatio = 0.75): SVGConfig {
+export function calculateResponsiveSize(containerSelector: string, aspectRatio = 0.75): SVGConfig {
     const container = document.querySelector(containerSelector);
     if (!container) {
         return defaultSVGConfig;
@@ -304,7 +304,7 @@ function calculateResponsiveSize(containerSelector: string, aspectRatio = 0.75):
  * @param domain ドメイン配列
  * @returns D3カラースケール
  */
-function createCategoricalColorScale(domain: string[]): any {
+export function createCategoricalColorScale(domain: string[]): any {
     return d3.scaleOrdinal<string>().domain(domain).range(d3.schemeCategory10);
 }
 
@@ -314,7 +314,7 @@ function createCategoricalColorScale(domain: string[]): any {
  * @param range カラーレンジ
  * @returns D3カラースケール
  */
-function createSequentialColorScale(
+export function createSequentialColorScale(
     domain: [number, number],
     range: [string, string] = ["#f0f0f0", "#d62728"],
 ): any {
@@ -326,7 +326,7 @@ function createSequentialColorScale(
  * @param container コンテナのセレクタ
  * @param message エラーメッセージ
  */
-function showError(container: string, message: string): void {
+export function showError(container: string, message: string): void {
     d3.select(container)
         .append("div")
         .attr("class", "visualization-error")
@@ -336,18 +336,3 @@ function showError(container: string, message: string): void {
         .style("text-align", "center")
         .text(message);
 }
-
-// テスト環境用のexport
-export {
-    loadVisualizationData,
-    createSVG,
-    createGroup,
-    createTooltip,
-    showTooltip,
-    hideTooltip,
-    calculateResponsiveSize,
-    createCategoricalColorScale,
-    createSequentialColorScale,
-    showError,
-    defaultSVGConfig,
-};

@@ -120,8 +120,6 @@ async function initializeVisualizations(): Promise<void> {
         console.error("サークルパッキングの描画中にエラーが発生しました:", error);
         showError("#circle-packing", resolveErrorMessage(error));
     }
-
-    console.log("Disney Experience可視化の初期化が完了しました");
 }
 
 /**

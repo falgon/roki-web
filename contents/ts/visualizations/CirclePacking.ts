@@ -41,7 +41,7 @@ const defaultCirclePackingConfig: CirclePackingConfig = {
 /**
  * サークルパッキングクラス
  */
-class CirclePacking {
+export class CirclePacking {
     private container: string;
     private config: CirclePackingConfig;
     private svg: any = null;
@@ -299,6 +299,3 @@ class CirclePacking {
         }
     }
 }
-
-// テスト環境用のexport
-export { CirclePacking };

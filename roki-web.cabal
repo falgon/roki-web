@@ -120,6 +120,7 @@ library
     , safe-exceptions
     , stack
     , tagsoup
+    , temporary
     , text
     , time
     , transformers

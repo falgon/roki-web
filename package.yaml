@@ -52,6 +52,7 @@ library:
       - containers
       - basic-prelude
       - directory
+      - temporary
 
 executables:
     site:
