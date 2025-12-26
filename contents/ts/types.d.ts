@@ -8,6 +8,7 @@ declare global {
      */
     interface VisualizationData {
         timeSeries: TimeSeriesData;
+        yearlyTimeSeries?: YearlyTimeSeriesData[];
         tagStats: TagStats;
     }
 
@@ -15,6 +16,15 @@ declare global {
      * 時系列データ
      */
     interface TimeSeriesData {
+        daily: DailyCount[];
+    }
+
+    /**
+     * 年度別時系列データ
+     * Haskellバックエンドの出力形式に対応
+     */
+    interface YearlyTimeSeriesData {
+        year: number;
         daily: DailyCount[];
     }
 

@@ -9,6 +9,7 @@ module Data.Disney.Experience
     , DailyCount (..)
     , TagStats (..)
     , TagCount (..)
+    , YearData (..)
     , VisualizationData (..)
     ) where
 
@@ -125,19 +126,39 @@ instance FromJSON TagStats where
     parseJSON = withObject "TagStats" $ \v -> TagStats
         <$> v .: "tags"
 
+-- | 年度別データの構造
+data YearData = YearData
+    { yearNumber  :: Int
+    , yearlyDaily :: [DailyCount]
+    } deriving (Eq, Show, Generic)
+
+instance ToJSON YearData where
+    toJSON (YearData year daily) = object
+        [ "year"  .= year
+        , "daily" .= daily
+        ]
+
+instance FromJSON YearData where
+    parseJSON = withObject "YearData" $ \v -> YearData
+        <$> v .: "year"
+        <*> v .: "daily"
+
 -- | 可視化データの全体構造
 data VisualizationData = VisualizationData
-    { timeSeries :: TimeSeriesData
-    , tagStats   :: TagStats
+    { timeSeries       :: TimeSeriesData
+    , tagStats         :: TagStats
+    , yearlyTimeSeries :: [YearData]
     } deriving (Eq, Show, Generic)
 
 instance ToJSON VisualizationData where
-    toJSON (VisualizationData ts tg) = object
-        [ "timeSeries" .= ts
-        , "tagStats"   .= tg
+    toJSON (VisualizationData ts tg yt) = object
+        [ "timeSeries"       .= ts
+        , "tagStats"         .= tg
+        , "yearlyTimeSeries" .= yt
         ]
 
 instance FromJSON VisualizationData where
     parseJSON = withObject "VisualizationData" $ \v -> VisualizationData
         <$> v .: "timeSeries"
         <*> v .: "tagStats"
+        <*> v .: "yearlyTimeSeries"

@@ -7,6 +7,7 @@ module Data.Disney.Experience.Generator
     ( generateVisualizationData
     , aggregateDailyData
     , aggregateTagData
+    , aggregateByYear
     , parseLogMetadata
     ) where
 
@@ -19,7 +20,8 @@ import qualified Data.Map.Strict        as M
 import           Data.Maybe             (fromMaybe)
 import           Data.Text              (Text)
 import qualified Data.Text              as T
-import           Data.Time              (Day, defaultTimeLocale, parseTimeM)
+import           Data.Time              (Day, defaultTimeLocale, parseTimeM,
+                                         toGregorian)
 import           Hakyll
 
 -- | メタデータから体験記録をパースする
@@ -72,6 +74,15 @@ aggregateTagData records =
         sortedTags = sort $ M.keys tagCountMap
     in map (\t -> TagCount t (tagCountMap M.! t)) sortedTags
 
+-- | 年度別にデータを集約
+aggregateByYear :: [ExperienceRecord] -> [YearData]
+aggregateByYear records =
+    let yearGrouped = M.fromListWith (++) [(getYear $ date rec, [rec]) | rec <- records]
+        sortedYears = sort $ M.keys yearGrouped
+    in map (\y -> YearData y (aggregateDailyData (yearGrouped M.! y))) sortedYears
+  where
+    getYear day = let (y, _, _) = toGregorian day in fromInteger y
+
 -- | 可視化データを生成
 generateVisualizationData :: [Item a] -> Compiler VisualizationData
 generateVisualizationData items = do
@@ -82,6 +93,7 @@ generateVisualizationData items = do
     let validRecords = [rec | Just rec <- records]
         dailyData = aggregateDailyData validRecords
         tagData = aggregateTagData validRecords
+        yearlyData = aggregateByYear validRecords
 
         timeSeriesData = TimeSeriesData { daily = dailyData }
         tagStatsData = TagStats { tags = tagData }
@@ -89,6 +101,7 @@ generateVisualizationData items = do
     return VisualizationData
         { timeSeries = timeSeriesData
         , tagStats = tagStatsData
+        , yearlyTimeSeries = yearlyData
         }
 
 -- | JSONファイルとして保存

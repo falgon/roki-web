@@ -32,6 +32,12 @@ const defaultHeatmapConfig: HeatmapConfig = {
 };
 
 /**
+ * 年度別データの型定義
+ * グローバル型YearlyTimeSeriesDataを利用
+ */
+type YearData = YearlyTimeSeriesData;
+
+/**
  * タイムラインヒートマップクラス
  */
 export class TimelineHeatmap {
@@ -39,6 +45,9 @@ export class TimelineHeatmap {
     private config: HeatmapConfig;
     private svg: any = null;
     private tooltip: any = null;
+    private allYearData: YearData[] = [];
+    private currentYear: number = 0;
+    private yearSelectorHandler: ((event: Event) => void) | null = null;
 
     /**
      * コンストラクタ
@@ -52,9 +61,34 @@ export class TimelineHeatmap {
 
     /**
      * ヒートマップを描画する
+     * @param data 時系列データまたは年度別データ配列
+     */
+    public render(data: TimeSeriesData | YearData[]): void {
+        // 年度別データ配列の場合
+        if (Array.isArray(data)) {
+            this.allYearData = data;
+            if (data.length === 0) {
+                return;
+            }
+
+            // 年度選択UIをセットアップ
+            this.setupYearSelector();
+
+            // 最新年度のデータで描画
+            const latestYear = Math.max(...data.map((d) => d.year));
+            this.renderForYear(latestYear);
+            return;
+        }
+
+        // 単一データの場合（既存の動作を維持）
+        this.renderSingleData(data);
+    }
+
+    /**
+     * 単一データでヒートマップを描画する（既存の動作）
      * @param data 時系列データ
      */
-    public render(data: TimeSeriesData): void {
+    private renderSingleData(data: TimeSeriesData): void {
         // データを変換
         const heatmapData = this.transformData(data.daily);
 
@@ -319,6 +353,72 @@ export class TimelineHeatmap {
             .attr("font-size", "9px")
             .attr("fill", "#666")
             .text((d) => d.label);
+    }
+
+    /**
+     * 年度選択UIをセットアップする
+     */
+    private setupYearSelector(): void {
+        const selector = document.getElementById("timeline-year-select") as HTMLSelectElement;
+        if (!selector) {
+            return;
+        }
+
+        // 既存のイベントリスナーを削除（メモリリーク対策）
+        if (this.yearSelectorHandler) {
+            selector.removeEventListener("change", this.yearSelectorHandler);
+        }
+
+        // セレクタをクリア
+        selector.innerHTML = "";
+
+        // 年度を降順でソート
+        const years = this.allYearData.map((d) => d.year).sort((a, b) => b - a);
+
+        // オプションを追加
+        years.forEach((year) => {
+            const option = document.createElement("option");
+            option.value = year.toString();
+            option.textContent = `${year}年`;
+            selector.appendChild(option);
+        });
+
+        // 新しいイベントリスナーを設定
+        this.yearSelectorHandler = (event: Event) => {
+            const selectedYear = parseInt((event.target as HTMLSelectElement).value, 10);
+            this.renderForYear(selectedYear);
+        };
+        selector.addEventListener("change", this.yearSelectorHandler);
+    }
+
+    /**
+     * 指定された年度のヒートマップを描画する
+     * @param year 年度
+     */
+    private renderForYear(year: number): void {
+        // 既存のSVGをクリア
+        if (this.svg) {
+            this.svg.remove();
+            this.svg = null;
+        }
+
+        // 指定された年度のデータを取得
+        const yearData = this.allYearData.find((d) => d.year === year);
+        if (!yearData) {
+            return;
+        }
+
+        // 現在の年度を保存
+        this.currentYear = year;
+
+        // セレクタの値を更新
+        const selector = document.getElementById("timeline-year-select") as HTMLSelectElement;
+        if (selector) {
+            selector.value = year.toString();
+        }
+
+        // データを描画
+        this.renderSingleData({ daily: yearData.daily });
     }
 
     /**

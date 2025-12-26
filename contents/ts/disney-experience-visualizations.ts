@@ -83,20 +83,28 @@ async function initializeVisualizations(): Promise<void> {
     }
 
     try {
-        if (data.timeSeries.daily.length === 0) {
+        // タイムラインヒートマップの設定
+        const heatmapConfig = {
+            width: 800,
+            height: 150,
+            margin: { top: 20, right: 20, bottom: 20, left: 60 },
+            cellSize: 15,
+            cellPadding: 2,
+        };
+
+        // yearlyTimeSeriesがある場合は年度選択付きで描画
+        if (data.yearlyTimeSeries && data.yearlyTimeSeries.length > 0) {
+            const heatmap = new TimelineHeatmap("#timeline-heatmap", heatmapConfig);
+            heatmap.render(data.yearlyTimeSeries);
+        } else if (data.timeSeries.daily.length === 0) {
+            // データが空の場合
             showPlaceholder(
                 "#timeline-heatmap",
                 "データがありません。体験記録を追加してください。",
             );
         } else {
-            // タイムラインヒートマップを初期化
-            const heatmap = new TimelineHeatmap("#timeline-heatmap", {
-                width: 800,
-                height: 150,
-                margin: { top: 20, right: 20, bottom: 20, left: 60 },
-                cellSize: 15,
-                cellPadding: 2,
-            });
+            // 後方互換性: yearlyTimeSeriesがない場合はtimeSeriesを使用
+            const heatmap = new TimelineHeatmap("#timeline-heatmap", heatmapConfig);
             heatmap.render(data.timeSeries);
         }
     } catch (error) {

@@ -715,6 +715,32 @@ $button-small-font-size-mobile: 0.65rem;
             padding: 1.5rem;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 
+            .timeline-header {
+                display: flex;
+                align-items: center;
+                gap: 1rem;
+                flex-wrap: wrap;
+
+                .subtitle {
+                    margin-bottom: 0;
+                }
+
+                .year-selector {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.5rem;
+
+                    label {
+                        margin: 0;
+                        white-space: nowrap;
+                    }
+
+                    select {
+                        min-width: 120px;
+                    }
+                }
+            }
+
             h4 {
                 color: #083963;
                 margin-bottom: 1rem;
@@ -1040,6 +1066,23 @@ $button-small-font-size-mobile: 0.65rem;
             flex-direction: column;
             align-items: flex-start;
             gap: 0.5rem;
+        }
+
+        .visualization-section {
+            .visualization-container {
+                .timeline-header {
+                    flex-direction: column;
+                    align-items: flex-start;
+
+                    .year-selector {
+                        width: 100%;
+
+                        .select {
+                            width: 100%;
+                        }
+                    }
+                }
+            }
         }
 
         .favorite-category {

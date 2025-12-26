@@ -126,6 +126,7 @@ spec = do
                     , tagStats = TagStats
                         { tags = [TagCount "TDL" 45, TagCount "TDS" 30]
                         }
+                    , yearlyTimeSeries = [YearData 2024 [DailyCount (fromGregorian 2024 1 1) 2]]
                     }
             let encoded = encode vizData
             decode encoded `shouldBe` Just vizData
@@ -134,6 +135,7 @@ spec = do
             let vizData = VisualizationData
                     { timeSeries = TimeSeriesData { daily = [] }
                     , tagStats   = TagStats { tags = [] }
+                    , yearlyTimeSeries = []
                     }
             let encoded = encode vizData
             decode encoded `shouldBe` Just vizData

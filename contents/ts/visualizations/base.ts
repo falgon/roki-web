@@ -161,7 +161,7 @@ declare global {
 /**
  * デフォルトのSVG設定
  */
-const defaultSVGConfig: SVGConfig = {
+export const defaultSVGConfig: SVGConfig = {
     width: 800,
     height: 600,
     margin: { top: 20, right: 20, bottom: 30, left: 40 },
