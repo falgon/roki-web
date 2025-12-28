@@ -73,7 +73,7 @@ async function initializeVisualizations(): Promise<void> {
     let data: VisualizationData;
     try {
         // データを読み込む
-        data = await loadVisualizationData("/data/disney-experience-visualization.json");
+        data = await loadVisualizationData("../data/disney-experience-visualization.json");
     } catch (error) {
         console.error("可視化データの読み込みに失敗しました:", error);
         const message = resolveErrorMessage(error);
