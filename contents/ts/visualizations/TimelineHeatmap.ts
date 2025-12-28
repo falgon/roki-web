@@ -46,7 +46,6 @@ export class TimelineHeatmap {
     private svg: any = null;
     private tooltip: any = null;
     private allYearData: YearData[] = [];
-    private currentYear: number = 0;
     private yearSelectorHandler: ((event: Event) => void) | null = null;
 
     /**
@@ -87,10 +86,11 @@ export class TimelineHeatmap {
     /**
      * 単一データでヒートマップを描画する（既存の動作）
      * @param data 時系列データ
+     * @param year 年度（指定された場合は年度全体を表示）
      */
-    private renderSingleData(data: TimeSeriesData): void {
+    private renderSingleData(data: TimeSeriesData, year?: number): void {
         // データを変換
-        const heatmapData = this.transformData(data.daily);
+        const heatmapData = this.transformData(data.daily, year);
 
         // SVGとツールチップを作成
         this.svg = createSVG(this.container, this.config);
@@ -235,34 +235,62 @@ export class TimelineHeatmap {
     /**
      * データを変換する
      * @param dailyData 日別カウントデータ
+     * @param year 年度（指定された場合は年度全体を表示）
      * @returns ヒートマップセルデータ
      */
-    private transformData(dailyData: DailyCount[]): HeatmapCell[] {
+    private transformData(dailyData: DailyCount[], year?: number): HeatmapCell[] {
         // 日付でソート
         const sortedData = dailyData.sort(
             (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
         );
 
-        if (sortedData.length === 0) {
+        // 空データの場合: year未指定時は空配列を返す
+        if (sortedData.length === 0 && year === undefined) {
             return [];
         }
 
-        // 最初の日付と最後の日付を取得
-        const firstDate = new Date(sortedData[0].date);
-        const lastDate = new Date(sortedData[sortedData.length - 1].date);
+        // 開始日と終了日を決定
+        let startDate: Date;
+        let endDate: Date;
 
-        // 最初の日曜日を計算
-        const startDate = new Date(firstDate);
-        startDate.setDate(startDate.getDate() - startDate.getDay());
+        // 年度が指定されている場合は、その年の全日を対象にする
+        if (year !== undefined) {
+            // 年の最初の日（1月1日）
+            const yearStart = new Date(year, 0, 1);
+            // 年の最後の日（12月31日）
+            const yearEnd = new Date(year, 11, 31);
 
-        // 最後の土曜日を計算
-        const endDate = new Date(lastDate);
-        endDate.setDate(endDate.getDate() + (6 - endDate.getDay()));
+            // 最初の日曜日を計算（年の開始日を含む週の日曜日）
+            startDate = new Date(yearStart);
+            startDate.setDate(startDate.getDate() - startDate.getDay());
 
-        // データをMapに変換
+            // 最後の土曜日を計算（年の終了日を含む週の土曜日）
+            endDate = new Date(yearEnd);
+            endDate.setDate(endDate.getDate() + (6 - endDate.getDay()));
+        } else {
+            // 既存のロジック: データの範囲から計算
+            if (sortedData.length === 0) {
+                return [];
+            }
+
+            // 最初の日付と最後の日付を取得
+            const firstDate = new Date(sortedData[0].date);
+            const lastDate = new Date(sortedData[sortedData.length - 1].date);
+
+            // 最初の日曜日を計算
+            startDate = new Date(firstDate);
+            startDate.setDate(startDate.getDate() - startDate.getDay());
+
+            // 最後の土曜日を計算
+            endDate = new Date(lastDate);
+            endDate.setDate(endDate.getDate() + (6 - endDate.getDay()));
+        }
+
+        // データをMapに変換（重複データは合算）
         const dataMap = new Map<string, number>();
         for (const item of sortedData) {
-            dataMap.set(item.date, item.count);
+            const existingCount = dataMap.get(item.date) || 0;
+            dataMap.set(item.date, existingCount + item.count);
         }
 
         // ヒートマップデータを生成
@@ -408,17 +436,14 @@ export class TimelineHeatmap {
             return;
         }
 
-        // 現在の年度を保存
-        this.currentYear = year;
-
         // セレクタの値を更新
         const selector = document.getElementById("timeline-year-select") as HTMLSelectElement;
         if (selector) {
             selector.value = year.toString();
         }
 
-        // データを描画
-        this.renderSingleData({ daily: yearData.daily });
+        // データを描画（年度を指定して全日表示）
+        this.renderSingleData({ daily: yearData.daily }, year);
     }
 
     /**
