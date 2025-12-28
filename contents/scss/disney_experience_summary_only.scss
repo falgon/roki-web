@@ -765,6 +765,34 @@ $button-small-font-size-mobile: 0.65rem;
                 align-items: center;
                 min-height: 200px;
 
+                // タイムラインヒートマップのみ横スクロール対応
+                &#timeline-heatmap {
+                    overflow-x: auto;
+                    overflow-y: hidden;
+                    max-width: 100%;
+                    scroll-behavior: smooth;
+                    -webkit-overflow-scrolling: touch;
+
+                    // Firefox対応
+                    scrollbar-width: thin;
+                    scrollbar-color: #dbdbdb #f5f5f5;
+
+                    // スクロールバーのカスタマイズ（Webkit系）
+                    &::-webkit-scrollbar {
+                        height: 8px;
+                        background: #f5f5f5;
+                    }
+
+                    &::-webkit-scrollbar-thumb {
+                        background: #dbdbdb;
+                        border-radius: 4px;
+
+                        &:hover {
+                            background: #b5b5b5;
+                        }
+                    }
+                }
+
                 svg {
                     max-width: 100%;
                     height: auto;

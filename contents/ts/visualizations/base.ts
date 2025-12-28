@@ -201,12 +201,19 @@ export function createSVG(container: string, config: SVGConfig = defaultSVGConfi
     // 既存のSVGを削除
     d3.select(container).select("svg").remove();
 
-    // 新しいSVGを作成
+    // SVGの実際のサイズを計算
+    const totalWidth = config.width + config.margin.left + config.margin.right;
+    const totalHeight = config.height + config.margin.top + config.margin.bottom;
+
+    // 新しいSVGを作成（ViewBox方式でレスポンシブ対応）
     const svg = d3
         .select(container)
         .append("svg")
-        .attr("width", config.width + config.margin.left + config.margin.right)
-        .attr("height", config.height + config.margin.top + config.margin.bottom)
+        .attr("viewBox", `0 0 ${totalWidth} ${totalHeight}`)
+        .attr("preserveAspectRatio", "xMinYMin meet")
+        .attr("width", "100%")
+        .attr("height", "auto")
+        .style("max-width", `${totalWidth}px`)
         .attr("class", "visualization-svg");
 
     return svg;
