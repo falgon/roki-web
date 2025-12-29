@@ -212,7 +212,6 @@ export function createSVG(container: string, config: SVGConfig = defaultSVGConfi
         .attr("viewBox", `0 0 ${totalWidth} ${totalHeight}`)
         .attr("preserveAspectRatio", "xMinYMin meet")
         .attr("width", "100%")
-        .attr("height", "auto")
         .style("max-width", `${totalWidth}px`)
         .attr("class", "visualization-svg");
 
