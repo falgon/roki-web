@@ -92,6 +92,14 @@ export class TimelineHeatmap {
         // データを変換
         const heatmapData = this.transformData(data.daily, year);
 
+        if (heatmapData.length > 0) {
+            const maxWeekIndex = d3.max(heatmapData, (d) => d.weekIndex) || 0;
+            const requiredWidth =
+                (maxWeekIndex + 1) * (this.config.cellSize + this.config.cellPadding);
+            const width = Math.max(this.config.width, requiredWidth);
+            this.config = { ...this.config, width };
+        }
+
         // SVGとツールチップを作成
         this.svg = createSVG(this.container, this.config);
         this.tooltip = createTooltip(this.container);
