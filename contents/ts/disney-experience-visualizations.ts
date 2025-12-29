@@ -3,6 +3,7 @@
  * タイムラインヒートマップとサークルパッキングを初期化
  */
 
+import { DisneyTabManager } from "./disney-tab-manager";
 import { loadVisualizationData, showError } from "./visualizations/base";
 import { CirclePacking } from "./visualizations/CirclePacking";
 import { TimelineHeatmap } from "./visualizations/TimelineHeatmap";
@@ -72,7 +73,6 @@ function showPlaceholder(container: string, message: string): void {
 async function initializeVisualizations(): Promise<void> {
     let data: VisualizationData;
     try {
-        // データを読み込む
         data = await loadVisualizationData("../data/disney-experience-visualization.json");
     } catch (error) {
         console.error("可視化データの読み込みに失敗しました:", error);
@@ -82,52 +82,56 @@ async function initializeVisualizations(): Promise<void> {
         return;
     }
 
-    try {
-        // タイムラインヒートマップの設定
-        const heatmapConfig = {
-            width: 800,
-            height: 150,
-            margin: { top: 20, right: 20, bottom: 20, left: 60 },
-            cellSize: 15,
-            cellPadding: 2,
-        };
+    // タブマネージャーを初期化
+    const tabManager = new DisneyTabManager(".tabs");
 
-        // yearlyTimeSeriesがある場合は年度選択付きで描画
-        if (data.yearlyTimeSeries && data.yearlyTimeSeries.length > 0) {
-            const heatmap = new TimelineHeatmap("#timeline-heatmap", heatmapConfig);
-            heatmap.render(data.yearlyTimeSeries);
-        } else if (data.timeSeries.daily.length === 0) {
-            // データが空の場合
-            showPlaceholder(
-                "#timeline-heatmap",
-                "データがありません。体験記録を追加してください。",
-            );
-        } else {
-            // 後方互換性: yearlyTimeSeriesがない場合はtimeSeriesを使用
-            const heatmap = new TimelineHeatmap("#timeline-heatmap", heatmapConfig);
-            heatmap.render(data.timeSeries);
-        }
-    } catch (error) {
-        console.error("タイムラインヒートマップの描画中にエラーが発生しました:", error);
-        showError("#timeline-heatmap", resolveErrorMessage(error));
-    }
+    // タイムラインパネルの初期化コールバックを登録
+    tabManager.registerInitCallback("panel-timeline", () => {
+        try {
+            const heatmapConfig = {
+                width: 800,
+                height: 150,
+                margin: { top: 20, right: 20, bottom: 20, left: 60 },
+                cellSize: 15,
+                cellPadding: 2,
+            };
 
-    try {
-        if (data.tagStats.tags.length === 0) {
-            showPlaceholder("#circle-packing", "タグデータがありません。");
-        } else {
-            // サークルパッキングを初期化
-            const circlePacking = new CirclePacking("#circle-packing", {
-                width: 600,
-                height: 600,
-                margin: { top: 20, right: 20, bottom: 20, left: 20 },
-            });
-            circlePacking.render(data.tagStats);
+            if (data.yearlyTimeSeries && data.yearlyTimeSeries.length > 0) {
+                const heatmap = new TimelineHeatmap("#timeline-heatmap", heatmapConfig);
+                heatmap.render(data.yearlyTimeSeries);
+            } else if (data.timeSeries.daily.length === 0) {
+                showPlaceholder(
+                    "#timeline-heatmap",
+                    "データがありません。体験記録を追加してください。",
+                );
+            } else {
+                const heatmap = new TimelineHeatmap("#timeline-heatmap", heatmapConfig);
+                heatmap.render(data.timeSeries);
+            }
+        } catch (error) {
+            console.error("タイムラインヒートマップの描画中にエラーが発生しました:", error);
+            showError("#timeline-heatmap", resolveErrorMessage(error));
         }
-    } catch (error) {
-        console.error("サークルパッキングの描画中にエラーが発生しました:", error);
-        showError("#circle-packing", resolveErrorMessage(error));
-    }
+    });
+
+    // サークルパッキングパネルの初期化コールバックを登録
+    tabManager.registerInitCallback("panel-tags", () => {
+        try {
+            if (data.tagStats.tags.length === 0) {
+                showPlaceholder("#circle-packing", "タグデータがありません。");
+            } else {
+                const circlePacking = new CirclePacking("#circle-packing", {
+                    width: 600,
+                    height: 600,
+                    margin: { top: 20, right: 20, bottom: 20, left: 20 },
+                });
+                circlePacking.render(data.tagStats);
+            }
+        } catch (error) {
+            console.error("サークルパッキングの描画中にエラーが発生しました:", error);
+            showError("#circle-packing", resolveErrorMessage(error));
+        }
+    });
 }
 
 /**
