@@ -132,6 +132,9 @@ async function initializeVisualizations(): Promise<void> {
             showError("#circle-packing", resolveErrorMessage(error));
         }
     });
+
+    // コールバック登録後に初期化を実行
+    tabManager.initialize();
 }
 
 /**

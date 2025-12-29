@@ -36,9 +36,6 @@ export class DisneyTabManager {
 
         // イベントリスナーを設定
         this.setupEventListeners();
-
-        // 初期アクティブタブを初期化
-        this.initializeActiveTab();
     }
 
     /**
@@ -48,6 +45,13 @@ export class DisneyTabManager {
      */
     public registerInitCallback(panelId: string, callback: () => void): void {
         this.initCallbacks.set(panelId, callback);
+    }
+
+    /**
+     * タブマネージャーを初期化（コールバック登録後に呼び出す）
+     */
+    public initialize(): void {
+        this.initializeActiveTab();
     }
 
     /**
