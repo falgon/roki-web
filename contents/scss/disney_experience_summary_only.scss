@@ -822,6 +822,7 @@ $button-small-font-size-mobile: 0.65rem;
             margin-bottom: 1rem;
 
             ul {
+                justify-content: flex-start;  // タブを左寄せ
                 border-bottom-color: rgba(8, 57, 99, 0.2);  // 既存カラーに合わせる
             }
 
