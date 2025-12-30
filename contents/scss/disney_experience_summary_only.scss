@@ -529,6 +529,14 @@ $button-small-font-size-mobile: 0.65rem;
 
         // ボタンのactive/focus時の白色化を防止
         button {
+            // フィルターが閉じている時（aria-expanded="false"）のデフォルト状態
+            // Bulmaの.button.is-outlinedデフォルトスタイルを明示的に上書き
+            &[aria-expanded="false"] {
+                background-color: transparent !important;
+                border-color: #3e8ed0 !important;
+                color: #3e8ed0 !important;
+            }
+
             // aria-expanded属性によるトグル状態のスタイル管理
             // フィルターが開いている時（aria-expanded="true"）のアクティブ状態
             &[aria-expanded="true"] {
