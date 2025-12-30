@@ -1169,10 +1169,11 @@ $button-small-font-size-mobile: 0.65rem;
             .tabs {
                 ul {
                     flex-wrap: wrap;  // 狭い画面でも折り返し
+                    justify-content: flex-start;  // 明示的に左寄せ
                 }
 
                 li {
-                    flex-grow: 1;  // 均等幅
+                    // flex-grow: 1 を削除（タブを左寄せにするため）
 
                     a {
                         justify-content: center;
