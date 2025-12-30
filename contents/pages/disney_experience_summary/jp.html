@@ -85,114 +85,168 @@
         </div>
     </div>
 
-    <div class="favorite-category mt-4">
+    <!-- 体験コーナー統合セクション -->
+    <div class="experience-hub mt-4">
         <h3 class="title is-4 mb-3">
-            <i class="fas fa-wand-magic-sparkles"></i>体験歴
-            <button class="button is-small is-info ml-1" id="toggle-search-filter" aria-expanded="false" aria-controls="search-filter" aria-label="キーワード検索フィルターの表示/非表示">
-                <span class="icon" aria-hidden="true">
-                    <i class="fas fa-search"></i>
-                </span>
-                <span>キーワード検索</span>
-            </button>
-            <button class="button is-small is-info ml-1" id="toggle-tag-filter" aria-expanded="false" aria-controls="tag-filter" aria-label="タグ絞り込みフィルターの表示/非表示">
-                <span class="icon" aria-hidden="true">
-                    <i class="fas fa-filter"></i>
-                </span>
-                <span>タグで絞り込み</span>
-            </button>
-            <span class="logs-summary-total-inline">
-                <div class="logs-summary-stats">
-                    <div class="stat-total">
-                        <span class="total-label">コンテンツ数:</span>
-                        <span class="total-value">$logs-total-count$</span>
-                    </div>
-                    <div class="stat-updated">
-                        <span class="updated-label">最終更新日:</span>
-                        <span class="updated-value">$logs-last-modified$</span>
-                    </div>
-                </div>
-            </span>
+            <i class="fas fa-wand-magic-sparkles"></i>体験コーナー
         </h3>
-        <div class="search-filter mb-3" id="search-filter" style="display: none;">
-            <input
-                type="text"
-                id="search-input"
-                class="input is-small"
-                placeholder="検索..."
-                aria-label="体験歴を検索"
-            />
+
+        <!-- 3タブナビゲーション -->
+        <div class="tabs is-boxed" role="tablist" aria-label="体験データタブ">
+            <ul>
+                <li class="is-active" data-tab="list">
+                    <a role="tab" id="tab-list" aria-controls="panel-list" aria-selected="true" tabindex="0">
+                        <span class="icon is-small"><i class="fas fa-list" aria-hidden="true"></i></span>
+                        <span>体験録一覧</span>
+                    </a>
+                </li>
+                <li data-tab="timeline">
+                    <a role="tab" id="tab-timeline" aria-controls="panel-timeline" aria-selected="false" tabindex="-1">
+                        <span class="icon is-small"><i class="fas fa-calendar-days" aria-hidden="true"></i></span>
+                        <span>体験タイムライン</span>
+                    </a>
+                </li>
+                <li data-tab="tags">
+                    <a role="tab" id="tab-tags" aria-controls="panel-tags" aria-selected="false" tabindex="-1">
+                        <span class="icon is-small"><i class="fas fa-circle-nodes" aria-hidden="true"></i></span>
+                        <span>タグ別体験頻度</span>
+                    </a>
+                </li>
+            </ul>
         </div>
-        <div class="tag-filter mb-3" style="display: none;">
-            <div class="tag-filter-buttons">
-                $for(unique-tags)$
-                <button class="button is-small is-outlined tag-filter-btn" data-tag="$name$" style="border-color: $color$; color: $color$; --tag-color: $color$;">
-                    <span class="icon">
-                        <i class="fas fa-tag"></i>
+
+        <!-- Tab 1: 体験録一覧 -->
+        <div id="panel-list" class="tab-panel is-active" role="tabpanel" aria-labelledby="tab-list">
+            <div class="list-controls mb-3">
+                <button class="button is-small is-info ml-1" id="toggle-search-filter" aria-expanded="false" aria-controls="search-filter" aria-label="キーワード検索フィルターの表示/非表示">
+                    <span class="icon" aria-hidden="true">
+                        <i class="fas fa-search"></i>
                     </span>
-                    <span>$name$</span>
+                    <span>キーワード検索</span>
                 </button>
+                <button class="button is-small is-info ml-1" id="toggle-tag-filter" aria-expanded="false" aria-controls="tag-filter" aria-label="タグ絞り込みフィルターの表示/非表示">
+                    <span class="icon" aria-hidden="true">
+                        <i class="fas fa-filter"></i>
+                    </span>
+                    <span>タグで絞り込み</span>
+                </button>
+                <span class="logs-summary-total-inline">
+                    <div class="logs-summary-stats">
+                        <div class="stat-total">
+                            <span class="total-label">コンテンツ数:</span>
+                            <span class="total-value">$logs-total-count$</span>
+                        </div>
+                        <div class="stat-updated">
+                            <span class="updated-label">最終更新日:</span>
+                            <span class="updated-value">$logs-last-modified$</span>
+                        </div>
+                    </div>
+                </span>
+            </div>
+            <div class="search-filter mb-3" id="search-filter" style="display: none;">
+                <input
+                    type="text"
+                    id="search-input"
+                    class="input is-small"
+                    placeholder="検索..."
+                    aria-label="体験歴を検索"
+                />
+            </div>
+            <div class="tag-filter mb-3" id="tag-filter" style="display: none;">
+                <div class="tag-filter-buttons">
+                    $for(unique-tags)$
+                    <button class="button is-small is-outlined tag-filter-btn" data-tag="$name$" style="border-color: $color$; color: $color$; --tag-color: $color$;">
+                        <span class="icon">
+                            <i class="fas fa-tag"></i>
+                        </span>
+                        <span>$name$</span>
+                    </button>
+                    $endfor$
+                </div>
+                <div class="selected-tags mt-2" style="display: none;">
+                    <span class="is-size-7 has-text-grey">選択中: </span>
+                    <span class="selected-tags-list"></span>
+                    <button class="button is-small is-danger is-outlined ml-2" id="clear-selection">
+                        <span class="icon">
+                            <i class="fas fa-xmark"></i>
+                        </span>
+                        <span>クリア</span>
+                    </button>
+                </div>
+            </div>
+            <div class="logs">
+                $for(disney-logs)$
+                <article class="log-entry" data-tags="$for(disney-tags-list)$$name$$sep$,$endfor$" data-search-content="$title$ $log-body$">
+                    <div class="log-title-row">
+                        <h2 class="log-title">$title$</h2>
+                        $for(ai-generated-badges)$
+                        <span class="ai-generated-badge">
+                            <i class="fas fa-robot"></i> $badge-text$
+                        </span>
+                        $endfor$
+                    </div>
+                    $if(disney-tags-list)$
+                    <div class="log-tags">
+                        $for(disney-tags-list)$
+                        <span class="tag is-small" style="background-color: $color$; color: white;">
+                            <a href="$link$" target="_blank" rel="noopener">$name$</a>
+                        </span>
+                        $endfor$
+                    </div>
+                    $endif$
+                    <div class="log-date">
+                        <span>$date$</span>
+                        $if(youtube-links)$
+                        $for(youtube-links)$
+                        <a href="$url$" target="_blank" rel="noopener" title="YouTube"><i class="fab fa-youtube fa-sm"></i></a>
+                        $endfor$
+                        $endif$
+                        $if(instagram-links)$
+                        $for(instagram-links)$
+                        <a href="$url$" target="_blank" rel="noopener" title="Instagram"><i class="fab fa-instagram fa-sm"></i></a>
+                        $endfor$
+                        $endif$
+                        $if(x-links)$
+                        $for(x-links)$
+                        <a href="$url$" target="_blank" rel="noopener" title="X (Twitter)"><i class="fab fa-x-twitter fa-sm"></i></a>
+                        $endfor$
+                        $endif$
+                        $if(note-links)$
+                        $for(note-links)$
+                        <a href="$url$" target="_blank" rel="noopener" title="Note"><i class="fas fa-note-sticky fa-sm"></i></a>
+                        $endfor$
+                        $endif$
+                    </div>
+                    <div class="log-body">$log-body$</div>
+                </article>
                 $endfor$
             </div>
-            <div class="selected-tags mt-2" style="display: none;">
-                <span class="is-size-7 has-text-grey">選択中: </span>
-                <span class="selected-tags-list"></span>
-                <button class="button is-small is-danger is-outlined ml-2" id="clear-selection">
-                    <span class="icon">
-                        <i class="fas fa-xmark"></i>
-                    </span>
-                    <span>クリア</span>
-                </button>
+        </div>
+
+        <!-- Tab 2: 体験タイムライン -->
+        <div id="panel-timeline" class="tab-panel" role="tabpanel" aria-labelledby="tab-timeline" hidden>
+            <div class="visualization-container">
+                <div class="timeline-header mb-3">
+                    <div class="year-selector">
+                        <label for="timeline-year-select" class="label is-small mr-2">年度選択:</label>
+                        <div class="select is-small">
+                            <select id="timeline-year-select" aria-label="タイムラインの表示年度を選択">
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div id="timeline-heatmap" class="visualization-chart"></div>
             </div>
         </div>
-        <div class="logs">
-            $for(disney-logs)$
-            <article class="log-entry" data-tags="$for(disney-tags-list)$$name$$sep$,$endfor$" data-search-content="$title$ $log-body$">
-                <div class="log-title-row">
-                    <h2 class="log-title">$title$</h2>
-                    $for(ai-generated-badges)$
-                    <span class="ai-generated-badge">
-                        <i class="fas fa-robot"></i> $badge-text$
-                    </span>
-                    $endfor$
-                </div>
-                $if(disney-tags-list)$
-                <div class="log-tags">
-                    $for(disney-tags-list)$
-                    <span class="tag is-small" style="background-color: $color$; color: white;">
-                        <a href="$link$" target="_blank" rel="noopener">$name$</a>
-                    </span>
-                    $endfor$
-                </div>
-                $endif$
-                <div class="log-date">
-                    <span>$date$</span>
-                    $if(youtube-links)$
-                    $for(youtube-links)$
-                    <a href="$url$" target="_blank" rel="noopener" title="YouTube"><i class="fab fa-youtube fa-sm"></i></a>
-                    $endfor$
-                    $endif$
-                    $if(instagram-links)$
-                    $for(instagram-links)$
-                    <a href="$url$" target="_blank" rel="noopener" title="Instagram"><i class="fab fa-instagram fa-sm"></i></a>
-                    $endfor$
-                    $endif$
-                    $if(x-links)$
-                    $for(x-links)$
-                    <a href="$url$" target="_blank" rel="noopener" title="X (Twitter)"><i class="fab fa-x-twitter fa-sm"></i></a>
-                    $endfor$
-                    $endif$
-                    $if(note-links)$
-                    $for(note-links)$
-                    <a href="$url$" target="_blank" rel="noopener" title="Note"><i class="fas fa-note-sticky fa-sm"></i></a>
-                    $endfor$
-                    $endif$
-                </div>
-                <div class="log-body">$log-body$</div>
-            </article>
-            $endfor$
+
+        <!-- Tab 3: タグ別体験頻度 -->
+        <div id="panel-tags" class="tab-panel" role="tabpanel" aria-labelledby="tab-tags" hidden>
+            <div class="visualization-container">
+                <div id="circle-packing" class="visualization-chart" style="position: relative;"></div>
+            </div>
         </div>
-        </div>
-        
+    </div>
+
     <!-- 宿泊概算セクション -->
     <div class="hotel-summary-section">
         <h3 class="title is-4 mb-3">
@@ -225,69 +279,6 @@
                 </div>
             </div>
             $endfor$
-        </div>
-    </div>
-
-    <!-- 可視化セクション -->
-    <div class="visualization-section mt-4">
-        <h3 class="title is-4 mb-3">
-            <i class="fas fa-chart-line"></i>体験データ可視化
-        </h3>
-
-        <!-- Bulma Tabs ナビゲーション -->
-        <div class="tabs is-boxed" role="tablist" aria-label="可視化タブ">
-            <ul>
-                <li class="is-active" data-tab="timeline">
-                    <a role="tab"
-                       id="tab-timeline"
-                       aria-controls="panel-timeline"
-                       aria-selected="true"
-                       tabindex="0">
-                        <span class="icon is-small"><i class="fas fa-calendar-days" aria-hidden="true"></i></span>
-                        <span>体験タイムライン</span>
-                    </a>
-                </li>
-                <li data-tab="tags">
-                    <a role="tab"
-                       id="tab-tags"
-                       aria-controls="panel-tags"
-                       aria-selected="false"
-                       tabindex="-1">
-                        <span class="icon is-small"><i class="fas fa-circle-nodes" aria-hidden="true"></i></span>
-                        <span>タグ別体験頻度</span>
-                    </a>
-                </li>
-            </ul>
-        </div>
-
-        <!-- タブパネル: タイムライン -->
-        <div id="panel-timeline"
-             class="tab-panel is-active"
-             role="tabpanel"
-             aria-labelledby="tab-timeline">
-            <div class="visualization-container">
-                <div class="timeline-header mb-3">
-                    <div class="year-selector">
-                        <label for="timeline-year-select" class="label is-small mr-2">年度選択:</label>
-                        <div class="select is-small">
-                            <select id="timeline-year-select" aria-label="タイムラインの表示年度を選択">
-                            </select>
-                        </div>
-                    </div>
-                </div>
-                <div id="timeline-heatmap" class="visualization-chart"></div>
-            </div>
-        </div>
-
-        <!-- タブパネル: タグ別体験頻度 -->
-        <div id="panel-tags"
-             class="tab-panel"
-             role="tabpanel"
-             aria-labelledby="tab-tags"
-             hidden>
-            <div class="visualization-container">
-                <div id="circle-packing" class="visualization-chart" style="position: relative;"></div>
-            </div>
         </div>
     </div>
     </div>

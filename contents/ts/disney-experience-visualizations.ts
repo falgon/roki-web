@@ -133,6 +133,11 @@ async function initializeVisualizations(): Promise<void> {
         }
     });
 
+    // 体験録一覧パネル（静的HTMLのため初期化処理は不要）
+    tabManager.registerInitCallback("panel-list", () => {
+        // Hakyllで静的生成されるため、JavaScript側での初期化は不要
+    });
+
     // コールバック登録後に初期化を実行
     tabManager.initialize();
 }
