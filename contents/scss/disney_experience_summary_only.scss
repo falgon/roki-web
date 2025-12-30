@@ -498,7 +498,7 @@ $button-small-font-size-mobile: 0.65rem;
 
     .log-tags {
         margin-bottom: 0.5rem;
-        
+
         .tag {
             margin-right: 0.2rem;
             margin-bottom: 0.2rem;
@@ -506,14 +506,112 @@ $button-small-font-size-mobile: 0.65rem;
             align-items: center;
             font-size: 0.75em;
             padding: 0.2em 0.6em;
-            
+
             a {
                 color: white !important;
                 text-decoration: none;
-                
+
                 &:hover {
                     color: white !important;
                     text-decoration: none;
+                }
+            }
+        }
+    }
+
+    // 体験録一覧のコントロールエリアのレイアウト
+    .list-controls {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 1rem;
+        flex-wrap: wrap;
+
+        // ボタンのactive/focus時の白色化を防止
+        button {
+            // aria-expanded属性によるトグル状態のスタイル管理
+            // フィルターが開いている時（aria-expanded="true"）のアクティブ状態
+            &[aria-expanded="true"] {
+                background-color: #3e8ed0 !important;
+                border-color: #3e8ed0 !important;
+                color: white !important;
+
+                // ホバー時はさらに濃い青
+                &:hover {
+                    background-color: #3082c5 !important;
+                    border-color: #2f7bbf !important;
+                }
+            }
+
+            // 既存の:active/:focusスタイルを維持（一時的な状態用）
+            &:active,
+            &:focus {
+                background-color: #3e8ed0 !important;
+                border-color: #3e8ed0 !important;
+                color: white !important;
+                box-shadow: none !important;
+            }
+
+            &:hover {
+                background-color: #3e8ed0 !important;
+                border-color: #3e8ed0 !important;
+                color: white !important;
+            }
+        }
+
+        // 統計情報を右端に配置
+        .logs-summary-total-inline {
+            margin-left: auto;
+            padding: 0.5rem 1rem;
+            background: linear-gradient(135deg, #3CAADF 0%, #083963 100%);
+            border-radius: 20px;
+            display: inline-flex;
+            align-items: center;
+            box-shadow: 0 3px 8px rgba(8, 57, 99, 0.3);
+            flex-shrink: 0;
+
+            .logs-summary-stats {
+                display: flex;
+                flex-direction: column;
+                gap: 0.2rem;
+                align-items: flex-end;
+            }
+
+            .stat-total {
+                display: flex;
+                align-items: center;
+                gap: 0.4rem;
+
+                .total-label {
+                    font-size: 0.75rem;
+                    color: white;
+                    font-weight: 500;
+                    opacity: 0.9;
+                }
+
+                .total-value {
+                    font-size: 0.95rem;
+                    color: white;
+                    font-weight: bold;
+                    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+                }
+            }
+
+            .stat-updated {
+                display: flex;
+                align-items: center;
+                gap: 0.3rem;
+
+                .updated-label {
+                    font-size: 0.65rem;
+                    color: rgba(255, 255, 255, 0.8);
+                    font-weight: 400;
+                }
+
+                .updated-value {
+                    font-size: 0.7rem;
+                    color: rgba(255, 255, 255, 0.95);
+                    font-weight: 500;
                 }
             }
         }
@@ -1193,19 +1291,19 @@ $button-small-font-size-mobile: 0.65rem;
         .experience-hub {
             h3 {
                 gap: 0.3rem;
-                
+
                 .button {
                     padding: $button-small-padding-mobile !important;
                     font-size: $button-small-font-size-mobile !important;
                     min-height: 1.6em !important;
-                    
+
                     .icon {
                         width: 0.9em !important;
                         height: 0.9em !important;
                         margin-left: 0.15rem !important;
                         margin-right: 0.3rem !important;
                     }
-                    
+
                     .icon i {
                         font-size: 1em !important;
                     }
@@ -1213,34 +1311,34 @@ $button-small-font-size-mobile: 0.65rem;
 
                 .logs-summary-total-inline {
                     padding: 0.3rem 0.5rem;
-                    
+
                     .logs-summary-stats {
                         flex-direction: column;
                         gap: 0.1rem;
                     }
-                    
+
                     .stat-total {
                         .total-label {
                             font-size: 0.6rem;
                         }
-                        
+
                         .total-value {
                             font-size: 0.75rem;
                         }
                     }
-                    
+
                     .stat-updated {
                         .updated-label {
                             font-size: 0.55rem;
                         }
-                        
+
                         .updated-value {
                             font-size: 0.6rem;
                         }
                     }
                 }
             }
-            
+
             // タグフィルターボタンのモバイル対応
             .tag-filter-buttons .tag-filter-btn .icon {
                 margin-right: 0.2rem !important;
@@ -1249,6 +1347,46 @@ $button-small-font-size-mobile: 0.65rem;
             // クリアボタンのモバイル対応
             #clear-selection .icon {
                 margin-right: 0.2rem !important;
+            }
+        }
+
+        // list-controlsのモバイル対応
+        .list-controls {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 0.75rem;
+
+            button {
+                padding: $button-small-padding-mobile !important;
+                font-size: $button-small-font-size-mobile !important;
+            }
+
+            .logs-summary-total-inline {
+                margin-left: 0;
+                align-self: flex-end;
+                padding: 0.3rem 0.5rem;
+
+                .logs-summary-stats {
+                    .stat-total {
+                        .total-label {
+                            font-size: 0.6rem;
+                        }
+
+                        .total-value {
+                            font-size: 0.75rem;
+                        }
+                    }
+
+                    .stat-updated {
+                        .updated-label {
+                            font-size: 0.55rem;
+                        }
+
+                        .updated-value {
+                            font-size: 0.6rem;
+                        }
+                    }
+                }
             }
         }
         
