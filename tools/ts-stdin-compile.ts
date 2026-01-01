@@ -9,7 +9,7 @@ process.stdin.on('end', () => {
   const result = ts.transpileModule(input, {
     compilerOptions: {
       target: ts.ScriptTarget.ES2020,
-      module: ts.ModuleKind.CommonJS,
+      // module: ts.ModuleKind.CommonJS, // ブラウザ用にグローバルスコープで出力
       lib: ['ES2020', 'DOM'],
       strict: true,
       skipLibCheck: true,

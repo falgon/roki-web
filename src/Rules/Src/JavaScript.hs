@@ -10,8 +10,9 @@ import           Media.TS        (compileTypeScriptCompiler)
 
 rules :: Rules ()
 rules = do
-    -- TypeScriptファイルの処理
-    match tsPath $ do
+    -- TypeScriptファイルの処理（visualizationsディレクトリを除外）
+    -- visualizations/内のファイルはdisney-experience-visualizations.tsにバンドルされるため個別処理不要
+    match (tsPath .&&. complement visualizationsPath) $ do
         route $ gsubRoute "contents/ts/" (const "js/") `composeRoutes` setExtension "js"
         compile compileTypeScriptCompiler
 
@@ -21,4 +22,5 @@ rules = do
         compile compressJsCompiler
     where
         tsPath = fromGlob $ joinPath ["contents", "ts", "**"]
+        visualizationsPath = fromGlob $ joinPath ["contents", "ts", "visualizations", "**"]
         jsPath = fromGlob $ joinPath ["contents", "js", "**"]

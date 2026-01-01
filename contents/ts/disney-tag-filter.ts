@@ -553,14 +553,10 @@ const initializeSearchFilter = (
             // 検索フィルターを表示
             searchFilterContainer.style.display = "block";
             toggleSearchFilterBtn.setAttribute("aria-expanded", "true");
-            toggleSearchFilterBtn.classList.remove("is-outlined");
-            toggleSearchFilterBtn.classList.add("is-info");
         } else {
             // 検索フィルターを非表示
             searchFilterContainer.style.display = "none";
             toggleSearchFilterBtn.setAttribute("aria-expanded", "false");
-            toggleSearchFilterBtn.classList.remove("is-info");
-            toggleSearchFilterBtn.classList.add("is-outlined");
         }
     });
 };
@@ -577,14 +573,10 @@ const initializeTagFilter = (
             // フィルターを表示
             tagFilterContainer.style.display = "block";
             toggleTagFilterBtn.setAttribute("aria-expanded", "true");
-            toggleTagFilterBtn.classList.remove("is-outlined");
-            toggleTagFilterBtn.classList.add("is-info");
         } else {
             // フィルターを非表示
             tagFilterContainer.style.display = "none";
             toggleTagFilterBtn.setAttribute("aria-expanded", "false");
-            toggleTagFilterBtn.classList.remove("is-info");
-            toggleTagFilterBtn.classList.add("is-outlined");
         }
     });
 };

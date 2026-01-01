@@ -3,8 +3,6 @@ cabal-version: 1.12
 -- This file has been generated from package.yaml by hpack version 0.37.0.
 --
 -- see: https://github.com/sol/hpack
---
--- hash: 04cfd063857319f784f62c6173e709acf7d7ad14b5e6086f25311a316331ee1c
 
 name:           roki-web
 version:        2.0.0.0
@@ -47,6 +45,8 @@ library
       Contexts.Field.RokiLog.GAdsense
       Contexts.Field.RokiLog.PowertedBy
       Contexts.Utils
+      Data.Disney.Experience
+      Data.Disney.Experience.Generator
       Hakyll.Web.Feed.Extra
       Media
       Media.JS
@@ -120,6 +120,7 @@ library
     , safe-exceptions
     , stack
     , tagsoup
+    , temporary
     , text
     , time
     , transformers
@@ -168,6 +169,7 @@ test-suite roki-web-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
+      ArchivesSpec
       Config.Blogs.AnotherBlogSpec
       Config.Blogs.TechBlogSpec
       Config.Blogs.UtilsSpec
@@ -175,7 +177,8 @@ test-suite roki-web-test
       Config.RegexUtilsSpec
       Config.SiteSpec
       Config.TopPageSpec
-      ArchivesSpec
+      Data.Disney.Experience.GeneratorSpec
+      Data.Disney.ExperienceSpec
       Hakyll.Web.Feed.ExtraSpec
       TestHelpers
       Utils.BaseSpec
@@ -185,13 +188,14 @@ test-suite roki-web-test
       test
   ghc-options: -threaded -Wall -rtsopts -with-rtsopts=-N
   build-depends:
-      base
+      aeson
+    , base
+    , containers
     , directory
     , filepath
     , hakyll
     , hspec
     , hspec-discover
-    , containers
     , pandoc
     , pandoc-types
     , regex-tdfa

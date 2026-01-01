@@ -52,6 +52,7 @@ library:
       - containers
       - basic-prelude
       - directory
+      - temporary
 
 executables:
     site:
@@ -110,5 +111,8 @@ tests:
         - pandoc-types
         - pandoc
         - directory
+        - aeson
+        - containers
+        - tagsoup
         - filepath
         - temporary
