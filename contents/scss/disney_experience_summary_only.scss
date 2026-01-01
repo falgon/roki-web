@@ -269,11 +269,30 @@ $button-small-font-size-mobile: 0.65rem;
     .favorite-category,
     .experience-hub {
         margin-bottom: 0;
-        
+
         &.mt-4 {
             margin-top: 3rem !important;
         }
-        
+
+        // タイトル行のラッパー（flexboxで左右配置）
+        .title-wrapper {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        // タイトル右端のメタ情報
+        .title-meta {
+            font-size: 0.85rem;
+            color: #6c757d;
+
+            .updated-label {
+                font-weight: 500;
+            }
+        }
+
         h3 {
             color: #083963;
             margin-bottom: 0.5rem;
@@ -283,7 +302,7 @@ $button-small-font-size-mobile: 0.65rem;
             align-items: center;
             flex-wrap: nowrap;
             gap: 0.5rem;
-            
+
             svg, i:not(.fa-filter, .fa-search) {
                 position: absolute;
                 left: 0;
@@ -523,9 +542,16 @@ $button-small-font-size-mobile: 0.65rem;
     .list-controls {
         display: flex;
         justify-content: space-between;
-        align-items: flex-start;
-        gap: 1rem;
+        align-items: center;
         flex-wrap: wrap;
+        gap: 0.5rem;
+
+        // ボタングループ
+        .buttons-group {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
 
         // ボタンのactive/focus時の白色化を防止
         button {
@@ -567,7 +593,17 @@ $button-small-font-size-mobile: 0.65rem;
             }
         }
 
-        // 統計情報を右端に配置
+        // コンテンツ数表示
+        .content-count {
+            font-size: 0.9rem;
+            color: #495057;
+
+            .total-label {
+                font-weight: 500;
+            }
+        }
+
+        // 統計情報を右端に配置（後方互換性のために維持）
         .logs-summary-total-inline {
             margin-left: auto;
             padding: 0.5rem 1rem;
@@ -1261,6 +1297,12 @@ $button-small-font-size-mobile: 0.65rem;
 
         .visualization-section,
         .experience-hub {
+            // タイトル行のモバイル対応
+            .title-wrapper {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
             .visualization-container {
                 .timeline-header {
                     flex-direction: column;
@@ -1361,8 +1403,15 @@ $button-small-font-size-mobile: 0.65rem;
         // list-controlsのモバイル対応
         .list-controls {
             flex-direction: column;
-            align-items: stretch;
-            gap: 0.75rem;
+            align-items: flex-start;
+
+            .buttons-group {
+                width: 100%;
+            }
+
+            .content-count {
+                margin-top: 0.5rem;
+            }
 
             button {
                 padding: $button-small-padding-mobile !important;

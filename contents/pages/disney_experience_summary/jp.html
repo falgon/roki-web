@@ -87,9 +87,15 @@
 
     <!-- 体験コーナー統合セクション -->
     <div class="experience-hub mt-4">
-        <h3 class="title is-4 mb-3">
-            <i class="fas fa-wand-magic-sparkles"></i>体験録
-        </h3>
+        <!-- タイトル行：最終更新日をタイトル右端に配置 -->
+        <div class="title-wrapper mb-3">
+            <h3 class="title is-4 mb-0">
+                <i class="fas fa-wand-magic-sparkles"></i>体験録
+            </h3>
+            <div class="title-meta">
+                <span class="updated-label">最終更新日:</span> $logs-last-modified$
+            </div>
+        </div>
 
         <!-- 3タブナビゲーション -->
         <div class="tabs is-boxed" role="tablist" aria-label="体験データタブ">
@@ -117,31 +123,25 @@
 
         <!-- Tab 1: 体験録一覧 -->
         <div id="panel-list" class="tab-panel is-active" role="tabpanel" aria-labelledby="tab-list">
+            <!-- ボタンエリア：コンテンツ数を右端に配置 -->
             <div class="list-controls mb-3">
-                <button class="button is-small is-info is-outlined ml-1" id="toggle-search-filter" aria-expanded="false" aria-controls="search-filter" aria-label="キーワード検索フィルターの表示/非表示">
-                    <span class="icon" aria-hidden="true">
-                        <i class="fas fa-search"></i>
-                    </span>
-                    <span>キーワード検索</span>
-                </button>
-                <button class="button is-small is-info is-outlined ml-1" id="toggle-tag-filter" aria-expanded="false" aria-controls="tag-filter" aria-label="タグ絞り込みフィルターの表示/非表示">
-                    <span class="icon" aria-hidden="true">
-                        <i class="fas fa-filter"></i>
-                    </span>
-                    <span>タグで絞り込み</span>
-                </button>
-                <span class="logs-summary-total-inline">
-                    <div class="logs-summary-stats">
-                        <div class="stat-total">
-                            <span class="total-label">コンテンツ数:</span>
-                            <span class="total-value">$logs-total-count$</span>
-                        </div>
-                        <div class="stat-updated">
-                            <span class="updated-label">最終更新日:</span>
-                            <span class="updated-value">$logs-last-modified$</span>
-                        </div>
-                    </div>
-                </span>
+                <div class="buttons-group">
+                    <button class="button is-small is-info is-outlined ml-1" id="toggle-search-filter" aria-expanded="false" aria-controls="search-filter" aria-label="キーワード検索フィルターの表示/非表示">
+                        <span class="icon" aria-hidden="true">
+                            <i class="fas fa-search"></i>
+                        </span>
+                        <span>キーワード検索</span>
+                    </button>
+                    <button class="button is-small is-info is-outlined ml-1" id="toggle-tag-filter" aria-expanded="false" aria-controls="tag-filter" aria-label="タグ絞り込みフィルターの表示/非表示">
+                        <span class="icon" aria-hidden="true">
+                            <i class="fas fa-filter"></i>
+                        </span>
+                        <span>タグで絞り込み</span>
+                    </button>
+                </div>
+                <div class="content-count">
+                    <span class="total-label">コンテンツ数:</span> $logs-total-count$
+                </div>
             </div>
             <div class="search-filter mb-3" id="search-filter" style="display: none;">
                 <input
