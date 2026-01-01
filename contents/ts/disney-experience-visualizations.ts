@@ -138,6 +138,11 @@ async function initializeVisualizations(): Promise<void> {
         // Hakyllで静的生成されるため、JavaScript側での初期化は不要
     });
 
+    // 宿泊概算パネル（静的HTMLのため初期化処理は不要）
+    tabManager.registerInitCallback("panel-hotels", () => {
+        // Hakyllで静的生成されるため、JavaScript側での初期化は不要
+    });
+
     // コールバック登録後に初期化を実行
     tabManager.initialize();
 }
