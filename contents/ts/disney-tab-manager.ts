@@ -7,6 +7,7 @@ export class DisneyTabManager {
     private panels: HTMLElement[];
     private initCallbacks: Map<string, () => void>;
     private initializedPanels: Set<string>;
+    private hashToPanelMap: Map<string, string>;
 
     /**
      * コンストラクタ
@@ -33,6 +34,14 @@ export class DisneyTabManager {
 
         this.initCallbacks = new Map();
         this.initializedPanels = new Set();
+
+        // URLハッシュとパネルIDのマッピングを初期化
+        this.hashToPanelMap = new Map([
+            ["exp_list", "panel-list"],
+            ["exp_timeline", "panel-timeline"],
+            ["exp_tags", "panel-tags"],
+            ["exp_hotels", "panel-hotels"],
+        ]);
 
         // イベントリスナーを設定
         this.setupEventListeners();
@@ -71,11 +80,40 @@ export class DisneyTabManager {
     }
 
     /**
+     * URLハッシュに基づいてタブをアクティブ化
+     * @returns アクティブ化に成功した場合true
+     */
+    private activateTabFromHash(): boolean {
+        const hash = window.location.hash.substring(1); // "#"を除去
+        if (!hash) {
+            return false;
+        }
+
+        const panelId = this.hashToPanelMap.get(hash);
+        if (!panelId) {
+            return false;
+        }
+
+        const tab = this.tabs.find((t) => t.getAttribute("aria-controls") === panelId);
+        if (tab) {
+            this.switchToTab(tab);
+            return true;
+        }
+        return false;
+    }
+
+    /**
      * 初期アクティブタブを初期化
+     * URLハッシュがある場合はそれに従い、なければ既存のアクティブタブを使用
      */
     private initializeActiveTab(): void {
-        const activeTab = this.tabs.find((tab) => tab.getAttribute("aria-selected") === "true");
+        // URLハッシュがある場合はそれを優先
+        if (this.activateTabFromHash()) {
+            return;
+        }
 
+        // ハッシュがない場合は既存のアクティブタブを初期化
+        const activeTab = this.tabs.find((tab) => tab.getAttribute("aria-selected") === "true");
         if (activeTab) {
             const panelId = activeTab.getAttribute("aria-controls");
             if (panelId) {
@@ -116,6 +154,14 @@ export class DisneyTabManager {
                 panel.classList.add("is-active");
                 panel.removeAttribute("hidden");
                 this.initializePanelIfNeeded(panelId);
+            }
+
+            // URLハッシュを更新（ページリロードなしでURL変更）
+            const hash = Array.from(this.hashToPanelMap.entries()).find(
+                ([_, id]) => id === panelId,
+            )?.[0];
+            if (hash) {
+                history.replaceState(null, "", `#${hash}`);
             }
         }
     }
