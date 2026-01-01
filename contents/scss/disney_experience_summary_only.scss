@@ -1041,7 +1041,8 @@ $button-small-font-size-mobile: 0.65rem;
     }
     
     // 宿泊概算セクション
-    .hotel-summary-section {
+    .hotel-summary-section,
+    #panel-hotels {
         margin-top: 3rem;
         margin-bottom: 3rem;
         
