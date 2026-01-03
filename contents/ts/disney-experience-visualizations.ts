@@ -3,6 +3,7 @@
  * タイムラインヒートマップとサークルパッキングを初期化
  */
 
+import { initHotelCardNavigation } from "./disney-hotel-card-navigation";
 import { DisneyTabManager } from "./disney-tab-manager";
 import { loadVisualizationData, showError } from "./visualizations/base";
 import { CirclePacking } from "./visualizations/CirclePacking";
@@ -145,6 +146,9 @@ async function initializeVisualizations(): Promise<void> {
 
     // コールバック登録後に初期化を実行
     tabManager.initialize();
+
+    // ホテルカードクリック連携を初期化
+    initHotelCardNavigation();
 }
 
 /**
