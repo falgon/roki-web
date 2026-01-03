@@ -173,6 +173,33 @@ export class CirclePacking {
                     hideTooltip(this.tooltip);
                 }
             })
+            .on("click", (_event, d) => {
+                // 1. タグフィルターUIを表示
+                const toggleBtn = document.getElementById("toggle-tag-filter");
+                const filterContainer = document.querySelector(".tag-filter") as HTMLElement;
+                if (filterContainer?.style.display === "none" || !filterContainer?.style.display) {
+                    toggleBtn?.click();
+                }
+
+                // 2. 既存の選択をクリア
+                const clearBtn = document.getElementById("clear-selection");
+                const selectedTags = document.querySelectorAll(".tag-filter-btn.active");
+                if (selectedTags.length > 0) {
+                    clearBtn?.click();
+                }
+
+                // 3. 対応するタグボタンをクリック（d.data.nameからタグ名を取得）
+                const tagButton = document.querySelector(
+                    `.tag-filter-btn[data-tag="${d.data.name}"]`,
+                ) as HTMLElement;
+                tagButton?.click();
+
+                // 4. 体験録一覧タブに切り替え
+                const listTab = document.querySelector(
+                    '[aria-controls="panel-list"]',
+                ) as HTMLElement;
+                listTab?.click();
+            })
             .on("focus", (event) => {
                 d3.select(event.currentTarget).attr("opacity", 1).attr("stroke-width", 4);
             })
