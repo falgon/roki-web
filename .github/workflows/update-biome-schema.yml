@@ -1,0 +1,74 @@
+name: Update Biome Schema URL
+
+on:
+  pull_request:
+    paths:
+      - 'package.json'
+      - 'package-lock.json'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update-schema:
+    runs-on: ubuntu-latest
+    # Only run on Dependabot PRs that update @biomejs/biome
+    if: |
+      github.actor == 'dependabot[bot]' &&
+      contains(github.head_ref, 'dependabot') &&
+      contains(github.head_ref, 'biome')
+    
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          ref: ${{ github.head_ref }}
+      
+      - name: Get biome version from package.json
+        id: get-version
+        run: |
+          VERSION=$(cat package.json | jq -r '.devDependencies."@biomejs/biome"' | tr -d '^~')
+          echo "Extracted version: $VERSION"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+      
+      - name: Check if biome.json exists
+        id: check-biome-json
+        run: |
+          if [ -f biome.json ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Update biome.json schema URL
+        if: steps.check-biome-json.outputs.exists == 'true'
+        run: |
+          echo "Updating biome.json schema URL to version ${{ steps.get-version.outputs.version }}"
+          sed -i 's|"https://biomejs.dev/schemas/[^/]*/schema.json"|"https://biomejs.dev/schemas/${{ steps.get-version.outputs.version }}/schema.json"|' biome.json
+          
+          # Show the change
+          echo "Updated biome.json:"
+          head -n 5 biome.json
+      
+      - name: Check if changes were made
+        id: check-changes
+        run: |
+          if git diff --quiet; then
+            echo "No changes detected"
+            echo "changed=false" >> $GITHUB_OUTPUT
+          else
+            echo "Changes detected:"
+            git diff
+            echo "changed=true" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Commit and push changes
+        if: steps.check-changes.outputs.changed == 'true'
+        run: |
+          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add biome.json
+          git commit -m "chore: update biome.json schema URL to ${{ steps.get-version.outputs.version }}"
+          git push origin HEAD:${{ github.head_ref }}
