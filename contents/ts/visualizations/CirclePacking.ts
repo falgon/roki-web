@@ -105,8 +105,14 @@ export class CirclePacking {
         // パックレイアウトを適用
         pack(root);
 
-        // カラースケールを作成
-        const colorScale = createCategoricalColorScale(data.tags.map((t) => t.tag));
+        // タグボタンからカラー情報を取得
+        const tagColorMap = this.getTagColorsFromDOM();
+        // フォールバック用のカラースケールを作成
+        const fallbackColorScale = createCategoricalColorScale(data.tags.map((t) => t.tag));
+        // タグ名から色を取得する関数
+        const getColor = (tagName: string): string => {
+            return tagColorMap.get(tagName) || fallbackColorScale(tagName);
+        };
 
         // ノードを描画
         const nodes = g
@@ -121,7 +127,7 @@ export class CirclePacking {
         const circles = nodes
             .append("circle")
             .attr("r", (d) => d.r || 0)
-            .attr("fill", (d) => colorScale(d.data.name))
+            .attr("fill", (d) => getColor(d.data.name))
             .attr("opacity", 0.7)
             .attr("stroke", "#fff")
             .attr("stroke-width", 2)
@@ -254,6 +260,28 @@ export class CirclePacking {
             name: "root",
             children,
         };
+    }
+
+    /**
+     * DOMのタグボタンから各タグの色情報を取得する
+     * @returns タグ名と色のマップ
+     */
+    private getTagColorsFromDOM(): Map<string, string> {
+        const colorMap = new Map<string, string>();
+        const tagButtons = document.querySelectorAll(".tag-filter-btn");
+
+        tagButtons.forEach((button) => {
+            const tagName = button.getAttribute("data-tag");
+            const style = button.getAttribute("style") || "";
+            const colorMatch = style.match(/--tag-color:\s*([^;]+)/);
+            const color = colorMatch ? colorMatch[1].trim() : null;
+
+            if (tagName && color) {
+                colorMap.set(tagName, color);
+            }
+        });
+
+        return colorMap;
     }
 
     /**

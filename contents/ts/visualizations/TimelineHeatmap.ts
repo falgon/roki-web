@@ -173,6 +173,14 @@ export class TimelineHeatmap {
 
         // インタラクションを追加
         cells
+            .on("click", (_event, d) => {
+                const dateStr = d3.timeFormat("%Y-%m-%d")(d.date);
+                const customEvent = new CustomEvent("heatmap-cell-click", {
+                    detail: { date: dateStr },
+                    bubbles: true,
+                });
+                document.dispatchEvent(customEvent);
+            })
             .on("mouseover", (event, d) => {
                 const baseStrokeWidth = getStrokeWidth(d.count);
                 d3.select(event.currentTarget)

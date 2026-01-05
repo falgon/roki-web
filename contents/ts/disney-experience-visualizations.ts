@@ -149,6 +149,34 @@ async function initializeVisualizations(): Promise<void> {
 
     // ホテルカードクリック連携を初期化
     initHotelCardNavigation();
+
+    // ヒートマップセルクリックイベントをリッスン
+    document.addEventListener("heatmap-cell-click", (event: Event) => {
+        const customEvent = event as CustomEvent<{ date: string }>;
+        const dateStr = customEvent.detail.date;
+
+        // 一覧タブに切り替え
+        const listTab = document.querySelector('[aria-controls="panel-list"]') as HTMLElement;
+        listTab?.click();
+
+        // 該当日付の体験録を検索
+        const logEntry = document.querySelector(
+            `.log-entry[data-date="${dateStr}"]`,
+        ) as HTMLElement;
+
+        if (logEntry) {
+            // スムーズスクロール
+            setTimeout(() => {
+                logEntry.scrollIntoView({ behavior: "smooth", block: "center" });
+
+                // ハイライト表示
+                logEntry.classList.add("highlighted");
+                setTimeout(() => {
+                    logEntry.classList.remove("highlighted");
+                }, 2000);
+            }, 300); // タブ切り替え後の遅延
+        }
+    });
 }
 
 /**
