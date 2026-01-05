@@ -14,6 +14,7 @@
         "@fortawesome/fontawesome-svg-core": "^7.1.0",
         "@fortawesome/free-brands-svg-icons": "^7.1.0",
         "@fortawesome/free-solid-svg-icons": "^7.1.0",
+        "@types/d3": "^7.4.3",
         "@vitest/coverage-v8": "^4.0.16",
         "@vitest/ui": "^4.0.15",
         "happy-dom": "^20.0.11",
@@ -22,6 +23,7 @@
         "terser": "^5.44.1",
         "tsx": "^4.21.0",
         "typescript": "^5.9.3",
+        "vite": "^6.0.7",
         "vitest": "^4.0.15"
     },
     "scripts": {
