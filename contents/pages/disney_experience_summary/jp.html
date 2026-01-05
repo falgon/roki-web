@@ -87,41 +87,59 @@
 
     <!-- 体験コーナー統合セクション -->
     <div class="experience-hub mt-4">
-        <!-- タイトル行：最終更新日をタイトル右端に配置 -->
+        <!-- タイトル行：最終更新日をバッジスタイルで表示 -->
         <div class="title-wrapper mb-3">
             <h3 class="title is-4 mb-0">
                 <i class="fas fa-wand-magic-sparkles"></i>体験録
             </h3>
-            <div class="title-meta">
-                <span class="updated-label">最終更新日:</span> $logs-last-modified$
-            </div>
+            <span class="badge badge-info">
+                <i class="fas fa-clock"></i> 最終更新: $logs-last-modified$
+            </span>
         </div>
 
-        <!-- 3タブナビゲーション -->
+        <!-- 4タブナビゲーション -->
         <div class="tabs is-boxed" role="tablist" aria-label="体験データタブ">
             <ul>
                 <li class="is-active" data-tab="list">
                     <a role="tab" id="tab-list" aria-controls="panel-list" aria-selected="true" tabindex="0">
                         <span class="icon is-small"><i class="fas fa-list" aria-hidden="true"></i></span>
-                        <span>一覧</span>
+                        <span class="tab-label">
+                            <span class="tab-label-main">一覧</span>
+                            <small class="tab-label-desc">全体験録を表示</small>
+                        </span>
                     </a>
                 </li>
                 <li data-tab="timeline">
                     <a role="tab" id="tab-timeline" aria-controls="panel-timeline" aria-selected="false" tabindex="-1">
                         <span class="icon is-small"><i class="fas fa-calendar-days" aria-hidden="true"></i></span>
-                        <span>体験タイムライン</span>
+                        <span class="tab-label">
+                            <span class="tab-label-main">
+                                <span class="is-hidden-mobile">体験タイムライン</span>
+                                <span class="is-hidden-tablet">タイムライン</span>
+                            </span>
+                            <small class="tab-label-desc">時系列で可視化</small>
+                        </span>
                     </a>
                 </li>
                 <li data-tab="tags">
                     <a role="tab" id="tab-tags" aria-controls="panel-tags" aria-selected="false" tabindex="-1">
                         <span class="icon is-small"><i class="fas fa-circle-nodes" aria-hidden="true"></i></span>
-                        <span>タグ別体験頻度</span>
+                        <span class="tab-label">
+                            <span class="tab-label-main">
+                                <span class="is-hidden-mobile">タグ別体験頻度</span>
+                                <span class="is-hidden-tablet">タグ頻度</span>
+                            </span>
+                            <small class="tab-label-desc">タグ別で可視化</small>
+                        </span>
                     </a>
                 </li>
                 <li data-tab="hotels">
                     <a role="tab" id="tab-hotels" aria-controls="panel-hotels" aria-selected="false" tabindex="-1">
                         <span class="icon is-small"><i class="fas fa-bed" aria-hidden="true"></i></span>
-                        <span>宿泊概算</span>
+                        <span class="tab-label">
+                            <span class="tab-label-main">宿泊概算</span>
+                            <small class="tab-label-desc">ホテル別集計</small>
+                        </span>
                     </a>
                 </li>
             </ul>
@@ -143,6 +161,7 @@
                             <i class="fas fa-filter"></i>
                         </span>
                         <span>タグで絞り込み</span>
+                        <span class="filter-count-badge" id="filter-count-badge" aria-live="polite" aria-atomic="true"></span>
                     </button>
                 </div>
                 <div class="content-count">
@@ -256,7 +275,7 @@
         <div id="panel-hotels" class="tab-panel" role="tabpanel" aria-labelledby="tab-hotels" hidden>
             <div class="hotel-cards">
                 $for(hotel-stays)$
-                <div class="hotel-card" data-hotel-code="$hotel-code$" style="border-left-color: $hotel-color$; cursor: pointer;">
+                <div class="hotel-card" data-hotel-code="$hotel-code$" style="border-left-color: $hotel-color$; cursor: pointer;" role="button" tabindex="0" aria-label="$hotel-code$の宿泊履歴を表示">
                     <div class="hotel-header">
                         <span class="hotel-badge" style="background-color: $hotel-color$;">$hotel-code$</span>
                         <div class="hotel-title">

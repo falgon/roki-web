@@ -33,5 +33,14 @@ export function initHotelCardNavigation(): void {
             const listTab = document.querySelector('[aria-controls="panel-list"]') as HTMLElement;
             listTab?.click();
         });
+
+        // キーボード操作対応
+        card.addEventListener("keydown", (event) => {
+            const keyboardEvent = event as KeyboardEvent;
+            if (keyboardEvent.key === "Enter" || keyboardEvent.key === " ") {
+                keyboardEvent.preventDefault();
+                (card as HTMLElement).click();
+            }
+        });
     });
 }

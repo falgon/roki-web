@@ -705,6 +705,20 @@ if (typeof document !== "undefined") {
             updateSelectedTagsDisplay();
         };
 
+        // フィルターバッジを更新する関数
+        const updateFilterBadge = (): void => {
+            const badge: HTMLElement | null = document.getElementById("filter-count-badge");
+            if (!badge) return;
+
+            const count: number = selectedTags.size;
+            badge.textContent = count > 0 ? count.toString() : "";
+            // スクリーンリーダー向けのラベル更新
+            badge.setAttribute(
+                "aria-label",
+                count > 0 ? `${count}件のタグが選択されています` : "タグは選択されていません"
+            );
+        };
+
         // 選択されたタグの表示を更新する関数
         const updateSelectedTagsDisplay = (): void => {
             if (!selectedTagsContainer || !selectedTagsList) return;
@@ -725,6 +739,9 @@ if (typeof document !== "undefined") {
                     .join("");
                 selectedTagsList.innerHTML = tagButtons;
             }
+
+            // フィルターバッジも更新
+            updateFilterBadge();
         };
 
         // ログエントリのフィルタリング関数
@@ -789,17 +806,22 @@ if (typeof document !== "undefined") {
                 (entry: Element): boolean => !entry.classList.contains("filtered-out"),
             );
 
+            // パフォーマンス最適化: 最大遅延時間を500msに制限
+            const MAX_DELAY_MS = 500;
+            const delayPerItem = Math.min(50, MAX_DELAY_MS / Math.max(visibleEntries.length, 1));
+
             visibleEntries.forEach((entry: Element, index: number) => {
                 const htmlEntry = entry as HTMLElement;
                 htmlEntry.style.opacity = "0";
-                htmlEntry.style.transform = "translateY(20px)";
+                // GPU最適化: translate3dを使用してハードウェアアクセラレーションを有効化
+                htmlEntry.style.transform = "translate3d(0, 20px, 0)";
 
                 requestAnimationFrame(() => {
                     setTimeout((): void => {
                         htmlEntry.style.transition = "opacity 0.3s ease, transform 0.3s ease";
                         htmlEntry.style.opacity = "1";
-                        htmlEntry.style.transform = "translateY(0)";
-                    }, index * 50);
+                        htmlEntry.style.transform = "translate3d(0, 0, 0)";
+                    }, index * delayPerItem);
                 });
             });
         };
