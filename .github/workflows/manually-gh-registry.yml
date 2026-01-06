@@ -191,11 +191,23 @@ jobs:
       with:
         sparse-checkout: |
           tools/github-actions
+    - name: Get Haskell version
+      run: |
+        curl -sSLJ \
+          "https://github.com/mikefarah/yq/releases/download/${{ env.yq_version }}/yq_linux_amd64.tar.gz" |
+          tar xzf - ./yq_linux_amd64
+        chmod +x ./yq_linux_amd64
+        echo "ghc_version=$(./yq_linux_amd64 '.compiler' ./stack.yaml | cut -f2 -d-)" >> "$GITHUB_ENV"
+        echo "stack_version=$(grep BOOTSTRAP_HASKELL_STACK_VERSION ./docker/.env | cut -f2 -d=)" >> "$GITHUB_ENV"
+      env:
+        yq_version: v4.44.3
+
     - name: Setup Haskell
       uses: haskell-actions/setup@v2
       with:
+        ghc-version: ${{ env.ghc_version }}
         enable-stack: true
-        stack-version: 'latest'
+        stack-version: ${{ env.stack_version }}
     - name: Cache Stack dependencies
       uses: actions/cache@v4
       with:
