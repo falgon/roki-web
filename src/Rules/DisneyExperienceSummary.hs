@@ -324,7 +324,6 @@ rules = do
                 getResourceBody
                     >>= applyAsTemplate disneyExperienceSummaryCtx
                     >>= loadAndApplyTemplate rootTemplate disneyExperienceSummaryCtx
-                    >>= modifyExternalLinkAttr
                     >>= relativizeUrls
                     >>= FA.render faIcons
 
