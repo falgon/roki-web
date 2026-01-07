@@ -25,6 +25,7 @@ import           Config                           (contentsRoot, readerOptions)
 import           Contexts                         (siteCtx)
 import           Media.SVG                        (mermaidTransform)
 import           Rules.PageType
+import           Text.HTML.TagSoup                (innerText, parseTags)
 import           Text.Pandoc.Walk                 (walkM)
 import           Utils                            (mconcatM,
                                                    modifyExternalLinkAttr)
@@ -125,6 +126,10 @@ trimMeta :: String -> String
 trimMeta = f . f
   where f = reverse . dropWhile (`elem` (" \n\r\t" :: String))
 
+-- HTMLタグを除去してプレーンテキストを取得
+stripHtmlTags :: String -> String
+stripHtmlTags = innerText . parseTags
+
 -- SNSリンクのメタデータを処理するためのフィールド
 snsLinksField :: String -> Context String
 snsLinksField snsType = listFieldWith (snsType ++ "-links") (field "url" (return . itemBody)) $ \item -> do
@@ -219,6 +224,7 @@ disneyLogCtx :: M.Map String (String, String) -> Context String
 disneyLogCtx tagConfig = mconcat
     [ metadataField
     , bodyField "log-body"
+    , field "log-body-text" $ return . stripHtmlTags . itemBody
     , snsLinksField "youtube"
     , snsLinksField "instagram"
     , snsLinksField "x"
@@ -324,7 +330,6 @@ rules = do
                 getResourceBody
                     >>= applyAsTemplate disneyExperienceSummaryCtx
                     >>= loadAndApplyTemplate rootTemplate disneyExperienceSummaryCtx
-                    >>= modifyExternalLinkAttr
                     >>= relativizeUrls
                     >>= FA.render faIcons
 
