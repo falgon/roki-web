@@ -70,7 +70,7 @@ jsonLdArticleField key = field key $ \item -> do
     resourceBody <- itemBody <$> getResourceBody
 
     -- 説明文を取得（最初の150文字）
-    let description = take 150 $ escapeHtml $ concat $ lines resourceBody
+    let description = take 150 $ concat $ lines resourceBody
 
     -- 画像URLを取得（なければデフォルト画像）
     let defaultImage = baseUrl <> "/images/avator/prof1000x1000.png"
@@ -128,7 +128,7 @@ imageField key = field key $ \item ->
 
 descriptionField :: String -> Int -> Context String
 descriptionField key len = field key $ const $
-    take len . escapeHtml . concat . lines . itemBody <$> getResourceBody
+    take len . concat . lines . itemBody <$> getResourceBody
 
 tagsField' :: String -> Tags -> Context a
 tagsField' key tags = field key $ \item -> do
