@@ -42,14 +42,16 @@
         <script type="text/javascript">
             addEventModal();
         </script>
-        <!-- Global site tag (gtag.js) - Google Analytics -->
-		<script async src="https://www.googletagmanager.com/gtag/js?id=$google-analytics$"></script>
-		<script>
-  		window.dataLayer = window.dataLayer || [];
-  		function gtag(){dataLayer.push(arguments);}
-  		gtag('js', new Date());
-  		gtag('config', '$google-analytics$');
-		</script>
+        $if(google-analytics)$
+        <!-- Google Analytics 4 (GA4) -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=$google-analytics$"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', '$google-analytics$');
+        </script>
+        $endif$
     </head>
     <body>
         <main class="section main" role="main">

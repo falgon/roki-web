@@ -61,7 +61,7 @@ authorCtx = mconcatMap (uncurry constField) [
   , ("author-steam", "r0k1")
   , ("author-yukicoder", "3223")
   , ("author-teratail", "kjfkhfhgx")
-  , ("google-analytics", "UA-116653080-2")
+  , ("google-analytics", "G-D7B9XXQWJE")
   ]
     where
         fav = TL.unpack $ renderText $
@@ -99,4 +99,3 @@ jsPathCtx = listFieldWith "js" ctx $ \item ->
             . takeDirectory
             . toFilePath
             . itemIdentifier
-
