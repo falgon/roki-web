@@ -1,6 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Config.Site (
     siteName
+  , baseUrl
   , timeZoneJST
   , defaultTimeLocale'
   , GSuite (..)
@@ -12,6 +13,9 @@ import           Data.Time.LocalTime (TimeZone (..))
 
 siteName :: String
 siteName = "roki.dev"
+
+baseUrl :: String
+baseUrl = "https://" <> siteName
 
 timeZoneJST :: TimeZone
 timeZoneJST = TimeZone (9 * 60) False "JST"
