@@ -80,6 +80,9 @@
         $if(header-additional-component)$
         $header-additional-component$
         $endif$
+        $if(canonical-url)$
+        <link rel="canonical" href="$canonical-url$">
+        $endif$
     </head>
 
     <body>

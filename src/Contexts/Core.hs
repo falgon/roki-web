@@ -3,9 +3,12 @@ module Contexts.Core (
     dateCtx
   , jsPathCtx
   , siteMapDateCtx
+  , canonicalUrlField
   , siteCtx
 ) where
 
+import           Control.Applicative      (empty)
+import           Control.Monad            ((<=<))
 import           Data.Functor             ((<&>))
 import           Data.List.Extra          (dropPrefix, mconcatMap)
 import           Data.String              (fromString)
@@ -15,8 +18,9 @@ import           Lucid.Base               (renderText)
 import           Lucid.Html5
 import           System.FilePath          (takeDirectory, (</>))
 
-import           Config                   (contentsRoot, defaultTimeLocale',
-                                           siteName, timeZoneJST)
+import           Config                   (baseUrl, contentsRoot,
+                                           defaultTimeLocale', siteName,
+                                           timeZoneJST)
 import qualified Config.Blogs.AnotherBlog as BA
 import qualified Config.Blogs.TechBlog    as TB
 import           Contexts.Field           (localDateField)
@@ -26,6 +30,10 @@ dateCtx = localDateField defaultTimeLocale' timeZoneJST "date" "%Y/%m/%d %R"
 
 siteMapDateCtx :: Context String
 siteMapDateCtx = localDateField defaultTimeLocale' timeZoneJST "date" "%Y-%m-%d"
+
+canonicalUrlField :: Context a
+canonicalUrlField = field "canonical-url" $
+    maybe empty (return . ((baseUrl <>) . toUrl)) <=< getRoute . itemIdentifier
 
 techBlogCtx :: Context String
 techBlogCtx = mconcatMap (uncurry constField) [
@@ -77,7 +85,8 @@ authorCtx = mconcatMap (uncurry constField) [
 
 siteCtx :: Context String
 siteCtx = mconcat [
-    constField "lang" "ja"
+    canonicalUrlField
+  , constField "lang" "ja"
   , constField "site-title" siteName
   , constField "site-description" "This is a Roki's website."
   , constField "copyright" "copyright &copy; 2016~ Roki All Rights Reserved."
