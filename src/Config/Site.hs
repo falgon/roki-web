@@ -15,7 +15,7 @@ siteName :: String
 siteName = "roki.dev"
 
 baseUrl :: String
-baseUrl = "https://roki.dev"
+baseUrl = "https://" <> siteName
 
 timeZoneJST :: TimeZone
 timeZoneJST = TimeZone (9 * 60) False "JST"
