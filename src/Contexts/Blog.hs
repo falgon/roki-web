@@ -14,7 +14,8 @@ module Contexts.Blog (
   , listCtx
 ) where
 
-import           Contexts.Field       (descriptionField, imageField)
+import           Contexts.Field       (descriptionField, imageField,
+                                       jsonLdArticleField, tagsField')
 import           Control.Monad.Extra  (ifM)
 import           Control.Monad.Reader (asks, lift)
 import qualified Data.Text            as T
@@ -26,7 +27,6 @@ import           Lucid.Html5
 import           Config.Blog          (BlogConfig (..))
 import           Config.Site          (GSuite (..), gSuiteConf)
 import           Contexts.Core
-import           Contexts.Field       (tagsField')
 import           Rules.Blog.Type
 import           Utils                (mconcatM, sanitizeDisqusName)
 
@@ -92,6 +92,7 @@ postCtx tags = mconcatM [
   , pure $ tagsField' "tags" tags
   , pure $ descriptionField "description" 150
   , pure $ imageField "image"
+  , pure $ jsonLdArticleField "json-ld-article"
   , pure $ siteCtx
   , pure $ jsPathCtx
   , pure $ defaultContext
