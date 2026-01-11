@@ -11,29 +11,30 @@ module Contexts.Field (
   , searchBoxResultField
 ) where
 
-import           Control.Monad              (forM_, liftM2)
-import           Control.Monad.Trans        (lift)
-import           Data.Aeson                 (encode, object, (.=))
-import qualified Data.ByteString.Lazy.Char8 as BL
-import           Data.Function              (on)
-import           Data.Functor               ((<&>))
-import           Data.List                  (isPrefixOf, isSuffixOf, sortBy)
-import           Data.List.Extra            (mconcatMap)
-import           Data.Maybe                 (catMaybes, fromMaybe)
-import qualified Data.Text                  as T
-import qualified Data.Text.Lazy             as TL
-import           Data.Time.Format           (TimeLocale (..), formatTime)
-import           Data.Time.LocalTime        (TimeZone (..), utcToLocalTime)
-import           Hakyll                     hiding (isExternal)
-import           Lucid.Base                 (Html, ToHtml (..), renderText,
-                                             renderTextT, toHtml)
+import           Control.Monad           (forM_, liftM2)
+import           Control.Monad.Trans     (lift)
+import           Data.Aeson              (encode, object, (.=))
+import qualified Data.ByteString.Lazy    as BL
+import           Data.Function           (on)
+import           Data.Functor            ((<&>))
+import           Data.List               (isPrefixOf, isSuffixOf, sortBy)
+import           Data.List.Extra         (mconcatMap)
+import           Data.Maybe              (catMaybes, fromMaybe)
+import qualified Data.Text               as T
+import qualified Data.Text.Lazy          as TL
+import qualified Data.Text.Lazy.Encoding as TLE
+import           Data.Time.Format        (TimeLocale (..), formatTime)
+import           Data.Time.LocalTime     (TimeZone (..), utcToLocalTime)
+import           Hakyll                  hiding (isExternal)
+import           Lucid.Base              (Html, ToHtml (..), renderText,
+                                          renderTextT, toHtml)
 import           Lucid.Html5
-import qualified Text.HTML.TagSoup          as TS
+import qualified Text.HTML.TagSoup       as TS
 
-import           Archives                   (Archives (..), MonthlyArchives,
-                                             YearlyArchives)
-import           Config.Site                (baseUrl, defaultTimeLocale',
-                                             siteName, timeZoneJST)
+import           Archives                (Archives (..), MonthlyArchives,
+                                          YearlyArchives)
+import           Config.Site             (baseUrl, defaultTimeLocale', siteName,
+                                          timeZoneJST)
 
 toLink :: String -> String -> Html ()
 toLink text path = a_ [href_ (T.pack $ toUrl path)] $ span_ $ toHtml text
@@ -81,7 +82,7 @@ jsonLdArticleField key = field key $ \item -> do
 
     case mTitle of
         Nothing -> noResult $ "Field " ++ key ++ ": title not found"
-        Just title -> return $ BL.unpack $ encode $ object
+        Just title -> return $ TL.unpack $ TLE.decodeUtf8 $ encode $ object
             [ "@context" .= ("https://schema.org" :: String)
             , "@type" .= ("BlogPosting" :: String)
             , "headline" .= title
