@@ -1,6 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Contexts.Field (
     localDateField
+  , iso8601DateField
+  , jsonLdArticleField
   , tagsField'
   , tagCloudField'
   , descriptionField
@@ -10,26 +12,30 @@ module Contexts.Field (
   , searchBoxResultField
 ) where
 
-import           Control.Monad       (forM_, liftM2)
-import           Control.Monad.Trans (lift)
-import           Data.Function       (on)
-import           Data.Functor        ((<&>))
-import           Data.List           (isPrefixOf, isSuffixOf, sortBy)
-import           Data.List.Extra     (mconcatMap)
-import           Data.Maybe          (catMaybes, fromMaybe)
-import qualified Data.Text           as T
-import qualified Data.Text.Lazy      as TL
-import           Data.Time.Format    (TimeLocale (..), formatTime)
-import           Data.Time.LocalTime (TimeZone (..), utcToLocalTime)
-import           Hakyll
-import           Lucid.Base          (Html, ToHtml (..), renderText,
-                                      renderTextT, toHtml)
+import           Control.Monad           (forM_, liftM2)
+import           Control.Monad.Trans     (lift)
+import           Data.Aeson              (encode, object, (.=))
+import qualified Data.ByteString.Lazy    as BL
+import           Data.Function           (on)
+import           Data.Functor            ((<&>))
+import           Data.List               (isPrefixOf, isSuffixOf, sortBy)
+import           Data.List.Extra         (mconcatMap)
+import           Data.Maybe              (catMaybes, fromMaybe)
+import qualified Data.Text               as T
+import qualified Data.Text.Lazy          as TL
+import qualified Data.Text.Lazy.Encoding as TLE
+import           Data.Time.Format        (TimeLocale (..), formatTime)
+import           Data.Time.LocalTime     (TimeZone (..), utcToLocalTime)
+import           Hakyll                  hiding (isExternal)
+import           Lucid.Base              (Html, ToHtml (..), renderText,
+                                          renderTextT, toHtml)
 import           Lucid.Html5
-import qualified Text.HTML.TagSoup   as TS
+import qualified Text.HTML.TagSoup       as TS
 
-import           Archives            (Archives (..), MonthlyArchives,
-                                      YearlyArchives)
-import           Config.Site         (siteName)
+import           Archives                (Archives (..), MonthlyArchives,
+                                          YearlyArchives)
+import           Config.Site             (baseUrl, defaultTimeLocale', siteName,
+                                          timeZoneJST)
 
 toLink :: String -> String -> Html ()
 toLink text path = a_ [href_ (T.pack $ toUrl path)] $ span_ $ toHtml text
@@ -38,17 +44,89 @@ localDateField :: TimeLocale -> TimeZone -> String -> String -> Context a
 localDateField locale zone key format = field key $
     fmap (formatTime locale format . utcToLocalTime zone) . getItemUTC locale . itemIdentifier
 
+iso8601DateField :: String -> Context String
+iso8601DateField key = localDateField defaultTimeLocale' timeZoneJST key "%Y-%m-%dT%H:%M:%S%Ez"
+
+-- | JSON-LD Article Schema (BlogPosting) を生成するフィールド
+-- schema.org仕様に準拠したJSON-LDを出力
+jsonLdArticleField :: String -> Context String
+jsonLdArticleField key = field key $ \item -> do
+    -- メタデータからタイトルと更新日を取得
+    metadata <- getMetadata (itemIdentifier item)
+    let mTitle = lookupString "title" metadata
+        mUpdated = lookupString "updated" metadata
+
+    -- 日付をISO 8601形式で取得
+    let iso8601Format = "%Y-%m-%dT%H:%M:%S%Ez"
+        formatDate = formatTime defaultTimeLocale' iso8601Format . utcToLocalTime timeZoneJST
+    publishedDate <- formatDate <$> getItemUTC defaultTimeLocale' (itemIdentifier item)
+
+    -- dateModifiedはupdatedメタデータがあればそれを使用、なければpublishedDateと同じ
+    let dateModified = fromMaybe publishedDate mUpdated
+
+    -- URLを取得（絶対URL）
+    mRoute <- getRoute (itemIdentifier item)
+    let articleUrl = maybe "" ((baseUrl <>) . toUrl) mRoute
+
+    -- リソースボディを1回だけ取得してパフォーマンス改善
+    resourceBody <- itemBody <$> getResourceBody
+
+    -- 説明文を取得（最初の150文字）
+    let description = take 150 $ concat $ lines resourceBody
+
+    -- 画像URLを取得（なければデフォルト画像）
+    let defaultImage = baseUrl <> "/images/avator/prof1000x1000.png"
+        images = extractImagesFromHtml $ TS.parseTags resourceBody
+        imageUrl = case images of
+            []      -> defaultImage
+            (src:_) -> if isExternal src then src else baseUrl <> src
+
+    case mTitle of
+        Nothing -> noResult $ "Field " ++ key ++ ": title not found"
+        Just title -> return $ TL.unpack $ TLE.decodeUtf8 $ encode $ object
+            [ "@context" .= ("https://schema.org" :: String)
+            , "@type" .= ("BlogPosting" :: String)
+            , "headline" .= title
+            , "image" .= imageUrl
+            , "datePublished" .= publishedDate
+            , "dateModified" .= dateModified
+            , "author" .= object
+                [ "@type" .= ("Person" :: String)
+                , "name" .= ("Roki" :: String)
+                , "url" .= baseUrl
+                ]
+            , "publisher" .= object
+                [ "@type" .= ("Organization" :: String)
+                , "name" .= siteName
+                , "logo" .= object
+                    [ "@type" .= ("ImageObject" :: String)
+                    , "url" .= defaultImage
+                    ]
+                ]
+            , "description" .= description
+            , "url" .= articleUrl
+            ]
+
+isExternal :: String -> Bool
+isExternal url = "http://" `isPrefixOf` url || "https://" `isPrefixOf` url
+
+-- | HTML文字列から画像URLを抽出する共通関数
+-- 外部URL、SVG画像、空のsrc属性を除外
+extractImagesFromHtml :: [TS.Tag String] -> [String]
+extractImagesFromHtml = map (TS.fromAttrib "src") . filter isValidImage
+  where
+    isValidImage tag =
+        let src = TS.fromAttrib "src" tag
+        in TS.isTagOpenName "img" tag
+            && not (null src)
+            && not (isExternal src)
+            && not (".svg" `isSuffixOf` src)
+
 imageField :: String -> Context String
 imageField key = field key $ \item ->
-    case extractImages $ TS.parseTags $ itemBody item of
-        [] -> noResult ("Field " ++ key ++ ": " ++ show (itemIdentifier item) ++ "has no image")
+    case extractImagesFromHtml $ TS.parseTags $ itemBody item of
+        [] -> noResult ("Field " ++ key ++ ": " ++ show (itemIdentifier item) ++ " has no image")
         (src:_) -> return src
-    where
-        extractImages = map (TS.fromAttrib "src") . filter f
-        f tag =
-            let src = TS.fromAttrib "src" tag
-                cond = not $ null src || isExternal src || ".svg" `isSuffixOf` src
-            in TS.isTagOpenName "img" tag && cond
 
 ogImageField :: String -> String -> Context String
 ogImageField key defaultImage = field key $ \item ->
@@ -66,7 +144,7 @@ ogImageField key defaultImage = field key $ \item ->
 
 descriptionField :: String -> Int -> Context String
 descriptionField key len = field key $ const $
-    take len . escapeHtml . concat . lines . itemBody <$> getResourceBody
+    take len . concat . lines . itemBody <$> getResourceBody
 
 tagsField' :: String -> Tags -> Context a
 tagsField' key tags = field key $ \item -> do

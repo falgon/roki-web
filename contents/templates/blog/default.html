@@ -78,6 +78,11 @@
 		});
         </script>
         $endif$
+        $if(json-ld-article)$
+        <script type="application/ld+json">
+$json-ld-article$
+        </script>
+        $endif$
         <meta name="google-site-verification" content="$google-site-verification$" />
         <!-- Global site tag (gtag.js) - Google Analytics -->
 		<script async src="https://www.googletagmanager.com/gtag/js?id=$google-analytics$"></script>
