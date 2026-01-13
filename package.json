@@ -15,8 +15,8 @@
         "@fortawesome/free-brands-svg-icons": "^7.1.0",
         "@fortawesome/free-solid-svg-icons": "^7.1.0",
         "@types/d3": "^7.4.3",
-        "@vitest/coverage-v8": "^4.0.16",
-        "@vitest/ui": "^4.0.15",
+        "@vitest/coverage-v8": "^4.0.17",
+        "@vitest/ui": "^4.0.17",
         "happy-dom": "^20.1.0",
         "katex": "^0.16.27",
         "svgo": "^4.0.0",
@@ -24,7 +24,7 @@
         "tsx": "^4.21.0",
         "typescript": "^5.9.3",
         "vite": "^7.3.1",
-        "vitest": "^4.0.15"
+        "vitest": "^4.0.17"
     },
     "scripts": {
         "format:ts": "biome check --write --unsafe contents/ts",
