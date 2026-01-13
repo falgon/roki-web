@@ -52,6 +52,9 @@
             gtag('config', '$google-analytics$');
         </script>
         $endif$
+        $if(canonical-url)$
+        <link rel="canonical" href="$canonical-url$">
+        $endif$
     </head>
     <body>
         <main class="section main" role="main">
