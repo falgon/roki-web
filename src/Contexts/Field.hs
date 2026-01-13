@@ -7,6 +7,7 @@ module Contexts.Field (
   , tagCloudField'
   , descriptionField
   , imageField
+  , ogImageField
   , yearMonthArchiveField
   , searchBoxResultField
 ) where
@@ -126,6 +127,20 @@ imageField key = field key $ \item ->
     case extractImagesFromHtml $ TS.parseTags $ itemBody item of
         [] -> noResult ("Field " ++ key ++ ": " ++ show (itemIdentifier item) ++ " has no image")
         (src:_) -> return src
+
+ogImageField :: String -> String -> Context String
+ogImageField key defaultImage = field key $ \item ->
+    fmap (makeAbsoluteUrl . fromMaybe defaultImage)
+        $ getMetadataField (itemIdentifier item) "og-image"
+  where
+    makeAbsoluteUrl :: String -> String
+    makeAbsoluteUrl path
+        | any (`isPrefixOf` path) ["http://", "https://"] = path
+        | otherwise = "https://" ++ siteName ++ ensureLeadingSlash path
+
+    ensureLeadingSlash :: String -> String
+    ensureLeadingSlash s@('/':_) = s
+    ensureLeadingSlash s         = '/' : s
 
 descriptionField :: String -> Int -> Context String
 descriptionField key len = field key $ const $

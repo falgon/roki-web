@@ -15,7 +15,8 @@ module Contexts.Blog (
 ) where
 
 import           Contexts.Field       (descriptionField, imageField,
-                                       jsonLdArticleField, tagsField')
+                                       jsonLdArticleField, ogImageField,
+                                       tagsField')
 import           Control.Monad.Extra  (ifM)
 import           Control.Monad.Reader (asks, lift)
 import qualified Data.Text            as T
@@ -87,17 +88,23 @@ katexJsCtx = ifM (asks $ not . blogIsPreview) (pure mempty) $ pure $
 postCtx :: Monad m
     => Tags
     -> BlogConfReader n m (Context String)
-postCtx tags = mconcatM [
-    pure $ dateCtx
-  , pure $ tagsField' "tags" tags
-  , pure $ descriptionField "description" 150
-  , pure $ imageField "image"
-  , pure $ jsonLdArticleField "json-ld-article"
-  , pure $ siteCtx
-  , pure $ jsPathCtx
-  , pure $ defaultContext
-  , katexJsCtx
-  ]
+postCtx tags = do
+    defaultOgImage <- asks $ \bc -> case blogName bc of
+        "roki.log"   -> "/images/ogp/roki-log-default.png"
+        "roki.diary" -> "/images/ogp/roki-diary-default.png"
+        _            -> "/images/ogp/default.png"
+    mconcatM [
+        pure $ dateCtx
+      , pure $ tagsField' "tags" tags
+      , pure $ descriptionField "description" 150
+      , pure $ imageField "image"
+      , pure $ ogImageField "og-image" defaultOgImage
+      , pure $ jsonLdArticleField "json-ld-article"
+      , pure $ siteCtx
+      , pure $ jsPathCtx
+      , pure $ defaultContext
+      , katexJsCtx
+      ]
 
 listCtx :: Monad m
     => BlogConfReader n m (Context String)
