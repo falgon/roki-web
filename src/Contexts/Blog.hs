@@ -14,7 +14,8 @@ module Contexts.Blog (
   , listCtx
 ) where
 
-import           Contexts.Field       (descriptionField, imageField)
+import           Contexts.Field       (descriptionField, imageField,
+                                       ogImageField, tagsField')
 import           Control.Monad.Extra  (ifM)
 import           Control.Monad.Reader (asks, lift)
 import qualified Data.Text            as T
@@ -26,7 +27,6 @@ import           Lucid.Html5
 import           Config.Blog          (BlogConfig (..))
 import           Config.Site          (GSuite (..), gSuiteConf)
 import           Contexts.Core
-import           Contexts.Field       (tagsField')
 import           Rules.Blog.Type
 import           Utils                (mconcatM, sanitizeDisqusName)
 
@@ -87,16 +87,22 @@ katexJsCtx = ifM (asks $ not . blogIsPreview) (pure mempty) $ pure $
 postCtx :: Monad m
     => Tags
     -> BlogConfReader n m (Context String)
-postCtx tags = mconcatM [
-    pure $ dateCtx
-  , pure $ tagsField' "tags" tags
-  , pure $ descriptionField "description" 150
-  , pure $ imageField "image"
-  , pure $ siteCtx
-  , pure $ jsPathCtx
-  , pure $ defaultContext
-  , katexJsCtx
-  ]
+postCtx tags = do
+    defaultOgImage <- asks $ \bc -> case blogName bc of
+        "roki.log"   -> "/images/ogp/roki-log-default.png"
+        "roki.diary" -> "/images/ogp/roki-diary-default.png"
+        _            -> "/images/ogp/default.png"
+    mconcatM [
+        pure $ dateCtx
+      , pure $ tagsField' "tags" tags
+      , pure $ descriptionField "description" 150
+      , pure $ imageField "image"
+      , pure $ ogImageField "og-image" defaultOgImage
+      , pure $ siteCtx
+      , pure $ jsPathCtx
+      , pure $ defaultContext
+      , katexJsCtx
+      ]
 
 listCtx :: Monad m
     => BlogConfReader n m (Context String)

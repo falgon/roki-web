@@ -5,6 +5,7 @@ module Contexts.Field (
   , tagCloudField'
   , descriptionField
   , imageField
+  , ogImageField
   , yearMonthArchiveField
   , searchBoxResultField
 ) where
@@ -13,7 +14,7 @@ import           Control.Monad       (forM_, liftM2)
 import           Control.Monad.Trans (lift)
 import           Data.Function       (on)
 import           Data.Functor        ((<&>))
-import           Data.List           (isSuffixOf, sortBy)
+import           Data.List           (isPrefixOf, isSuffixOf, sortBy)
 import           Data.List.Extra     (mconcatMap)
 import           Data.Maybe          (catMaybes, fromMaybe)
 import qualified Data.Text           as T
@@ -28,6 +29,7 @@ import qualified Text.HTML.TagSoup   as TS
 
 import           Archives            (Archives (..), MonthlyArchives,
                                       YearlyArchives)
+import           Config.Site         (siteName)
 
 toLink :: String -> String -> Html ()
 toLink text path = a_ [href_ (T.pack $ toUrl path)] $ span_ $ toHtml text
@@ -47,6 +49,20 @@ imageField key = field key $ \item ->
             let src = TS.fromAttrib "src" tag
                 cond = not $ null src || isExternal src || ".svg" `isSuffixOf` src
             in TS.isTagOpenName "img" tag && cond
+
+ogImageField :: String -> String -> Context String
+ogImageField key defaultImage = field key $ \item ->
+    fmap (makeAbsoluteUrl . fromMaybe defaultImage)
+        $ getMetadataField (itemIdentifier item) "og-image"
+  where
+    makeAbsoluteUrl :: String -> String
+    makeAbsoluteUrl path
+        | any (`isPrefixOf` path) ["http://", "https://"] = path
+        | otherwise = "https://" ++ siteName ++ ensureLeadingSlash path
+
+    ensureLeadingSlash :: String -> String
+    ensureLeadingSlash s@('/':_) = s
+    ensureLeadingSlash s         = '/' : s
 
 descriptionField :: String -> Int -> Context String
 descriptionField key len = field key $ const $
@@ -116,4 +132,3 @@ yearMonthArchiveField key ya ma s = field key
 searchBoxResultField :: Context String
 searchBoxResultField = constField "body" $
     TL.unpack $ renderText $ div_ [class_ "gcse-searchresults-only"] mempty
-
