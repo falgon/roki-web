@@ -3,7 +3,6 @@ module Utils.Hakyll (
     absolutizeUrls
   , modifyExternalLinkAttr
   , sanitizeTagName
-  , sanitizeDisqusName
   , makePageIdentifier
   , getStringField
   , injectTableOfContents
@@ -56,8 +55,6 @@ getStringField key cs = unContext cs key mempty (Item (fromFilePath mempty) memp
     StringField x -> pure $ Just x
     _             -> pure Nothing
 
-sanitizeDisqusName :: String -> String
-sanitizeDisqusName = map (\x -> if x == '.' then '-' else x)
 
 injectTableOfContents :: Pandoc -> Pandoc
 injectTableOfContents doc@(Pandoc meta blocks) =
@@ -112,4 +109,3 @@ injectTableOfContents doc@(Pandoc meta blocks) =
                     | "<!--toc-->" `T.isInfixOf` text = toc
                     | otherwise = [b]
                 replaceBlock b = [b]
-

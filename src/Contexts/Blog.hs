@@ -8,7 +8,7 @@ module Contexts.Blog (
   , footerAdditionalComponent
   , tagCloud
   , gSuite
-  , disqus
+  , giscus
   , katexJsCtx
   , postCtx
   , listCtx
@@ -29,7 +29,7 @@ import           Config.Blog          (BlogConfig (..))
 import           Config.Site          (GSuite (..), gSuiteConf)
 import           Contexts.Core
 import           Rules.Blog.Type
-import           Utils                (mconcatM, sanitizeDisqusName)
+import           Utils                (mconcatM)
 
 {-# INLINE toLink #-}
 toLink :: String -> String -> Html ()
@@ -74,9 +74,14 @@ gSuite = (<>)
     <$> asks (constField "google-cx" . ((gCxPrefix gSuiteConf <> ":") <>) . blogGoogleCx)
     <*> pure (constField "google-site-verification" (gSiteVerifyKey gSuiteConf))
 
-disqus :: Monad m
+giscus :: Monad m
     => BlogConfReader n m (Context String)
-disqus = asks $ constField "disqus" . sanitizeDisqusName . blogName
+giscus = asks $ \cfg -> mconcat
+    [ constField "giscus-repo" (blogGiscusRepo cfg)
+    , constField "giscus-repo-id" (blogGiscusRepoId cfg)
+    , constField "giscus-category" (blogGiscusCategory cfg)
+    , constField "giscus-category-id" (blogGiscusCategoryId cfg)
+    ]
 
 katexJsCtx :: Monad m
     => BlogConfReader n m (Context String)

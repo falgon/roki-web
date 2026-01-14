@@ -35,22 +35,6 @@ spec = do
         it "handles mixed case with special chars" $
             sanitizeTagName "Hello World! 123" `shouldBe` "hello-world-123"
 
-    describe "sanitizeDisqusName" $ do
-        it "replaces dots with hyphens" $
-            sanitizeDisqusName "hello.world" `shouldBe` "hello-world"
-
-        it "replaces multiple dots" $
-            sanitizeDisqusName "a.b.c.d" `shouldBe` "a-b-c-d"
-
-        it "keeps other characters unchanged" $
-            sanitizeDisqusName "hello_world-123" `shouldBe` "hello_world-123"
-
-        it "handles empty string" $
-            sanitizeDisqusName "" `shouldBe` ""
-
-        it "handles string with no dots" $
-            sanitizeDisqusName "helloworld" `shouldBe` "helloworld"
-
     describe "makePageIdentifier" $ do
         it "returns original path for page 1" $ do
             let result = makePageIdentifier "posts/index.html" 1

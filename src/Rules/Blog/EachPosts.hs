@@ -29,9 +29,9 @@ build :: FA.FontAwesomeIcons
     -> Context String
     -> BlogConfReader m Rules Snapshot
 build faIcons ctx = do
-    disqusCtx <- mconcatM [
+    giscusCtx <- mconcatM [
         pure ctx
-      , BlogCtx.disqus
+      , BlogCtx.giscus
       ]
     wOptions <- asks blogWriterOptions
     cs <- asks blogContentSnapshot
@@ -47,7 +47,7 @@ build faIcons ctx = do
             >>= saveSnapshot feedContent
             >>= katexRender
             >>= saveSnapshot cs
-            >>= loadAndApplyTemplate (fromFilePath $ tmBlogRoot </> "post.html") (s <> disqusCtx)
+            >>= loadAndApplyTemplate (fromFilePath $ tmBlogRoot </> "post.html") (s <> giscusCtx)
             >>= appendFooter t defaultTimeLocale' timeZoneJST
             >>= loadAndApplyTemplate (fromFilePath $ tmBlogRoot </> "default.html") ctx
             >>= modifyExternalLinkAttr
