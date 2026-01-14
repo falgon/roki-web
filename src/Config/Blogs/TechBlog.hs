@@ -12,6 +12,10 @@ module Config.Blogs.TechBlog (
   , buildYearlyArchives
   , monthlyPagePath
   , buildMonthlyArchives
+  , giscusRepo
+  , giscusRepoId
+  , giscusCategory
+  , giscusCategoryId
 ) where
 
 import           Data.String           (fromString)
@@ -79,4 +83,19 @@ monthlyPagePath = BU.monthlyPagePath blogName
 buildMonthlyArchives :: (H.MonadMetadata m, MonadFail m) => m A.MonthlyArchives
 buildMonthlyArchives = BU.buildMonthlyArchives blogName
 
+{-# INLINE giscusRepo #-}
+giscusRepo :: String
+giscusRepo = "falgon/roki-web"
+
+{-# INLINE giscusRepoId #-}
+giscusRepoId :: String
+giscusRepoId = "MDEwOlJlcG9zaXRvcnkyODA5MjI1NTI="
+
+{-# INLINE giscusCategory #-}
+giscusCategory :: String
+giscusCategory = "roki.log Comments"
+
+{-# INLINE giscusCategoryId #-}
+giscusCategoryId :: String
+giscusCategoryId = "DIC_kwDOEL6JuM4C0724"
 
