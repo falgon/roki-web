@@ -254,7 +254,7 @@ main = do
           }
         mapM_ (runReaderT $ Blog.rules faIcons) blogConfs
         mapM_ (flip runReaderT pageConf) [TopPage.rules blogConfs, Resume.rules, DisneyExperienceSummary.rules]
-        mapM_ (flip match (route idRoute >> compile copyFileCompiler)) ["CNAME", "ads.txt"]
+        mapM_ (flip match (route idRoute >> compile copyFileCompiler)) ["CNAME", "ads.txt", "robots.txt"]
         match (fromString $ joinPath ["contents", "templates", "**"]) $
             compile templateBodyCompiler
     where

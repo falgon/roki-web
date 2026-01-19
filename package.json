@@ -15,16 +15,16 @@
         "@fortawesome/free-brands-svg-icons": "^7.1.0",
         "@fortawesome/free-solid-svg-icons": "^7.1.0",
         "@types/d3": "^7.4.3",
-        "@vitest/coverage-v8": "^4.0.16",
-        "@vitest/ui": "^4.0.15",
-        "happy-dom": "^20.0.11",
+        "@vitest/coverage-v8": "^4.0.17",
+        "@vitest/ui": "^4.0.17",
+        "happy-dom": "^20.3.3",
         "katex": "^0.16.27",
         "svgo": "^4.0.0",
-        "terser": "^5.44.1",
+        "terser": "^5.46.0",
         "tsx": "^4.21.0",
         "typescript": "^5.9.3",
-        "vite": "^7.3.0",
-        "vitest": "^4.0.15"
+        "vite": "^7.3.1",
+        "vitest": "^4.0.17"
     },
     "scripts": {
         "format:ts": "biome check --write --unsafe contents/ts",
