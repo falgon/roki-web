@@ -23,7 +23,8 @@ import           Config                   (baseUrl, contentsRoot,
                                            timeZoneJST)
 import qualified Config.Blogs.AnotherBlog as BA
 import qualified Config.Blogs.TechBlog    as TB
-import           Contexts.Field           (localDateField)
+import           Contexts.Field           (jsonLdPersonField,
+                                           jsonLdWebSiteField, localDateField)
 
 dateCtx :: Context String
 dateCtx = localDateField defaultTimeLocale' timeZoneJST "date" "%Y/%m/%d %R"
@@ -92,6 +93,8 @@ siteCtx = mconcat [
   , constField "copyright" "copyright &copy; 2016~ Roki All Rights Reserved."
   , blogCtx
   , authorCtx
+  , jsonLdPersonField "json-ld-person"
+  , jsonLdWebSiteField "json-ld-website"
   ]
 
 jsPathCtx :: Context String
