@@ -17,7 +17,7 @@
         "@types/d3": "^7.4.3",
         "@vitest/coverage-v8": "^4.0.17",
         "@vitest/ui": "^4.0.17",
-        "happy-dom": "^20.3.3",
+        "happy-dom": "^20.3.4",
         "katex": "^0.16.27",
         "svgo": "^4.0.0",
         "terser": "^5.46.0",
