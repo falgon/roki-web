@@ -66,6 +66,12 @@
         $if(canonical-url)$
         <link rel="canonical" href="$canonical-url$">
         $endif$
+        <script type="application/ld+json">
+$json-ld-person$
+        </script>
+        <script type="application/ld+json">
+$json-ld-website$
+        </script>
     </head>
     <body>
         <main class="section main" role="main">
