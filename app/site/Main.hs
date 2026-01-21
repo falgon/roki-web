@@ -181,6 +181,10 @@ techBlogConf = B.BlogConfig {
   , B.blogMonthlyPagePath = TB.monthlyPagePath
   , B.blogWriterOptions = writerOptions
   , B.blogGoogleCx = "c0ipiy0rxaw"
+  , B.blogGiscusRepo = TB.giscusRepo
+  , B.blogGiscusRepoId = TB.giscusRepoId
+  , B.blogGiscusCategory = TB.giscusCategory
+  , B.blogGiscusCategoryId = TB.giscusCategoryId
   }
 
 diaryConf :: B.BlogConfig Rules
@@ -207,6 +211,10 @@ diaryConf = B.BlogConfig {
   , B.blogMonthlyPagePath = AB.monthlyPagePath
   , B.blogWriterOptions = writerOptions
   , B.blogGoogleCx = "rzk_3jogdf4"
+  , B.blogGiscusRepo = AB.giscusRepo
+  , B.blogGiscusRepoId = AB.giscusRepoId
+  , B.blogGiscusCategory = AB.giscusCategory
+  , B.blogGiscusCategoryId = AB.giscusCategoryId
   }
 
 main :: IO ()
