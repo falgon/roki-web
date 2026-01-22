@@ -36,6 +36,10 @@ import qualified Text.HTML.TagSoup       as TS
 
 import           Archives                (Archives (..), MonthlyArchives,
                                           YearlyArchives)
+import           Config.Author           (authorDescriptionEn,
+                                          authorDescriptionJa, authorGithub,
+                                          authorJobTitle, authorName,
+                                          authorStackOverflow, authorTwitter)
 import           Config.Site             (baseUrl, defaultTimeLocale', siteName,
                                           timeZoneJST)
 
@@ -94,7 +98,7 @@ jsonLdArticleField key = field key $ \item -> do
             , "dateModified" .= dateModified
             , "author" .= object
                 [ "@type" .= ("Person" :: String)
-                , "name" .= ("Roki" :: String)
+                , "name" .= authorName
                 , "url" .= baseUrl
                 ]
             , "publisher" .= object
@@ -111,20 +115,28 @@ jsonLdArticleField key = field key $ \item -> do
 
 -- | JSON-LD Person Schema を生成するフィールド
 -- サイト著者の構造化データを出力
+-- langメタデータに応じてdescriptionを多言語切り替え
 jsonLdPersonField :: String -> Context String
-jsonLdPersonField key = constField key $ TL.unpack $ TLE.decodeUtf8 $ encode $ object
-    [ "@context" .= ("https://schema.org" :: String)
-    , "@type" .= ("Person" :: String)
-    , "name" .= ("Roki" :: String)
-    , "url" .= baseUrl
-    , "sameAs" .=
-        [ "https://twitter.com/roki_r7" :: String
-        , "https://github.com/falgon"
-        , "https://stackoverflow.com/users/8345717"
+jsonLdPersonField key = field key $ \item -> do
+    -- langメタデータを取得（デフォルトは"ja"）
+    mLang <- getMetadataField (itemIdentifier item) "lang"
+    let description = case mLang of
+            Just "ja" -> authorDescriptionJa
+            Just "en" -> authorDescriptionEn
+            _         -> authorDescriptionJa  -- デフォルトは日本語
+    return $ TL.unpack $ TLE.decodeUtf8 $ encode $ object
+        [ "@context" .= ("https://schema.org" :: String)
+        , "@type" .= ("Person" :: String)
+        , "name" .= authorName
+        , "url" .= baseUrl
+        , "sameAs" .=
+            [ "https://twitter.com/" <> authorTwitter
+            , "https://github.com/" <> authorGithub
+            , "https://stackoverflow.com/users/" <> authorStackOverflow
+            ]
+        , "jobTitle" .= authorJobTitle
+        , "description" .= description
         ]
-    , "jobTitle" .= ("Software Engineer" :: String)
-    , "description" .= ("Haskell enthusiast and Disney data analyst" :: String)
-    ]
 
 -- | JSON-LD WebSite Schema を生成するフィールド
 -- サイト全体の構造化データと検索機能を出力
