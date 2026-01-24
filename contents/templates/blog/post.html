@@ -69,21 +69,22 @@ $endif$
                     </div>
                 </div>
                 <aside class="comments mt-4">
-                    <div id="disqus_thread"></div>
-                    <script>
-                    (function() { 
-                        var d = document, s = d.createElement('script');
-                        s.src = 'https://$disqus$.disqus.com/embed.js';
-                        s.setAttribute('data-timestamp', +new Date());
-                        (d.head || d.body).appendChild(s); 
-                    })();
+                    <script src="https://giscus.app/client.js"
+                            data-repo="$giscus-repo$"
+                            data-repo-id="$giscus-repo-id$"
+                            data-category="$giscus-category$"
+                            data-category-id="$giscus-category-id$"
+                            data-mapping="pathname"
+                            data-strict="0"
+                            data-reactions-enabled="1"
+                            data-emit-metadata="0"
+                            data-input-position="bottom"
+                            data-theme="light"
+                            data-lang="ja"
+                            data-loading="lazy"
+                            crossorigin="anonymous"
+                            async>
                     </script>
-                    <noscript>
-                        Please enable JavaScript to view the 
-                        <a href="https://$disqus$.disqus.com/?ref_noscript">
-                            comments powered by Disqus.
-                        </a>
-                    </noscript>
                 </aside>
 
                 <div class="container">
