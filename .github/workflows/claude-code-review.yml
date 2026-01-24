@@ -1,4 +1,4 @@
-name: Claude Code Review
+name: Claude Code Review for Bot PRs
 
 on:
   pull_request:
@@ -36,7 +36,7 @@ jobs:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           github_token: ${{ github.token }}
 
-          allowed_bots: "dependabot,github-actions,claude"
+          allowed_bots: "dependabot,github-actions,claude,kodiakhq"
 
           # Optional: Specify model and allowed tools via claude_args (API v1)
           claude_args: |
