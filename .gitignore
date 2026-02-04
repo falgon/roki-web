@@ -11,3 +11,4 @@ coverage/
 hpc-report/
 .serena/
 .mcp.json
+.stack
