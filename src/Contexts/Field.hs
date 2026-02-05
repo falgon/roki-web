@@ -3,6 +3,8 @@ module Contexts.Field (
     localDateField
   , iso8601DateField
   , jsonLdArticleField
+  , jsonLdPersonField
+  , jsonLdWebSiteField
   , breadcrumbField
   , tagsField'
   , tagCloudField'
@@ -109,6 +111,39 @@ jsonLdArticleField key = field key $ \item -> do
             , "description" .= description
             , "url" .= articleUrl
             ]
+
+-- | JSON-LD Person Schema を生成するフィールド
+-- サイト著者の構造化データを出力
+jsonLdPersonField :: String -> Context String
+jsonLdPersonField key = constField key $ TL.unpack $ TLE.decodeUtf8 $ encode $ object
+    [ "@context" .= ("https://schema.org" :: String)
+    , "@type" .= ("Person" :: String)
+    , "name" .= ("Roki" :: String)
+    , "url" .= baseUrl
+    , "sameAs" .=
+        [ "https://twitter.com/roki_r7" :: String
+        , "https://github.com/falgon"
+        , "https://stackoverflow.com/users/8345717"
+        ]
+    , "jobTitle" .= ("Software Engineer" :: String)
+    , "description" .= ("Haskell enthusiast and Disney data analyst" :: String)
+    ]
+
+-- | JSON-LD WebSite Schema を生成するフィールド
+-- サイト全体の構造化データと検索機能を出力
+jsonLdWebSiteField :: String -> Context String
+jsonLdWebSiteField key = constField key $ TL.unpack $ TLE.decodeUtf8 $ encode $ object
+    [ "@context" .= ("https://schema.org" :: String)
+    , "@type" .= ("WebSite" :: String)
+    , "name" .= siteName
+    , "url" .= baseUrl
+    , "description" .= ("Roki's technical blog and hobby content" :: String)
+    , "potentialAction" .= object
+        [ "@type" .= ("SearchAction" :: String)
+        , "target" .= (baseUrl <> "/roki.log/search.html?q={search_term_string}")
+        , "query-input" .= ("required name=search_term_string" :: String)
+        ]
+    ]
 
 -- | BreadcrumbList の個別要素を生成
 mkListItem :: Int -> String -> String -> Value

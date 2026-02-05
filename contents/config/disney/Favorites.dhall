@@ -17,13 +17,10 @@ in    [ { text = "アナと雪の女王"
         , category = "works"
         , link = Some "https://www.disney.co.jp/fc/live-action/enchanted"
         }
-      , { text = "ソウルフル・ワールド"
+      , { text = "ミッキーマウス！"
         , category = "works"
-        , link = Some "https://www.disney.co.jp/movie/soulfulworld"
-        }
-      , { text = "クルエラ"
-        , category = "works"
-        , link = Some "https://www.disney.co.jp/movie/cruella"
+        , link = Some
+            "https://www.disneyplus.com/ja-jp/browse/entity-9ef52e33-d305-4043-ad90-a1b718ec8f65"
         }
       , { text = "ワンス・アポン・ア・スタジオ -100年の思い出-"
         , category = "works"
@@ -41,10 +38,6 @@ in    [ { text = "アナと雪の女王"
       , { text = "ジュディ・ホップス"
         , category = "characters"
         , link = Some "https://www.disney.co.jp/fc/zootopia/character/judy"
-        }
-      , { text = "リトル・グリーン・メン"
-        , category = "characters"
-        , link = Some "https://www.disney.co.jp/fc/toystory/character/aliens"
         }
       , { text = "ミッキーのマジカルミュージックワールド"
         , category = "park-contents"
