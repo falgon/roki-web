@@ -83,6 +83,11 @@
 $json-ld-article$
         </script>
         $endif$
+        $if(json-ld-breadcrumb)$
+        <script type="application/ld+json">
+$json-ld-breadcrumb$
+        </script>
+        $endif$
         <meta name="google-site-verification" content="$google-site-verification$" />
         <!-- Global site tag (gtag.js) - Google Analytics -->
 		<script async src="https://www.googletagmanager.com/gtag/js?id=$google-analytics$"></script>
