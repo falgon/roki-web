@@ -5,6 +5,7 @@ module Contexts.Field (
   , jsonLdArticleField
   , jsonLdPersonField
   , jsonLdWebSiteField
+  , breadcrumbField
   , tagsField'
   , tagCloudField'
   , descriptionField
@@ -16,11 +17,12 @@ module Contexts.Field (
 
 import           Control.Monad           (forM_, liftM2)
 import           Control.Monad.Trans     (lift)
-import           Data.Aeson              (encode, object, (.=))
+import           Data.Aeson              (Value, encode, object, (.=))
 import qualified Data.ByteString.Lazy    as BL
 import           Data.Function           (on)
 import           Data.Functor            ((<&>))
-import           Data.List               (isPrefixOf, isSuffixOf, sortBy)
+import           Data.List               (inits, intercalate, isPrefixOf,
+                                          isSuffixOf, sortBy)
 import           Data.List.Extra         (mconcatMap)
 import           Data.Maybe              (catMaybes, fromMaybe)
 import qualified Data.Text               as T
@@ -32,6 +34,7 @@ import           Hakyll                  hiding (isExternal)
 import           Lucid.Base              (Html, ToHtml (..), renderText,
                                           renderTextT, toHtml)
 import           Lucid.Html5
+import           System.FilePath         (splitDirectories)
 import qualified Text.HTML.TagSoup       as TS
 
 import           Archives                (Archives (..), MonthlyArchives,
@@ -141,6 +144,46 @@ jsonLdWebSiteField key = constField key $ TL.unpack $ TLE.decodeUtf8 $ encode $ 
         , "query-input" .= ("required name=search_term_string" :: String)
         ]
     ]
+
+-- | BreadcrumbList の個別要素を生成
+mkListItem :: Int -> String -> String -> Value
+mkListItem pos name url = object
+    [ "@type" .= ("ListItem" :: String)
+    , "position" .= pos
+    , "name" .= name
+    , "item" .= url
+    ]
+
+-- | パスセグメントからパンくず要素のリストを構築
+-- ホーム要素を先頭に追加し、各セグメントに累積的な URL を設定
+buildBreadcrumbs :: String -> String -> [String] -> [Value]
+buildBreadcrumbs base finalTitle segments =
+    homeItem : zipWith3 mkListItem [2 ..] names urls
+  where
+    homeItem = mkListItem 1 "ホーム" base
+    names = init segments ++ [finalTitle]
+    urls = map ((base <>) . ("/" <>) . intercalate "/") $ tail $ inits segments
+
+-- | JSON-LD BreadcrumbList スキーマを生成するフィールド
+-- パス構造から階層的なパンくずリストを構築し、schema.org 仕様に準拠した JSON-LD を出力
+breadcrumbField :: String -> Context String
+breadcrumbField key = field key $ \item ->
+    getRoute (itemIdentifier item) >>= \mRoute ->
+        case mRoute of
+            Nothing -> noResult $ "Field " ++ key ++ ": route not found"
+            Just route ->
+                let segments = filter (not . null) $ splitDirectories route
+                in case segments of
+                    [] -> noResult $ "Field " ++ key ++ ": empty route"
+                    _ -> do
+                        metadata <- getMetadata (itemIdentifier item)
+                        let title = fromMaybe (last segments) $ lookupString "title" metadata
+                            breadcrumbs = buildBreadcrumbs baseUrl title segments
+                        return $ TL.unpack $ TLE.decodeUtf8 $ encode $ object
+                            [ "@context" .= ("https://schema.org" :: String)
+                            , "@type" .= ("BreadcrumbList" :: String)
+                            , "itemListElement" .= breadcrumbs
+                            ]
 
 isExternal :: String -> Bool
 isExternal url = "http://" `isPrefixOf` url || "https://" `isPrefixOf` url
