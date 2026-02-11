@@ -40,7 +40,7 @@ jobs:
 
           # Optional: Specify model and allowed tools via claude_args (API v1)
           claude_args: |
-            --model 'sonnet[1m]'
+            --model 'haiku'
             --allowedTools mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),WebFetch,WebSearch
 
           # Prompt for automated review (no @claude mention needed)
