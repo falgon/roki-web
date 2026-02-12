@@ -330,8 +330,25 @@ ul.commit-ul {
     // Google 側の内部フォームも親コンテナ幅に追従させる
     .gsc-search-box,
     .gsc-input-box {
+        box-sizing: border-box;
         max-width: 100%;
         width: 100%;
+    }
+
+    // Google 側の既定マージンを打ち消し、モバイルでのはみ出しを防ぐ
+    .gsc-search-box {
+        margin-left: 0;
+        margin-right: 0;
+    }
+
+    // 検索ボックスの縦幅を少し詰めて navbar とのバランスを整える
+    .gsc-input-box {
+        height: 42px;
+    }
+
+    // Google が入力要素へ付与するインライン margin を打ち消す
+    input.gsc-input {
+        margin: 0 !important;
     }
 }
 
@@ -351,6 +368,10 @@ ul.commit-ul {
         .gcse-searchbox-only,
         .gsc-control-searchbox-only {
             max-width: 100%;
+        }
+
+        .gsc-input-box {
+            height: 40px;
         }
     }
 }
