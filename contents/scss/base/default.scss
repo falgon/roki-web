@@ -316,3 +316,34 @@ ul.commit-ul {
 .is-disable-pointer-events {
     pointer-events: none;
 }
+
+// Google Custom Search Engine (GCSE) の横幅制御
+// navbar 内の検索ボックスの横幅を制限し、レイアウト崩れを防止
+.navbar-item {
+    // GCSE コンテナの横幅制限（デフォルト: デスクトップサイズ）
+    .gcse-searchbox-only,
+    .gsc-control-cse {
+        max-width: 300px;
+        width: 100%;
+    }
+}
+
+// タブレット (769px - 1023px) での調整
+@media screen and (min-width: 769px) and (max-width: 1023px) {
+    .navbar-item {
+        .gcse-searchbox-only,
+        .gsc-control-cse {
+            max-width: 250px;
+        }
+    }
+}
+
+// モバイル (768px 以下) ではフル幅を許可
+@media screen and (max-width: 768px) {
+    .navbar-item {
+        .gcse-searchbox-only,
+        .gsc-control-cse {
+            max-width: 100%;
+        }
+    }
+}
