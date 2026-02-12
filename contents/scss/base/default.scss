@@ -346,6 +346,12 @@ ul.commit-ul {
         height: 42px;
     }
 
+    // GCSE 側の虫眼鏡アイコンは 56px セル基準で中央寄せされるため、
+    // 入力欄の高さを詰めた分だけ上方向へ補正して見た目の中央を合わせる
+    .gsib_a {
+        background-position: left 16px calc(50% - 7px);
+    }
+
     // Google が入力要素へ付与するインライン margin を打ち消す
     input.gsc-input {
         margin: 0 !important;
@@ -372,6 +378,10 @@ ul.commit-ul {
 
         .gsc-input-box {
             height: 40px;
+        }
+
+        .gsib_a {
+            background-position: left 16px calc(50% - 8px);
         }
     }
 }
