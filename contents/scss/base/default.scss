@@ -318,21 +318,28 @@ ul.commit-ul {
 }
 
 // Google Custom Search Engine (GCSE) の横幅制御
-// navbar 内の検索ボックスの横幅を制限し、レイアウト崩れを防止
-.navbar-item {
+// 初期描画時のプレースホルダーと、Google が動的生成する要素の両方に適用する
+.navbar-item.field {
     // GCSE コンテナの横幅制限（デフォルト: デスクトップサイズ）
     .gcse-searchbox-only,
-    .gsc-control-cse {
+    .gsc-control-searchbox-only {
         max-width: 300px;
+        width: 100%;
+    }
+
+    // Google 側の内部フォームも親コンテナ幅に追従させる
+    .gsc-search-box,
+    .gsc-input-box {
+        max-width: 100%;
         width: 100%;
     }
 }
 
 // タブレット (769px - 1023px) での調整
 @media screen and (min-width: 769px) and (max-width: 1023px) {
-    .navbar-item {
+    .navbar-item.field {
         .gcse-searchbox-only,
-        .gsc-control-cse {
+        .gsc-control-searchbox-only {
             max-width: 250px;
         }
     }
@@ -340,9 +347,9 @@ ul.commit-ul {
 
 // モバイル (768px 以下) ではフル幅を許可
 @media screen and (max-width: 768px) {
-    .navbar-item {
+    .navbar-item.field {
         .gcse-searchbox-only,
-        .gsc-control-cse {
+        .gsc-control-searchbox-only {
             max-width: 100%;
         }
     }
