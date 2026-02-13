@@ -14,9 +14,9 @@ module Contexts.Blog (
   , listCtx
 ) where
 
-import           Contexts.Field       (descriptionField, imageField,
-                                       jsonLdArticleField, ogImageField,
-                                       tagsField')
+import           Contexts.Field       (breadcrumbField, descriptionField,
+                                       imageField, jsonLdArticleField,
+                                       ogImageField, tagsField')
 import           Control.Monad.Extra  (ifM)
 import           Control.Monad.Reader (asks, lift)
 import qualified Data.Text            as T
@@ -105,6 +105,7 @@ postCtx tags = do
       , pure $ imageField "image"
       , pure $ ogImageField "og-image" defaultOgImage
       , pure $ jsonLdArticleField "json-ld-article"
+      , pure $ breadcrumbField "json-ld-breadcrumb"
       , pure $ siteCtx
       , pure $ jsPathCtx
       , pure $ defaultContext

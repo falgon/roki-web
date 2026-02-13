@@ -9,10 +9,6 @@ on:
       - '.gitignore'
   pull_request:
     branches: [ "develop", "master" ]
-    paths-ignore:
-      - '**.md'
-      - 'LICENSE'
-      - '.gitignore'
   schedule:
     - cron: "25 2 * * 5"
 

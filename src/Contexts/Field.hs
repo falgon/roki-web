@@ -5,6 +5,7 @@ module Contexts.Field (
   , jsonLdArticleField
   , jsonLdPersonField
   , jsonLdWebSiteField
+  , breadcrumbField
   , tagsField'
   , tagCloudField'
   , descriptionField
@@ -16,11 +17,12 @@ module Contexts.Field (
 
 import           Control.Monad           (forM_, liftM2)
 import           Control.Monad.Trans     (lift)
-import           Data.Aeson              (encode, object, (.=))
+import           Data.Aeson              (Value, encode, object, (.=))
 import qualified Data.ByteString.Lazy    as BL
 import           Data.Function           (on)
 import           Data.Functor            ((<&>))
-import           Data.List               (isPrefixOf, isSuffixOf, sortBy)
+import           Data.List               (inits, intercalate, isPrefixOf,
+                                          isSuffixOf, sortBy)
 import           Data.List.Extra         (mconcatMap)
 import           Data.Maybe              (catMaybes, fromMaybe)
 import qualified Data.Text               as T
@@ -32,10 +34,15 @@ import           Hakyll                  hiding (isExternal)
 import           Lucid.Base              (Html, ToHtml (..), renderText,
                                           renderTextT, toHtml)
 import           Lucid.Html5
+import           System.FilePath         (splitDirectories)
 import qualified Text.HTML.TagSoup       as TS
 
 import           Archives                (Archives (..), MonthlyArchives,
                                           YearlyArchives)
+import           Config.Author           (authorDescriptionEn,
+                                          authorDescriptionJa, authorGithub,
+                                          authorJobTitle, authorName,
+                                          authorStackOverflow, authorTwitter)
 import           Config.Site             (baseUrl, defaultTimeLocale', siteName,
                                           timeZoneJST)
 
@@ -94,7 +101,7 @@ jsonLdArticleField key = field key $ \item -> do
             , "dateModified" .= dateModified
             , "author" .= object
                 [ "@type" .= ("Person" :: String)
-                , "name" .= ("Roki" :: String)
+                , "name" .= authorName
                 , "url" .= baseUrl
                 ]
             , "publisher" .= object
@@ -111,20 +118,28 @@ jsonLdArticleField key = field key $ \item -> do
 
 -- | JSON-LD Person Schema を生成するフィールド
 -- サイト著者の構造化データを出力
+-- langメタデータに応じてdescriptionを多言語切り替え
 jsonLdPersonField :: String -> Context String
-jsonLdPersonField key = constField key $ TL.unpack $ TLE.decodeUtf8 $ encode $ object
-    [ "@context" .= ("https://schema.org" :: String)
-    , "@type" .= ("Person" :: String)
-    , "name" .= ("Roki" :: String)
-    , "url" .= baseUrl
-    , "sameAs" .=
-        [ "https://twitter.com/roki_r7" :: String
-        , "https://github.com/falgon"
-        , "https://stackoverflow.com/users/8345717"
+jsonLdPersonField key = field key $ \item -> do
+    -- langメタデータを取得（デフォルトは"ja"）
+    mLang <- getMetadataField (itemIdentifier item) "lang"
+    let description = case mLang of
+            Just "ja" -> authorDescriptionJa
+            Just "en" -> authorDescriptionEn
+            _         -> authorDescriptionJa  -- デフォルトは日本語
+    return $ TL.unpack $ TLE.decodeUtf8 $ encode $ object
+        [ "@context" .= ("https://schema.org" :: String)
+        , "@type" .= ("Person" :: String)
+        , "name" .= authorName
+        , "url" .= baseUrl
+        , "sameAs" .=
+            [ "https://twitter.com/" <> authorTwitter
+            , "https://github.com/" <> authorGithub
+            , "https://stackoverflow.com/users/" <> authorStackOverflow
+            ]
+        , "jobTitle" .= authorJobTitle
+        , "description" .= description
         ]
-    , "jobTitle" .= ("Software Engineer" :: String)
-    , "description" .= ("Haskell enthusiast and Disney data analyst" :: String)
-    ]
 
 -- | JSON-LD WebSite Schema を生成するフィールド
 -- サイト全体の構造化データと検索機能を出力
@@ -141,6 +156,46 @@ jsonLdWebSiteField key = constField key $ TL.unpack $ TLE.decodeUtf8 $ encode $ 
         , "query-input" .= ("required name=search_term_string" :: String)
         ]
     ]
+
+-- | BreadcrumbList の個別要素を生成
+mkListItem :: Int -> String -> String -> Value
+mkListItem pos name url = object
+    [ "@type" .= ("ListItem" :: String)
+    , "position" .= pos
+    , "name" .= name
+    , "item" .= url
+    ]
+
+-- | パスセグメントからパンくず要素のリストを構築
+-- ホーム要素を先頭に追加し、各セグメントに累積的な URL を設定
+buildBreadcrumbs :: String -> String -> [String] -> [Value]
+buildBreadcrumbs base finalTitle segments =
+    homeItem : zipWith3 mkListItem [2 ..] names urls
+  where
+    homeItem = mkListItem 1 "ホーム" base
+    names = init segments ++ [finalTitle]
+    urls = map ((base <>) . ("/" <>) . intercalate "/") $ tail $ inits segments
+
+-- | JSON-LD BreadcrumbList スキーマを生成するフィールド
+-- パス構造から階層的なパンくずリストを構築し、schema.org 仕様に準拠した JSON-LD を出力
+breadcrumbField :: String -> Context String
+breadcrumbField key = field key $ \item ->
+    getRoute (itemIdentifier item) >>= \mRoute ->
+        case mRoute of
+            Nothing -> noResult $ "Field " ++ key ++ ": route not found"
+            Just route ->
+                let segments = filter (not . null) $ splitDirectories route
+                in case segments of
+                    [] -> noResult $ "Field " ++ key ++ ": empty route"
+                    _ -> do
+                        metadata <- getMetadata (itemIdentifier item)
+                        let title = fromMaybe (last segments) $ lookupString "title" metadata
+                            breadcrumbs = buildBreadcrumbs baseUrl title segments
+                        return $ TL.unpack $ TLE.decodeUtf8 $ encode $ object
+                            [ "@context" .= ("https://schema.org" :: String)
+                            , "@type" .= ("BreadcrumbList" :: String)
+                            , "itemListElement" .= breadcrumbs
+                            ]
 
 isExternal :: String -> Bool
 isExternal url = "http://" `isPrefixOf` url || "https://" `isPrefixOf` url
