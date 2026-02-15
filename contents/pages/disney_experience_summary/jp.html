@@ -223,7 +223,37 @@
                         $endfor$
                         $endif$
                     </div>
-                    <div class="log-body">$log-body$</div>
+                    <div class="log-content-row">
+                        <div class="log-body">$log-body$</div>
+                        $if(image-items)$
+                        <div class="log-images" data-image-slideshow>
+                            <div class="log-image-viewport">
+                                $for(image-items)$
+                                <button
+                                    type="button"
+                                    class="log-image-slide"
+                                    data-image-url="$url$"
+                                    data-image-alt="$alt$"
+                                    aria-label="体験録画像を拡大表示"
+                                >
+                                    <img src="$url$" alt="$alt$" loading="lazy" decoding="async" />
+                                </button>
+                                $endfor$
+                            </div>
+                            <button type="button" class="slideshow-control prev" aria-label="前の画像">
+                                <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                            </button>
+                            <button type="button" class="slideshow-control next" aria-label="次の画像">
+                                <i class="fas fa-chevron-right" aria-hidden="true"></i>
+                            </button>
+                            <div class="slideshow-dots" role="tablist" aria-label="スライド画像の切り替え">
+                                $for(image-items)$
+                                <button type="button" class="slideshow-dot" aria-label="$alt$"></button>
+                                $endfor$
+                            </div>
+                        </div>
+                        $endif$
+                    </div>
                 </article>
                 $endfor$
             </div>
@@ -272,6 +302,21 @@
         </div>
     </div>
     </div>
+</div>
+
+<div id="log-image-modal" class="log-image-modal" role="dialog" aria-modal="true" aria-hidden="true">
+    <button type="button" class="log-image-modal-close" aria-label="拡大画像を閉じる">
+        <i class="fas fa-xmark" aria-hidden="true"></i>
+    </button>
+    <button type="button" class="log-image-modal-nav prev" aria-label="前の画像">
+        <i class="fas fa-chevron-left" aria-hidden="true"></i>
+    </button>
+    <figure class="log-image-modal-content">
+        <img id="log-image-modal-img" src="" alt="" />
+    </figure>
+    <button type="button" class="log-image-modal-nav next" aria-label="次の画像">
+        <i class="fas fa-chevron-right" aria-hidden="true"></i>
+    </button>
 </div>
 
 <script>

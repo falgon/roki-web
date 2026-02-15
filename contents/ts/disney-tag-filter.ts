@@ -541,6 +541,244 @@ declare global {
     }
 }
 
+interface SlideshowState {
+    slides: HTMLButtonElement[];
+    dots: HTMLButtonElement[];
+    currentIndex: number;
+    autoplayTimer: ReturnType<typeof setInterval> | null;
+    goTo: (index: number) => void;
+    startAutoplay: () => void;
+    stopAutoplay: () => void;
+}
+
+// 体験録画像スライドショーと拡大表示モーダルを初期化
+const initializeLogImageSlideshows = (): void => {
+    const slideshowRoots = Array.from(
+        document.querySelectorAll<HTMLElement>(".log-images[data-image-slideshow]"),
+    );
+    if (slideshowRoots.length === 0) {
+        return;
+    }
+
+    const modal = document.getElementById("log-image-modal");
+    const modalImage = document.getElementById("log-image-modal-img") as HTMLImageElement | null;
+    const modalCloseBtn = modal?.querySelector<HTMLButtonElement>(".log-image-modal-close") ?? null;
+    const modalPrevBtn =
+        modal?.querySelector<HTMLButtonElement>(".log-image-modal-nav.prev") ?? null;
+    const modalNextBtn =
+        modal?.querySelector<HTMLButtonElement>(".log-image-modal-nav.next") ?? null;
+
+    const slideshows: SlideshowState[] = [];
+    let activeModalSlideshow: SlideshowState | null = null;
+    let activeModalIndex = 0;
+
+    const isModalOpen = (): boolean => {
+        return modal?.classList.contains("is-active") ?? false;
+    };
+
+    const updateModalImage = (): void => {
+        if (!modalImage || !activeModalSlideshow) return;
+        const activeSlide = activeModalSlideshow.slides[activeModalIndex];
+        const image = activeSlide?.querySelector("img");
+        const imageSrc = activeSlide?.dataset.imageUrl || image?.getAttribute("src") || "";
+        const imageAlt =
+            activeSlide?.dataset.imageAlt || image?.getAttribute("alt") || "体験録画像";
+
+        modalImage.src = imageSrc;
+        modalImage.alt = imageAlt;
+    };
+
+    const openModal = (slideshow: SlideshowState, index: number): void => {
+        if (!modal || !modalImage) return;
+        activeModalSlideshow = slideshow;
+        activeModalIndex = index;
+        slideshow.stopAutoplay();
+        updateModalImage();
+        modal.classList.add("is-active");
+        modal.setAttribute("aria-hidden", "false");
+        document.body.style.overflow = "hidden";
+    };
+
+    const closeModal = (): void => {
+        if (!modal) return;
+        modal.classList.remove("is-active");
+        modal.setAttribute("aria-hidden", "true");
+        document.body.style.overflow = "";
+        if (activeModalSlideshow) {
+            activeModalSlideshow.startAutoplay();
+        }
+        activeModalSlideshow = null;
+    };
+
+    const moveModalImage = (step: number): void => {
+        if (!activeModalSlideshow) return;
+        const total = activeModalSlideshow.slides.length;
+        if (total === 0) return;
+        activeModalIndex = (activeModalIndex + step + total) % total;
+        activeModalSlideshow.goTo(activeModalIndex);
+        updateModalImage();
+    };
+
+    for (const root of slideshowRoots) {
+        const slides = Array.from(root.querySelectorAll<HTMLButtonElement>(".log-image-slide"));
+        if (slides.length === 0) {
+            continue;
+        }
+
+        const dots = Array.from(root.querySelectorAll<HTMLButtonElement>(".slideshow-dot"));
+        const prevButton = root.querySelector<HTMLButtonElement>(".slideshow-control.prev");
+        const nextButton = root.querySelector<HTMLButtonElement>(".slideshow-control.next");
+        const dotsContainer = root.querySelector<HTMLElement>(".slideshow-dots");
+
+        const slideshow: SlideshowState = {
+            slides,
+            dots,
+            currentIndex: 0,
+            autoplayTimer: null,
+            goTo: (index: number): void => {
+                const total = slideshow.slides.length;
+                if (total === 0) return;
+                slideshow.currentIndex = (index + total) % total;
+
+                slideshow.slides.forEach((slide, slideIndex) => {
+                    const isActive = slideIndex === slideshow.currentIndex;
+                    slide.classList.toggle("is-active", isActive);
+                    slide.setAttribute("aria-hidden", String(!isActive));
+                    slide.tabIndex = isActive ? 0 : -1;
+                });
+
+                slideshow.dots.forEach((dot, dotIndex) => {
+                    const isActive = dotIndex === slideshow.currentIndex;
+                    dot.classList.toggle("is-active", isActive);
+                    dot.setAttribute("aria-selected", String(isActive));
+                    dot.tabIndex = isActive ? 0 : -1;
+                });
+            },
+            startAutoplay: (): void => {
+                slideshow.stopAutoplay();
+                if (slideshow.slides.length <= 1 || isModalOpen()) {
+                    return;
+                }
+                slideshow.autoplayTimer = setInterval((): void => {
+                    slideshow.goTo(slideshow.currentIndex + 1);
+                }, 4000);
+            },
+            stopAutoplay: (): void => {
+                if (slideshow.autoplayTimer) {
+                    clearInterval(slideshow.autoplayTimer);
+                    slideshow.autoplayTimer = null;
+                }
+            },
+        };
+
+        if (slideshow.slides.length <= 1) {
+            if (prevButton) prevButton.style.display = "none";
+            if (nextButton) nextButton.style.display = "none";
+            if (dotsContainer) dotsContainer.style.display = "none";
+        } else {
+            if (prevButton) {
+                prevButton.addEventListener("click", (event: Event): void => {
+                    event.preventDefault();
+                    slideshow.goTo(slideshow.currentIndex - 1);
+                    slideshow.startAutoplay();
+                });
+            }
+
+            if (nextButton) {
+                nextButton.addEventListener("click", (event: Event): void => {
+                    event.preventDefault();
+                    slideshow.goTo(slideshow.currentIndex + 1);
+                    slideshow.startAutoplay();
+                });
+            }
+
+            slideshow.dots.forEach((dot, dotIndex) => {
+                dot.addEventListener("click", (event: Event): void => {
+                    event.preventDefault();
+                    slideshow.goTo(dotIndex);
+                    slideshow.startAutoplay();
+                });
+            });
+
+            root.addEventListener("mouseenter", (): void => {
+                slideshow.stopAutoplay();
+            });
+            root.addEventListener("mouseleave", (): void => {
+                slideshow.startAutoplay();
+            });
+            root.addEventListener("focusin", (): void => {
+                slideshow.stopAutoplay();
+            });
+            root.addEventListener("focusout", (event: FocusEvent): void => {
+                const nextFocusTarget = event.relatedTarget as Node | null;
+                if (!nextFocusTarget || !root.contains(nextFocusTarget)) {
+                    slideshow.startAutoplay();
+                }
+            });
+        }
+
+        slideshow.slides.forEach((slide, index) => {
+            slide.addEventListener("click", (event: Event): void => {
+                event.preventDefault();
+                openModal(slideshow, index);
+            });
+        });
+
+        slideshow.goTo(0);
+        slideshow.startAutoplay();
+        slideshows.push(slideshow);
+    }
+
+    if (!modal || !modalImage) {
+        return;
+    }
+
+    modalCloseBtn?.addEventListener("click", (): void => {
+        closeModal();
+    });
+
+    modal.addEventListener("click", (event: Event): void => {
+        if (event.target === modal) {
+            closeModal();
+        }
+    });
+
+    modalPrevBtn?.addEventListener("click", (event: Event): void => {
+        event.preventDefault();
+        event.stopPropagation();
+        moveModalImage(-1);
+    });
+
+    modalNextBtn?.addEventListener("click", (event: Event): void => {
+        event.preventDefault();
+        event.stopPropagation();
+        moveModalImage(1);
+    });
+
+    document.addEventListener("keydown", (event: KeyboardEvent): void => {
+        if (!isModalOpen()) return;
+        if (event.key === "Escape") {
+            closeModal();
+        } else if (event.key === "ArrowLeft") {
+            moveModalImage(-1);
+        } else if (event.key === "ArrowRight") {
+            moveModalImage(1);
+        }
+    });
+
+    document.addEventListener("visibilitychange", (): void => {
+        if (document.hidden) {
+            slideshows.forEach((slideshow) => {
+                slideshow.stopAutoplay();
+            });
+        } else if (!isModalOpen()) {
+            slideshows.forEach((slideshow) => {
+                slideshow.startAutoplay();
+            });
+        }
+    });
+};
+
 // 検索フィルターの表示/非表示切り替えを初期化
 const initializeSearchFilter = (
     toggleSearchFilterBtn: HTMLElement,
@@ -656,18 +894,26 @@ if (typeof window !== "undefined") {
             escapeHtml: typeof escapeHtml;
             normalizeString: typeof normalizeString;
             initLoadingScreen: typeof initLoadingScreen;
+            initializeLogImageSlideshows: typeof initializeLogImageSlideshows;
         }
     ).escapeHtml = escapeHtml;
     (window as typeof window & { normalizeString: typeof normalizeString }).normalizeString =
         normalizeString;
     (window as typeof window & { initLoadingScreen: typeof initLoadingScreen }).initLoadingScreen =
         initLoadingScreen;
+    (
+        window as typeof window & {
+            initializeLogImageSlideshows: typeof initializeLogImageSlideshows;
+        }
+    ).initializeLogImageSlideshows = initializeLogImageSlideshows;
 }
 
 if (typeof document !== "undefined") {
     document.addEventListener("DOMContentLoaded", (): void => {
         // ローディング画面を初期化
         initLoadingScreen();
+        // 体験録画像スライドショーを初期化
+        initializeLogImageSlideshows();
 
         const tagFilterButtons: HTMLCollectionOf<Element> =
             document.getElementsByClassName("tag-filter-btn");
