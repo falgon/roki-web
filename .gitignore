@@ -12,3 +12,4 @@ hpc-report/
 .serena/
 .mcp.json
 .stack
+.claude/settings.local.json
