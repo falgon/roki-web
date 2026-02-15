@@ -173,7 +173,7 @@ disneyLogsPattern = fromRegex $ mconcat
     [ "(^"
     , joinPath [disneyExperienceSummaryRoot, "logs", "[0-9]+.md"]
     , "$)|(^"
-    , joinPath [disneyExperienceSummaryRoot, "logs", "[0-9]+", "content.md"]
+    , joinPath [disneyExperienceSummaryRoot, "logs", "[0-9]+", "index.md"]
     , "$)"
     ]
 
@@ -234,9 +234,9 @@ getLogsLastModified = do
     let logsDir = joinPath [contentsRoot, "disney_experience_summary", "logs"]
     entries <- listDirectory logsDir
     let topLevelMdFiles = [logsDir </> fileName | fileName <- entries, ".md" `isSuffixOf` fileName]
-        contentMdCandidates = [logsDir </> dirName </> "content.md" | dirName <- entries, all isDigit dirName]
-    existingContentMdFiles <- filterM doesFileExist contentMdCandidates
-    let mdFiles = topLevelMdFiles ++ existingContentMdFiles
+        indexMdCandidates = [logsDir </> dirName </> "index.md" | dirName <- entries, all isDigit dirName]
+    existingIndexMdFiles <- filterM doesFileExist indexMdCandidates
+    let mdFiles = topLevelMdFiles ++ existingIndexMdFiles
     if null mdFiles
         then return "-"
         else do
@@ -260,11 +260,8 @@ disneyLogCtx tagConfig = mconcat
     ]
   where
     imageItemsField = listFieldWith "image-items" imageCtx $ \item -> do
-        mImagePaths <- getMetadataField (itemIdentifier item) "images"
-        case mImagePaths of
-            Just imagePathsStr ->
-                return $ zipWith toImageItem [1 :: Int ..] $ map (resolveImageUrl item) $ filter (not . null) $ map trimMeta $ splitAll "," imagePathsStr
-            Nothing            -> return []
+        imagePaths <- extractImagePaths item
+        return $ zipWith toImageItem [1 :: Int ..] $ map (resolveImageUrl item) imagePaths
 
     imageCtx = mconcat
         [ field "url" (return . imageUrl . itemBody)
@@ -279,6 +276,13 @@ disneyLogCtx tagConfig = mconcat
                 imageUrl = url
               , imageAlt = "体験録画像 " ++ show idx
               }
+
+    extractImagePaths :: Item String -> Compiler [String]
+    extractImagePaths item = do
+        mImagePaths <- getMetadataField (itemIdentifier item) "images"
+        case mImagePaths of
+            Just imagePathsStr -> return $ filter (not . null) $ map trimMeta $ splitAll "," imagePathsStr
+            Nothing            -> return []
 
     resolveImageUrl :: Item String -> String -> String
     resolveImageUrl item path
