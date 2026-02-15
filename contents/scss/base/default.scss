@@ -316,3 +316,72 @@ ul.commit-ul {
 .is-disable-pointer-events {
     pointer-events: none;
 }
+
+// Google Custom Search Engine (GCSE) の横幅制御
+// 初期描画時のプレースホルダーと、Google が動的生成する要素の両方に適用する
+.navbar-item.field {
+    // GCSE コンテナの横幅制限（デフォルト: デスクトップサイズ）
+    .gcse-searchbox-only,
+    .gsc-control-searchbox-only {
+        max-width: 300px;
+        width: 100%;
+    }
+
+    // Google 側の内部フォームも親コンテナ幅に追従させる
+    .gsc-search-box,
+    .gsc-input-box {
+        box-sizing: border-box;
+        max-width: 100%;
+        width: 100%;
+    }
+
+    // Google 側の既定マージンを打ち消し、モバイルでのはみ出しを防ぐ
+    .gsc-search-box {
+        margin-left: 0;
+        margin-right: 0;
+    }
+
+    // 検索ボックスの縦幅を少し詰めて navbar とのバランスを整える
+    .gsc-input-box {
+        height: 42px;
+    }
+
+    // GCSE 側の虫眼鏡アイコンは 56px セル基準で中央寄せされるため、
+    // 入力欄の高さを詰めた分だけ上方向へ補正して見た目の中央を合わせる
+    .gsib_a {
+        background-position: 16px calc(50% - 7px);
+    }
+
+    // Google が入力要素へ付与するインライン margin を打ち消す
+    input.gsc-input {
+        margin: 0 !important;
+    }
+}
+
+// タブレット (769px - 1023px) での調整
+@media screen and (min-width: 769px) and (max-width: 1023px) {
+    .navbar-item.field {
+        .gcse-searchbox-only,
+        .gsc-control-searchbox-only {
+            max-width: 250px;
+        }
+    }
+}
+
+// モバイル (768px 以下) ではフル幅を許可
+@media screen and (max-width: 768px) {
+    .navbar-item.field {
+        .gcse-searchbox-only,
+        .gsc-control-searchbox-only {
+            max-width: 100%;
+        }
+
+        .gsc-input-box {
+            height: 40px;
+        }
+
+        .gsib_a {
+            background-position: 16px calc(50% - 8px);
+        }
+    }
+}
