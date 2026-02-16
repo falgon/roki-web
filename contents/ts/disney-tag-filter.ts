@@ -572,6 +572,45 @@ const initializeLogImageSlideshows = (): void => {
     let activeModalSlideshow: SlideshowState | null = null;
     let activeModalIndex = 0;
 
+    const loadImageFromElement = (image: HTMLImageElement | null): void => {
+        if (!image) return;
+        const dataSrc = image.dataset.src;
+        if (!dataSrc) return;
+        if (image.getAttribute("src") === dataSrc) return;
+        image.setAttribute("src", dataSrc);
+    };
+
+    const loadAllSlides = (slides: HTMLButtonElement[]): void => {
+        slides.forEach((slide): void => {
+            loadImageFromElement(slide.querySelector<HTMLImageElement>("img"));
+        });
+    };
+
+    const initializeLazyLoading = (root: HTMLElement, slides: HTMLButtonElement[]): void => {
+        if (typeof window.IntersectionObserver !== "function") {
+            loadAllSlides(slides);
+            return;
+        }
+
+        const observer = new IntersectionObserver(
+            (entries, currentObserver): void => {
+                const isVisible = entries.some((entry) => entry.isIntersecting);
+                if (!isVisible) return;
+
+                loadAllSlides(slides);
+                currentObserver.unobserve(root);
+                currentObserver.disconnect();
+            },
+            {
+                root: null,
+                rootMargin: "200px 0px",
+                threshold: 0.1,
+            },
+        );
+
+        observer.observe(root);
+    };
+
     const isModalOpen = (): boolean => {
         return modal?.classList.contains("is-active") ?? false;
     };
@@ -580,7 +619,8 @@ const initializeLogImageSlideshows = (): void => {
         if (!modalImage || !activeModalSlideshow) return;
         const activeSlide = activeModalSlideshow.slides[activeModalIndex];
         const image = activeSlide?.querySelector("img");
-        const imageSrc = activeSlide?.dataset.imageUrl || image?.getAttribute("src") || "";
+        const imageSrc =
+            activeSlide?.dataset.imageUrl || image?.dataset.src || image?.getAttribute("src") || "";
         const imageAlt =
             activeSlide?.dataset.imageAlt || image?.getAttribute("alt") || "体験録画像";
 
@@ -670,6 +710,8 @@ const initializeLogImageSlideshows = (): void => {
                 }
             },
         };
+
+        initializeLazyLoading(root, slides);
 
         if (slideshow.slides.length <= 1) {
             if (prevButton) prevButton.style.display = "none";

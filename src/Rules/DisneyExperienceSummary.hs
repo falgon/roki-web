@@ -299,9 +299,9 @@ disneyLogCtx tagConfig = mconcat
         | null filePath = filePath
         | Posix.isAbsolute filePath = filePath
         | (contentsRoot ++ "/") `isPrefixOf` filePath =
-            let dropped = drop (length contentsRoot) filePath
-            in if null dropped then "/" else dropped
-        | otherwise = "/" ++ filePath
+            let publicPath = dropWhile (== '/') $ drop (length contentsRoot) filePath
+            in Posix.makeRelative "disney_experience_summary" publicPath
+        | otherwise = filePath
 
     aiGeneratedField = listFieldWith "ai-generated-badges" (field "badge-text" (return . itemBody)) $ \item -> do
         mAiGenerated <- getMetadataField (itemIdentifier item) "ai-generated"

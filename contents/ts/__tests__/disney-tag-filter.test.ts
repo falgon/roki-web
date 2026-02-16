@@ -609,6 +609,42 @@ describe("disney-tag-filter.ts", () => {
             expect(dots[1]?.classList.contains("is-active")).toBe(false);
         });
 
+        it("loads slide image from data-src on initialization", () => {
+            const originalObserver = window.IntersectionObserver;
+            Object.defineProperty(window, "IntersectionObserver", {
+                configurable: true,
+                value: undefined,
+            });
+
+            document.body.innerHTML = `
+                ${modalHtml}
+                <div class="log-images" data-image-slideshow>
+                    <div class="log-image-viewport">
+                        <button class="log-image-slide" data-image-url="logs/80/sample-1.png" data-image-alt="A">
+                            <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" data-src="logs/80/sample-1.png" alt="A" />
+                        </button>
+                    </div>
+                    <button class="slideshow-control prev"></button>
+                    <button class="slideshow-control next"></button>
+                    <div class="slideshow-dots">
+                        <button class="slideshow-dot"></button>
+                    </div>
+                </div>
+            `;
+
+            try {
+                initializeLogImageSlideshows();
+
+                const image = document.querySelector(".log-image-slide img") as HTMLImageElement;
+                expect(image.getAttribute("src")).toBe("logs/80/sample-1.png");
+            } finally {
+                Object.defineProperty(window, "IntersectionObserver", {
+                    configurable: true,
+                    value: originalObserver,
+                });
+            }
+        });
+
         it("switches slide when next button is clicked", () => {
             document.body.innerHTML = `
                 ${modalHtml}
