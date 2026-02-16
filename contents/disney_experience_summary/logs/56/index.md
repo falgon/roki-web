@@ -4,7 +4,7 @@ date: 2025-08-24
 instagram: "https://www.instagram.com/p/DN0xWbA5n89"
 x: "https://x.com/p0nchi_v/status/1960183084348780593, https://x.com/p0nchi_v/status/1960202749683126284"
 disney-tags: "DAH"
-ai-generated: true
+ai-generated-by: "Claude Sonnet 4.5"
 ---
 
 この日はアナと雪の女王のグッズをお迎えしに舞浜へ。目的のデカビョルゲンを無事にお迎えすることができた。本来はそれだけの予定だったが、店内のオラフを見ているうちに、その場の空気に飲まれて思わずオラフも一緒にお迎えすることに。計画外の出費となってしまったが、二つ並んだ姿を見ると後悔はなかった。

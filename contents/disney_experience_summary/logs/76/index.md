@@ -4,7 +4,7 @@ date: 2025-11-20
 instagram: "https://www.instagram.com/p/DRTpGtpE5p0/, https://www.instagram.com/p/DRWOx02E4c3/, https://www.instagram.com/p/DRW-fTpE1df/"
 x: "https://x.com/p0nchi_v/status/1991455082710507533, https://x.com/p0nchi_v/status/1991493767543840802, https://x.com/p0nchi_v/status/1991834434367345015, https://x.com/p0nchi_v/status/1992190187527655896"
 disney-tags: "TDH"
-ai-generated: true
+ai-generated-by: "Claude Sonnet 4.5"
 ---
 
 仕事終わりに舞浜へ向かい、東京ディズニーランドホテルのシャーウッドガーデン・レストランでフードファイトを楽しんできた。20:30入りということでなかなか忙しいスケジュールだったが、戦略的に食事を進めながら、相変わらずここのうどんが好きすぎて4杯は食べてしまった。クリスマス的なメニューとしては、サーモンのアスピックとフォンダンショコラがなかなか美味しく、季節感を味わうことができた。

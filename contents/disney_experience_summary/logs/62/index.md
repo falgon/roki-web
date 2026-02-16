@@ -4,7 +4,7 @@ date: 2025-09-25
 instagram: "https://www.instagram.com/p/DPB4EOvk8zM/, https://www.instagram.com/p/DPEUzhekxKy/"
 x: "https://x.com/p0nchi_v/status/1971110551699980306, https://x.com/p0nchi_v/status/1971141182211358779, https://x.com/p0nchi_v/status/1971449160235876833"
 disney-tags: "TDH, DAH"
-ai-generated: true
+ai-generated-by: "Claude Sonnet 4.5"
 ---
 
 シャーウッドガーデンレストランに訪れ、狐とおばけのデザートを頂いてきた。キャラクターモチーフのかわいらしい見た目と、優しい甘さが印象的な逸品だった。「ご自身と会えて良かったね」と思わず呟いてしまうほど、愛らしい出来栄えに心が和んだ。

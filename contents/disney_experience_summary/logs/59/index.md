@@ -4,7 +4,7 @@ date: 2025-09-19
 instagram: "https://www.instagram.com/p/DOx-FK8k7Sm/, https://www.instagram.com/p/DO0h5zrk8Ec/, https://www.instagram.com/p/DO2M5-rk-K-/"
 x: "https://x.com/p0nchi_v/status/1968669288895549694, https://x.com/p0nchi_v/status/1968671374110499317, https://x.com/p0nchi_v/status/1968672758897741893, https://x.com/p0nchi_v/status/1968681440733802971"
 disney-tags: "DHM"
-ai-generated: true
+ai-generated-by: "Claude Sonnet 4.5"
 ---
 
 ディズニーハロウィーンのホテル飯1発目として、ホテルミラコスタのオチェーアノでディズニーハロウィーングルメディナーコースを頂いた。ビリーヴを直近で見られる絶好のロケーションで、何もかもが至れり尽くせりの体験だった。まずポメリーとスペシャルドリンクから始まり、結局肉料理に合わせて赤ワインも追加する形となった。

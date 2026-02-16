@@ -4,7 +4,7 @@ date: 2025-10-05
 instagram: "https://www.instagram.com/p/DPdRb9ck8CC/"
 x: "https://x.com/p0nchi_v/status/1974752743144517930, https://x.com/p0nchi_v/status/1974754812660244893"
 disney-tags: "DAH"
-ai-generated: true
+ai-generated-by: "Claude Sonnet 4.5"
 ---
 
 舞浜に到着し、チックタックダイナーへ向かった。ディズニーハロウィン2025のホテル飯もいよいよ大詰めということで、この日のスペシャルセットを楽しみにしていた。本日のカードはベイマックスで、幸先の良いスタートとなった。

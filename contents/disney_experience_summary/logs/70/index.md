@@ -4,7 +4,7 @@ date: 2025-10-25
 instagram: "https://www.instagram.com/p/DQo-ttRk7FG/"
 x: "https://x.com/p0nchi_v/status/1981956533991932327"
 disney-tags: "DAH"
-ai-generated: true
+ai-generated-by: "Claude Sonnet 4.5"
 ---
 
 ディズニーアンバサダーホテルのチックタックダイナーへ、ドナルドのクワッキーダックダックダックシティのハロウィンパンを食べに訪れた。投稿を忘れていたという反省とともに、ドナルドの顔面パンを目当てに来たのだが、中身は真っ黒の焼きそばパンで見た目のインパクトとは裏腹に味は大分ベーシックな焼きそばだった。

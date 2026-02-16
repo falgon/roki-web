@@ -4,7 +4,7 @@ date: 2025-11-02
 instagram: "https://www.instagram.com/p/DQy0VExk5e1/, https://www.instagram.com/p/DQ1z_EQE3LW/"
 x: "https://x.com/p0nchi_v/status/1984968525589729374, https://x.com/p0nchi_v/status/1985177862236983485"
 disney-tags: "TDH"
-ai-generated: true
+ai-generated-by: "Claude Sonnet 4.5"
 ---
 
 東京ディズニーランドホテルのドリーマーズラウンジで、昨日から始まった『"ディズニー・クリスマス"アフタヌーンセット』を頂いてきた。個人的には「タラバ蟹のグリル 長ネギとレンコンのエテュヴェ」が一番のお気に入りで、上品な味付けと食材の組み合わせが絶妙だった。うとうとしながら投稿したら色々漏れていたので、盛り込んだ上で再投稿するという小さなハプニングもあった。

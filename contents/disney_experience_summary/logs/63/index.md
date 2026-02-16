@@ -4,7 +4,7 @@ date: 2025-10-02
 instagram: "https://www.instagram.com/p/DPUESQFE6M4/, https://www.instagram.com/p/DPV9hDME-JR/"
 x: "https://x.com/p0nchi_v/status/1973676362994192569, https://x.com/p0nchi_v/status/1973678036332794264"
 disney-tags: "DHM"
-ai-generated: true
+ai-generated-by: "Claude Sonnet 4.5"
 ---
 
 オチェーアノでの食事の時間となった。コースは既に食べ終えていたため、この日はブッフェを選択することに。ハロウィン期間中ということもあり、特別なメニューが楽しめる絶好の機会だった。

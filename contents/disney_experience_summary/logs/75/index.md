@@ -4,7 +4,7 @@ date: 2025-11-18
 instagram: "https://www.instagram.com/p/DRNIOrKEwY3/, https://www.instagram.com/p/DROhENTExfZ/"
 x: "https://x.com/p0nchi_v/status/1990679241772642498, https://x.com/p0nchi_v/status/1990681469149462586, https://x.com/p0nchi_v/status/1990819653094879654, https://x.com/p0nchi_v/status/1991091957951775037"
 disney-tags: "DHM"
-ai-generated: true
+ai-generated-by: "Claude Sonnet 4.5"
 ---
 
 11月18日はミッキーとミニーの誕生日ということで、何かしらの形で当日二人の顔を拝みたいと思っていたところ、ホテルミラコスタのベッラヴィスタラウンジで『"ディズニークリスマス"ランチコース』を頂くことができた。鰤もリゾットも肉もシャーベットも美味しく、クリスマスシーズンならではの特別なコース料理を満喫することができた。ドリンクはスペシャルドリンクとニコラ・フィアットコレクション ヴィンテージブリュット15を頂き、リルリンリンのグッズと共にクリスマスの雰囲気を楽しんだ。

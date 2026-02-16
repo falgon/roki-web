@@ -4,7 +4,7 @@ date: 2025-10-09
 instagram: "https://www.instagram.com/p/DPlnVUTk-LD/"
 x: "https://x.com/p0nchi_v/status/1976159603424649229, https://x.com/p0nchi_v/status/1976164966689562842"
 disney-tags: "DAH"
-ai-generated: true
+ai-generated-by: "Claude Sonnet 4.5"
 ---
 
 本日も舞浜を訪れ、ディズニーアンバサダーホテルのハイピリオンラウンジへ。「ディズニー・ハロウィーン」ケーキセットを堪能することができた。紫色の層が美しいケーキに、白いミッキーマウスのフィギュアが可愛らしく飾られており、見た目からして心踊るものだった。

@@ -4,7 +4,7 @@ date: 2025-11-03
 instagram: "https://www.instagram.com/p/DQ3MNm9EwSL, https://www.instagram.com/p/DQ4SoFUE6Lj"
 x: "https://x.com/p0nchi_v/status/1985207959509782884, https://x.com/p0nchi_v/status/1985233926932341036, https://x.com/p0nchi_v/status/1985293007768453375, https://x.com/p0nchi_v/status/1987171611800416735"
 disney-tags: "TDH, DHM"
-ai-generated: true
+ai-generated-by: "Claude Sonnet 4.5"
 ---
 
 今日も舞浜に訪れ、ドリーマーズラウンジ、ハイピリオン・ラウンジ、シルクロードガーデンというホテル巡りを楽しんだ。ドリーマーズラウンジでは、前から気になっていたトルティーヤと昨日飲まなかったスペシャルドリンクを注文した。トルティーヤは重くなくて良い味わいで、期待通りの美味しさだった。毎年思うことだが、クリスマスは実質2ヶ月間の催事だと実感する日々となった。

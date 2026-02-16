@@ -4,7 +4,7 @@ date: 2025-10-20
 instagram: "https://www.instagram.com/p/DQlglZ-E7LJ/, https://www.instagram.com/p/DQl4BljE8gG/"
 x: "https://x.com/p0nchi_v/status/1981327102382395404, https://x.com/p0nchi_v/status/1980287265520886093, https://x.com/p0nchi_v/status/1980154442738778215"
 disney-tags: "TDH, TDL"
-ai-generated: true
+ai-generated-by: "Claude Sonnet 4.5"
 ---
 
 今年のディズニーハロウィーン2025第2弾として、映画「おしゃれキャット」のトーマス・オマリーとダッチェスの仮装で東京ディズニーランドホテルに宿泊した。トーマス・オマリーはエイブラハム・デ・レイシー・ジュゼッペ・ケイシー・トーマス・オマリーという長い本名を持つキザな性格のキャラクターで、ニックのような人気動物キャラクターとは異なり、センターストリートコーヒーハウスには登場しないのが少し不思議だった。人間の仮装と違い、動物キャラクターの仮装は着ぐるみを着るわけにもいかず、バウンド的な表現が難しいところもあった。

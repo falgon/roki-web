@@ -4,7 +4,7 @@ date: 2025-10-13
 instagram: "https://www.instagram.com/p/DPx4CB_Ewo7/, https://www.instagram.com/p/DP0yj_tk6SC/, https://www.instagram.com/p/DP3QgUWE0cw/, https://www.instagram.com/p/DQgHC78E47R/"
 x: "https://x.com/p0nchi_v/status/1977598587812139123, https://x.com/p0nchi_v/status/1977655924199453139, https://x.com/p0nchi_v/status/1977657305467597005, https://x.com/p0nchi_v/status/1977708720722198607, https://x.com/p0nchi_v/status/1977750540072169915, https://x.com/p0nchi_v/status/1978041161383096597, https://x.com/p0nchi_v/status/1978372229013344356, https://x.com/p0nchi_v/status/1978770561363824725, https://x.com/p0nchi_v/status/1977534240725303693, https://x.com/p0nchi_v/status/1978805382068768844"
 disney-tags: "TDS"
-ai-generated: true
+ai-generated-by: "Claude Sonnet 4.5"
 ---
 
 4ヶ月ぶりに東京ディズニーシーへ訪れることとなった。仮装禁止期間で唯一許される仮装として制服ディズニーを楽しんだが、年齢的にもう着れないかもしれないという思いがよぎった。久しぶりの海インということもあり、タワテラ、アクアトピア、シンド、レイジングといった定番アトラクションから、ドリフラやアナ雪などのショーまで、やりたいことを詰め込んだ充実のスケジュールとなった。

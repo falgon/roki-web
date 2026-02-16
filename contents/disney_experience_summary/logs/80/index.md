@@ -5,7 +5,7 @@ instagram: "https://www.instagram.com/p/DSuLPECk9r7/, https://www.instagram.com/
 x: "https://x.com/p0nchi_v/status/2003648010962842070, https://x.com/p0nchi_v/status/2003710800125657170, https://x.com/p0nchi_v/status/2003743112007729530, https://x.com/p0nchi_v/status/2003813573429268680, https://x.com/p0nchi_v/status/2003851672221872339, https://x.com/p0nchi_v/status/2003974110377107753, https://x.com/p0nchi_v/status/2004000228362559931, https://x.com/p0nchi_v/status/2004081340443250809, https://x.com/p0nchi_v/status/2004097735432253837, https://x.com/p0nchi_v/status/2004100279848128659, https://x.com/p0nchi_v/status/2004123602925531323, https://x.com/p0nchi_v/status/2004155312568520927, https://x.com/p0nchi_v/status/2004165244495794198, https://x.com/p0nchi_v/status/2004199634529669298, https://x.com/p0nchi_v/status/2004484582448804067, https://x.com/p0nchi_v/status/2004503757745488253, https://x.com/p0nchi_v/status/2004561056828694771"
 images: "sample-1.png, sample-2.png"
 disney-tags: "FSH, TDS"
-ai-generated: true
+ai-generated-by: "Claude Sonnet 4.5"
 ---
 
 2025年のクリスマスイヴとクリスマス当日、去年に引き続きファンタジースプリングスホテルでクリスマス期間を過ごすことができた。これで6泊目となるFSHでは、2年目のクリスマスを迎えたホテルのクリスマス装飾が美しく、レストラン「フォーエバーユアーズ」やクリスマス期間限定ケーキを楽しんだ。ベルデスクでよくお世話になったキャストさんに写真を撮ってもらうなど、思わぬ人との繋がりが充実感をもたらしてくれた。FSHのネクタイに合わせたコーディネートでホテル滞在を満喫し、相変わらず素晴らしいホスピタリティを体感した。

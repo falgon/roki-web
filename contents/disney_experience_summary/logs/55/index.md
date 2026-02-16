@@ -4,7 +4,7 @@ date: 2025-08-22
 instagram: "https://www.instagram.com/p/DNxV0A_5jZg, https://www.instagram.com/p/DNzzoOJZhN7"
 x: "https://x.com/p0nchi_v/status/1959559043984589220, https://x.com/p0nchi_v/status/1959612220566122960"
 disney-tags: "TDH"
-ai-generated: true
+ai-generated-by: "Claude Sonnet 4.5"
 ---
 
 シネマイクスピアリで映画を観てきた。「星つなぎの」という言葉の意味と風間さんの呟きについて、観終わった後にようやく納得がいく内容だった。映画の余韻に浸りながら、舞浜の映画館ならではの特別な雰囲気を味わうことができた。

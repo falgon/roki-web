@@ -4,7 +4,7 @@ date: 2025-10-07
 instagram: "https://www.instagram.com/p/DPgtocTk-WS/, https://www.instagram.com/p/DPjDxlvk2vr/"
 x: "https://x.com/p0nchi_v/status/1975464533264376126, https://x.com/p0nchi_v/status/1975492059298734149, https://x.com/p0nchi_v/status/1975556323745173685"
 disney-tags: "DAH"
-ai-generated: true
+ai-generated-by: "Claude Sonnet 4.5"
 ---
 
 今日も舞浜を訪れ、スカしたリーナベルと共にディズニーアンバサダーホテルへ。カチューシャに合わせたコーディネートを試みたが、蛍光緑の服など持っていない中、似た色のシャツで何とか雰囲気を演出することに。リーナベルと同じポーズを取りながら、お茶を濁すような格好となってしまった。

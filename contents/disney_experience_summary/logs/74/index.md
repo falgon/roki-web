@@ -4,7 +4,7 @@ date: 2025-11-09
 instagram: "https://www.instagram.com/p/DQ57OJUk0Ga/, https://www.instagram.com/p/DQ6LTL6E-qC/"
 x: "https://x.com/p0nchi_v/status/1987400369337737594, https://x.com/p0nchi_v/status/1987432381553516715, https://x.com/p0nchi_v/status/1987908454590345580"
 disney-tags: "DAH"
-ai-generated: true
+ai-generated-by: "Claude Sonnet 4.5"
 ---
 
 ディズニーアンバサダーホテルのシェフミッキーへお伺いし、ミッキーの97歳の誕生日を間近に控えたこの時期に、わちゃわちゃとしたグリーティングを楽しむことができた。ミッキーとのやり取りの中で「ミッキー語」を理解し合い、充実した時間を過ごした。今回の訪問で、着々と増えるスノーギースグッズを手に入れることができ、コレクションがまた一つ豊かになった。

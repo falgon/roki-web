@@ -32,8 +32,10 @@ parseLogMetadata meta = do
     date <- parseTimeM True defaultTimeLocale "%Y-%m-%d" dateStr
     let tagsStr = fromMaybe "" $ lookupString "disney-tags" meta
         tags = filter (not . T.null) $ map T.strip $ T.splitOn "," $ T.pack tagsStr
+        aiGeneratedByStr = fromMaybe "" $ lookupString "ai-generated-by" meta
+        aiGeneratedBy = T.strip $ T.pack aiGeneratedByStr
         aiGeneratedStr = fromMaybe "false" $ lookupString "ai-generated" meta
-        aiGenerated = T.toLower (T.pack aiGeneratedStr) == "true"
+        aiGenerated = (not $ T.null aiGeneratedBy) || T.toLower (T.pack aiGeneratedStr) == "true"
 
         -- SNSリンクの取得
         youtube = parseLinks $ fromMaybe "" $ lookupString "youtube" meta

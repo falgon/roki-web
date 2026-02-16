@@ -3,7 +3,7 @@ title: "ドリーマーズラウンジにてお気に入りのケーキセット
 date: 2025-07-24
 x: "https://x.com/p0nchi_v/status/1948279880246059483"
 disney-tags: "TDH"
-ai-generated: true
+ai-generated-by: "Claude Sonnet 4.5"
 ---
 
 またしてもドリーマーズラウンジを訪れた。お目当ては、すっかりお気に入りになったケーキセット。その美味しさに魅了されている。

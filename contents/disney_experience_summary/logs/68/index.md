@@ -4,7 +4,7 @@ date: 2025-10-18
 instagram: "https://www.instagram.com/p/DQehW9Xk4a_/, https://www.instagram.com/p/DQf4CYiE-oI/, https://www.instagram.com/p/DQgvJoCEwEc/, https://www.instagram.com/p/DQijsSxk_eS/, https://www.instagram.com/p/DQjjcARExCJ/, https://www.instagram.com/p/DQjuV-tE1X8/"
 x: "https://x.com/p0nchi_v/status/1979825312675533118, https://x.com/p0nchi_v/status/1979906597632548891, https://x.com/p0nchi_v/status/1979908058366046396, https://x.com/p0nchi_v/status/1980270779595133281, https://x.com/p0nchi_v/status/1980573072676765827"
 disney-tags: "TDH, TDL"
-ai-generated: true
+ai-generated-by: "Claude Sonnet 4.5"
 ---
 
 今年のディズニーハロウィーン2025では、映画「魔法にかけられて」のロバート・フィリップとジゼルの仮装で東京ディズニーランドホテルに宿泊した。お衣装は知人に作ってもらい、コーナールーム3515に希望通り泊まることができた。以前宿泊した3214と対となるこの部屋は、ビビディ・バビディ・ブティック上階に位置し、相変わらずバルコニーが広くて最高の眺めだった。出入りするリゾートライナーを眺めながら、まるでウォルト・ディズニー・ワールドのコンテンポラリーリゾートにいるような気分を味わうことができた。

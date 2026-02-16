@@ -4,7 +4,7 @@ date: 2025-08-11
 instagram: "https://www.instagram.com/p/DNN8UBUTq6y/, https://www.instagram.com/p/DNQcnUPTsAR/"
 x: "https://x.com/p0nchi_v/status/1954822300609515536, https://x.com/p0nchi_v/status/1954853923300204604, https://x.com/p0nchi_v/status/1954927181932773881, https://x.com/p0nchi_v/status/1954888225799262267"
 disney-tags: "TDH"
-ai-generated: true
+ai-generated-by: "Claude Sonnet 4.5"
 ---
 
 この日は東京ディズニーシー・ファンタジースプリングスホテルにて、ジャスミンに続きラプンツェルの「ワンス・アポン・ドリームセット」を体験。全体的にフローラル感が漂い、FSH（ファンタジースプリングスホテル）に入った時のあの特別な香りを想起させる上品な味わいが印象的だった。特に白桃とオマール海老のアスピック、パテ・ド・カンパーニュが絶品で、推しメニューとなった。

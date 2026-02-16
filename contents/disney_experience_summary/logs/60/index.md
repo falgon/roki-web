@@ -4,7 +4,7 @@ date: 2025-09-20
 instagram: "https://www.instagram.com/p/DO3mXcsE8tX/"
 x: "https://x.com/p0nchi_v/status/1969307931838488657, https://x.com/p0nchi_v/status/1969329609343689066, https://x.com/p0nchi_v/status/1969331031057580250"
 disney-tags: "TDH"
-ai-generated: true
+ai-generated-by: "Claude Sonnet 4.5"
 ---
 
 ドリーマーズラウンジでDハロスペシャルセットのアフタヌーンティーを頂いてきた。スタンド物は全体的に甘さ控えめで食べやすく、特にカボチャがハロウィン感を味わえて良き。推しは帆立貝のスモークとブラックベリーゼリーで、これらの組み合わせが絶妙なバランスを生み出していた。

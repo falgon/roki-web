@@ -4,7 +4,7 @@ date: 2025-12-21
 instagram: "https://www.instagram.com/p/DSjZSNMgYkh/, https://www.instagram.com/p/DSkI9qcAQG3/, https://www.instagram.com/p/DSkuqXRk8Kv/"
 x: "https://x.com/p0nchi_v/status/2003456943143420013, https://x.com/p0nchi_v/status/2002726885609111597, https://x.com/p0nchi_v/status/2002661412695597421, https://x.com/p0nchi_v/status/2002646531871314007"
 disney-tags: "DAH"
-ai-generated: true
+ai-generated-by: "Claude Sonnet 4.5"
 ---
 
 12月下旬、クリスマス直前の時期にディズニーアンバサダーホテルで2025年の締めくくりとなる体験をしてきた。シェフミッキーでは25年のシェフ納めとして、ミッキーに「Have a great year Mickey!」という言葉を送りながら楽しい食事の時間を過ごした。アンバサダーホテルのクリスマス装飾を眺めながら、いよいよクリスマスだなあという実感が湧いてきた。
