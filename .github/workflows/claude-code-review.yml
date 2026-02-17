@@ -28,7 +28,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 1
+          fetch-depth: 0
 
       - name: Run Claude Code Review
         id: claude-review
@@ -52,9 +52,12 @@ jobs:
 
             すべてのコメントは日本語で記述してください。
             フィードバックは建設的かつ有益なものにしてください。
+            指摘事項（修正提案を伴うもの）がある場合は、必ず mcp__github_inline_comment__create_inline_comment を使って該当行に投稿してください。
+            行番号を特定できない指摘は投稿しないでください（推測での投稿は禁止）。
 
-          # Optional: Use sticky comments to make Claude reuse the same comment on subsequent pushes to the same PR
-          # use_sticky_comment: true
+          # 同一PRでコメントを増やさずに追跡コメントを更新する
+          use_sticky_comment: "true"
+          track_progress: "true"
           
           # Optional: Customize review based on file types
           # direct_prompt: |
@@ -77,4 +80,3 @@ jobs:
           # if: |
           #   !contains(github.event.pull_request.title, '[skip-review]') &&
           #   !contains(github.event.pull_request.title, '[WIP]')
-
