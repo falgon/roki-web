@@ -6,11 +6,11 @@
         <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no" />
         <meta content="Roki" name="author" />
         
-        <meta content="LU 分解に関して初歩的な内容から網羅的にまとめた.&lt;!--toc--&gt;&lt;!--more--&gt;## ガウスの消去法 ガウスの消去法は, 前進消去による上三角行列の形成と後退代入の組み合わせのことをいい, その本質は行列の行基本変形, すなわち中学校で習う連立方程式の解法そのも" name="description" />
-        <meta property="og:description" content="LU 分解に関して初歩的な内容から網羅的にまとめた.&lt;!--toc--&gt;&lt;!--more--&gt;## ガウスの消去法 ガウスの消去法は, 前進消去による上三角行列の形成と後退代入の組み合わせのことをいい, その本質は行列の行基本変形, すなわち中学校で習う連立方程式の解法そのも" />
+        <meta content="LU 分解に関して初歩的な内容から網羅的にまとめた.&lt;!--toc--&gt;&lt;!--more--&gt;## ガウスの消去法 ガウスの消去法は, 前進消去による上三角行列の形成と後退代入の組み合わせのことをいい, その本質は行列の行基本変形, すなわち中学校で習う連立方程式の解法そのものである.例えば, 何の" name="description" />
+        <meta property="og:description" content="LU 分解に関して初歩的な内容から網羅的にまとめた.&lt;!--toc--&gt;&lt;!--more--&gt;## ガウスの消去法 ガウスの消去法は, 前進消去による上三角行列の形成と後退代入の組み合わせのことをいい, その本質は行列の行基本変形, すなわち中学校で習う連立方程式の解法そのものである.例えば, 何の" />
         
         <meta content="Hakyll" name="generator" />
-        <meta property="twitter:card" content="summary" />
+        <meta property="twitter:card" content="summary_large_image" />
         <meta property="twitter:site" content="@roki_r7" />
         <meta property="twitter:creator" content="roki_r7" />
         <meta property="og:type" content="website" />
@@ -20,6 +20,12 @@
             <meta property="og:title" content="LU 分解" />
         
         <meta property="og:site_name" content="roki.dev/roki.log" />
+        
+        <meta property="og:image" content="https://roki.dev/images/ogp/roki-log-default.png" />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta property="twitter:image" content="https://roki.dev/images/ogp/roki-log-default.png" />
+        
         
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -37,6 +43,16 @@
             addEventModal();
         </script>
         
+        
+        <script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Roki","url":"https://roki.dev"},"dateModified":"2019-01-01T09:00:00","datePublished":"2019-01-01T09:00:00","description":"LU 分解に関して初歩的な内容から網羅的にまとめた.<!--toc--><!--more-->## ガウスの消去法 ガウスの消去法は, 前進消去による上三角行列の形成と後退代入の組み合わせのことをいい, その本質は行列の行基本変形, すなわち中学校で習う連立方程式の解法そのものである.例えば, 何の","headline":"LU 分解","image":"https://roki.dev/images/avator/prof1000x1000.png","publisher":{"@type":"Organization","logo":{"@type":"ImageObject","url":"https://roki.dev/images/avator/prof1000x1000.png"},"name":"roki.dev"},"url":"https://roki.dev/roki.log/2019/01/1/lu_decomposition/index.html"}
+        </script>
+        
+        
+        <script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","item":"https://roki.dev","name":"ホーム","position":1},{"@type":"ListItem","item":"https://roki.dev/roki.log","name":"roki.log","position":2},{"@type":"ListItem","item":"https://roki.dev/roki.log/2019","name":"2019","position":3},{"@type":"ListItem","item":"https://roki.dev/roki.log/2019/01","name":"01","position":4},{"@type":"ListItem","item":"https://roki.dev/roki.log/2019/01/1","name":"1","position":5},{"@type":"ListItem","item":"https://roki.dev/roki.log/2019/01/1/lu_decomposition","name":"lu_decomposition","position":6},{"@type":"ListItem","item":"https://roki.dev/roki.log/2019/01/1/lu_decomposition/index.html","name":"LU 分解","position":7}]}
+        </script>
+        
         <meta name="google-site-verification" content="13X5cycw11yFEsfZrhsQ0m_cSI90r7HucdErNDQ8Za8" />
         <!-- Global site tag (gtag.js) - Google Analytics -->
 		<script async src="https://www.googletagmanager.com/gtag/js?id=G-D7B9XXQWJE"></script>
@@ -49,6 +65,9 @@
         <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5658861742931397" crossorigin="anonymous"></script>
         
         
+        
+        
+        <link rel="canonical" href="https://roki.dev/roki.log/2019/01/1/lu_decomposition/index.html">
         
     </head>
 
@@ -3162,21 +3181,8 @@ Crout 法はピボットを簡単に選択できる.</p>
                     </div>
                 </div>
                 <aside class="comments mt-4">
-                    <div id="disqus_thread"></div>
-                    <script>
-                    (function() { 
-                        var d = document, s = d.createElement('script');
-                        s.src = 'https://roki-log.disqus.com/embed.js';
-                        s.setAttribute('data-timestamp', +new Date());
-                        (d.head || d.body).appendChild(s); 
-                    })();
+                    <script src="https://giscus.app/client.js" data-repo="falgon/roki-web" data-repo-id="MDEwOlJlcG9zaXRvcnkyODA5MjI1NTI=" data-category="roki.log Comments" data-category-id="DIC_kwDOEL6JuM4C0724" data-mapping="pathname" data-strict="0" data-reactions-enabled="1" data-emit-metadata="0" data-input-position="bottom" data-theme="light" data-lang="ja" data-loading="lazy" crossorigin="anonymous" async>
                     </script>
-                    <noscript>
-                        Please enable JavaScript to view the 
-                        <a href="https://roki-log.disqus.com/?ref_noscript" target="_blank" rel="nofollow noopener">
-                            comments powered by Disqus.
-                        </a>
-                    </noscript>
                 </aside>
 
                 <div class="container">

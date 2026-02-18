@@ -10,7 +10,7 @@
         <meta property="og:description" content="久しぶりにまた[^1]なにか d3.js で視覚化してみたくなったのだが, このエントリがポストされる次の日は[アイザック・ニュートン](https://ja.wikipedia.org/wiki/%E3%82%A2%E3%82%A4%E3%82%B6%E3%83%83%E3%82%AF%E3%83" />
         
         <meta content="Hakyll" name="generator" />
-        <meta property="twitter:card" content="summary" />
+        <meta property="twitter:card" content="summary_large_image" />
         <meta property="twitter:site" content="@roki_r7" />
         <meta property="twitter:creator" content="roki_r7" />
         <meta property="og:type" content="website" />
@@ -20,6 +20,12 @@
             <meta property="og:title" content="ニュートン法の視覚化" />
         
         <meta property="og:site_name" content="roki.dev/roki.log" />
+        
+        <meta property="og:image" content="https://roki.dev/images/ogp/roki-log-default.png" />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta property="twitter:image" content="https://roki.dev/images/ogp/roki-log-default.png" />
+        
         
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -41,6 +47,16 @@
             addEventModal();
         </script>
         
+        
+        <script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Roki","url":"https://roki.dev"},"dateModified":"2018-12-25T01:20:00","datePublished":"2018-12-25T01:20:00","description":"久しぶりにまた[^1]なにか d3.js で視覚化してみたくなったのだが, このエントリがポストされる次の日は[アイザック・ニュートン](https://ja.wikipedia.org/wiki/%E3%82%A2%E3%82%A4%E3%82%B6%E3%83%83%E3%82%AF%E3%83","headline":"ニュートン法の視覚化","image":"https://roki.dev/images/avator/prof1000x1000.png","publisher":{"@type":"Organization","logo":{"@type":"ImageObject","url":"https://roki.dev/images/avator/prof1000x1000.png"},"name":"roki.dev"},"url":"https://roki.dev/roki.log/2018/12/24/newtonRaphson/index.html"}
+        </script>
+        
+        
+        <script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","item":"https://roki.dev","name":"ホーム","position":1},{"@type":"ListItem","item":"https://roki.dev/roki.log","name":"roki.log","position":2},{"@type":"ListItem","item":"https://roki.dev/roki.log/2018","name":"2018","position":3},{"@type":"ListItem","item":"https://roki.dev/roki.log/2018/12","name":"12","position":4},{"@type":"ListItem","item":"https://roki.dev/roki.log/2018/12/24","name":"24","position":5},{"@type":"ListItem","item":"https://roki.dev/roki.log/2018/12/24/newtonRaphson","name":"newtonRaphson","position":6},{"@type":"ListItem","item":"https://roki.dev/roki.log/2018/12/24/newtonRaphson/index.html","name":"ニュートン法の視覚化","position":7}]}
+        </script>
+        
         <meta name="google-site-verification" content="13X5cycw11yFEsfZrhsQ0m_cSI90r7HucdErNDQ8Za8" />
         <!-- Global site tag (gtag.js) - Google Analytics -->
 		<script async src="https://www.googletagmanager.com/gtag/js?id=G-D7B9XXQWJE"></script>
@@ -53,6 +69,9 @@
         <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5658861742931397" crossorigin="anonymous"></script>
         
         
+        
+        
+        <link rel="canonical" href="https://roki.dev/roki.log/2018/12/24/newtonRaphson/index.html">
         
     </head>
 
@@ -405,21 +424,8 @@ g(x^{\star})&amp;=&amp;\frac{f(x)}{\frac{f(x)}{f&#39;(x)}}(x^{\star}-x+\frac{f(x
                     </div>
                 </div>
                 <aside class="comments mt-4">
-                    <div id="disqus_thread"></div>
-                    <script>
-                    (function() { 
-                        var d = document, s = d.createElement('script');
-                        s.src = 'https://roki-log.disqus.com/embed.js';
-                        s.setAttribute('data-timestamp', +new Date());
-                        (d.head || d.body).appendChild(s); 
-                    })();
+                    <script src="https://giscus.app/client.js" data-repo="falgon/roki-web" data-repo-id="MDEwOlJlcG9zaXRvcnkyODA5MjI1NTI=" data-category="roki.log Comments" data-category-id="DIC_kwDOEL6JuM4C0724" data-mapping="pathname" data-strict="0" data-reactions-enabled="1" data-emit-metadata="0" data-input-position="bottom" data-theme="light" data-lang="ja" data-loading="lazy" crossorigin="anonymous" async>
                     </script>
-                    <noscript>
-                        Please enable JavaScript to view the 
-                        <a href="https://roki-log.disqus.com/?ref_noscript" target="_blank" rel="nofollow noopener">
-                            comments powered by Disqus.
-                        </a>
-                    </noscript>
                 </aside>
 
                 <div class="container">
