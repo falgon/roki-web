@@ -41,9 +41,12 @@ interface InstagramGraphContext {
 
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(SCRIPT_DIR, "..");
+const DOTENV_PATH = path.join(REPO_ROOT, ".env");
 const MAX_TEXT_LENGTH = 12000;
 const MAX_IMAGE_COUNT = 3;
 const LOG_PREFIX = "[gen-disney-logs]";
+const INSTAGRAM_ACCESS_TOKEN_ENV_KEY = "INSTAGRAM_ACCESS_TOKEN";
+const INSTAGRAM_USER_ID_ENV_KEY = "INSTAGRAM_USER_ID";
 const DEFAULT_CODEX_CONFIG_PATH = path.join(os.homedir(), ".codex", "config.toml");
 const DISNEY_LOGS_ROOT = path.join(REPO_ROOT, "contents", "disney_experience_summary", "logs");
 const DEFAULT_INSTAGRAM_API_VERSION = "v24.0";
@@ -60,7 +63,7 @@ const WEBHOOK_SITE_WAIT_SECONDS = 180;
 const INSTAGRAM_MEDIA_FIELDS =
     "id,caption,media_type,media_url,thumbnail_url,permalink,timestamp,username,children{media_type,media_url,thumbnail_url}";
 let instagramGraphContextPromise: Promise<InstagramGraphContext | null> | null = null;
-const dotenvLoadResult = loadDotenv({ path: path.join(REPO_ROOT, ".env"), quiet: true });
+const dotenvLoadResult = loadDotenv({ path: DOTENV_PATH, quiet: true });
 if (dotenvLoadResult.error) {
     const nodeError = dotenvLoadResult.error as NodeJS.ErrnoException;
     if (nodeError.code !== "ENOENT") {
@@ -118,6 +121,24 @@ function reportProgress(message: string): void {
 
 function normalizeText(value: string | null | undefined): string {
     return (value ?? "").replace(/\s+/gu, " ").trim();
+}
+
+function escapeRegExp(value: string): string {
+    return value.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
+}
+
+function upsertDotenvEntry(dotenvContent: string, key: string, value: string): string {
+    const normalizedValue = value.replace(/\r?\n/gu, "").trim();
+    const entryLine = `${key}=${normalizedValue}`;
+    const entryPattern = new RegExp(`^\\s*${escapeRegExp(key)}\\s*=.*$`, "mu");
+    if (entryPattern.test(dotenvContent)) {
+        return dotenvContent.replace(entryPattern, entryLine);
+    }
+    const trimmedContent = dotenvContent.replace(/\s*$/u, "");
+    if (trimmedContent.length === 0) {
+        return `${entryLine}\n`;
+    }
+    return `${trimmedContent}\n${entryLine}\n`;
 }
 
 function parseArgs(args: string[]): ParsedArgs {
@@ -753,6 +774,36 @@ async function fetchInstagramUserId(accessToken: string): Promise<string | null>
     }
 }
 
+async function persistInstagramCredentialsToDotenv(
+    accessToken: string,
+    userId: string,
+): Promise<void> {
+    let currentDotenvContent = "";
+    try {
+        currentDotenvContent = await readFile(DOTENV_PATH, "utf8");
+    } catch (error: unknown) {
+        const nodeError = error as NodeJS.ErrnoException;
+        if (nodeError.code !== "ENOENT") {
+            throw error;
+        }
+    }
+
+    const updatedDotenvContent = upsertDotenvEntry(
+        upsertDotenvEntry(
+            currentDotenvContent,
+            INSTAGRAM_ACCESS_TOKEN_ENV_KEY,
+            normalizeText(accessToken),
+        ),
+        INSTAGRAM_USER_ID_ENV_KEY,
+        normalizeText(userId),
+    );
+    if (updatedDotenvContent !== currentDotenvContent) {
+        await writeFile(DOTENV_PATH, updatedDotenvContent, "utf8");
+    }
+    process.env.INSTAGRAM_ACCESS_TOKEN = normalizeText(accessToken);
+    process.env.INSTAGRAM_USER_ID = normalizeText(userId);
+}
+
 async function issueInstagramGraphContextFromAuthorizationCode(): Promise<InstagramGraphContext | null> {
     const authorizationCode = await resolveInstagramAuthorizationCode();
     if (authorizationCode === null) {
@@ -763,9 +814,15 @@ async function issueInstagramGraphContextFromAuthorizationCode(): Promise<Instag
     const longLivedToken = await exchangeInstagramShortLivedTokenToLongLivedToken(
         shortLivedContext.accessToken,
     );
-    reportProgress(
-        "INSTAGRAM_AUTHORIZATION_CODE から長期アクセストークンを発行しました。必要であれば .env に INSTAGRAM_ACCESS_TOKEN と INSTAGRAM_USER_ID を保存してください。",
-    );
+    try {
+        await persistInstagramCredentialsToDotenv(longLivedToken, shortLivedContext.userId);
+        reportProgress(
+            ".env に INSTAGRAM_ACCESS_TOKEN と INSTAGRAM_USER_ID を保存しました（認可コード経由）。",
+        );
+    } catch (error: unknown) {
+        reportProgress(`Instagram認証情報の .env 保存に失敗しました: ${stringifyError(error)}`);
+    }
+    reportProgress("INSTAGRAM_AUTHORIZATION_CODE から長期アクセストークンを発行しました。");
     return { accessToken: longLivedToken, userId: shortLivedContext.userId };
 }
 
@@ -807,6 +864,12 @@ async function issueInstagramGraphContext(): Promise<InstagramGraphContext | nul
             throw new Error(
                 "INSTAGRAM_USER_ID を解決できません。環境変数 INSTAGRAM_USER_ID を設定してください。",
             );
+        }
+        try {
+            await persistInstagramCredentialsToDotenv(accessToken, resolvedUserId);
+            reportProgress(".env の Instagram 認証情報を更新しました。");
+        } catch (error: unknown) {
+            reportProgress(`Instagram認証情報の .env 更新に失敗しました: ${stringifyError(error)}`);
         }
         return { accessToken, userId: resolvedUserId };
     }
@@ -1085,23 +1148,12 @@ async function extractInstagramContent(page: Page, targetUrl: string): Promise<S
             document.querySelector('header a[role="link"]')?.textContent ??
             document.querySelector('meta[name="twitter:title"]')?.getAttribute("content") ??
             "";
-        const metaImageUrls = [
-            document.querySelector('meta[property="og:image"]')?.getAttribute("content") ?? "",
-            document
-                .querySelector('meta[property="og:image:secure_url"]')
-                ?.getAttribute("content") ?? "",
-            document.querySelector('meta[name="twitter:image"]')?.getAttribute("content") ?? "",
-        ];
-        const articleImageUrls = Array.from(document.querySelectorAll("article img"))
-            .map((image) => image.getAttribute("src") ?? "")
-            .filter((imageUrl) => imageUrl.length > 0);
 
         return {
             articleText,
             author,
             bodyText,
             description,
-            domImageUrls: [...metaImageUrls, ...articleImageUrls],
             postedAt,
             title,
         };
@@ -1112,13 +1164,10 @@ async function extractInstagramContent(page: Page, targetUrl: string): Promise<S
         instagramApiContent = await fetchInstagramMediaByApi(targetUrl);
     } catch (error: unknown) {
         reportProgress(
-            `Instagram Graph API 画像取得に失敗しました。DOM抽出へフォールバックします: ${stringifyError(error)}`,
+            `Instagram Graph API 画像取得に失敗しました。画像設定をスキップします: ${stringifyError(error)}`,
         );
     }
-    const imageUrls = collectUniqueImageUrls([
-        ...(instagramApiContent?.imageUrls ?? []),
-        ...snapshot.domImageUrls,
-    ]);
+    const imageUrls = collectUniqueImageUrls(instagramApiContent?.imageUrls ?? []);
 
     return {
         platform: "instagram",
@@ -1394,13 +1443,9 @@ async function main(): Promise<void> {
     reportProgress(`処理を開始します。入力URL数: ${parsedArgs.urls.length}`);
     reportProgress(`利用するCodexモデル: ${codexModelName}`);
     if (hasInstagramGraphApiConfiguration()) {
-        reportProgress(
-            "Instagram API with Instagram Login を優先利用します（失敗時のみDOM抽出へフォールバック）。",
-        );
+        reportProgress("Instagram API with Instagram Login でのみ画像取得します。");
     } else {
-        reportProgress(
-            "Instagram API 用の認証情報が未設定のため、Instagram画像はDOM抽出のみで取得します。",
-        );
+        reportProgress("Instagram API 用の認証情報が未設定のため、Instagram画像は取得しません。");
     }
     const targets = [...new Set(parsedArgs.urls)].map((rawUrl) => detectPlatform(rawUrl));
     reportProgress(`重複除去後のURL数: ${targets.length}`);
