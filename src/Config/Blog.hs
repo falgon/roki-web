@@ -33,4 +33,8 @@ data BlogConfig m = BlogConfig {
   , blogMonthlyPagePath             :: (FilePath, FilePath) -> FilePath
   , blogWriterOptions               :: WriterOptions
   , blogGoogleCx                    :: String
+  , blogGiscusRepo                  :: String
+  , blogGiscusRepoId                :: String
+  , blogGiscusCategory              :: String
+  , blogGiscusCategoryId            :: String
   }

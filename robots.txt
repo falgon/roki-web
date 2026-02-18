@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+
+# サイトマップ
+Sitemap: https://roki.dev/roki.log/sitemap.xml
+Sitemap: https://roki.dev/roki.diary/sitemap.xml

@@ -3,9 +3,12 @@ module Contexts.Core (
     dateCtx
   , jsPathCtx
   , siteMapDateCtx
+  , canonicalUrlField
   , siteCtx
 ) where
 
+import           Control.Applicative      (empty)
+import           Control.Monad            ((<=<))
 import           Data.Functor             ((<&>))
 import           Data.List.Extra          (dropPrefix, mconcatMap)
 import           Data.String              (fromString)
@@ -15,17 +18,25 @@ import           Lucid.Base               (renderText)
 import           Lucid.Html5
 import           System.FilePath          (takeDirectory, (</>))
 
-import           Config                   (contentsRoot, defaultTimeLocale',
-                                           siteName, timeZoneJST)
+import           Config                   (authorGithub, authorJobTitle,
+                                           authorName, authorStackOverflow,
+                                           authorTwitter, baseUrl, contentsRoot,
+                                           defaultTimeLocale', siteName,
+                                           timeZoneJST)
 import qualified Config.Blogs.AnotherBlog as BA
 import qualified Config.Blogs.TechBlog    as TB
-import           Contexts.Field           (localDateField)
+import           Contexts.Field           (jsonLdPersonField,
+                                           jsonLdWebSiteField, localDateField)
 
 dateCtx :: Context String
 dateCtx = localDateField defaultTimeLocale' timeZoneJST "date" "%Y/%m/%d %R"
 
 siteMapDateCtx :: Context String
 siteMapDateCtx = localDateField defaultTimeLocale' timeZoneJST "date" "%Y-%m-%d"
+
+canonicalUrlField :: Context a
+canonicalUrlField = field "canonical-url" $
+    maybe empty (return . ((baseUrl <>) . toUrl)) <=< getRoute . itemIdentifier
 
 techBlogCtx :: Context String
 techBlogCtx = mconcatMap (uncurry constField) [
@@ -45,19 +56,19 @@ blogCtx = techBlogCtx <> privBlogCtx
 
 authorCtx :: Context String
 authorCtx = mconcatMap (uncurry constField) [
-    ("author-name", "Roki")
+    ("author-name", authorName)
   , ("author-avator", "/images/avator/prof1000x1000.png")
   , ("author-sex", "Male")
   , ("author-locale", "Tokyo, JP")
   , ("author-fav", fav)
   , ("author-interested", "・FP&#10;・Compiler&#10;・Category theory&#10;・Low layer networking, Infrastructure")
-  , ("author-job", "Software Engineer")
-  , ("author-github", "falgon")
-  , ("author-twitter", "roki_r7")
+  , ("author-job", authorJobTitle)
+  , ("author-github", authorGithub)
+  , ("author-twitter", authorTwitter)
   , ("author-note", "_roki")
   , ("author-tumblr", "0x35")
   , ("author-reddit", "r0k1")
-  , ("author-stackoverflow", "8345717")
+  , ("author-stackoverflow", authorStackOverflow)
   , ("author-steam", "r0k1")
   , ("author-yukicoder", "3223")
   , ("author-teratail", "kjfkhfhgx")
@@ -77,12 +88,15 @@ authorCtx = mconcatMap (uncurry constField) [
 
 siteCtx :: Context String
 siteCtx = mconcat [
-    constField "lang" "ja"
+    canonicalUrlField
+  , constField "lang" "ja"
   , constField "site-title" siteName
   , constField "site-description" "This is a Roki's website."
   , constField "copyright" "copyright &copy; 2016~ Roki All Rights Reserved."
   , blogCtx
   , authorCtx
+  , jsonLdPersonField "json-ld-person"
+  , jsonLdWebSiteField "json-ld-website"
   ]
 
 jsPathCtx :: Context String

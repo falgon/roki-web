@@ -22,6 +22,21 @@ updates:
       separator: "/"
     groups:
       vitest:
+        # vitest関連パッケージをバージョン同期させる
+        # minor/patch更新は1つのPRにまとめ、major更新は個別PRとする
+        # 注: セキュリティ更新は常に個別PRになります（Dependabot仕様）
+        update-types:
+          - "minor"
+          - "patch"
         patterns:
           - "vitest"
           - "@vitest/*"
+      fortawesome:
+        # fortawesome関連パッケージをバージョン同期させる
+        # minor/patch更新は1つのPRにまとめ、major更新は個別PRとする
+        # 注: セキュリティ更新は常に個別PRになります（Dependabot仕様）
+        update-types:
+          - "minor"
+          - "patch"
+        patterns:
+          - "@fortawesome/*"

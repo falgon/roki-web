@@ -13,7 +13,7 @@
         <meta property="og:description" content="$site-description$" />
         $endif$
         <meta content="Hakyll" name="generator" />
-        <meta property="twitter:card" content="summary" />
+        <meta property="twitter:card" content="summary_large_image" />
         <meta property="twitter:site" content="@$author-twitter$" />
         <meta property="twitter:creator" content="$author-twitter$" />
         <meta property="og:type" content="website" />
@@ -26,6 +26,17 @@
             <meta property="og:title" content="$blog-title$" />
         $endif$
         <meta property="og:site_name" content="$site-title$/$blog-title$" />
+        $if(og-image)$
+        <meta property="og:image" content="$og-image$" />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta property="twitter:image" content="$og-image$" />
+        $else$
+        <meta property="og:image" content="https://roki.dev/images/ogp/default.png" />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta property="twitter:image" content="https://roki.dev/images/ogp/default.png" />
+        $endif$
         
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -67,6 +78,16 @@
 		});
         </script>
         $endif$
+        $if(json-ld-article)$
+        <script type="application/ld+json">
+$json-ld-article$
+        </script>
+        $endif$
+        $if(json-ld-breadcrumb)$
+        <script type="application/ld+json">
+$json-ld-breadcrumb$
+        </script>
+        $endif$
         <meta name="google-site-verification" content="$google-site-verification$" />
         <!-- Global site tag (gtag.js) - Google Analytics -->
 		<script async src="https://www.googletagmanager.com/gtag/js?id=$google-analytics$"></script>
@@ -79,6 +100,9 @@
         <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5658861742931397" crossorigin="anonymous"></script>
         $if(header-additional-component)$
         $header-additional-component$
+        $endif$
+        $if(canonical-url)$
+        <link rel="canonical" href="$canonical-url$">
         $endif$
     </head>
 

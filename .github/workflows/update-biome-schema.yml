@@ -23,7 +23,7 @@ jobs:
       - name: Checkout PR branch
         uses: actions/checkout@v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.UPDATE_BIOME_SCHEMA_TOKEN }}
           ref: ${{ github.head_ref }}
       
       - name: Get biome version from package.json
