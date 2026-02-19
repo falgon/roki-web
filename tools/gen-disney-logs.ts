@@ -47,6 +47,7 @@ const MAX_IMAGE_COUNT = 3;
 const LOG_PREFIX = "[gen-disney-logs]";
 const INSTAGRAM_ACCESS_TOKEN_ENV_KEY = "INSTAGRAM_ACCESS_TOKEN";
 const INSTAGRAM_USER_ID_ENV_KEY = "INSTAGRAM_USER_ID";
+const INSTAGRAM_AUTHORIZATION_CODE_ENV_KEY = "INSTAGRAM_AUTHORIZATION_CODE";
 const DEFAULT_CODEX_CONFIG_PATH = path.join(os.homedir(), ".codex", "config.toml");
 const DISNEY_LOGS_ROOT = path.join(REPO_ROOT, "contents", "disney_experience_summary", "logs");
 const DEFAULT_INSTAGRAM_API_VERSION = "v24.0";
@@ -95,10 +96,27 @@ const DISNEY_LOGS_PROMPT = `あなたは roki-web リポジトリ内で Disney �
 ## タグ候補
 - FSH, TDH, DHM, TSH, DAH, TDL, TDS, DOI
 
+## 事前スタイル分析（必須）
+- 作成前に \`contents/disney_experience_summary/logs\` 配下の既存 \`index.md\` を最低10件読み、文章構成・語彙・情報密度・文の長短の傾向を抽出する。
+- 抽出した傾向を今回の本文へ反映する。ただし、出来事としての事実は \`snsContents\` 以外から追加してはいけない。
+- 不要なコマンド実行は禁止。build/test/lint/git 操作は行わない。
+
 ## 本文ルール
 - 取得済みデータに書かれている事実だけを使う。
-- 箇条書きは禁止。自然な地の文で2〜4段落程度。
-- 文体は「だ・である調」を基調に、読みやすいリズムを維持する。
+- 本文は体験録として十分な読み応えを持たせ、原則 5〜7 段落、最低 900 文字以上を目安にする。
+- 箇条書きは最小限とし、基本は流れるような地の文で記述する。
+- 文体は「だ・である調」を基調にしつつ、ときおり親しみやすい口語表現を自然に織り交ぜる。
+- 本文は「体験録」として書く。投稿内容の解説・分析・メタ説明を書いてはいけない。
+- 必ず投稿者本人の一人称視点（「私」）で、実際に体験した流れとして書く。
+- 禁止表現: 「投稿では」「〜と記されている」「〜と述べられている」「〜がうかがえる」「内容である」「〜という投稿」。
+- 感情は「嬉しい」「悲しい」のような単語だけで済ませず、心身の反応が伝わる細やかな表現で書く。
+- 情景・味・香り・音・光など、感覚的な描写語を必ず含める。
+- 比喩（「まるで〜のようだ」「〜に例えるなら」など）を使う場合は、認知言語学・修辞学の観点で対応関係が明瞭なものに限定し、乱用しない。
+- 比喩に学術的背景の妥当性を説明できない場合は、無理に使わない。
+- 完璧すぎる人工的な文体を避け、人間らしい自然なゆらぎを残す。
+- 個人的な体験と感情を織り交ぜる。
+- 20代女性が読んでも興味を持ち、50代男性が読んでも知性を感じる内容にする。
+- 文の長さに意図的なバラツキを持たせる。
 
 ## 最終出力
 - 最終出力は「作成済みファイルの Markdown 本文のみ」を返す。
@@ -110,7 +128,7 @@ function showUsage(): void {
     );
     console.error("対応URL: x.com / twitter.com / instagram.com");
     console.error(
-        "任意環境変数: INSTAGRAM_ACCESS_TOKEN, INSTAGRAM_USER_ID, APP_ID, APP_SECRET, INSTAGRAM_REDIRECT_URI, INSTAGRAM_AUTHORIZATION_CODE（.env から自動読込）",
+        "任意環境変数: INSTAGRAM_ACCESS_TOKEN, INSTAGRAM_USER_ID, APP_ID, APP_SECRET, INSTAGRAM_REDIRECT_URI（.env から自動読込）",
     );
 }
 
@@ -139,6 +157,13 @@ function upsertDotenvEntry(dotenvContent: string, key: string, value: string): s
         return `${entryLine}\n`;
     }
     return `${trimmedContent}\n${entryLine}\n`;
+}
+
+function removeDotenvEntry(dotenvContent: string, key: string): string {
+    const entryPattern = new RegExp(`^\\s*${escapeRegExp(key)}\\s*=.*(?:\\r?\\n)?`, "gmu");
+    const contentWithoutEntry = dotenvContent.replace(entryPattern, "");
+    const trimmedContent = contentWithoutEntry.replace(/\s*$/u, "");
+    return trimmedContent.length === 0 ? "" : `${trimmedContent}\n`;
 }
 
 function parseArgs(args: string[]): ParsedArgs {
@@ -510,7 +535,7 @@ async function waitForInstagramAuthorizationCodeFromWebhookSite(
     token: string,
 ): Promise<string | null> {
     reportProgress(
-        `INSTAGRAM_AUTHORIZATION_CODE が未設定です。次のURLをブラウザで開いて認可してください: ${authorizationUrl}`,
+        `Instagram 認可コードが必要です。次のURLをブラウザで開いて認可してください: ${authorizationUrl}`,
     );
     reportProgress(`webhook.site で認可コードを最大 ${WEBHOOK_SITE_WAIT_SECONDS} 秒待機します。`);
 
@@ -557,18 +582,12 @@ async function waitForInstagramAuthorizationCodeFromWebhookSite(
     }
 
     reportProgress(
-        "webhook.site で認可コードを取得できませんでした。INSTAGRAM_AUTHORIZATION_CODE を手動設定してください。",
+        "webhook.site で認可コードを取得できませんでした。ブラウザ認可を完了して再実行してください。",
     );
     return null;
 }
 
 async function resolveInstagramAuthorizationCode(): Promise<string | null> {
-    const configuredCode = sanitizeInstagramAuthorizationCode(
-        normalizeText(process.env.INSTAGRAM_AUTHORIZATION_CODE),
-    );
-    if (configuredCode.length > 0) {
-        return configuredCode;
-    }
     if (!hasInstagramLoginCredentials()) {
         return null;
     }
@@ -602,10 +621,32 @@ function hasInstagramGraphApiConfiguration(): boolean {
 function isLikelyInstagramTokenInvalidError(errorMessage: string): boolean {
     const normalizedMessage = errorMessage.toLowerCase();
     return (
-        normalizedMessage.includes("oauthexception") ||
-        normalizedMessage.includes('code":190') ||
-        normalizedMessage.includes("code 190") ||
-        normalizedMessage.includes("invalid access token")
+        normalizedMessage.includes("invalid access token") ||
+        normalizedMessage.includes("access token is invalid") ||
+        normalizedMessage.includes("cannot parse access token") ||
+        normalizedMessage.includes("session has expired")
+    );
+}
+
+function isLikelyInstagramRefreshTooEarlyError(errorMessage: string): boolean {
+    const normalizedMessage = errorMessage.toLowerCase();
+    return (
+        normalizedMessage.includes("can only be refreshed") ||
+        normalizedMessage.includes("not yet eligible for refresh") ||
+        normalizedMessage.includes("not due for refresh") ||
+        normalizedMessage.includes("once every 24 hours") ||
+        (normalizedMessage.includes("refresh") && normalizedMessage.includes("24 hour"))
+    );
+}
+
+function isLikelyInstagramAuthorizationCodeExpiredError(errorMessage: string): boolean {
+    const normalizedMessage = errorMessage.toLowerCase();
+    return (
+        normalizedMessage.includes("authorization code has expired") ||
+        normalizedMessage.includes("code has expired") ||
+        normalizedMessage.includes("invalid authorization code") ||
+        normalizedMessage.includes("you must provide a valid client_secret and code") ||
+        normalizedMessage.includes("you must provide a valid client secret and code")
     );
 }
 
@@ -788,29 +829,62 @@ async function persistInstagramCredentialsToDotenv(
         }
     }
 
-    const updatedDotenvContent = upsertDotenvEntry(
+    const updatedDotenvContent = removeDotenvEntry(
         upsertDotenvEntry(
-            currentDotenvContent,
-            INSTAGRAM_ACCESS_TOKEN_ENV_KEY,
-            normalizeText(accessToken),
+            upsertDotenvEntry(
+                currentDotenvContent,
+                INSTAGRAM_ACCESS_TOKEN_ENV_KEY,
+                normalizeText(accessToken),
+            ),
+            INSTAGRAM_USER_ID_ENV_KEY,
+            normalizeText(userId),
         ),
-        INSTAGRAM_USER_ID_ENV_KEY,
-        normalizeText(userId),
+        INSTAGRAM_AUTHORIZATION_CODE_ENV_KEY,
     );
     if (updatedDotenvContent !== currentDotenvContent) {
         await writeFile(DOTENV_PATH, updatedDotenvContent, "utf8");
     }
     process.env.INSTAGRAM_ACCESS_TOKEN = normalizeText(accessToken);
     process.env.INSTAGRAM_USER_ID = normalizeText(userId);
+    delete process.env.INSTAGRAM_AUTHORIZATION_CODE;
 }
 
 async function issueInstagramGraphContextFromAuthorizationCode(): Promise<InstagramGraphContext | null> {
-    const authorizationCode = await resolveInstagramAuthorizationCode();
+    let authorizationCode = await resolveInstagramAuthorizationCode();
     if (authorizationCode === null) {
         return null;
     }
 
-    const shortLivedContext = await exchangeInstagramCodeForShortLivedToken(authorizationCode);
+    let shortLivedContext: InstagramGraphContext;
+    try {
+        shortLivedContext = await exchangeInstagramCodeForShortLivedToken(authorizationCode);
+    } catch (error: unknown) {
+        const errorMessage = stringifyError(error);
+        if (!isLikelyInstagramAuthorizationCodeExpiredError(errorMessage)) {
+            throw error;
+        }
+        reportProgress(
+            "認可コードが無効または期限切れです。新しい認可コードの取得を試みます。",
+        );
+        const refreshedAuthorizationCode = await resolveInstagramAuthorizationCode();
+        if (
+            refreshedAuthorizationCode === null ||
+            refreshedAuthorizationCode === authorizationCode
+        ) {
+            throw new Error(
+                `Instagram OAuth 認可コード交換に失敗しました。新しい認可コードを取得できませんでした: ${errorMessage}`,
+            );
+        }
+        authorizationCode = refreshedAuthorizationCode;
+        try {
+            shortLivedContext = await exchangeInstagramCodeForShortLivedToken(authorizationCode);
+        } catch (refreshedError: unknown) {
+            throw new Error(
+                `Instagram OAuth 認可コード交換に失敗しました。APP_SECRET または認可コードが正しいか確認してください: ${stringifyError(refreshedError)}`,
+            );
+        }
+    }
+
     const longLivedToken = await exchangeInstagramShortLivedTokenToLongLivedToken(
         shortLivedContext.accessToken,
     );
@@ -822,7 +896,7 @@ async function issueInstagramGraphContextFromAuthorizationCode(): Promise<Instag
     } catch (error: unknown) {
         reportProgress(`Instagram認証情報の .env 保存に失敗しました: ${stringifyError(error)}`);
     }
-    reportProgress("INSTAGRAM_AUTHORIZATION_CODE から長期アクセストークンを発行しました。");
+    reportProgress("認可コードから長期アクセストークンを発行しました。");
     return { accessToken: longLivedToken, userId: shortLivedContext.userId };
 }
 
@@ -836,7 +910,11 @@ async function issueInstagramGraphContext(): Promise<InstagramGraphContext | nul
             reportProgress("Instagram 長期アクセストークンを更新しました。");
         } catch (error: unknown) {
             const errorMessage = stringifyError(error);
-            if (
+            if (isLikelyInstagramRefreshTooEarlyError(errorMessage)) {
+                reportProgress(
+                    "Instagram 長期アクセストークンの更新タイミング前のため既存トークンを利用します。",
+                );
+            } else if (
                 isLikelyInstagramTokenInvalidError(errorMessage) &&
                 hasInstagramLoginCredentials()
             ) {
@@ -850,7 +928,7 @@ async function issueInstagramGraphContext(): Promise<InstagramGraphContext | nul
                 }
                 const authorizationUrl = buildInstagramAuthorizationUrl();
                 throw new Error(
-                    `INSTAGRAM_ACCESS_TOKEN が無効です。再認可して INSTAGRAM_AUTHORIZATION_CODE を設定してください: ${authorizationUrl}`,
+                    `INSTAGRAM_ACCESS_TOKEN が無効です。次のURLで再認可してください: ${authorizationUrl}`,
                 );
             }
             reportProgress(
@@ -884,7 +962,7 @@ async function issueInstagramGraphContext(): Promise<InstagramGraphContext | nul
     }
     const authorizationUrl = buildInstagramAuthorizationUrl();
     throw new Error(
-        `INSTAGRAM_ACCESS_TOKEN が未設定です。次のURLで認可して code を取得し、INSTAGRAM_AUTHORIZATION_CODE に設定して再実行してください: ${authorizationUrl}`,
+        `INSTAGRAM_ACCESS_TOKEN が未設定です。次のURLで認可して再実行してください: ${authorizationUrl}`,
     );
 }
 
@@ -961,10 +1039,12 @@ function extractImageUrlsFromInstagramMediaItem(mediaItem: InstagramGraphMediaIt
     return collectUniqueImageUrls(extractImageCandidatesFromInstagramNode(mediaItem));
 }
 
-async function fetchInstagramMediaByApi(targetUrl: string): Promise<InstagramApiContent | null> {
+async function fetchInstagramMediaByApi(targetUrl: string): Promise<InstagramApiContent> {
     const instagramGraphContext = await getInstagramGraphContext();
     if (instagramGraphContext === null) {
-        return null;
+        throw new Error(
+            "Instagram API 認証情報を解決できません。INSTAGRAM_ACCESS_TOKEN か認可コードフローを確認してください。",
+        );
     }
 
     let requestUrl = buildInstagramGraphVersionedUrl(`${instagramGraphContext.userId}/media`);
@@ -1019,7 +1099,7 @@ async function fetchInstagramMediaByApi(targetUrl: string): Promise<InstagramApi
             requestUrl.searchParams.set("access_token", instagramGraphContext.accessToken);
         }
     }
-    return null;
+    throw new Error(`Instagram Graph API 上で対象投稿が見つかりませんでした: ${targetUrl}`);
 }
 
 function extractImageExtensionFromUrl(imageUrl: string): string | null {
@@ -1160,12 +1240,12 @@ async function extractInstagramContent(page: Page, targetUrl: string): Promise<S
     });
 
     let instagramApiContent: InstagramApiContent | null = null;
+    let instagramApiFetchError: string | null = null;
     try {
         instagramApiContent = await fetchInstagramMediaByApi(targetUrl);
     } catch (error: unknown) {
-        reportProgress(
-            `Instagram Graph API 画像取得に失敗しました。画像設定をスキップします: ${stringifyError(error)}`,
-        );
+        instagramApiFetchError = stringifyError(error);
+        reportProgress(`Instagram Graph API 画像取得に失敗しました: ${instagramApiFetchError}`);
     }
     const imageUrls = collectUniqueImageUrls(instagramApiContent?.imageUrls ?? []);
 
@@ -1187,7 +1267,7 @@ async function extractInstagramContent(page: Page, targetUrl: string): Promise<S
             extractAuthorFromInstagramDescription(snapshot.description) ||
             null,
         imageUrls,
-        fetchError: null,
+        fetchError: instagramApiFetchError,
     };
 }
 
@@ -1391,6 +1471,7 @@ async function runCodexExec(prompt: string, codexModelName: string): Promise<str
 
     try {
         reportProgress(`codex exec を開始します。model=${codexModelName}`);
+        reportProgress("codex exec では project_doc_max_bytes=0 を指定し、AGENTS.md 読み込みを無効化します。");
         await new Promise<void>((resolve, reject) => {
             const child = spawn(
                 "codex",
@@ -1401,6 +1482,8 @@ async function runCodexExec(prompt: string, codexModelName: string): Promise<str
                     "workspace-write",
                     "--color",
                     "never",
+                    "-c",
+                    "project_doc_max_bytes=0",
                     "-m",
                     codexModelName,
                     "-o",
