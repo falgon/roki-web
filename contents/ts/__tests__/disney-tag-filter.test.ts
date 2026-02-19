@@ -4,6 +4,7 @@ import "../disney-tag-filter";
 declare global {
     function escapeHtml(text: string): string;
     function initLoadingScreen(): void;
+    function initializeLogImageSlideshows(): void;
     function normalizeString(str: string): string;
 }
 
@@ -567,6 +568,141 @@ describe("disney-tag-filter.ts", () => {
             expect(searchFilter?.style.display).toBe("none");
             expect(toggleButton?.classList.contains("is-outlined")).toBe(true);
             expect(toggleButton?.getAttribute("aria-expanded")).toBe("false");
+        });
+    });
+
+    describe("log image slideshow", () => {
+        const modalHtml = `
+            <div id="log-image-modal" class="log-image-modal" aria-hidden="true">
+                <button type="button" class="log-image-modal-close"></button>
+                <button type="button" class="log-image-modal-nav prev"></button>
+                <img id="log-image-modal-img" src="" alt="" />
+                <button type="button" class="log-image-modal-nav next"></button>
+            </div>
+        `;
+
+        it("activates first slide and dot on initialization", () => {
+            document.body.innerHTML = `
+                ${modalHtml}
+                <div class="log-images" data-image-slideshow>
+                    <div class="log-image-viewport">
+                        <button class="log-image-slide" data-image-url="/a.jpg" data-image-alt="A"></button>
+                        <button class="log-image-slide" data-image-url="/b.jpg" data-image-alt="B"></button>
+                    </div>
+                    <button class="slideshow-control prev"></button>
+                    <button class="slideshow-control next"></button>
+                    <div class="slideshow-dots">
+                        <button class="slideshow-dot"></button>
+                        <button class="slideshow-dot"></button>
+                    </div>
+                </div>
+            `;
+
+            initializeLogImageSlideshows();
+
+            const slides = document.querySelectorAll<HTMLButtonElement>(".log-image-slide");
+            const dots = document.querySelectorAll<HTMLButtonElement>(".slideshow-dot");
+
+            expect(slides[0]?.classList.contains("is-active")).toBe(true);
+            expect(slides[1]?.classList.contains("is-active")).toBe(false);
+            expect(dots[0]?.classList.contains("is-active")).toBe(true);
+            expect(dots[1]?.classList.contains("is-active")).toBe(false);
+        });
+
+        it("loads slide image from data-src on initialization", () => {
+            const originalObserver = window.IntersectionObserver;
+            Object.defineProperty(window, "IntersectionObserver", {
+                configurable: true,
+                value: undefined,
+            });
+
+            document.body.innerHTML = `
+                ${modalHtml}
+                <div class="log-images" data-image-slideshow>
+                    <div class="log-image-viewport">
+                        <button class="log-image-slide" data-image-url="logs/80/sample-1.png" data-image-alt="A">
+                            <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" data-src="logs/80/sample-1.png" alt="A" />
+                        </button>
+                    </div>
+                    <button class="slideshow-control prev"></button>
+                    <button class="slideshow-control next"></button>
+                    <div class="slideshow-dots">
+                        <button class="slideshow-dot"></button>
+                    </div>
+                </div>
+            `;
+
+            try {
+                initializeLogImageSlideshows();
+
+                const image = document.querySelector(".log-image-slide img") as HTMLImageElement;
+                expect(image.getAttribute("src")).toBe("logs/80/sample-1.png");
+            } finally {
+                Object.defineProperty(window, "IntersectionObserver", {
+                    configurable: true,
+                    value: originalObserver,
+                });
+            }
+        });
+
+        it("switches slide when next button is clicked", () => {
+            document.body.innerHTML = `
+                ${modalHtml}
+                <div class="log-images" data-image-slideshow>
+                    <div class="log-image-viewport">
+                        <button class="log-image-slide" data-image-url="/a.jpg" data-image-alt="A"></button>
+                        <button class="log-image-slide" data-image-url="/b.jpg" data-image-alt="B"></button>
+                    </div>
+                    <button class="slideshow-control prev"></button>
+                    <button class="slideshow-control next"></button>
+                    <div class="slideshow-dots">
+                        <button class="slideshow-dot"></button>
+                        <button class="slideshow-dot"></button>
+                    </div>
+                </div>
+            `;
+
+            initializeLogImageSlideshows();
+
+            const root = document.querySelector(".log-images") as HTMLElement;
+            root.dispatchEvent(new Event("mouseenter"));
+
+            const nextButton = document.querySelector(
+                ".slideshow-control.next",
+            ) as HTMLButtonElement;
+            nextButton.click();
+
+            const slides = document.querySelectorAll<HTMLButtonElement>(".log-image-slide");
+            expect(slides[0]?.classList.contains("is-active")).toBe(false);
+            expect(slides[1]?.classList.contains("is-active")).toBe(true);
+        });
+
+        it("opens modal when slide is clicked", () => {
+            document.body.innerHTML = `
+                ${modalHtml}
+                <div class="log-images" data-image-slideshow>
+                    <div class="log-image-viewport">
+                        <button class="log-image-slide" data-image-url="/a.jpg" data-image-alt="A"></button>
+                    </div>
+                    <button class="slideshow-control prev"></button>
+                    <button class="slideshow-control next"></button>
+                    <div class="slideshow-dots">
+                        <button class="slideshow-dot"></button>
+                    </div>
+                </div>
+            `;
+
+            initializeLogImageSlideshows();
+
+            const slide = document.querySelector(".log-image-slide") as HTMLButtonElement;
+            const modal = document.getElementById("log-image-modal");
+            const modalImage = document.getElementById("log-image-modal-img") as HTMLImageElement;
+
+            slide.click();
+
+            expect(modal?.classList.contains("is-active")).toBe(true);
+            expect(modal?.getAttribute("aria-hidden")).toBe("false");
+            expect(modalImage.src).toContain("/a.jpg");
         });
     });
 });

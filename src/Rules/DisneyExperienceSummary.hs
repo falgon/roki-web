@@ -1,14 +1,18 @@
 {-# LANGUAGE DeriveGeneric, DuplicateRecordFields, OverloadedStrings #-}
 module Rules.DisneyExperienceSummary (rules) where
 
+import           Control.Monad                    (filterM)
 import           Control.Monad.Reader             (asks)
 import           Control.Monad.Trans              (MonadTrans (..))
 import           Data.Aeson                       (encode)
 import qualified Data.ByteString.Lazy             as BL
+import           Data.Char                        (isDigit)
 import           Data.Disney.Experience.Generator
-import           Data.List                        (foldl', nub, sort, sortBy,
-                                                   sortOn)
+import           Data.List                        (foldl', isPrefixOf,
+                                                   isSuffixOf, nub, sort,
+                                                   sortBy, sortOn)
 import qualified Data.Map                         as M
+import           Data.Maybe                       (fromMaybe)
 import           Data.Ord                         (comparing)
 import           Data.String                      (IsString (..))
 import           Data.Time                        (defaultTimeLocale,
@@ -16,9 +20,11 @@ import           Data.Time                        (defaultTimeLocale,
 import           Dhall                            (FromDhall, Generic, Natural,
                                                    auto, input)
 import           Hakyll
-import           System.Directory                 (getModificationTime,
+import           System.Directory                 (doesFileExist,
+                                                   getModificationTime,
                                                    listDirectory)
 import           System.FilePath                  (joinPath, (</>))
+import qualified System.FilePath.Posix            as Posix
 import           System.FilePath.Posix            (takeBaseName)
 
 import           Config                           (contentsRoot, readerOptions)
@@ -100,6 +106,11 @@ data TagInfo = TagInfo {
 instance FromDhall TagConfig
 instance FromDhall TagInfo
 
+data LogImage = LogImage {
+    imageUrl :: String
+  , imageAlt :: String
+  } deriving (Show)
+
 -- Dhallファイルからタグ設定を読み込み
 loadDisneyTags :: IO [TagConfig]
 loadDisneyTags = input auto "./contents/config/disney/Tags.dhall"
@@ -161,6 +172,8 @@ disneyLogsPattern :: Pattern
 disneyLogsPattern = fromRegex $ mconcat
     [ "(^"
     , joinPath [disneyExperienceSummaryRoot, "logs", "[0-9]+.md"]
+    , "$)|(^"
+    , joinPath [disneyExperienceSummaryRoot, "logs", "[0-9]+", "index.md"]
     , "$)"
     ]
 
@@ -168,7 +181,15 @@ sortByNum :: [Item a] -> [Item a]
 sortByNum = sortBy
     $ flip
     $ comparing
-    $ (read :: String -> Int) . takeBaseName . toFilePath . itemIdentifier
+    $ fromMaybe (0 :: Int) . extractLogNumber . toFilePath . itemIdentifier
+  where
+    extractLogNumber :: FilePath -> Maybe Int
+    extractLogNumber filePath =
+        let candidates = [takeBaseName filePath, takeBaseName (Posix.takeDirectory filePath)]
+            digitsOnly = filter (all isDigit) candidates
+        in case digitsOnly of
+            (x:_) -> Just (read x)
+            _     -> Nothing
 
 mdRule :: Snapshot
     -> Pattern
@@ -211,13 +232,17 @@ getHotelsLastModified = do
 getLogsLastModified :: IO String
 getLogsLastModified = do
     let logsDir = joinPath [contentsRoot, "disney_experience_summary", "logs"]
-    files <- listDirectory logsDir
-    let mdFiles = filter (\f -> ".md" `isSuffixOf` f) files
-    modTimes <- mapM (\f -> getModificationTime (logsDir </> f)) mdFiles
-    let latestTime = maximum modTimes
-    return $ formatTime defaultTimeLocale "%Y/%m/%d" latestTime
-  where
-    isSuffixOf suffix str = drop (length str - length suffix) str == suffix
+    entries <- listDirectory logsDir
+    let topLevelMdFiles = [logsDir </> fileName | fileName <- entries, ".md" `isSuffixOf` fileName]
+        indexMdCandidates = [logsDir </> dirName </> "index.md" | dirName <- entries, all isDigit dirName]
+    existingIndexMdFiles <- filterM doesFileExist indexMdCandidates
+    let mdFiles = topLevelMdFiles ++ existingIndexMdFiles
+    if null mdFiles
+        then return "-"
+        else do
+            modTimes <- mapM getModificationTime mdFiles
+            let latestTime = maximum modTimes
+            return $ formatTime defaultTimeLocale "%Y/%m/%d" latestTime
 
 -- ログエントリ用のコンテキストを作成
 disneyLogCtx :: M.Map String (String, String) -> Context String
@@ -229,15 +254,67 @@ disneyLogCtx tagConfig = mconcat
     , snsLinksField "instagram"
     , snsLinksField "x"
     , snsLinksField "note"
+    , imageItemsField
     , disneyTagsField tagConfig
     , aiGeneratedField
     ]
   where
-    aiGeneratedField = listFieldWith "ai-generated-badges" (field "badge-text" (return . itemBody)) $ \item -> do
-        mAiGenerated <- getMetadataField (itemIdentifier item) "ai-generated"
-        case mAiGenerated of
-            Just "true" -> return [Item (fromString "ai") "Generated by AI"]
-            _           -> return []
+    imageItemsField = listFieldWith "image-items" imageCtx $ \item -> do
+        imagePaths <- extractImagePaths item
+        return $ zipWith toImageItem [1 :: Int ..] $ map (resolveImageUrl item) imagePaths
+
+    imageCtx = mconcat
+        [ field "url" (return . imageUrl . itemBody)
+        , field "alt" (return . imageAlt . itemBody)
+        ]
+
+    toImageItem :: Int -> String -> Item LogImage
+    toImageItem idx url =
+        Item
+            (fromString $ "image-item-" ++ show idx)
+            LogImage {
+                imageUrl = url
+              , imageAlt = "体験録画像 " ++ show idx
+              }
+
+    extractImagePaths :: Item String -> Compiler [String]
+    extractImagePaths item = do
+        mImagePaths <- getMetadataField (itemIdentifier item) "images"
+        case mImagePaths of
+            Just imagePathsStr -> return $ filter (not . null) $ map trimMeta $ splitAll "," imagePathsStr
+            Nothing            -> return []
+
+    resolveImageUrl :: Item String -> String -> String
+    resolveImageUrl item path
+        | null path = path
+        | "http://" `isPrefixOf` path = path
+        | "https://" `isPrefixOf` path = path
+        | Posix.isAbsolute path = path
+        | otherwise = toPublicUrl
+            $ Posix.normalise
+            $ Posix.takeDirectory (toFilePath $ itemIdentifier item) </> path
+
+    toPublicUrl :: FilePath -> String
+    toPublicUrl filePath
+        | null filePath = filePath
+        | Posix.isAbsolute filePath = filePath
+        | (contentsRoot ++ "/") `isPrefixOf` filePath =
+            let publicPath = dropWhile (== '/') $ drop (length contentsRoot) filePath
+            in Posix.makeRelative "disney_experience_summary" publicPath
+        | otherwise = filePath
+
+    aiGeneratedField = listFieldWith "ai-generated-badges" aiGeneratedBadgeCtx $ \item -> do
+        mAiGeneratedBy <- getMetadataField (itemIdentifier item) "ai-generated-by"
+        case fmap trimMeta mAiGeneratedBy of
+            Just modelName
+                | not (null modelName) -> return [Item (fromString "ai") modelName]
+            _ -> return []
+
+    aiGeneratedBadgeCtx :: Context String
+    aiGeneratedBadgeCtx = mconcat
+        [ field "badge-text" $ const $ return "Generated by AI"
+        , field "model-name" (return . itemBody)
+        ]
 
 -- ホテル情報用のコンテキストを作成
 hotelCtx :: Context Hotel
@@ -280,6 +357,11 @@ rules = do
     lift $ do
         -- フォントファイルのコピー
         match (fromGlob $ joinPath [contentsRoot, "fonts", "*.otf"]) $ do
+            route $ gsubRoute "contents/" $ const ""
+            compile copyFileCompiler
+
+        -- Disney体験録に紐づく画像などのアセットをコピー
+        match ((fromGlob $ joinPath [disneyExperienceSummaryRoot, "logs", "**"]) .&&. complement disneyLogsPattern) $ do
             route $ gsubRoute "contents/" $ const ""
             compile copyFileCompiler
 
