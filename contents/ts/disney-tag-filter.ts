@@ -819,6 +819,9 @@ const initializeLogImageSlideshows = (): void => {
             image.addEventListener("load", (): void => {
                 if (slide.dataset.imageLoadFailed === "true") return;
                 slide.dataset.imageLoaded = "true";
+                if (slideshow.currentIndex === slideIndex) {
+                    viewport?.classList.remove("is-loading");
+                }
                 updateViewportLoading();
             });
 

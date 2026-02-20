@@ -111,6 +111,11 @@ $button-small-font-size-mobile: 0.65rem;
     100% { left: 100%; }
 }
 
+@keyframes slideshow-loading-sweep {
+    0% { background-position-x: 100%; }
+    100% { background-position-x: -100%; }
+}
+
 // メインコンテンツの初期状態
 .disney-experience-summary {
     opacity: 0;
@@ -312,7 +317,7 @@ $button-small-font-size-mobile: 0.65rem;
             aspect-ratio: 4 / 3;
             border-radius: 10px;
             overflow: hidden;
-            background: #d4e9fb;
+            background: linear-gradient(135deg, #d4e9fb 0%, #c6dff7 100%);
             box-shadow: 0 6px 14px rgba(8, 57, 99, 0.18);
             position: relative;
 
@@ -320,7 +325,15 @@ $button-small-font-size-mobile: 0.65rem;
                 content: "";
                 position: absolute;
                 inset: 0;
-                background: rgba(255, 255, 255, 0.48);
+                background:
+                    linear-gradient(
+                        110deg,
+                        rgba(202, 224, 244, 0.92) 8%,
+                        rgba(228, 240, 251, 0.96) 18%,
+                        rgba(202, 224, 244, 0.92) 33%
+                    );
+                background-size: 220% 100%;
+                animation: slideshow-loading-sweep 1.25s ease-in-out infinite;
                 z-index: 5;
                 pointer-events: none;
             }
