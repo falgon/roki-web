@@ -553,6 +553,8 @@ interface SlideshowState {
 
 // 体験録画像スライドショーと拡大表示モーダルを初期化
 const initializeLogImageSlideshows = (): void => {
+    const TRANSPARENT_PLACEHOLDER_GIF =
+        "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==";
     const slideshowRoots = Array.from(
         document.querySelectorAll<HTMLElement>(".log-images[data-image-slideshow]"),
     );
@@ -572,17 +574,36 @@ const initializeLogImageSlideshows = (): void => {
     let activeModalSlideshow: SlideshowState | null = null;
     let activeModalIndex = 0;
 
-    const loadImageFromElement = (image: HTMLImageElement | null): void => {
+    // 一部ブラウザ/拡張機能環境で発生する double click 起点の例外伝播を防ぐ
+    const suppressDoubleClick = (event: MouseEvent): void => {
+        event.preventDefault();
+        event.stopPropagation();
+    };
+
+    const loadImageFromElement = (
+        slide: HTMLButtonElement,
+        image: HTMLImageElement | null,
+    ): void => {
         if (!image) return;
         const dataSrc = image.dataset.src;
         if (!dataSrc) return;
         if (image.getAttribute("src") === dataSrc) return;
         image.setAttribute("src", dataSrc);
+        if (image.complete) {
+            if (image.naturalWidth > 0) {
+                slide.dataset.imageLoaded = "true";
+            } else {
+                slide.dataset.imageLoadFailed = "true";
+                image.setAttribute("src", TRANSPARENT_PLACEHOLDER_GIF);
+                image.removeAttribute("data-src");
+                image.alt = "";
+            }
+        }
     };
 
     const loadAllSlides = (slides: HTMLButtonElement[]): void => {
         slides.forEach((slide): void => {
-            loadImageFromElement(slide.querySelector<HTMLImageElement>("img"));
+            loadImageFromElement(slide, slide.querySelector<HTMLImageElement>("img"));
         });
     };
 
@@ -669,6 +690,37 @@ const initializeLogImageSlideshows = (): void => {
         const prevButton = root.querySelector<HTMLButtonElement>(".slideshow-control.prev");
         const nextButton = root.querySelector<HTMLButtonElement>(".slideshow-control.next");
         const dotsContainer = root.querySelector<HTMLElement>(".slideshow-dots");
+        const viewport = root.querySelector<HTMLElement>(".log-image-viewport");
+        viewport?.classList.add("is-loading");
+
+        const isSlideAvailable = (slide: HTMLButtonElement): boolean => {
+            return slide.dataset.imageLoadFailed !== "true";
+        };
+
+        const findNearestAvailableIndex = (startIndex: number): number | null => {
+            const total = slides.length;
+            if (total === 0) return null;
+            const normalizedIndex = ((startIndex % total) + total) % total;
+            for (let offset = 0; offset < total; offset += 1) {
+                const candidate = (normalizedIndex + offset) % total;
+                if (isSlideAvailable(slides[candidate])) {
+                    return candidate;
+                }
+            }
+            return null;
+        };
+
+        const getAvailableSlidesCount = (): number => {
+            return slides.filter((slide): boolean => isSlideAvailable(slide)).length;
+        };
+
+        const isSlideLoaded = (slide: HTMLButtonElement): boolean => {
+            return slide.dataset.imageLoaded === "true";
+        };
+
+        const isSlideReady = (slide: HTMLButtonElement): boolean => {
+            return isSlideLoaded(slide) || slide.dataset.imageLoadFailed === "true";
+        };
 
         const slideshow: SlideshowState = {
             slides,
@@ -678,7 +730,27 @@ const initializeLogImageSlideshows = (): void => {
             goTo: (index: number): void => {
                 const total = slideshow.slides.length;
                 if (total === 0) return;
-                slideshow.currentIndex = (index + total) % total;
+                const resolvedIndex = findNearestAvailableIndex(index);
+                if (resolvedIndex === null) {
+                    slideshow.currentIndex = 0;
+                    slideshow.slides.forEach((slide) => {
+                        slide.classList.remove("is-active");
+                        slide.setAttribute("aria-hidden", "true");
+                        slide.tabIndex = -1;
+                    });
+                    slideshow.dots.forEach((dot) => {
+                        dot.classList.remove("is-active");
+                        dot.setAttribute("aria-selected", "false");
+                        dot.hidden = true;
+                        dot.tabIndex = -1;
+                    });
+                    if (prevButton) prevButton.style.display = "none";
+                    if (nextButton) nextButton.style.display = "none";
+                    if (dotsContainer) dotsContainer.style.display = "none";
+                    updateViewportLoading();
+                    return;
+                }
+                slideshow.currentIndex = resolvedIndex;
 
                 slideshow.slides.forEach((slide, slideIndex) => {
                     const isActive = slideIndex === slideshow.currentIndex;
@@ -689,14 +761,22 @@ const initializeLogImageSlideshows = (): void => {
 
                 slideshow.dots.forEach((dot, dotIndex) => {
                     const isActive = dotIndex === slideshow.currentIndex;
+                    const isAvailable = isSlideAvailable(slideshow.slides[dotIndex]);
                     dot.classList.toggle("is-active", isActive);
                     dot.setAttribute("aria-selected", String(isActive));
-                    dot.tabIndex = isActive ? 0 : -1;
+                    dot.hidden = !isAvailable;
+                    dot.tabIndex = isActive && isAvailable ? 0 : -1;
                 });
+
+                const availableCount = getAvailableSlidesCount();
+                if (prevButton) prevButton.style.display = availableCount <= 1 ? "none" : "";
+                if (nextButton) nextButton.style.display = availableCount <= 1 ? "none" : "";
+                if (dotsContainer) dotsContainer.style.display = availableCount <= 1 ? "none" : "";
+                updateViewportLoading();
             },
             startAutoplay: (): void => {
                 slideshow.stopAutoplay();
-                if (slideshow.slides.length <= 1 || isModalOpen()) {
+                if (getAvailableSlidesCount() <= 1 || isModalOpen()) {
                     return;
                 }
                 slideshow.autoplayTimer = setInterval((): void => {
@@ -711,6 +791,57 @@ const initializeLogImageSlideshows = (): void => {
             },
         };
 
+        const updateViewportLoading = (): void => {
+            if (!viewport) return;
+            const currentSlide = slideshow.slides[slideshow.currentIndex];
+            const hasLoadingTarget = slideshow.slides.some(
+                (slide): boolean =>
+                    slide.dataset.imageLoadFailed !== "true" &&
+                    slide.dataset.imageLoaded !== "true",
+            );
+            const currentReady = currentSlide ? isSlideReady(currentSlide) : true;
+            viewport.classList.toggle("is-loading", hasLoadingTarget && !currentReady);
+        };
+
+        slideshow.slides.forEach((slide, slideIndex) => {
+            const image = slide.querySelector<HTMLImageElement>("img");
+            if (!image) return;
+
+            image.addEventListener("load", (): void => {
+                if (slide.dataset.imageLoadFailed === "true") return;
+                slide.dataset.imageLoaded = "true";
+                updateViewportLoading();
+            });
+
+            image.addEventListener("error", (): void => {
+                if (slide.dataset.imageLoadFailed === "true") return;
+
+                slide.dataset.imageLoadFailed = "true";
+                slide.dataset.imageLoaded = "false";
+                slide.classList.add("is-image-load-failed");
+                image.setAttribute("src", TRANSPARENT_PLACEHOLDER_GIF);
+                image.removeAttribute("data-src");
+                image.alt = "";
+
+                if (slideshow.currentIndex === slideIndex) {
+                    slideshow.goTo(slideIndex + 1);
+                } else {
+                    slideshow.goTo(slideshow.currentIndex);
+                }
+                updateViewportLoading();
+            });
+
+            const src = image.getAttribute("src") ?? "";
+            if (
+                src &&
+                src !== TRANSPARENT_PLACEHOLDER_GIF &&
+                image.complete &&
+                image.naturalWidth > 0
+            ) {
+                slide.dataset.imageLoaded = "true";
+            }
+        });
+
         initializeLazyLoading(root, slides);
 
         if (slideshow.slides.length <= 1) {
@@ -724,6 +855,7 @@ const initializeLogImageSlideshows = (): void => {
                     slideshow.goTo(slideshow.currentIndex - 1);
                     slideshow.startAutoplay();
                 });
+                prevButton.addEventListener("dblclick", suppressDoubleClick);
             }
 
             if (nextButton) {
@@ -732,6 +864,7 @@ const initializeLogImageSlideshows = (): void => {
                     slideshow.goTo(slideshow.currentIndex + 1);
                     slideshow.startAutoplay();
                 });
+                nextButton.addEventListener("dblclick", suppressDoubleClick);
             }
 
             slideshow.dots.forEach((dot, dotIndex) => {
@@ -740,6 +873,7 @@ const initializeLogImageSlideshows = (): void => {
                     slideshow.goTo(dotIndex);
                     slideshow.startAutoplay();
                 });
+                dot.addEventListener("dblclick", suppressDoubleClick);
             });
 
             root.addEventListener("mouseenter", (): void => {
@@ -764,9 +898,12 @@ const initializeLogImageSlideshows = (): void => {
                 event.preventDefault();
                 openModal(slideshow, index);
             });
+            slide.addEventListener("dblclick", suppressDoubleClick);
         });
 
         slideshow.goTo(0);
+        viewport?.classList.add("is-ready");
+        updateViewportLoading();
         slideshow.startAutoplay();
         slideshows.push(slideshow);
     }
@@ -778,6 +915,7 @@ const initializeLogImageSlideshows = (): void => {
     modalCloseBtn?.addEventListener("click", (): void => {
         closeModal();
     });
+    modalCloseBtn?.addEventListener("dblclick", suppressDoubleClick);
 
     modal.addEventListener("click", (event: Event): void => {
         if (event.target === modal) {
@@ -790,12 +928,15 @@ const initializeLogImageSlideshows = (): void => {
         event.stopPropagation();
         moveModalImage(-1);
     });
+    modalPrevBtn?.addEventListener("dblclick", suppressDoubleClick);
 
     modalNextBtn?.addEventListener("click", (event: Event): void => {
         event.preventDefault();
         event.stopPropagation();
         moveModalImage(1);
     });
+    modalNextBtn?.addEventListener("dblclick", suppressDoubleClick);
+    modalImage.addEventListener("dblclick", suppressDoubleClick);
 
     document.addEventListener("keydown", (event: KeyboardEvent): void => {
         if (!isModalOpen()) return;
