@@ -331,11 +331,6 @@ $button-small-font-size-mobile: 0.65rem;
             transition: opacity 0.3s ease;
             background: transparent;
 
-            &:first-child {
-                opacity: 1;
-                pointer-events: auto;
-            }
-
             &.is-active {
                 opacity: 1;
                 pointer-events: auto;
@@ -347,6 +342,12 @@ $button-small-font-size-mobile: 0.65rem;
                 object-fit: cover;
                 display: block;
             }
+        }
+
+        // 初期化前のみ先頭画像を表示し、初期化後は is-active のみ表示する
+        .log-image-viewport:not(.is-ready) .log-image-slide:first-child {
+            opacity: 1;
+            pointer-events: auto;
         }
 
         .slideshow-control {
@@ -375,6 +376,12 @@ $button-small-font-size-mobile: 0.65rem;
 
             &.next {
                 right: 8px;
+            }
+
+            // アイコンをクリックしても button 自体をイベントターゲットにする
+            i,
+            svg {
+                pointer-events: none;
             }
         }
 
@@ -1466,6 +1473,11 @@ $button-small-font-size-mobile: 0.65rem;
         display: inline-flex;
         align-items: center;
         justify-content: center;
+
+        i,
+        svg {
+            pointer-events: none;
+        }
     }
 
     .log-image-modal-nav {
@@ -1488,6 +1500,11 @@ $button-small-font-size-mobile: 0.65rem;
 
         &.next {
             right: 1rem;
+        }
+
+        i,
+        svg {
+            pointer-events: none;
         }
     }
 }
