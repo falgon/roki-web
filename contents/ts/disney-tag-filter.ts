@@ -572,17 +572,22 @@ const initializeLogImageSlideshows = (): void => {
     let activeModalSlideshow: SlideshowState | null = null;
     let activeModalIndex = 0;
 
-    const loadImageFromElement = (image: HTMLImageElement | null): void => {
+    const loadImageFromElement = (
+        slide: HTMLButtonElement,
+        image: HTMLImageElement | null,
+    ): void => {
         if (!image) return;
         const dataSrc = image.dataset.src;
         if (!dataSrc) return;
         if (image.getAttribute("src") === dataSrc) return;
+        slide.dataset.imageLoaded = "false";
+        slide.dataset.imageLoadFailed = "false";
         image.setAttribute("src", dataSrc);
     };
 
     const loadAllSlides = (slides: HTMLButtonElement[]): void => {
         slides.forEach((slide): void => {
-            loadImageFromElement(slide.querySelector<HTMLImageElement>("img"));
+            loadImageFromElement(slide, slide.querySelector<HTMLImageElement>("img"));
         });
     };
 
@@ -669,6 +674,25 @@ const initializeLogImageSlideshows = (): void => {
         const prevButton = root.querySelector<HTMLButtonElement>(".slideshow-control.prev");
         const nextButton = root.querySelector<HTMLButtonElement>(".slideshow-control.next");
         const dotsContainer = root.querySelector<HTMLElement>(".slideshow-dots");
+        const viewport = root.querySelector<HTMLElement>(".log-image-viewport");
+        let slideshowRef: SlideshowState | null = null;
+
+        viewport?.classList.add("is-loading");
+
+        const isSlideReady = (slide: HTMLButtonElement | undefined): boolean => {
+            if (!slide) return true;
+            if (slide.dataset.imageLoadFailed === "true") return true;
+            if (slide.dataset.imageLoaded === "true") return true;
+            const image = slide.querySelector<HTMLImageElement>("img");
+            if (!image) return true;
+            return Boolean(image.getAttribute("src")) && image.complete && image.naturalWidth > 0;
+        };
+
+        const updateViewportLoading = (): void => {
+            if (!viewport || !slideshowRef) return;
+            const activeSlide = slideshowRef.slides[slideshowRef.currentIndex];
+            viewport.classList.toggle("is-loading", !isSlideReady(activeSlide));
+        };
 
         const slideshow: SlideshowState = {
             slides,
@@ -693,6 +717,8 @@ const initializeLogImageSlideshows = (): void => {
                     dot.setAttribute("aria-selected", String(isActive));
                     dot.tabIndex = isActive ? 0 : -1;
                 });
+
+                updateViewportLoading();
             },
             startAutoplay: (): void => {
                 slideshow.stopAutoplay();
@@ -710,6 +736,26 @@ const initializeLogImageSlideshows = (): void => {
                 }
             },
         };
+        slideshowRef = slideshow;
+
+        slideshow.slides.forEach((slide): void => {
+            const image = slide.querySelector<HTMLImageElement>("img");
+            if (!image) return;
+            image.addEventListener("load", (): void => {
+                slide.dataset.imageLoaded = "true";
+                slide.dataset.imageLoadFailed = "false";
+                updateViewportLoading();
+            });
+            image.addEventListener("error", (): void => {
+                slide.dataset.imageLoaded = "false";
+                slide.dataset.imageLoadFailed = "true";
+                updateViewportLoading();
+            });
+            if (image.complete && image.naturalWidth > 0 && image.getAttribute("src")) {
+                slide.dataset.imageLoaded = "true";
+                slide.dataset.imageLoadFailed = "false";
+            }
+        });
 
         initializeLazyLoading(root, slides);
 
@@ -767,6 +813,7 @@ const initializeLogImageSlideshows = (): void => {
         });
 
         slideshow.goTo(0);
+        updateViewportLoading();
         slideshow.startAutoplay();
         slideshows.push(slideshow);
     }
