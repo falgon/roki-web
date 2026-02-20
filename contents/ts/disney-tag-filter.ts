@@ -63,8 +63,17 @@ const initLoadingScreen = (): void => {
         );
 
         // 画像の読み込み完了を待つ
-        const images: NodeListOf<HTMLImageElement> = document.querySelectorAll("img");
-        log(`Found ${images.length} images to load`);
+        // 体験録スライドショーの遅延読込画像（data-src）はページ全体ローディングの対象から除外する
+        const images: HTMLImageElement[] = Array.from(
+            document.querySelectorAll<HTMLImageElement>("img"),
+        ).filter((img) => {
+            const hasDeferredSource =
+                typeof img.dataset.src === "string" && normalizeString(img.dataset.src).length > 0;
+            const isDeferredSlideshowImage =
+                hasDeferredSource && img.closest(".log-images[data-image-slideshow]") !== null;
+            return !isDeferredSlideshowImage;
+        });
+        log(`Found ${images.length} images to load (excluding deferred slideshow images)`);
 
         if (images.length === 0) {
             // 画像がない場合は即座に完了
