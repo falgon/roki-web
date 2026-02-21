@@ -645,6 +645,49 @@ describe("disney-tag-filter.ts", () => {
             }
         });
 
+        it("keeps viewport loading state when current slide fails but others are still loading", () => {
+            const originalObserver = window.IntersectionObserver;
+            Object.defineProperty(window, "IntersectionObserver", {
+                configurable: true,
+                value: undefined,
+            });
+
+            document.body.innerHTML = `
+                ${modalHtml}
+                <div class="log-images" data-image-slideshow>
+                    <div class="log-image-viewport">
+                        <button class="log-image-slide" data-image-url="logs/80/sample-1.png" data-image-alt="A">
+                            <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" data-src="logs/80/sample-1.png" alt="A" />
+                        </button>
+                        <button class="log-image-slide" data-image-url="logs/80/sample-2.png" data-image-alt="B">
+                            <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" data-src="logs/80/sample-2.png" alt="B" />
+                        </button>
+                    </div>
+                    <button class="slideshow-control prev"></button>
+                    <button class="slideshow-control next"></button>
+                    <div class="slideshow-dots">
+                        <button class="slideshow-dot"></button>
+                        <button class="slideshow-dot"></button>
+                    </div>
+                </div>
+            `;
+
+            try {
+                initializeLogImageSlideshows();
+
+                const viewport = document.querySelector(".log-image-viewport") as HTMLElement;
+                const images = document.querySelectorAll<HTMLImageElement>(".log-image-slide img");
+                images[0]?.dispatchEvent(new Event("error"));
+
+                expect(viewport.classList.contains("is-loading")).toBe(true);
+            } finally {
+                Object.defineProperty(window, "IntersectionObserver", {
+                    configurable: true,
+                    value: originalObserver,
+                });
+            }
+        });
+
         it("switches slide when next button is clicked", () => {
             document.body.innerHTML = `
                 ${modalHtml}
