@@ -32,6 +32,8 @@ interface ParsedArgs {
     urls: string[];
     showHelp: boolean;
     codexModel: string | null;
+    selectFirstInstagramImageWithoutHumanCloseup: boolean;
+    instagramMinImageCount: number;
 }
 
 interface InstagramGraphContext {
@@ -39,11 +41,17 @@ interface InstagramGraphContext {
     userId: string;
 }
 
+interface DownloadInstagramImagesOptions {
+    codexModelName: string;
+    selectFirstImageWithoutHumanCloseup: boolean;
+    minimumImageCount: number;
+}
+
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(SCRIPT_DIR, "..");
 const DOTENV_PATH = path.join(REPO_ROOT, ".env");
 const MAX_TEXT_LENGTH = 12000;
-const MAX_IMAGE_COUNT = 3;
+const DEFAULT_INSTAGRAM_MIN_IMAGE_COUNT = 3;
 const LOG_PREFIX = "[gen-disney-logs]";
 const INSTAGRAM_ACCESS_TOKEN_ENV_KEY = "INSTAGRAM_ACCESS_TOKEN";
 const INSTAGRAM_USER_ID_ENV_KEY = "INSTAGRAM_USER_ID";
@@ -121,12 +129,25 @@ const DISNEY_LOGS_PROMPT = `あなたは roki-web リポジトリ内で Disney �
 ## 最終出力
 - 最終出力は「作成済みファイルの Markdown 本文のみ」を返す。
 `;
+const NON_HUMAN_CLOSEUP_IMAGE_JUDGE_PROMPT = `次の画像について、人物の写り方を判定してください。
+
+判定基準:
+- REJECT: 人物が明らかに主被写体としてアップで写っている（顔や上半身が画面の大部分を占める）
+- ACCEPT: それ以外（人物が背景として小さく写る、人物が写っていない、風景や建物や料理が主被写体）
+
+必ず最終回答は1語のみで返してください: ACCEPT または REJECT`;
 
 function showUsage(): void {
     console.error(
-        "使用方法: tsx tools/gen-disney-logs.ts [--codex-model <model>] <url-1> [<url-2> ...]",
+        "使用方法: tsx tools/gen-disney-logs.ts [--codex-model <model>] [--instagram-first-nonhuman-image] [--instagram-min-images <number>] <url-1> [<url-2> ...]",
     );
     console.error("対応URL: x.com / twitter.com / instagram.com");
+    console.error(
+        "任意フラグ: --instagram-first-nonhuman-image（Instagram画像のうち、人物アップを除外しつつ先頭から優先取得）",
+    );
+    console.error(
+        `任意オプション: --instagram-min-images <number>（保存目標の最低枚数。デフォルト: ${DEFAULT_INSTAGRAM_MIN_IMAGE_COUNT}）`,
+    );
     console.error(
         "任意環境変数: INSTAGRAM_ACCESS_TOKEN, INSTAGRAM_USER_ID, APP_ID, APP_SECRET, INSTAGRAM_REDIRECT_URI（.env から自動読込）",
     );
@@ -166,15 +187,53 @@ function removeDotenvEntry(dotenvContent: string, key: string): string {
     return trimmedContent.length === 0 ? "" : `${trimmedContent}\n`;
 }
 
+function parsePositiveIntegerOption(rawValue: string, optionName: string): number {
+    const normalizedValue = normalizeText(rawValue);
+    if (!/^\d+$/u.test(normalizedValue)) {
+        throw new Error(`${optionName} には 1 以上の整数を指定してください。`);
+    }
+    const parsedValue = Number(normalizedValue);
+    if (!Number.isInteger(parsedValue) || parsedValue <= 0) {
+        throw new Error(`${optionName} には 1 以上の整数を指定してください。`);
+    }
+    return parsedValue;
+}
+
 function parseArgs(args: string[]): ParsedArgs {
     const urls: string[] = [];
     let showHelp = false;
     let codexModel: string | null = null;
+    let selectFirstInstagramImageWithoutHumanCloseup = false;
+    let instagramMinImageCount = DEFAULT_INSTAGRAM_MIN_IMAGE_COUNT;
 
     for (let index = 0; index < args.length; index += 1) {
         const arg = args[index] ?? "";
         if (arg === "--help" || arg === "-h") {
             showHelp = true;
+            continue;
+        }
+        if (arg === "--instagram-first-nonhuman-image") {
+            selectFirstInstagramImageWithoutHumanCloseup = true;
+            continue;
+        }
+        if (arg === "--no-instagram-first-nonhuman-image") {
+            selectFirstInstagramImageWithoutHumanCloseup = false;
+            continue;
+        }
+        if (arg === "--instagram-min-images") {
+            const nextArg = args[index + 1];
+            if (!nextArg) {
+                throw new Error("--instagram-min-images には整数を指定してください。");
+            }
+            instagramMinImageCount = parsePositiveIntegerOption(nextArg, "--instagram-min-images");
+            index += 1;
+            continue;
+        }
+        if (arg.startsWith("--instagram-min-images=")) {
+            instagramMinImageCount = parsePositiveIntegerOption(
+                arg.slice("--instagram-min-images=".length),
+                "--instagram-min-images",
+            );
             continue;
         }
         if (arg === "--codex-model") {
@@ -196,7 +255,13 @@ function parseArgs(args: string[]): ParsedArgs {
         urls.push(arg);
     }
 
-    return { urls, showHelp, codexModel };
+    return {
+        urls,
+        showHelp,
+        codexModel,
+        selectFirstInstagramImageWithoutHumanCloseup,
+        instagramMinImageCount,
+    };
 }
 
 function detectPlatform(rawUrl: string): TargetUrl {
@@ -298,10 +363,11 @@ function normalizeHttpUrl(rawUrl: string | null | undefined): string | null {
 
 function collectUniqueImageUrls(
     rawUrls: Array<string | null | undefined>,
-    limit: number = MAX_IMAGE_COUNT,
+    limit: number = Number.POSITIVE_INFINITY,
 ): string[] {
     const uniqueUrls: string[] = [];
     const seenUrls = new Set<string>();
+    const hasFiniteLimit = Number.isFinite(limit);
     for (const rawUrl of rawUrls) {
         const normalizedUrl = normalizeHttpUrl(rawUrl);
         if (!normalizedUrl) {
@@ -312,7 +378,7 @@ function collectUniqueImageUrls(
         }
         seenUrls.add(normalizedUrl);
         uniqueUrls.push(normalizedUrl);
-        if (uniqueUrls.length >= limit) {
+        if (hasFiniteLimit && uniqueUrls.length >= limit) {
             break;
         }
     }
@@ -863,9 +929,7 @@ async function issueInstagramGraphContextFromAuthorizationCode(): Promise<Instag
         if (!isLikelyInstagramAuthorizationCodeExpiredError(errorMessage)) {
             throw error;
         }
-        reportProgress(
-            "認可コードが無効または期限切れです。新しい認可コードの取得を試みます。",
-        );
+        reportProgress("認可コードが無効または期限切れです。新しい認可コードの取得を試みます。");
         const refreshedAuthorizationCode = await resolveInstagramAuthorizationCode();
         if (
             refreshedAuthorizationCode === null ||
@@ -1388,6 +1452,7 @@ function buildLogDirectoryRelativePath(logNumber: number): string {
 async function downloadInstagramImages(
     contents: SnsContent[],
     logNumber: number,
+    options: DownloadInstagramImagesOptions,
 ): Promise<string[]> {
     const instagramImageUrls = collectUniqueImageUrls(
         contents
@@ -1402,6 +1467,7 @@ async function downloadInstagramImages(
     const logDirectoryAbsolutePath = path.join(REPO_ROOT, logDirectoryRelativePath);
     await mkdir(logDirectoryAbsolutePath, { recursive: true });
 
+    const targetImageCount = options.minimumImageCount;
     const savedFileNames: string[] = [];
     for (const imageUrl of instagramImageUrls) {
         try {
@@ -1414,14 +1480,27 @@ async function downloadInstagramImages(
                 throw new Error("画像データが空です。");
             }
 
-            const nextIndex = savedFileNames.length + 1;
             const extension = resolveImageExtension(imageUrl, response.headers.get("content-type"));
+            if (options.selectFirstImageWithoutHumanCloseup) {
+                const selected = await isLikelyNoHumanCloseupByCodex(
+                    imageBuffer,
+                    extension,
+                    options.codexModelName,
+                );
+                if (!selected) {
+                    reportProgress(`人物アップ判定で除外しました: ${imageUrl}`);
+                    continue;
+                }
+                reportProgress(`人物アップ判定を通過しました: ${imageUrl}`);
+            }
+
+            const nextIndex = savedFileNames.length + 1;
             const fileName = `image-${String(nextIndex)}${extension}`;
             const filePath = path.join(logDirectoryAbsolutePath, fileName);
             await writeFile(filePath, imageBuffer);
             savedFileNames.push(fileName);
             reportProgress(`Instagram画像を保存しました: ${logDirectoryRelativePath}/${fileName}`);
-            if (savedFileNames.length >= MAX_IMAGE_COUNT) {
+            if (savedFileNames.length >= targetImageCount) {
                 break;
             }
         } catch (error: unknown) {
@@ -1429,6 +1508,12 @@ async function downloadInstagramImages(
                 `Instagram画像の保存に失敗しました (${imageUrl}): ${stringifyError(error)}`,
             );
         }
+    }
+
+    if (savedFileNames.length < targetImageCount) {
+        reportProgress(
+            `Instagram画像は目標最低枚数 (${targetImageCount}) に達しませんでした。取得件数: ${savedFileNames.length} 件`,
+        );
     }
     return savedFileNames;
 }
@@ -1465,36 +1550,44 @@ ${serializedContents}
 `;
 }
 
-async function runCodexExec(prompt: string, codexModelName: string): Promise<string> {
+async function runCodexExec(
+    prompt: string,
+    codexModelName: string,
+    imagePaths: string[] = [],
+): Promise<string> {
     const tempDirectory = await mkdtemp(path.join(os.tmpdir(), "gen-disney-logs-"));
     const outputPath = path.join(tempDirectory, "codex-last-message.md");
 
     try {
         reportProgress(`codex exec を開始します。model=${codexModelName}`);
-        reportProgress("codex exec では project_doc_max_bytes=0 を指定し、AGENTS.md 読み込みを無効化します。");
+        reportProgress(
+            "codex exec では project_doc_max_bytes=0 を指定し、AGENTS.md 読み込みを無効化します。",
+        );
+        if (imagePaths.length > 0) {
+            reportProgress(`codex exec に画像を添付します。枚数: ${imagePaths.length}`);
+        }
         await new Promise<void>((resolve, reject) => {
-            const child = spawn(
-                "codex",
-                [
-                    "exec",
-                    "--skip-git-repo-check",
-                    "--sandbox",
-                    "workspace-write",
-                    "--color",
-                    "never",
-                    "-c",
-                    "project_doc_max_bytes=0",
-                    "-m",
-                    codexModelName,
-                    "-o",
-                    outputPath,
-                    "-",
-                ],
-                {
-                    cwd: REPO_ROOT,
-                    stdio: ["pipe", "ignore", "inherit"],
-                },
-            );
+            const codexArgs = [
+                "exec",
+                "--skip-git-repo-check",
+                "--sandbox",
+                "workspace-write",
+                "--color",
+                "never",
+                "-c",
+                "project_doc_max_bytes=0",
+                "-m",
+                codexModelName,
+            ];
+            for (const imagePath of imagePaths) {
+                codexArgs.push("--image", imagePath);
+            }
+            codexArgs.push("-o", outputPath, "-");
+
+            const child = spawn("codex", codexArgs, {
+                cwd: REPO_ROOT,
+                stdio: ["pipe", "ignore", "inherit"],
+            });
 
             child.on("error", reject);
             child.stdin.write(prompt);
@@ -1515,6 +1608,46 @@ async function runCodexExec(prompt: string, codexModelName: string): Promise<str
     }
 }
 
+function parseAcceptOrReject(output: string): "ACCEPT" | "REJECT" | null {
+    const normalizedOutput = normalizeText(output).toUpperCase();
+    const hasAccept = /\bACCEPT\b/u.test(normalizedOutput);
+    const hasReject = /\bREJECT\b/u.test(normalizedOutput);
+    if (hasAccept && !hasReject) {
+        return "ACCEPT";
+    }
+    if (hasReject && !hasAccept) {
+        return "REJECT";
+    }
+    return null;
+}
+
+async function isLikelyNoHumanCloseupByCodex(
+    imageBuffer: Buffer,
+    imageExtension: string,
+    codexModelName: string,
+): Promise<boolean> {
+    const tempDirectory = await mkdtemp(path.join(os.tmpdir(), "gen-disney-logs-image-judge-"));
+    const tempImagePath = path.join(tempDirectory, `target${imageExtension}`);
+    try {
+        await writeFile(tempImagePath, imageBuffer);
+        const codexOutput = await runCodexExec(
+            NON_HUMAN_CLOSEUP_IMAGE_JUDGE_PROMPT,
+            codexModelName,
+            [tempImagePath],
+        );
+        const judgeResult = parseAcceptOrReject(codexOutput);
+        if (judgeResult === null) {
+            reportProgress(
+                `人物アップ判定の出力が不正だったため除外扱いにします: ${trimText(codexOutput)}`,
+            );
+            return false;
+        }
+        return judgeResult === "ACCEPT";
+    } finally {
+        await rm(tempDirectory, { force: true, recursive: true });
+    }
+}
+
 async function main(): Promise<void> {
     const parsedArgs = parseArgs(process.argv.slice(2));
     if (parsedArgs.showHelp || parsedArgs.urls.length === 0) {
@@ -1525,6 +1658,14 @@ async function main(): Promise<void> {
     const codexModelName = await resolveCodexModelName(parsedArgs.codexModel);
     reportProgress(`処理を開始します。入力URL数: ${parsedArgs.urls.length}`);
     reportProgress(`利用するCodexモデル: ${codexModelName}`);
+    reportProgress(
+        `Instagram画像の最低取得枚数: ${parsedArgs.instagramMinImageCount}（足りない場合は取得可能な範囲で保存）`,
+    );
+    if (parsedArgs.selectFirstInstagramImageWithoutHumanCloseup) {
+        reportProgress(
+            "人物アップ除外モードを有効化しました。Instagram画像は先頭から判定し、条件を満たす画像のみ保存します。",
+        );
+    }
     if (hasInstagramGraphApiConfiguration()) {
         reportProgress("Instagram API with Instagram Login でのみ画像取得します。");
     } else {
@@ -1547,7 +1688,12 @@ async function main(): Promise<void> {
     const nextLogNumber = await resolveNextLogNumber();
     reportProgress(`今回の作成番号を確定しました: ${nextLogNumber}`);
     reportProgress("Instagram画像の保存を開始します。");
-    const downloadedImageFiles = await downloadInstagramImages(contents, nextLogNumber);
+    const downloadedImageFiles = await downloadInstagramImages(contents, nextLogNumber, {
+        codexModelName,
+        selectFirstImageWithoutHumanCloseup:
+            parsedArgs.selectFirstInstagramImageWithoutHumanCloseup,
+        minimumImageCount: parsedArgs.instagramMinImageCount,
+    });
     reportProgress(`Instagram画像の保存完了: ${downloadedImageFiles.length} 件`);
 
     reportProgress("プロンプトを組み立てます。");

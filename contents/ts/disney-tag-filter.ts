@@ -63,8 +63,17 @@ const initLoadingScreen = (): void => {
         );
 
         // 画像の読み込み完了を待つ
-        const images: NodeListOf<HTMLImageElement> = document.querySelectorAll("img");
-        log(`Found ${images.length} images to load`);
+        // 体験録スライドショーの遅延読込画像（data-src）はページ全体ローディングの対象から除外する
+        const images: HTMLImageElement[] = Array.from(
+            document.querySelectorAll<HTMLImageElement>("img"),
+        ).filter((img) => {
+            const hasDeferredSource =
+                typeof img.dataset.src === "string" && normalizeString(img.dataset.src).length > 0;
+            const isDeferredSlideshowImage =
+                hasDeferredSource && img.closest(".log-images[data-image-slideshow]") !== null;
+            return !isDeferredSlideshowImage;
+        });
+        log(`Found ${images.length} images to load (excluding deferred slideshow images)`);
 
         if (images.length === 0) {
             // 画像がない場合は即座に完了
@@ -588,12 +597,17 @@ const initializeLogImageSlideshows = (): void => {
         const dataSrc = image.dataset.src;
         if (!dataSrc) return;
         if (image.getAttribute("src") === dataSrc) return;
+        // プレースホルダーの load で誤って loaded 扱いになった状態をリセットする
+        slide.dataset.imageLoaded = "false";
+        slide.classList.remove("is-image-loaded");
         image.setAttribute("src", dataSrc);
         if (image.complete) {
             if (image.naturalWidth > 0) {
                 slide.dataset.imageLoaded = "true";
+                slide.classList.add("is-image-loaded");
             } else {
                 slide.dataset.imageLoadFailed = "true";
+                slide.classList.remove("is-image-loaded");
                 image.setAttribute("src", TRANSPARENT_PLACEHOLDER_GIF);
                 image.removeAttribute("data-src");
                 image.alt = "";
@@ -607,9 +621,14 @@ const initializeLogImageSlideshows = (): void => {
         });
     };
 
-    const initializeLazyLoading = (root: HTMLElement, slides: HTMLButtonElement[]): void => {
+    const initializeLazyLoading = (
+        root: HTMLElement,
+        slides: HTMLButtonElement[],
+        onLoadStart: () => void,
+    ): void => {
         if (typeof window.IntersectionObserver !== "function") {
             loadAllSlides(slides);
+            onLoadStart();
             return;
         }
 
@@ -619,6 +638,7 @@ const initializeLogImageSlideshows = (): void => {
                 if (!isVisible) return;
 
                 loadAllSlides(slides);
+                onLoadStart();
                 currentObserver.unobserve(root);
                 currentObserver.disconnect();
             },
@@ -718,7 +738,7 @@ const initializeLogImageSlideshows = (): void => {
             return slide.dataset.imageLoaded === "true";
         };
 
-        const isSlideReady = (slide: HTMLButtonElement): boolean => {
+        const _isSlideReady = (slide: HTMLButtonElement): boolean => {
             return isSlideLoaded(slide) || slide.dataset.imageLoadFailed === "true";
         };
 
@@ -799,8 +819,8 @@ const initializeLogImageSlideshows = (): void => {
                     slide.dataset.imageLoadFailed !== "true" &&
                     slide.dataset.imageLoaded !== "true",
             );
-            const currentReady = currentSlide ? isSlideReady(currentSlide) : true;
-            viewport.classList.toggle("is-loading", hasLoadingTarget && !currentReady);
+            const currentLoaded = currentSlide ? isSlideLoaded(currentSlide) : false;
+            viewport.classList.toggle("is-loading", hasLoadingTarget && !currentLoaded);
         };
 
         slideshow.slides.forEach((slide, slideIndex) => {
@@ -809,7 +829,15 @@ const initializeLogImageSlideshows = (): void => {
 
             image.addEventListener("load", (): void => {
                 if (slide.dataset.imageLoadFailed === "true") return;
+                const currentSrc = image.getAttribute("src") ?? "";
+                if (currentSrc === TRANSPARENT_PLACEHOLDER_GIF) {
+                    return;
+                }
                 slide.dataset.imageLoaded = "true";
+                slide.classList.add("is-image-loaded");
+                if (slideshow.currentIndex === slideIndex) {
+                    viewport?.classList.remove("is-loading");
+                }
                 updateViewportLoading();
             });
 
@@ -819,6 +847,7 @@ const initializeLogImageSlideshows = (): void => {
                 slide.dataset.imageLoadFailed = "true";
                 slide.dataset.imageLoaded = "false";
                 slide.classList.add("is-image-load-failed");
+                slide.classList.remove("is-image-loaded");
                 image.setAttribute("src", TRANSPARENT_PLACEHOLDER_GIF);
                 image.removeAttribute("data-src");
                 image.alt = "";
@@ -839,10 +868,11 @@ const initializeLogImageSlideshows = (): void => {
                 image.naturalWidth > 0
             ) {
                 slide.dataset.imageLoaded = "true";
+                slide.classList.add("is-image-loaded");
             }
         });
 
-        initializeLazyLoading(root, slides);
+        initializeLazyLoading(root, slides, updateViewportLoading);
 
         if (slideshow.slides.length <= 1) {
             if (prevButton) prevButton.style.display = "none";
