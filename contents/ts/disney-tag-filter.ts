@@ -597,6 +597,9 @@ const initializeLogImageSlideshows = (): void => {
         const dataSrc = image.dataset.src;
         if (!dataSrc) return;
         if (image.getAttribute("src") === dataSrc) return;
+        // プレースホルダーの load で誤って loaded 扱いになった状態をリセットする
+        slide.dataset.imageLoaded = "false";
+        slide.classList.remove("is-image-loaded");
         image.setAttribute("src", dataSrc);
         if (image.complete) {
             if (image.naturalWidth > 0) {
@@ -618,9 +621,14 @@ const initializeLogImageSlideshows = (): void => {
         });
     };
 
-    const initializeLazyLoading = (root: HTMLElement, slides: HTMLButtonElement[]): void => {
+    const initializeLazyLoading = (
+        root: HTMLElement,
+        slides: HTMLButtonElement[],
+        onLoadStart: () => void,
+    ): void => {
         if (typeof window.IntersectionObserver !== "function") {
             loadAllSlides(slides);
+            onLoadStart();
             return;
         }
 
@@ -630,6 +638,7 @@ const initializeLogImageSlideshows = (): void => {
                 if (!isVisible) return;
 
                 loadAllSlides(slides);
+                onLoadStart();
                 currentObserver.unobserve(root);
                 currentObserver.disconnect();
             },
@@ -820,6 +829,10 @@ const initializeLogImageSlideshows = (): void => {
 
             image.addEventListener("load", (): void => {
                 if (slide.dataset.imageLoadFailed === "true") return;
+                const currentSrc = image.getAttribute("src") ?? "";
+                if (currentSrc === TRANSPARENT_PLACEHOLDER_GIF) {
+                    return;
+                }
                 slide.dataset.imageLoaded = "true";
                 slide.classList.add("is-image-loaded");
                 if (slideshow.currentIndex === slideIndex) {
@@ -859,7 +872,7 @@ const initializeLogImageSlideshows = (): void => {
             }
         });
 
-        initializeLazyLoading(root, slides);
+        initializeLazyLoading(root, slides, updateViewportLoading);
 
         if (slideshow.slides.length <= 1) {
             if (prevButton) prevButton.style.display = "none";
