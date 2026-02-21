@@ -4,7 +4,6 @@ date: 2025-12-24
 instagram: "https://www.instagram.com/p/DSuLPECk9r7/, https://www.instagram.com/p/DSuet2TE5eT/, https://www.instagram.com/p/DSwr7OZE2U3/, https://www.instagram.com/p/DSxUv1nk2x5/, https://www.instagram.com/p/DSzSm9rk_tr/, https://www.instagram.com/p/DSzi5Brk8qS/, https://www.instagram.com/p/DS2EPzxk5GC/"
 x: "https://x.com/p0nchi_v/status/2003648010962842070, https://x.com/p0nchi_v/status/2003710800125657170, https://x.com/p0nchi_v/status/2003743112007729530, https://x.com/p0nchi_v/status/2003813573429268680, https://x.com/p0nchi_v/status/2003851672221872339, https://x.com/p0nchi_v/status/2003974110377107753, https://x.com/p0nchi_v/status/2004000228362559931, https://x.com/p0nchi_v/status/2004081340443250809, https://x.com/p0nchi_v/status/2004097735432253837, https://x.com/p0nchi_v/status/2004100279848128659, https://x.com/p0nchi_v/status/2004123602925531323, https://x.com/p0nchi_v/status/2004155312568520927, https://x.com/p0nchi_v/status/2004165244495794198, https://x.com/p0nchi_v/status/2004199634529669298, https://x.com/p0nchi_v/status/2004484582448804067, https://x.com/p0nchi_v/status/2004503757745488253, https://x.com/p0nchi_v/status/2004561056828694771"
 disney-tags: "FSH, TDS"
-images: "sample-1.png, sample-2.png, sample-3.png"
 ai-generated-by: "Claude Sonnet 4.5"
 ---
 

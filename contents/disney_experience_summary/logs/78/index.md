@@ -4,7 +4,6 @@ date: 2025-12-02
 instagram: "https://www.instagram.com/p/DRtm2HDkxog/, https://www.instagram.com/p/DRvstryE_aK/, https://www.instagram.com/p/DRworJPk3Yd/, https://www.instagram.com/p/DRzQRXek1Ag/"
 x: "https://x.com/p0nchi_v/status/1994934492738605383, https://x.com/p0nchi_v/status/1994977184864456888, https://x.com/p0nchi_v/status/1994992192608506142, https://x.com/p0nchi_v/status/1995014897177076009, https://x.com/p0nchi_v/status/1995030903740142047, https://x.com/p0nchi_v/status/1995053829210157456, https://x.com/p0nchi_v/status/1995081714776039498, https://x.com/p0nchi_v/status/1995150679049150533, https://x.com/p0nchi_v/status/1995433485151179094, https://x.com/p0nchi_v/status/1995817250511880704, https://x.com/p0nchi_v/status/1996180030536429924"
 disney-tags: "TDL"
-images: "sample-1.png, sample-2.png, sample-3.png"
 ai-generated-by: "Claude Sonnet 4.5"
 ---
 
