@@ -111,6 +111,11 @@ $button-small-font-size-mobile: 0.65rem;
     100% { left: 100%; }
 }
 
+@keyframes slideshow-loading-sweep {
+    0% { background-position-x: 100%; }
+    100% { background-position-x: -100%; }
+}
+
 // メインコンテンツの初期状態
 .disney-experience-summary {
     opacity: 0;
@@ -312,7 +317,7 @@ $button-small-font-size-mobile: 0.65rem;
             aspect-ratio: 4 / 3;
             border-radius: 10px;
             overflow: hidden;
-            background: #d4e9fb;
+            background: linear-gradient(135deg, #c5ddf2 0%, #b8d2ea 100%);
             box-shadow: 0 6px 14px rgba(8, 57, 99, 0.18);
             position: relative;
 
@@ -320,7 +325,15 @@ $button-small-font-size-mobile: 0.65rem;
                 content: "";
                 position: absolute;
                 inset: 0;
-                background: rgba(255, 255, 255, 0.48);
+                background:
+                    linear-gradient(
+                        110deg,
+                        rgba(175, 205, 230, 0.94) 8%,
+                        rgba(197, 220, 239, 0.96) 18%,
+                        rgba(175, 205, 230, 0.94) 33%
+                    );
+                background-size: 220% 100%;
+                animation: slideshow-loading-sweep 1.25s ease-in-out infinite;
                 z-index: 5;
                 pointer-events: none;
             }
@@ -355,11 +368,60 @@ $button-small-font-size-mobile: 0.65rem;
             opacity: 0;
             pointer-events: none;
             transition: opacity 0.3s ease;
-            background: transparent;
+            background: linear-gradient(135deg, #c5ddf2 0%, #b8d2ea 100%);
+            background-color: #b8d2ea;
+            appearance: none;
+            -webkit-appearance: none;
+            overflow: hidden;
+
+            &::before,
+            &::after {
+                content: "";
+                position: absolute;
+                pointer-events: none;
+                opacity: 0;
+                transition: opacity 0.2s ease;
+            }
+
+            &::before {
+                inset: 0;
+                background:
+                    linear-gradient(
+                        110deg,
+                        rgba(175, 205, 230, 0.94) 8%,
+                        rgba(197, 220, 239, 0.96) 18%,
+                        rgba(175, 205, 230, 0.94) 33%
+                    );
+                background-size: 220% 100%;
+                z-index: 1;
+            }
+
+            &::after {
+                top: 50%;
+                left: 50%;
+                width: 30px;
+                height: 30px;
+                margin-top: -15px;
+                margin-left: -15px;
+                border: 3px solid rgba(11, 71, 123, 0.22);
+                border-top-color: #0b477b;
+                border-radius: 50%;
+                z-index: 2;
+            }
 
             &.is-active {
                 opacity: 1;
                 pointer-events: auto;
+            }
+
+            &.is-active:not(.is-image-loaded):not(.is-image-load-failed)::before {
+                opacity: 1;
+                animation: slideshow-loading-sweep 1.25s ease-in-out infinite;
+            }
+
+            &.is-active:not(.is-image-loaded):not(.is-image-load-failed)::after {
+                opacity: 1;
+                animation: spin 0.8s linear infinite;
             }
 
             img {
@@ -367,6 +429,18 @@ $button-small-font-size-mobile: 0.65rem;
                 height: 100%;
                 object-fit: cover;
                 display: block;
+                opacity: 0;
+                transition: opacity 0.25s ease;
+                position: relative;
+                z-index: 3;
+            }
+
+            &.is-image-loaded img {
+                opacity: 1;
+            }
+
+            &.is-image-load-failed img {
+                opacity: 0;
             }
         }
 
