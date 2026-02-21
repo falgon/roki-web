@@ -601,8 +601,10 @@ const initializeLogImageSlideshows = (): void => {
         if (image.complete) {
             if (image.naturalWidth > 0) {
                 slide.dataset.imageLoaded = "true";
+                slide.classList.add("is-image-loaded");
             } else {
                 slide.dataset.imageLoadFailed = "true";
+                slide.classList.remove("is-image-loaded");
                 image.setAttribute("src", TRANSPARENT_PLACEHOLDER_GIF);
                 image.removeAttribute("data-src");
                 image.alt = "";
@@ -819,6 +821,7 @@ const initializeLogImageSlideshows = (): void => {
             image.addEventListener("load", (): void => {
                 if (slide.dataset.imageLoadFailed === "true") return;
                 slide.dataset.imageLoaded = "true";
+                slide.classList.add("is-image-loaded");
                 if (slideshow.currentIndex === slideIndex) {
                     viewport?.classList.remove("is-loading");
                 }
@@ -831,6 +834,7 @@ const initializeLogImageSlideshows = (): void => {
                 slide.dataset.imageLoadFailed = "true";
                 slide.dataset.imageLoaded = "false";
                 slide.classList.add("is-image-load-failed");
+                slide.classList.remove("is-image-loaded");
                 image.setAttribute("src", TRANSPARENT_PLACEHOLDER_GIF);
                 image.removeAttribute("data-src");
                 image.alt = "";
@@ -851,6 +855,7 @@ const initializeLogImageSlideshows = (): void => {
                 image.naturalWidth > 0
             ) {
                 slide.dataset.imageLoaded = "true";
+                slide.classList.add("is-image-loaded");
             }
         });
 

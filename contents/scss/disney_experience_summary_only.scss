@@ -317,7 +317,7 @@ $button-small-font-size-mobile: 0.65rem;
             aspect-ratio: 4 / 3;
             border-radius: 10px;
             overflow: hidden;
-            background: linear-gradient(135deg, #d4e9fb 0%, #c6dff7 100%);
+            background: linear-gradient(135deg, #c5ddf2 0%, #b8d2ea 100%);
             box-shadow: 0 6px 14px rgba(8, 57, 99, 0.18);
             position: relative;
 
@@ -328,9 +328,9 @@ $button-small-font-size-mobile: 0.65rem;
                 background:
                     linear-gradient(
                         110deg,
-                        rgba(202, 224, 244, 0.92) 8%,
-                        rgba(228, 240, 251, 0.96) 18%,
-                        rgba(202, 224, 244, 0.92) 33%
+                        rgba(175, 205, 230, 0.94) 8%,
+                        rgba(197, 220, 239, 0.96) 18%,
+                        rgba(175, 205, 230, 0.94) 33%
                     );
                 background-size: 220% 100%;
                 animation: slideshow-loading-sweep 1.25s ease-in-out infinite;
@@ -380,6 +380,16 @@ $button-small-font-size-mobile: 0.65rem;
                 height: 100%;
                 object-fit: cover;
                 display: block;
+                opacity: 0;
+                transition: opacity 0.25s ease;
+            }
+
+            &.is-image-loaded img {
+                opacity: 1;
+            }
+
+            &.is-image-load-failed img {
+                opacity: 0;
             }
         }
 
