@@ -729,7 +729,7 @@ const initializeLogImageSlideshows = (): void => {
             return slide.dataset.imageLoaded === "true";
         };
 
-        const isSlideReady = (slide: HTMLButtonElement): boolean => {
+        const _isSlideReady = (slide: HTMLButtonElement): boolean => {
             return isSlideLoaded(slide) || slide.dataset.imageLoadFailed === "true";
         };
 
@@ -810,8 +810,8 @@ const initializeLogImageSlideshows = (): void => {
                     slide.dataset.imageLoadFailed !== "true" &&
                     slide.dataset.imageLoaded !== "true",
             );
-            const currentReady = currentSlide ? isSlideReady(currentSlide) : true;
-            viewport.classList.toggle("is-loading", hasLoadingTarget && !currentReady);
+            const currentLoaded = currentSlide ? isSlideLoaded(currentSlide) : false;
+            viewport.classList.toggle("is-loading", hasLoadingTarget && !currentLoaded);
         };
 
         slideshow.slides.forEach((slide, slideIndex) => {

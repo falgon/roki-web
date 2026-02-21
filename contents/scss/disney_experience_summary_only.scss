@@ -368,7 +368,7 @@ $button-small-font-size-mobile: 0.65rem;
             opacity: 0;
             pointer-events: none;
             transition: opacity 0.3s ease;
-            background: transparent;
+            background: linear-gradient(135deg, #c5ddf2 0%, #b8d2ea 100%);
 
             &.is-active {
                 opacity: 1;
