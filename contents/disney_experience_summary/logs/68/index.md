@@ -4,6 +4,7 @@ date: 2025-10-18
 instagram: "https://www.instagram.com/p/DQehW9Xk4a_/, https://www.instagram.com/p/DQf4CYiE-oI/, https://www.instagram.com/p/DQgvJoCEwEc/, https://www.instagram.com/p/DQijsSxk_eS/, https://www.instagram.com/p/DQjjcARExCJ/, https://www.instagram.com/p/DQjuV-tE1X8/"
 x: "https://x.com/p0nchi_v/status/1979825312675533118, https://x.com/p0nchi_v/status/1979906597632548891, https://x.com/p0nchi_v/status/1979908058366046396, https://x.com/p0nchi_v/status/1980270779595133281, https://x.com/p0nchi_v/status/1980573072676765827"
 disney-tags: "TDH, TDL"
+images: "image-1.jpg, image-2.jpg, image-3.jpg"
 ai-generated-by: "Claude Sonnet 4.5"
 ---
 

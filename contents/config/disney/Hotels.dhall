@@ -116,7 +116,9 @@ in  [ { hotelCodeRaw = "FSH"
       , staysRaw = 4
       , detailsRaw =
           detailsToPaths
-            [ makeNode "スイート" [ makeText "ハバテラ ×2", makeText "ピアバル" ]
+            [ makeNode
+                "スイート"
+                [ makeText "ハバグラ", makeText "ハバテラ ×2", makeText "ピアバル" ]
             , makeNode "ポルトパラディーゾ" [ makeText "スーペリアルームハーバービュー" ]
             ]
       , hotelColorRaw = "#8A7501"

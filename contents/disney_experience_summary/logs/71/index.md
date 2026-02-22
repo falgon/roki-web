@@ -4,6 +4,7 @@ date: 2025-10-26
 instagram: "https://www.instagram.com/p/DQoXOcckxad/, https://www.instagram.com/p/DQoq0iuE0R2/, https://www.instagram.com/p/DQqioTjE5hW/, https://www.instagram.com/p/DQrB92CE2yw/, https://www.instagram.com/p/DQrTDt3E9_Q/, https://www.instagram.com/p/DQtRhtZE3iu/, https://www.instagram.com/p/DQvjIQACeaA/, https://www.instagram.com/p/DQwBmUBE4VK/"
 x: "https://x.com/p0nchi_v/status/1982318080727671183, https://x.com/p0nchi_v/status/1982330042861662694, https://x.com/p0nchi_v/status/1982618065637708236, https://x.com/p0nchi_v/status/1982623946630746548, https://x.com/p0nchi_v/status/1982625587278835918, https://x.com/p0nchi_v/status/1982277192198316346, https://x.com/p0nchi_v/status/1982846205173608616, https://x.com/p0nchi_v/status/1982786932284260398, https://x.com/p0nchi_v/status/1982847617307685116, https://x.com/p0nchi_v/status/1983132424696369358, https://x.com/p0nchi_v/status/1983486907192610995, https://x.com/p0nchi_v/status/1983862340673269785, https://x.com/p0nchi_v/status/1984217814895583468, https://x.com/p0nchi_v/status/1984932723610550647, https://x.com/p0nchi_v/status/1985353013540856274, https://x.com/p0nchi_v/status/1985686174753861738, https://x.com/p0nchi_v/status/1986070956335657166, https://x.com/p0nchi_v/status/1986399491805856052, https://x.com/p0nchi_v/status/1986727735205777449"
 disney-tags: "FSH, TDL, TDS"
+images: "image-1.jpg, image-2.jpg, image-3.jpg"
 ai-generated-by: "Claude Sonnet 4.5"
 ---
 

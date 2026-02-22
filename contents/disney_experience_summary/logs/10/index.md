@@ -3,6 +3,7 @@ title: "初めての FSH 宿泊"
 date: 2024-10-02
 instagram: "https://www.instagram.com/p/DA6Zk08zjJl/, https://www.instagram.com/p/DA6frRdTtJD/"
 disney-tags: "FSH, TDS, TDH"
+images: "image-1.jpg, image-2.jpg, image-3.jpg"
 ---
 
 初めての FSH 宿泊、4201 号室。ファンタジースプリングス・マジックを購入し、FS 内のアトラクションを周回した。またドリーマーズラウンジにて、同時期に提供されていたゴーストミッキーのアフタヌーンティーセットを頂いた。

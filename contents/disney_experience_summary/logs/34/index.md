@@ -4,6 +4,7 @@ date: 2025-06-13
 instagram: "https://www.instagram.com/p/DKz4Mc7zdY7/?img_index=1, https://www.instagram.com/p/DK1hm14Tr76/?img_index=1"
 x: "https://x.com/p0nchi_v/status/1933435913578951177"
 disney-tags: "TDH"
+images: "image-1.jpg, image-2.jpg"
 ---
 
 今回もドリーマーズラウンジを訪れた。お目当てはケーキセット🍰。一口食べた瞬間、「これ……美味しすぎる…」と思わず心の中で呟いてしまうほどの衝撃的な美味しさだった。

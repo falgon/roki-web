@@ -4,6 +4,7 @@ date: 2025-09-25
 instagram: "https://www.instagram.com/p/DPB4EOvk8zM/, https://www.instagram.com/p/DPEUzhekxKy/"
 x: "https://x.com/p0nchi_v/status/1971110551699980306, https://x.com/p0nchi_v/status/1971141182211358779, https://x.com/p0nchi_v/status/1971449160235876833"
 disney-tags: "TDH, DAH"
+images: "image-1.jpg, image-2.jpg, image-3.jpg"
 ai-generated-by: "Claude Sonnet 4.5"
 ---
 
