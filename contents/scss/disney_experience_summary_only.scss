@@ -320,6 +320,7 @@ $button-small-font-size-mobile: 0.65rem;
             background: linear-gradient(135deg, #c5ddf2 0%, #b8d2ea 100%);
             box-shadow: 0 6px 14px rgba(8, 57, 99, 0.18);
             position: relative;
+            z-index: 1;
 
             &.is-loading::before {
                 content: "";
@@ -463,7 +464,7 @@ $button-small-font-size-mobile: 0.65rem;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            z-index: 2;
+            z-index: 10;
             transition: background-color 0.25s ease;
 
             &:hover {
