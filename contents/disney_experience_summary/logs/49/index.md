@@ -4,6 +4,7 @@ date: 2025-07-31
 instagram: "https://www.instagram.com/p/DMz1zb2zolQ/, https://www.instagram.com/p/DM2brMyz63r/"
 x: "https://x.com/p0nchi_v/status/1950783669251301747, https://x.com/p0nchi_v/status/1950864113435025563, https://x.com/p0nchi_v/status/1951250797519577519"
 disney-tags: "DAH"
+images: "image-1.jpg, image-2.jpg, image-3.jpg"
 ai-generated-by: "Claude Sonnet 4.5"
 ---
 

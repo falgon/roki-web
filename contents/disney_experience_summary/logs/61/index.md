@@ -4,6 +4,7 @@ date: 2025-09-21
 instagram: "https://www.instagram.com/p/DO5imWxk-hS/?img_index=1"
 x: "https://x.com/p0nchi_v/status/1969640486307840336"
 disney-tags: "DHM"
+images: "image-1.jpg, image-2.jpg, image-3.jpg"
 ai-generated-by: "Claude Sonnet 4.5"
 ---
 

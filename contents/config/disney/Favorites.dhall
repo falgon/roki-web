@@ -31,13 +31,22 @@ in    [ { text = "アナと雪の女王"
         , category = "characters"
         , link = Some "https://www.disney.co.jp/fc/anayuki/character/snowgies"
         }
-      , { text = "エルサ"
+      , { text = "リトル・グリーン・メン"
         , category = "characters"
-        , link = Some "https://www.disney.co.jp/fc/anayuki/character/elsa"
+        , link = Some "https://www.disney.co.jp/fc/toystory/character/aliens"
+        }
+      , { text = "ミッキーマウス"
+        , category = "characters"
+        , link = Some
+            "https://www.disney.co.jp/fc/mickey-friends/character/mickey"
         }
       , { text = "ジュディ・ホップス"
         , category = "characters"
         , link = Some "https://www.disney.co.jp/fc/zootopia/character/judy"
+        }
+      , { text = "リーナ・ベル"
+        , category = "characters"
+        , link = Some "https://www.tokyodisneyresort.jp/treasure/duffy/linabell"
         }
       , { text = "ミッキーのマジカルミュージックワールド"
         , category = "park-contents"
