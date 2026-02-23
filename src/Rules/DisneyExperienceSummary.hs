@@ -1,16 +1,16 @@
 {-# LANGUAGE DeriveGeneric, DuplicateRecordFields, OverloadedStrings #-}
 module Rules.DisneyExperienceSummary (rules) where
 
-import           Control.Monad                    (filterM)
+import           Control.Monad                    (filterM, forM_)
 import           Control.Monad.Reader             (asks)
 import           Control.Monad.Trans              (MonadTrans (..))
 import           Data.Aeson                       (encode)
 import qualified Data.ByteString.Lazy             as BL
 import           Data.Char                        (isDigit)
 import           Data.Disney.Experience.Generator
-import           Data.List                        (foldl', isPrefixOf,
-                                                   isSuffixOf, nub, sort,
-                                                   sortBy, sortOn)
+import           Data.List                        (foldl', intercalate,
+                                                   isPrefixOf, isSuffixOf, nub,
+                                                   sort, sortBy, sortOn)
 import qualified Data.Map                         as M
 import           Data.Maybe                       (fromMaybe)
 import           Data.Ord                         (comparing)
@@ -111,6 +111,18 @@ data LogImage = LogImage {
   , imageAlt :: String
   } deriving (Show)
 
+data Offer = Offer {
+    offerId          :: String
+  , offerTitle       :: String
+  , offerUrl         :: String
+  , offerCtaLabel    :: String
+  , offerDescription :: Maybe String
+  , offerUtmCampaign :: Maybe String
+  , offerIsActive    :: Bool
+  } deriving (Generic, Show)
+
+instance FromDhall Offer
+
 -- Dhallファイルからタグ設定を読み込み
 loadDisneyTags :: IO [TagConfig]
 loadDisneyTags = input auto "./contents/config/disney/Tags.dhall"
@@ -208,6 +220,102 @@ mdRule ss pat = do
 
 loadDisneyFavorites :: IO [Favorite]
 loadDisneyFavorites = input auto "./contents/config/disney/Favorites.dhall"
+
+loadDisneyOffers :: IO [Offer]
+loadDisneyOffers = input auto "./contents/config/disney/Offers.dhall"
+
+offerRedirectPath :: Offer -> FilePath
+offerRedirectPath offer = joinPath ["disney_experience_summary", "go", offerId offer, "index.html"]
+
+offerTrackingPath :: Offer -> String
+offerTrackingPath offer = Posix.makeRelative "disney_experience_summary" (offerRedirectPath offer)
+
+appendQueryParams :: String -> [(String, String)] -> String
+appendQueryParams rawUrl queryParams
+    | null queryParams = rawUrl
+    | otherwise        = basePart ++ queryJoiner ++ serializedParams ++ fragmentPart
+  where
+    (basePart, fragmentPart) = breakAt '#'
+    serializedParams = intercalate "&" $ map (\(k, v) -> k ++ "=" ++ v) queryParams
+    hasQuery = '?' `elem` basePart
+    queryJoiner
+        | not hasQuery = "?"
+        | null basePart = ""
+        | last basePart `elem` ("?&" :: String) = ""
+        | otherwise = "&"
+
+    breakAt :: Char -> (String, String)
+    breakAt delimiter = case break (== delimiter) rawUrl of
+        (prefix, [])     -> (prefix, "")
+        (prefix, suffix) -> (prefix, suffix)
+
+offerDestinationUrl :: Offer -> String
+offerDestinationUrl offer =
+    appendQueryParams
+        (offerUrl offer)
+        [ ("utm_source", "roki_disney")
+        , ("utm_medium", "referral")
+        , ("utm_campaign", fromMaybe ("offer_" ++ offerId offer) (offerUtmCampaign offer))
+        ]
+
+escapeHtmlAttr :: String -> String
+escapeHtmlAttr = concatMap escapeChar
+  where
+    escapeChar '&'  = "&amp;"
+    escapeChar '"'  = "&quot;"
+    escapeChar '\'' = "&#39;"
+    escapeChar '<'  = "&lt;"
+    escapeChar '>'  = "&gt;"
+    escapeChar ch   = [ch]
+
+escapeHtmlText :: String -> String
+escapeHtmlText = escapeHtmlAttr
+
+offerRedirectHtml :: String -> String
+offerRedirectHtml destinationUrl =
+    "<!doctype html><html lang=\"ja\"><head><meta charset=\"utf-8\">"
+    ++ "<meta name=\"robots\" content=\"noindex,nofollow\">"
+    ++ "<meta http-equiv=\"refresh\" content=\"0;url="
+    ++ escapeHtmlAttr destinationUrl
+    ++ "\">"
+    ++ "<title>Redirecting...</title>"
+    ++ "<script>window.location.replace("
+    ++ show destinationUrl
+    ++ ");</script>"
+    ++ "</head><body><p>遷移中です。"
+    ++ "<a href=\""
+    ++ escapeHtmlAttr destinationUrl
+    ++ "\">こちら</a></p></body></html>"
+
+renderFeaturedOfferHtml :: [Offer] -> String
+renderFeaturedOfferHtml offers = case offers of
+    []        -> ""
+    (offer:_) ->
+        let descriptionHtml = case offerDescription offer of
+                Just desc | not (null desc) ->
+                    "<span class=\"featured-offer-description\">"
+                    ++ escapeHtmlText desc
+                    ++ "</span>"
+                _ ->
+                    ""
+        in "<a class=\"featured-offer-link offer-link\""
+            ++ " href=\"" ++ escapeHtmlAttr (offerTrackingPath offer) ++ "\""
+            ++ " target=\"_blank\""
+            ++ " rel=\"sponsored nofollow noopener\""
+            ++ " data-offer-id=\"" ++ escapeHtmlAttr (offerId offer) ++ "\""
+            ++ " data-offer-title=\"" ++ escapeHtmlAttr (offerTitle offer) ++ "\""
+            ++ " data-offer-placement=\"list-featured\">"
+            ++ "<span class=\"featured-offer-badge\">PR</span>"
+            ++ "<span class=\"featured-offer-main\">"
+            ++ "<span class=\"featured-offer-title\">"
+            ++ escapeHtmlText (offerTitle offer)
+            ++ "</span>"
+            ++ descriptionHtml
+            ++ "</span>"
+            ++ "<span class=\"featured-offer-cta\">"
+            ++ escapeHtmlText (offerCtaLabel offer)
+            ++ "</span>"
+            ++ "</a>"
 
 -- Dhallファイルからホテル情報を読み込み
 loadDisneyHotels :: IO [Hotel]
@@ -350,9 +458,12 @@ rules = do
     isPreview <- asks pcIsPreview
     favorites <- lift $ preprocess loadDisneyFavorites
     hotels <- lift $ preprocess loadDisneyHotels
+    offers <- lift $ preprocess loadDisneyOffers
     hotelsLastModified <- lift $ preprocess getHotelsLastModified
     logsLastModified <- lift $ preprocess getLogsLastModified
     tagConfig <- lift $ preprocess tagConfigMap
+    let activeOffers = filter offerIsActive offers
+        featuredOfferHtml = renderFeaturedOfferHtml activeOffers
     let totalStays = sum $ map stays hotels
     lift $ do
         -- フォントファイルのコピー
@@ -364,6 +475,11 @@ rules = do
         match ((fromGlob $ joinPath [disneyExperienceSummaryRoot, "logs", "**"]) .&&. complement disneyLogsPattern) $ do
             route $ gsubRoute "contents/" $ const ""
             compile copyFileCompiler
+
+        forM_ activeOffers $ \offer -> do
+            create [fromFilePath $ offerRedirectPath offer] $ do
+                route idRoute
+                compile $ makeItem $ offerRedirectHtml $ offerDestinationUrl offer
 
         -- JSON可視化データの生成
         create [fromFilePath "data/disney-experience-visualization.json"] $ do
@@ -399,6 +515,7 @@ rules = do
                   , constField "about-body"
                         <$> loadSnapshotBody aboutIdent disneyExperienceSummarySnapshot
                   , pure $ listField "disney-logs" (disneyLogCtx tagConfig) (return disneyLogs)
+                  , pure $ constField "featured-offer-html" featuredOfferHtml
                   , pure $ listField "unique-tags" (field "name" (return . itemBody) <> field "color" (return . flip getTagColor tagConfig . itemBody) <> field "link" (return . flip getTagLink tagConfig . itemBody)) (return $ map (\tag -> Item (fromString tag) tag) uniqueTags)
                   , pure $ favoritesListField "favorite-works" "works" favorites
                   , pure $ favoritesListField "favorite-characters" "characters" favorites
