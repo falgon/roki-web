@@ -764,6 +764,7 @@ describe("disney-tag-filter.ts", () => {
                     href="go/demo-offer/index.html"
                     data-offer-id="demo-offer"
                     data-offer-title="Demo Offer"
+                    data-offer-partner-id="demo-partner"
                     data-offer-placement="log-entry"
                 >Offer</a>
             `;
@@ -780,6 +781,7 @@ describe("disney-tag-filter.ts", () => {
                 expect.objectContaining({
                     offer_id: "demo-offer",
                     offer_title: "Demo Offer",
+                    offer_partner_id: "demo-partner",
                     offer_placement: "log-entry",
                     outbound_url: expect.stringContaining("go/demo-offer/index.html"),
                 }),

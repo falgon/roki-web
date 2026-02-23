@@ -123,6 +123,41 @@ data Offer = Offer {
 
 instance FromDhall Offer
 
+-- オファー配信ポリシー（公平性と配信最適化の設定）
+data OfferDeliveryPolicy = OfferDeliveryPolicy {
+    policyOfferId               :: String
+  , policyPartnerId             :: String
+  , policyPriority              :: Double
+  , policyTargetShare           :: Double
+  , policyMinShare              :: Double
+  , policyMaxShare              :: Double
+  , policyHistoricalImpressions :: Natural
+  , policyHistoricalClicks      :: Natural
+  , policyExplorationWeight     :: Double
+  } deriving (Generic, Show)
+
+instance FromDhall OfferDeliveryPolicy
+
+-- オファーと配信ポリシーを結合した内部データ
+data OfferCandidate = OfferCandidate {
+    candidateOffer                 :: Offer
+  , candidatePartnerId             :: String
+  , candidatePriority              :: Double
+  , candidateTargetShare           :: Double
+  , candidateMinShare              :: Double
+  , candidateMaxShare              :: Double
+  , candidateHistoricalImpressions :: Natural
+  , candidateHistoricalClicks      :: Natural
+  , candidateExplorationWeight     :: Double
+  } deriving (Show)
+
+-- featured選定時の中間評価情報
+data OfferCandidateMetric = OfferCandidateMetric {
+    metricCandidate   :: OfferCandidate
+  , metricActualShare :: Double
+  , metricScore       :: Double
+  } deriving (Show)
+
 -- Dhallファイルからタグ設定を読み込み
 loadDisneyTags :: IO [TagConfig]
 loadDisneyTags = input auto "./contents/config/disney/Tags.dhall"
@@ -224,6 +259,137 @@ loadDisneyFavorites = input auto "./contents/config/disney/Favorites.dhall"
 loadDisneyOffers :: IO [Offer]
 loadDisneyOffers = input auto "./contents/config/disney/Offers.dhall"
 
+loadDisneyOfferPolicies :: IO [OfferDeliveryPolicy]
+loadDisneyOfferPolicies = do
+    let policyPath = "./contents/config/disney/OfferDeliveryPolicies.dhall"
+    exists <- doesFileExist policyPath
+    if exists
+        then input auto "./contents/config/disney/OfferDeliveryPolicies.dhall"
+        else return []
+
+normalizeRatio :: Double -> Double
+normalizeRatio = max 0 . min 1
+
+buildOfferCandidates :: [Offer] -> [OfferDeliveryPolicy] -> [OfferCandidate]
+buildOfferCandidates offers policies =
+    map (\offer -> toCandidate offer $ M.lookup (offerId offer) policyMap) offers
+  where
+    policyMap = M.fromList $ map (\policy -> (policyOfferId policy, policy)) policies
+
+    toCandidate :: Offer -> Maybe OfferDeliveryPolicy -> OfferCandidate
+    toCandidate offer mPolicy = case mPolicy of
+        Just policy ->
+            let minShare = normalizeRatio $ policyMinShare policy
+                maxShare = max minShare $ normalizeRatio $ policyMaxShare policy
+                targetShare = min maxShare $ max minShare $ normalizeRatio $ policyTargetShare policy
+            in OfferCandidate
+                { candidateOffer = offer
+                , candidatePartnerId = policyPartnerId policy
+                , candidatePriority = normalizeRatio $ policyPriority policy
+                , candidateTargetShare = targetShare
+                , candidateMinShare = minShare
+                , candidateMaxShare = maxShare
+                , candidateHistoricalImpressions = policyHistoricalImpressions policy
+                , candidateHistoricalClicks = policyHistoricalClicks policy
+                , candidateExplorationWeight = normalizeRatio $ policyExplorationWeight policy
+                }
+        Nothing ->
+            OfferCandidate
+                { candidateOffer = offer
+                , candidatePartnerId = offerId offer
+                , candidatePriority = 0.5
+                , candidateTargetShare = 0.1
+                , candidateMinShare = 0.0
+                , candidateMaxShare = 1.0
+                , candidateHistoricalImpressions = 0
+                , candidateHistoricalClicks = 0
+                , candidateExplorationWeight = 0.1
+                }
+
+buildOfferCandidateMetrics :: [OfferCandidate] -> [OfferCandidateMetric]
+buildOfferCandidateMetrics candidates =
+    map toMetric candidates
+  where
+    impressionsByPartner = foldl'
+            (\acc candidate ->
+                M.insertWith
+                    (+)
+                    (candidatePartnerId candidate)
+                    (fromIntegral (candidateHistoricalImpressions candidate) :: Double)
+                    acc
+            )
+            M.empty
+            candidates
+
+    totalPartnerImpressions = sum $ M.elems impressionsByPartner
+
+    partnerActualShare :: String -> Double
+    partnerActualShare partnerId
+        | totalPartnerImpressions <= 0 = 0
+        | otherwise = M.findWithDefault 0 partnerId impressionsByPartner / totalPartnerImpressions
+
+    toMetric :: OfferCandidate -> OfferCandidateMetric
+    toMetric candidate =
+        let impressions = fromIntegral (candidateHistoricalImpressions candidate) :: Double
+            clicks = fromIntegral (candidateHistoricalClicks candidate) :: Double
+            actualShare = partnerActualShare $ candidatePartnerId candidate
+            expectedCtr = (clicks + 1) / (impressions + 20)
+            fairnessGap = max 0 (candidateTargetShare candidate - actualShare)
+            fairnessBoost = 1 + fairnessGap
+            fatiguePenalty = 1 / (1 + (impressions / 400))
+            baseScore =
+                expectedCtr * 0.65
+                + candidatePriority candidate * 0.20
+                + candidateExplorationWeight candidate * 0.15
+            finalScore = baseScore * fairnessBoost * fatiguePenalty
+        in OfferCandidateMetric
+            { metricCandidate = candidate
+            , metricActualShare = actualShare
+            , metricScore = finalScore
+            }
+
+pickFeaturedOfferCandidate :: [OfferCandidate] -> Maybe OfferCandidate
+pickFeaturedOfferCandidate candidates = do
+    best <- pickBestMetric scoped
+    return $ metricCandidate best
+  where
+    metrics = buildOfferCandidateMetrics candidates
+    underMin =
+        filter
+            (\metric ->
+                metricActualShare metric
+                < candidateMinShare (metricCandidate metric)
+            )
+            metrics
+    withinMax =
+        filter
+            (\metric ->
+                metricActualShare metric
+                <= candidateMaxShare (metricCandidate metric)
+            )
+            metrics
+    scoped
+        | not $ null underMin = underMin
+        | not $ null withinMax = withinMax
+        | otherwise = metrics
+
+    pickBestMetric :: [OfferCandidateMetric] -> Maybe OfferCandidateMetric
+    pickBestMetric []            = Nothing
+    pickBestMetric (metric:rest) = Just $ foldl' chooseMetric metric rest
+
+    chooseMetric :: OfferCandidateMetric -> OfferCandidateMetric -> OfferCandidateMetric
+    chooseMetric current challenger =
+        case compareMetric challenger current of
+            GT -> challenger
+            _  -> current
+
+    compareMetric :: OfferCandidateMetric -> OfferCandidateMetric -> Ordering
+    compareMetric left right =
+        compare (metricScore left) (metricScore right)
+            <> compare (candidatePriority $ metricCandidate left) (candidatePriority $ metricCandidate right)
+            <> compare (negate $ metricActualShare left) (negate $ metricActualShare right)
+            <> compare (offerId $ candidateOffer $ metricCandidate right) (offerId $ candidateOffer $ metricCandidate left)
+
 offerRedirectPath :: Offer -> FilePath
 offerRedirectPath offer = joinPath ["disney_experience_summary", "go", offerId offer, "index.html"]
 
@@ -287,11 +453,12 @@ offerRedirectHtml destinationUrl =
     ++ escapeHtmlAttr destinationUrl
     ++ "\">こちら</a></p></body></html>"
 
-renderFeaturedOfferHtml :: [Offer] -> String
-renderFeaturedOfferHtml offers = case offers of
-    []        -> ""
-    (offer:_) ->
-        let descriptionHtml = case offerDescription offer of
+renderFeaturedOfferHtml :: [OfferCandidate] -> String
+renderFeaturedOfferHtml candidates = case pickFeaturedOfferCandidate candidates of
+    Nothing -> ""
+    Just candidate ->
+        let offer = candidateOffer candidate
+            descriptionHtml = case offerDescription offer of
                 Just desc | not (null desc) ->
                     "<span class=\"featured-offer-description\">"
                     ++ escapeHtmlText desc
@@ -304,6 +471,7 @@ renderFeaturedOfferHtml offers = case offers of
             ++ " rel=\"sponsored nofollow noopener\""
             ++ " data-offer-id=\"" ++ escapeHtmlAttr (offerId offer) ++ "\""
             ++ " data-offer-title=\"" ++ escapeHtmlAttr (offerTitle offer) ++ "\""
+            ++ " data-offer-partner-id=\"" ++ escapeHtmlAttr (candidatePartnerId candidate) ++ "\""
             ++ " data-offer-placement=\"list-featured\">"
             ++ "<span class=\"featured-offer-badge\">PR</span>"
             ++ "<span class=\"featured-offer-main\">"
@@ -459,11 +627,13 @@ rules = do
     favorites <- lift $ preprocess loadDisneyFavorites
     hotels <- lift $ preprocess loadDisneyHotels
     offers <- lift $ preprocess loadDisneyOffers
+    offerPolicies <- lift $ preprocess loadDisneyOfferPolicies
     hotelsLastModified <- lift $ preprocess getHotelsLastModified
     logsLastModified <- lift $ preprocess getLogsLastModified
     tagConfig <- lift $ preprocess tagConfigMap
     let activeOffers = filter offerIsActive offers
-        featuredOfferHtml = renderFeaturedOfferHtml activeOffers
+        activeOfferCandidates = buildOfferCandidates activeOffers offerPolicies
+        featuredOfferHtml = renderFeaturedOfferHtml activeOfferCandidates
     let totalStays = sum $ map stays hotels
     lift $ do
         -- フォントファイルのコピー

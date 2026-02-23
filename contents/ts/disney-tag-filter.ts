@@ -1007,11 +1007,13 @@ const initializeOfferClickTracking = (): void => {
             }
             const offerId = link.dataset.offerId ?? "";
             const offerTitle = link.dataset.offerTitle ?? "";
+            const offerPartnerId = link.dataset.offerPartnerId ?? "";
             const offerPlacement = link.dataset.offerPlacement ?? "log-entry";
 
             window.gtag("event", "offer_click", {
                 offer_id: offerId,
                 offer_title: offerTitle,
+                offer_partner_id: offerPartnerId,
                 offer_placement: offerPlacement,
                 page_path: window.location.pathname,
                 outbound_url: link.href,
