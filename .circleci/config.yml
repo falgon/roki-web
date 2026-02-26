@@ -16,7 +16,7 @@ parameters:
 jobs:
   build:
     docker:
-    - image: cimg/go:1.24.7
+    - image: cimg/go:1.25.0
     resource_class: large
     environment:
       TZ: /usr/share/zoneinfo/Asia/Tokyo
@@ -32,7 +32,7 @@ jobs:
           echo 'export ARTIFACTS_GDRIVE_PATH="<< pipeline.parameters.GDRIVE_PATH >>"' >> $BASH_ENV
           source "$BASH_ENV"
     - restore_cache:
-        key: skicka-2023-10-11-latest
+        key: skicka-2026-02-26-go1.25.0
     - run:
         name: Setup tools
         command: |
@@ -46,7 +46,7 @@ jobs:
           fi
           curl -sSL https://get.haskellstack.org/ | sh
     - save_cache:
-        key: skicka-2023-10-11-latest
+        key: skicka-2026-02-26-go1.25.0
         paths:
           - ~/.go/bin
           - ~/.cache/go-build
