@@ -2,6 +2,7 @@
 declare global {
     interface Window {
         isPreview?: boolean;
+        gtag?: (...args: unknown[]) => void;
     }
 }
 
@@ -992,6 +993,35 @@ const initializeLogImageSlideshows = (): void => {
     });
 };
 
+// 送客リンクのクリック計測を初期化
+const initializeOfferClickTracking = (): void => {
+    const offerLinks = Array.from(document.querySelectorAll<HTMLAnchorElement>(".offer-link"));
+    if (offerLinks.length === 0) {
+        return;
+    }
+
+    offerLinks.forEach((link): void => {
+        link.addEventListener("click", (): void => {
+            if (typeof window.gtag !== "function") {
+                return;
+            }
+            const offerId = link.dataset.offerId ?? "";
+            const offerTitle = link.dataset.offerTitle ?? "";
+            const offerPartnerId = link.dataset.offerPartnerId ?? "";
+            const offerPlacement = link.dataset.offerPlacement ?? "log-entry";
+
+            window.gtag("event", "offer_click", {
+                offer_id: offerId,
+                offer_title: offerTitle,
+                offer_partner_id: offerPartnerId,
+                offer_placement: offerPlacement,
+                page_path: window.location.pathname,
+                outbound_url: link.href,
+            });
+        });
+    });
+};
+
 // 検索フィルターの表示/非表示切り替えを初期化
 const initializeSearchFilter = (
     toggleSearchFilterBtn: HTMLElement,
@@ -1108,6 +1138,7 @@ if (typeof window !== "undefined") {
             normalizeString: typeof normalizeString;
             initLoadingScreen: typeof initLoadingScreen;
             initializeLogImageSlideshows: typeof initializeLogImageSlideshows;
+            initializeOfferClickTracking: typeof initializeOfferClickTracking;
         }
     ).escapeHtml = escapeHtml;
     (window as typeof window & { normalizeString: typeof normalizeString }).normalizeString =
@@ -1119,6 +1150,11 @@ if (typeof window !== "undefined") {
             initializeLogImageSlideshows: typeof initializeLogImageSlideshows;
         }
     ).initializeLogImageSlideshows = initializeLogImageSlideshows;
+    (
+        window as typeof window & {
+            initializeOfferClickTracking: typeof initializeOfferClickTracking;
+        }
+    ).initializeOfferClickTracking = initializeOfferClickTracking;
 }
 
 if (typeof document !== "undefined") {
@@ -1127,6 +1163,8 @@ if (typeof document !== "undefined") {
         initLoadingScreen();
         // 体験録画像スライドショーを初期化
         initializeLogImageSlideshows();
+        // 送客リンクのクリック計測を初期化
+        initializeOfferClickTracking();
 
         const tagFilterButtons: HTMLCollectionOf<Element> =
             document.getElementsByClassName("tag-filter-btn");

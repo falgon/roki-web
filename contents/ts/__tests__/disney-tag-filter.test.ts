@@ -1,10 +1,11 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import "../disney-tag-filter";
 
 declare global {
     function escapeHtml(text: string): string;
     function initLoadingScreen(): void;
     function initializeLogImageSlideshows(): void;
+    function initializeOfferClickTracking(): void;
     function normalizeString(str: string): string;
 }
 
@@ -746,6 +747,45 @@ describe("disney-tag-filter.ts", () => {
             expect(modal?.classList.contains("is-active")).toBe(true);
             expect(modal?.getAttribute("aria-hidden")).toBe("false");
             expect(modalImage.src).toContain("/a.jpg");
+        });
+    });
+
+    describe("offer click tracking", () => {
+        it("sends offer_click event when offer link is clicked", () => {
+            const gtagSpy = vi.fn();
+            Object.defineProperty(window, "gtag", {
+                configurable: true,
+                value: gtagSpy,
+            });
+
+            document.body.innerHTML = `
+                <a
+                    class="offer-link"
+                    href="go/demo-offer/index.html"
+                    data-offer-id="demo-offer"
+                    data-offer-title="Demo Offer"
+                    data-offer-partner-id="demo-partner"
+                    data-offer-placement="log-entry"
+                >Offer</a>
+            `;
+
+            initializeOfferClickTracking();
+
+            const offerLink = document.querySelector(".offer-link") as HTMLAnchorElement;
+            offerLink.click();
+
+            expect(gtagSpy).toHaveBeenCalledTimes(1);
+            expect(gtagSpy).toHaveBeenCalledWith(
+                "event",
+                "offer_click",
+                expect.objectContaining({
+                    offer_id: "demo-offer",
+                    offer_title: "Demo Offer",
+                    offer_partner_id: "demo-partner",
+                    offer_placement: "log-entry",
+                    outbound_url: expect.stringContaining("go/demo-offer/index.html"),
+                }),
+            );
         });
     });
 });
