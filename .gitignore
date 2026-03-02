@@ -15,3 +15,5 @@ hpc-report/
 .claude
 CLAUDE.md
 .claude/settings.local.json
+.env
+AGENTS.md
