@@ -271,28 +271,34 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_URL: ${{ steps.evaluate.outputs.pr-url }}
         run: |
-          required_checks=(
-            "build"
-            "upload"
-            "boot-circle-ci"
-            "lint-and-test"
-            "Analyze (javascript)"
-            "CodeQL"
-            "restyled"
+          required_workflows=(
+            "CI-pr"
+            "CI-lint-test"
+            "CI-CodeQL"
+            "CI-Restyled"
           )
 
-          status_json="$(gh pr view "$PR_URL" --json statusCheckRollup)"
+          pr_json="$(gh pr view "$PR_URL" --json headRefOid)"
+          head_sha="$(jq -r '.headRefOid' <<<"$pr_json")"
+          runs_json="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs?event=pull_request&per_page=100")"
           failures=()
 
-          for check_name in "${required_checks[@]}"; do
+          for workflow_name in "${required_workflows[@]}"; do
             conclusion="$(
-              jq -r --arg name "$check_name" '
-                [.statusCheckRollup[] | select(.name == $name) | .conclusion] | last // ""
-              ' <<<"$status_json"
+              jq -r --arg name "$workflow_name" --arg sha "$head_sha" '
+                [
+                  .workflow_runs[]
+                  | select(.name == $name and .head_sha == $sha)
+                  | {run_number, conclusion}
+                ]
+                | sort_by(.run_number)
+                | last
+                | .conclusion // ""
+              ' <<<"$runs_json"
             )"
 
-            if [[ "$conclusion" != "SUCCESS" ]]; then
-              failures+=("${check_name}:${conclusion:-missing}")
+            if [[ "$conclusion" != "success" ]]; then
+              failures+=("${workflow_name}:${conclusion:-missing}")
             fi
           done
 
