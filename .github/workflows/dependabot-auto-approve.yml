@@ -1,0 +1,448 @@
+name: Dependabot Auto Approve
+
+on:
+  workflow_run:
+    workflows:
+      - CI-pr
+      - CI-lint-test
+      - CI-CodeQL
+      - CI-Restyled
+    types:
+      - completed
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+jobs:
+  collect-target-prs:
+    if: >-
+      github.repository == 'falgon/roki-web' &&
+      (
+        github.event_name != 'workflow_run' ||
+        github.event.workflow_run.conclusion == 'success'
+      )
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      pr-numbers: ${{ steps.collect.outputs.pr-numbers }}
+    steps:
+      - name: Collect candidate pull requests
+        id: collect
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.DEPENDABOT_AUTO_APPROVE_READ_BRANCH_PROTECTION_TOKEN }}
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            const setPullRequests = (numbers) => {
+              core.setOutput(
+                "pr-numbers",
+                JSON.stringify([...new Set(numbers)].sort((a, b) => a - b)),
+              );
+            };
+
+            if (context.eventName === "workflow_run") {
+              if (context.payload.workflow_run.event !== "pull_request") {
+                return setPullRequests([]);
+              }
+
+              return setPullRequests(
+                (context.payload.workflow_run.pull_requests ?? []).map(({ number }) => number),
+              );
+            }
+
+            const pullRequests = await github.paginate(github.rest.pulls.list, {
+              owner,
+              repo,
+              state: "open",
+              base: "develop",
+              per_page: 100,
+            });
+
+            return setPullRequests(
+              pullRequests
+                .filter(
+                  (pullRequest) =>
+                    pullRequest.user.login === "dependabot[bot]" &&
+                    pullRequest.labels.some(({ name }) => name === "automerge"),
+                )
+                .map(({ number }) => number),
+            );
+
+  auto-approve:
+    needs: collect-target-prs
+    if: >-
+      github.repository == 'falgon/roki-web' &&
+      needs.collect-target-prs.outputs.pr-numbers != '[]'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        pr-number: ${{ fromJson(needs.collect-target-prs.outputs.pr-numbers) }}
+    steps:
+      - name: Evaluate pull request risk and readiness
+        id: evaluate
+        uses: actions/github-script@v7
+        env:
+          PR_NUMBER: ${{ matrix.pr-number }}
+        with:
+          github-token: ${{ secrets.DEPENDABOT_AUTO_APPROVE_READ_BRANCH_PROTECTION_TOKEN }}
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const pullNumber = Number(process.env.PR_NUMBER);
+
+            const skip = (reason) => {
+              core.info(reason);
+              core.setOutput("should-approve", "false");
+              core.setOutput("reason", reason);
+            };
+
+            const { data: pr } = await github.rest.pulls.get({
+              owner,
+              repo,
+              pull_number: pullNumber,
+            });
+
+            if (pr.state !== "open") {
+              return skip(`PR #${pr.number} is not open.`);
+            }
+
+            if (pr.user.login !== "dependabot[bot]") {
+              return skip(`PR #${pr.number} is not authored by Dependabot.`);
+            }
+
+            if (pr.base.ref !== "develop") {
+              return skip(`PR #${pr.number} does not target the develop branch.`);
+            }
+
+            if (!pr.labels.some(({ name }) => name === "automerge")) {
+              return skip(`PR #${pr.number} does not have the automerge label.`);
+            }
+
+            const files = await github.paginate(github.rest.pulls.listFiles, {
+              owner,
+              repo,
+              pull_number: pr.number,
+              per_page: 100,
+            });
+
+            const changedFiles = files.map(({ filename }) => filename).sort();
+            const packageFiles = new Set(["package.json", "package-lock.json"]);
+            const biomeFiles = new Set(["package.json", "package-lock.json", "biome.json"]);
+            const isLockfileOnly =
+              changedFiles.length === 1 && changedFiles[0] === "package-lock.json";
+
+            const formatChanges = (changes) =>
+              changes.map(({ name, before, after }) => `${name}: ${before} -> ${after}`).join(", ");
+
+            if (!isLockfileOnly) {
+              if (!changedFiles.includes("package.json")) {
+                return skip(
+                  `PR #${pr.number} does not update package.json and is not lockfile-only: ${changedFiles.join(
+                    ", ",
+                  )}`,
+                );
+              }
+
+              const onlyPackageFiles = changedFiles.every((filename) => packageFiles.has(filename));
+              const onlyBiomeRelatedFiles = changedFiles.every((filename) => biomeFiles.has(filename));
+
+              if (!onlyPackageFiles && !onlyBiomeRelatedFiles) {
+                return skip(
+                  `PR #${pr.number} changes files outside the dependency manifest allowlist: ${changedFiles.join(
+                    ", ",
+                  )}`,
+                );
+              }
+
+              const parsePackageManifest = async (ref) => {
+                const { data } = await github.rest.repos.getContent({
+                  owner,
+                  repo,
+                  path: "package.json",
+                  ref,
+                });
+
+                if (Array.isArray(data) || !("content" in data)) {
+                  throw new Error("package.json content lookup returned an unexpected payload.");
+                }
+
+                return JSON.parse(Buffer.from(data.content, data.encoding).toString("utf8"));
+              };
+
+              const { data: compare } = await github.request(
+                "GET /repos/{owner}/{repo}/compare/{basehead}",
+                {
+                  owner,
+                  repo,
+                  basehead: `${pr.base.ref}...${pr.head.sha}`,
+                },
+              );
+
+              const mergeBaseSha = compare.merge_base_commit?.sha;
+
+              if (!mergeBaseSha) {
+                return skip(`PR #${pr.number} does not expose a merge base for dependency diffing.`);
+              }
+
+              const baseManifest = await parsePackageManifest(mergeBaseSha);
+              const headManifest = await parsePackageManifest(pr.head.sha);
+
+              const stripDependencySections = (manifest) => {
+                const {
+                  dependencies = {},
+                  devDependencies = {},
+                  optionalDependencies = {},
+                  peerDependencies = {},
+                  ...rest
+                } = manifest;
+                return rest;
+              };
+
+              if (
+                JSON.stringify(stripDependencySections(baseManifest)) !==
+                JSON.stringify(stripDependencySections(headManifest))
+              ) {
+                return skip(`PR #${pr.number} updates package.json outside dependency version fields.`);
+              }
+
+              const sections = [
+                ["dependencies", baseManifest.dependencies ?? {}, headManifest.dependencies ?? {}],
+                ["devDependencies", baseManifest.devDependencies ?? {}, headManifest.devDependencies ?? {}],
+                ["optionalDependencies", baseManifest.optionalDependencies ?? {}, headManifest.optionalDependencies ?? {}],
+                ["peerDependencies", baseManifest.peerDependencies ?? {}, headManifest.peerDependencies ?? {}],
+              ];
+
+              const dependencyChanges = sections.flatMap(([section, baseDeps, headDeps]) => {
+                const names = [...new Set([...Object.keys(baseDeps), ...Object.keys(headDeps)])].sort();
+                return names
+                  .filter((name) => baseDeps[name] !== headDeps[name])
+                  .map((name) => ({
+                    name,
+                    section,
+                    before: baseDeps[name] ?? null,
+                    after: headDeps[name] ?? null,
+                  }));
+              });
+
+              if (!dependencyChanges.length) {
+                return skip(`PR #${pr.number} does not change any dependency versions in package.json.`);
+              }
+
+              if (
+                dependencyChanges.some(({ before, after }) => before === null || after === null)
+              ) {
+                return skip(`PR #${pr.number} adds or removes dependencies: ${formatChanges(dependencyChanges)}`);
+              }
+
+              if (dependencyChanges.some(({ section }) => section !== "devDependencies")) {
+                return skip(
+                  `PR #${pr.number} updates non-dev dependencies: ${formatChanges(dependencyChanges)}`,
+                );
+              }
+
+              const allowlistedPatterns = [
+                /^@biomejs\/biome$/,
+                /^vitest$/,
+                /^@vitest\/.+$/,
+                /^@types\/.+$/,
+              ];
+
+              const isAllowlisted = (dependencyName) =>
+                allowlistedPatterns.some((pattern) => pattern.test(dependencyName));
+
+              const nonAllowlisted = dependencyChanges
+                .map(({ name }) => name)
+                .filter((name) => !isAllowlisted(name));
+
+              if (nonAllowlisted.length > 0) {
+                return skip(
+                  `PR #${pr.number} updates dependencies outside the auto-approve allowlist: ${[
+                    ...new Set(nonAllowlisted),
+                  ].join(", ")}`,
+                );
+              }
+
+              const normalizeVersion = (version) =>
+                version.match(/\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?/)?.[0] ?? null;
+
+              const semverUpdateType = (before, after) => {
+                const previous = normalizeVersion(before);
+                const next = normalizeVersion(after);
+
+                if (!previous || !next) {
+                  return "unknown";
+                }
+
+                const [previousMajor, previousMinor, previousPatch] = previous
+                  .split("-")[0]
+                  .split(".")
+                  .map(Number);
+                const [nextMajor, nextMinor, nextPatch] = next
+                  .split("-")[0]
+                  .split(".")
+                  .map(Number);
+
+                if (
+                  [previousMajor, previousMinor, previousPatch, nextMajor, nextMinor, nextPatch].some(
+                    Number.isNaN,
+                  )
+                ) {
+                  return "unknown";
+                }
+
+                if (nextMajor !== previousMajor) {
+                  return "major";
+                }
+
+                if (nextMinor !== previousMinor) {
+                  return "minor";
+                }
+
+                if (nextPatch !== previousPatch) {
+                  return "patch";
+                }
+
+                return "none";
+              };
+
+              const nonPatchChanges = dependencyChanges.filter(
+                ({ before, after }) => semverUpdateType(before, after) !== "patch",
+              );
+
+              if (nonPatchChanges.length > 0) {
+                return skip(
+                  `PR #${pr.number} is not a pure patch update: ${formatChanges(nonPatchChanges)}`,
+                );
+              }
+
+              if (!changedFiles.every((filename) => packageFiles.has(filename))) {
+                const biomeOnly =
+                  changedFiles.every((filename) => biomeFiles.has(filename)) &&
+                  dependencyChanges.every(({ name }) => name === "@biomejs/biome");
+
+                if (!biomeOnly) {
+                  return skip(
+                    `PR #${pr.number} changes biome.json for a dependency outside the dedicated allowlist.`,
+                  );
+                }
+              }
+
+              core.setOutput(
+                "reason",
+                `Low-risk Dependabot update: ${formatChanges(dependencyChanges)}`,
+              );
+            } else {
+              core.setOutput("reason", "Lockfile-only Dependabot update.");
+            }
+
+            const { data: protection } = await github.request(
+              "GET /repos/{owner}/{repo}/branches/{branch}/protection",
+              {
+                owner,
+                repo,
+                branch: pr.base.ref,
+              },
+            );
+
+            const requiredContexts =
+              protection.required_status_checks?.checks?.map(({ context }) => context) ??
+              protection.required_status_checks?.contexts ??
+              [];
+            const additionalRequiredContexts = ["lint-and-test"];
+            const contextsToRequire = [
+              ...new Set([...requiredContexts, ...additionalRequiredContexts]),
+            ];
+
+            const query = `
+              query($owner: String!, $repo: String!, $number: Int!) {
+                repository(owner: $owner, name: $repo) {
+                  pullRequest(number: $number) {
+                    url
+                    reviewDecision
+                    statusCheckRollup {
+                      contexts(first: 100) {
+                        nodes {
+                          __typename
+                          ... on CheckRun {
+                            name
+                            conclusion
+                            status
+                          }
+                          ... on StatusContext {
+                            context
+                            state
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            `;
+
+            const result = await github.graphql(query, {
+              owner,
+              repo,
+              number: pr.number,
+            });
+
+            const pullRequest = result.repository.pullRequest;
+
+            if (pullRequest.reviewDecision === "APPROVED") {
+              return skip(`PR #${pr.number} is already approved.`);
+            }
+
+            const statuses = new Map();
+
+            for (const node of pullRequest.statusCheckRollup?.contexts?.nodes ?? []) {
+              if (node.__typename === "CheckRun") {
+                statuses.set(node.name, node.conclusion ?? node.status ?? "MISSING");
+              } else if (node.__typename === "StatusContext") {
+                statuses.set(node.context, node.state ?? "MISSING");
+              }
+            }
+
+            const incompleteContexts = contextsToRequire.filter(
+              (contextName) => statuses.get(contextName) !== "SUCCESS",
+            );
+
+            if (incompleteContexts.length > 0) {
+              return skip(
+                `PR #${pr.number} is still waiting on required checks: ${incompleteContexts
+                  .map((contextName) => `${contextName}:${statuses.get(contextName) ?? "MISSING"}`)
+                  .join(", ")}`,
+              );
+            }
+
+            core.setOutput("should-approve", "true");
+            core.setOutput("pr-url", pr.html_url);
+
+      - name: Auto approve low-risk Dependabot PR
+        if: steps.evaluate.outputs.should-approve == 'true'
+        env:
+          PR_URL: ${{ steps.evaluate.outputs.pr-url }}
+          REVIEW_BODY: ${{ steps.evaluate.outputs.reason }}
+          KIIROTORI_GH_CONFIG_HOSTS: ${{ secrets.KIIROTORI_GH_CONFIG_HOSTS }}
+          KIIROTORI_GH_CONFIG_CONFIG: ${{ secrets.KIIROTORI_GH_CONFIG_CONFIG }}
+        run: |
+          export GH_CONFIG_DIR="$PWD/.config"
+          mkdir -p "$GH_CONFIG_DIR"
+          printf '%s' "$KIIROTORI_GH_CONFIG_HOSTS" > "$GH_CONFIG_DIR/hosts.yml"
+          printf '%s' "$KIIROTORI_GH_CONFIG_CONFIG" > "$GH_CONFIG_DIR/config.yml"
+          gh pr review "$PR_URL" --approve --body "$REVIEW_BODY"
+
+      - name: Summarize decision
+        if: always()
+        run: |
+          {
+            echo "## Dependabot auto-approve"
+            echo
+            echo "* Candidate: \`${{ steps.evaluate.outputs.should-approve || 'false' }}\`"
+            echo "* Reason: ${{ steps.evaluate.outputs.reason || 'No evaluation result.' }}"
+          } >> "$GITHUB_STEP_SUMMARY"
