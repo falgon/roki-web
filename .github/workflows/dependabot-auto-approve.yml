@@ -175,7 +175,22 @@ jobs:
                 return JSON.parse(Buffer.from(data.content, data.encoding).toString("utf8"));
               };
 
-              const baseManifest = await parsePackageManifest(pr.base.sha);
+              const { data: compare } = await github.request(
+                "GET /repos/{owner}/{repo}/compare/{basehead}",
+                {
+                  owner,
+                  repo,
+                  basehead: `${pr.base.ref}...${pr.head.sha}`,
+                },
+              );
+
+              const mergeBaseSha = compare.merge_base_commit?.sha;
+
+              if (!mergeBaseSha) {
+                return skip(`PR #${pr.number} does not expose a merge base for dependency diffing.`);
+              }
+
+              const baseManifest = await parsePackageManifest(mergeBaseSha);
               const headManifest = await parsePackageManifest(pr.head.sha);
 
               const stripDependencySections = (manifest) => {
@@ -339,6 +354,10 @@ jobs:
               protection.required_status_checks?.checks?.map(({ context }) => context) ??
               protection.required_status_checks?.contexts ??
               [];
+            const additionalRequiredContexts = ["lint-and-test"];
+            const contextsToRequire = [
+              ...new Set([...requiredContexts, ...additionalRequiredContexts]),
+            ];
 
             const query = `
               query($owner: String!, $repo: String!, $number: Int!) {
@@ -389,7 +408,7 @@ jobs:
               }
             }
 
-            const incompleteContexts = requiredContexts.filter(
+            const incompleteContexts = contextsToRequire.filter(
               (contextName) => statuses.get(contextName) !== "SUCCESS",
             );
 
