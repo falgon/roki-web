@@ -168,6 +168,10 @@ aboutIdent :: Identifier
 aboutIdent = fromString
     $ joinPath [disneyExperienceSummaryRoot, "about.md"]
 
+mediaKitIdent :: Identifier
+mediaKitIdent = fromString
+    $ joinPath [disneyExperienceSummaryRoot, "media_kit.md"]
+
 disneyLogsPattern :: Pattern
 disneyLogsPattern = fromRegex $ mconcat
     [ "(^"
@@ -344,6 +348,7 @@ rules :: PageConfReader Rules ()
 rules = do
     let items = disneyLogsPattern : map (fromList . (:[]))
             [ aboutIdent
+            , mediaKitIdent
             ]
     mapM_ (mdRule disneyExperienceSummarySnapshot) items
     faIcons <- asks pcFaIcons
@@ -415,13 +420,36 @@ rules = do
                     >>= relativizeUrls
                     >>= FA.render faIcons
 
+        match disneyExperienceSummaryMediaKitPath $ do
+            route $ gsubRoute (contentsRoot </> "pages/") (const mempty)
+            compile $ do
+                disneyLogs <- loadAllSnapshots disneyLogsPattern disneyExperienceSummarySnapshot :: Compiler [Item String]
+                let totalLogs = length disneyLogs
+                disneyExperienceSummaryMediaKitCtx <- mconcatM [
+                    pure $ constField "title" "Disney Experience Summary Media Kit"
+                  , pure $ listField "additional-css" (field "css" (return . itemBody)) (return $ map (\css -> Item (fromString css) css) ["../style/disney_experience_summary_only.css"])
+                  , pure siteCtx
+                  , pure defaultContext
+                  , constField "media-kit-body"
+                        <$> loadSnapshotBody mediaKitIdent disneyExperienceSummarySnapshot
+                  , pure $ constField "logs-total-count" (show totalLogs)
+                  , pure $ constField "logs-last-modified" logsLastModified
+                    ]
+                getResourceBody
+                    >>= applyAsTemplate disneyExperienceSummaryMediaKitCtx
+                    >>= loadAndApplyTemplate rootTemplate disneyExperienceSummaryMediaKitCtx
+                    >>= relativizeUrls
+                    >>= FA.render faIcons
+
         createRedirects [
             (fromFilePath $ joinPath ["disney_experience_summary", "index.html"], joinPath ["/", "disney_experience_summary", "jp.html"]),
-            (fromFilePath $ joinPath ["disney", "index.html"], joinPath ["/", "disney_experience_summary", "jp.html"])
+            (fromFilePath $ joinPath ["disney", "index.html"], joinPath ["/", "disney_experience_summary", "jp.html"]),
+            (fromFilePath $ joinPath ["disney_experience_summary", "media_kit.html"], joinPath ["/", "disney_experience_summary", "media-kit.html"])
           ]
     where
         disneyExperienceSummarySnapshot = "disneyExperienceSummarySS"
         disneyExperienceSummaryJPPath = fromGlob $ joinPath [contentsRoot, "pages", "disney_experience_summary", "jp.html"]
+        disneyExperienceSummaryMediaKitPath = fromGlob $ joinPath [contentsRoot, "pages", "disney_experience_summary", "media-kit.html"]
         rootTemplate = fromFilePath $ joinPath [contentsRoot, "templates", "site", "default.html"]
 
         favoritesListField :: String -> String -> [Favorite] -> Context String
