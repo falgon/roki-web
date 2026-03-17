@@ -61,37 +61,40 @@ rules bcs = do
     wOpt <- asks pcWriterOpt
     projs <- lift $ preprocess renderProjectsList
     conts <- lift $ preprocess renderContributionsTable
+    contributionsConfigDependency <- lift $ makePatternDependency contributionsConfigPath
     lift $ do
+        match contributionsConfigPath $ compile getResourceBody
         match aboutPattern $ compile $
             pandocCompilerWithTransformM readerOptions wOpt (walkM mermaidTransform)
                 >>= saveSnapshot aboutSnapshot
-        match indexPath $ do
-            route $ gsubRoute (contentsRoot </> "pages/") (const mempty)
-            compile $ do
-                let baseCtx = mconcatMap (uncurry constField) [
-                        ("title", siteName)
-                      , ("projs", projs)
-                      , ("contable", conts)
-                      ]
-                topCtx <- mconcatM [
-                        pure baseCtx
-                      , mconcatMapM (runReaderT mkBlogCtx) bcs
-                      , constField "sitemap-body"
-                            <$> loadSnapshotBody sitemapIdent aboutSnapshot
-                      , constField "updates-body"
-                            <$> loadSnapshotBody updatesIdent aboutSnapshot
-                      ]
-                getResourceBody
-                    >>= applyAsTemplate topCtx
-                    >>= loadAndApplyTemplate rootTemplate topCtx
-                    >>= modifyExternalLinkAttr
-                    >>= relativizeUrls
-                    >>= FA.render faIcons
+        rulesExtraDependencies [contributionsConfigDependency] $
+            match indexPath $ do
+                route $ gsubRoute (contentsRoot </> "pages/") (const mempty)
+                compile $ do
+                    let baseCtx = mconcatMap (uncurry constField) [
+                            ("title", siteName)
+                          , ("projs", projs)
+                          , ("contable", conts)
+                          ]
+                    topCtx <- mconcatM [
+                            pure baseCtx
+                          , mconcatMapM (runReaderT mkBlogCtx) bcs
+                          , constField "sitemap-body"
+                                <$> loadSnapshotBody sitemapIdent aboutSnapshot
+                          , constField "updates-body"
+                                <$> loadSnapshotBody updatesIdent aboutSnapshot
+                          ]
+                    getResourceBody
+                        >>= applyAsTemplate topCtx
+                        >>= loadAndApplyTemplate rootTemplate topCtx
+                        >>= modifyExternalLinkAttr
+                        >>= relativizeUrls
+                        >>= FA.render faIcons
     where
         aboutPattern = fromGlob $ joinPath [contentsRoot, "about", "*.md"]
+        contributionsConfigPath = fromRegex "^contents/config/contributions/.+\\.dhall$"
         sitemapIdent = fromFilePath $ joinPath [contentsRoot, "about", "sitemap.md"]
         updatesIdent = fromFilePath $ joinPath [contentsRoot, "about", "updates.md"]
         indexPath = fromGlob $ joinPath [contentsRoot, "pages", "index.html"]
         rootTemplate = fromFilePath $ joinPath [contentsRoot, "templates", "site", "default.html"]
-
 
