@@ -59,40 +59,54 @@ rules :: [BlogConfig m] -> PageConfReader Rules ()
 rules bcs = do
     faIcons <- asks pcFaIcons
     wOpt <- asks pcWriterOpt
-    contributionsConfigDependency <- lift $ makePatternDependency contributionsConfigPath
+    projectsConfigDependency <- lift $ makePatternDependency projectsDependencyPath
+    contributionsConfigDependency <- lift $ makePatternDependency contributionsDependencyPath
     lift $ do
-        match contributionsConfigPath $ compile getResourceBody
+        match projectsConfigPattern $ compile getResourceBody
+        match contributionsConfigPattern $ compile getResourceBody
+        match contributionsTypeConfigPath $ compile getResourceBody
         match aboutPattern $ compile $
             pandocCompilerWithTransformM readerOptions wOpt (walkM mermaidTransform)
                 >>= saveSnapshot aboutSnapshot
+        rulesExtraDependencies [projectsConfigDependency] $
+            create [projectsCachePath] $
+                compile $ makeItem =<< unsafeCompiler renderProjectsList
         rulesExtraDependencies [contributionsConfigDependency] $
-            match indexPath $ do
-                route $ gsubRoute (contentsRoot </> "pages/") (const mempty)
-                compile $ do
-                    projs <- unsafeCompiler renderProjectsList
-                    conts <- unsafeCompiler renderContributionsTable
-                    let baseCtx = mconcatMap (uncurry constField) [
-                            ("title", siteName)
-                          , ("projs", projs)
-                          , ("contable", conts)
-                          ]
-                    topCtx <- mconcatM [
-                            pure baseCtx
-                          , mconcatMapM (runReaderT mkBlogCtx) bcs
-                          , constField "sitemap-body"
-                                <$> loadSnapshotBody sitemapIdent aboutSnapshot
-                          , constField "updates-body"
-                                <$> loadSnapshotBody updatesIdent aboutSnapshot
-                          ]
-                    getResourceBody
-                        >>= applyAsTemplate topCtx
-                        >>= loadAndApplyTemplate rootTemplate topCtx
-                        >>= modifyExternalLinkAttr
-                        >>= relativizeUrls
-                        >>= FA.render faIcons
+            create [contributionsCachePath] $
+                compile $ makeItem =<< unsafeCompiler renderContributionsTable
+        match indexPath $ do
+            route $ gsubRoute (contentsRoot </> "pages/") (const mempty)
+            compile $ do
+                projs <- loadBody projectsCachePath
+                conts <- loadBody contributionsCachePath
+                let baseCtx = mconcatMap (uncurry constField) [
+                        ("title", siteName)
+                      , ("projs", projs)
+                      , ("contable", conts)
+                      ]
+                topCtx <- mconcatM [
+                        pure baseCtx
+                      , mconcatMapM (runReaderT mkBlogCtx) bcs
+                      , constField "sitemap-body"
+                            <$> loadSnapshotBody sitemapIdent aboutSnapshot
+                      , constField "updates-body"
+                            <$> loadSnapshotBody updatesIdent aboutSnapshot
+                      ]
+                getResourceBody
+                    >>= applyAsTemplate topCtx
+                    >>= loadAndApplyTemplate rootTemplate topCtx
+                    >>= modifyExternalLinkAttr
+                    >>= relativizeUrls
+                    >>= FA.render faIcons
     where
         aboutPattern = fromGlob $ joinPath [contentsRoot, "about", "*.md"]
-        contributionsConfigPath = fromRegex "^contents/config/contributions/.+\\.dhall$"
+        projectsConfigPattern = fromGlob $ joinPath [contentsRoot, "config", "contributions", "Projects.dhall"]
+        contributionsConfigPattern = fromGlob $ joinPath [contentsRoot, "config", "contributions", "Contributions.dhall"]
+        contributionsTypeConfigPath = fromRegex "^contents/config/contributions/Type/.+\\.dhall$"
+        projectsDependencyPath = projectsConfigPattern .||. contributionsTypeConfigPath
+        contributionsDependencyPath = contributionsConfigPattern .||. contributionsTypeConfigPath
+        projectsCachePath = fromFilePath "top-page-projects-cache"
+        contributionsCachePath = fromFilePath "top-page-contributions-cache"
         sitemapIdent = fromFilePath $ joinPath [contentsRoot, "about", "sitemap.md"]
         updatesIdent = fromFilePath $ joinPath [contentsRoot, "about", "updates.md"]
         indexPath = fromGlob $ joinPath [contentsRoot, "pages", "index.html"]
