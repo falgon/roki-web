@@ -59,8 +59,6 @@ rules :: [BlogConfig m] -> PageConfReader Rules ()
 rules bcs = do
     faIcons <- asks pcFaIcons
     wOpt <- asks pcWriterOpt
-    projs <- lift $ preprocess renderProjectsList
-    conts <- lift $ preprocess renderContributionsTable
     contributionsConfigDependency <- lift $ makePatternDependency contributionsConfigPath
     lift $ do
         match contributionsConfigPath $ compile getResourceBody
@@ -71,6 +69,8 @@ rules bcs = do
             match indexPath $ do
                 route $ gsubRoute (contentsRoot </> "pages/") (const mempty)
                 compile $ do
+                    projs <- unsafeCompiler renderProjectsList
+                    conts <- unsafeCompiler renderContributionsTable
                     let baseCtx = mconcatMap (uncurry constField) [
                             ("title", siteName)
                           , ("projs", projs)
@@ -97,4 +97,3 @@ rules bcs = do
         updatesIdent = fromFilePath $ joinPath [contentsRoot, "about", "updates.md"]
         indexPath = fromGlob $ joinPath [contentsRoot, "pages", "index.html"]
         rootTemplate = fromFilePath $ joinPath [contentsRoot, "templates", "site", "default.html"]
-

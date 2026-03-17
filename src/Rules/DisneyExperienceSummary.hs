@@ -348,13 +348,7 @@ rules = do
     mapM_ (mdRule disneyExperienceSummarySnapshot) items
     faIcons <- asks pcFaIcons
     isPreview <- asks pcIsPreview
-    favorites <- lift $ preprocess loadDisneyFavorites
-    hotels <- lift $ preprocess loadDisneyHotels
-    hotelsLastModified <- lift $ preprocess getHotelsLastModified
-    logsLastModified <- lift $ preprocess getLogsLastModified
-    tagConfig <- lift $ preprocess tagConfigMap
     disneyConfigDependency <- lift $ makePatternDependency disneyConfigPath
-    let totalStays = sum $ map stays hotels
     lift $ do
         match disneyConfigPath $ compile getResourceBody
         -- フォントファイルのコピー
@@ -379,7 +373,13 @@ rules = do
             match disneyExperienceSummaryJPPath $ do
                 route $ gsubRoute (contentsRoot </> "pages/") (const mempty)
                 compile $ do
+                    favorites <- unsafeCompiler loadDisneyFavorites
+                    hotels <- unsafeCompiler loadDisneyHotels
+                    hotelsLastModified <- unsafeCompiler getHotelsLastModified
+                    logsLastModified <- unsafeCompiler getLogsLastModified
+                    tagConfig <- unsafeCompiler tagConfigMap
                     disneyLogs <- sortByNum <$> loadAllSnapshots disneyLogsPattern disneyExperienceSummarySnapshot
+                    let totalStays = sum $ map stays hotels
                     let totalLogs = length disneyLogs
                     -- ユニークなタグリストを作成
                     uniqueTags <- do
