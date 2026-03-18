@@ -348,13 +348,9 @@ rules = do
     mapM_ (mdRule disneyExperienceSummarySnapshot) items
     faIcons <- asks pcFaIcons
     isPreview <- asks pcIsPreview
-    favorites <- lift $ preprocess loadDisneyFavorites
-    hotels <- lift $ preprocess loadDisneyHotels
-    hotelsLastModified <- lift $ preprocess getHotelsLastModified
-    logsLastModified <- lift $ preprocess getLogsLastModified
-    tagConfig <- lift $ preprocess tagConfigMap
-    let totalStays = sum $ map stays hotels
+    disneyConfigDependency <- lift $ makePatternDependency disneyConfigPath
     lift $ do
+        match disneyConfigPath $ compile getResourceBody
         -- フォントファイルのコピー
         match (fromGlob $ joinPath [contentsRoot, "fonts", "*.otf"]) $ do
             route $ gsubRoute "contents/" $ const ""
@@ -373,47 +369,54 @@ rules = do
                 vizData <- generateVisualizationData disneyLogs
                 makeItem $ BL.toStrict $ encode vizData
 
-        match disneyExperienceSummaryJPPath $ do
-            route $ gsubRoute (contentsRoot </> "pages/") (const mempty)
-            compile $ do
-                disneyLogs <- sortByNum <$> loadAllSnapshots disneyLogsPattern disneyExperienceSummarySnapshot
-                let totalLogs = length disneyLogs
-                -- ユニークなタグリストを作成
-                uniqueTags <- do
-                    allTags <- sequence $ map (\logItem -> do
-                        mTags <- getMetadataField (itemIdentifier logItem) "disney-tags"
-                        case mTags of
-                            Just tagsStr -> return $ map trimMeta $ filter (not . null) $ splitAll "," tagsStr
-                            Nothing      -> return []
-                        ) disneyLogs
-                    return $ sort $ nub $ concat allTags
+        rulesExtraDependencies [disneyConfigDependency] $
+            match disneyExperienceSummaryJPPath $ do
+                route $ gsubRoute (contentsRoot </> "pages/") (const mempty)
+                compile $ do
+                    favorites <- unsafeCompiler loadDisneyFavorites
+                    hotels <- unsafeCompiler loadDisneyHotels
+                    hotelsLastModified <- unsafeCompiler getHotelsLastModified
+                    logsLastModified <- unsafeCompiler getLogsLastModified
+                    tagConfig <- unsafeCompiler tagConfigMap
+                    disneyLogs <- sortByNum <$> loadAllSnapshots disneyLogsPattern disneyExperienceSummarySnapshot
+                    let totalStays = sum $ map stays hotels
+                    let totalLogs = length disneyLogs
+                    -- ユニークなタグリストを作成
+                    uniqueTags <- do
+                        allTags <- sequence $ map (\logItem -> do
+                            mTags <- getMetadataField (itemIdentifier logItem) "disney-tags"
+                            case mTags of
+                                Just tagsStr -> return $ map trimMeta $ filter (not . null) $ splitAll "," tagsStr
+                                Nothing      -> return []
+                            ) disneyLogs
+                        return $ sort $ nub $ concat allTags
 
-                disneyExperienceSummaryCtx <- mconcatM [
-                    pure $ constField "title" "Ponchi's Disney Journey"
-                  , pure $ constField "font_path" "../fonts/waltograph42.otf"
-                  , pure $ constField "is_preview" (show isPreview)
-                  , pure $ listField "additional-css" (field "css" (return . itemBody)) (return $ map (\css -> Item (fromString css) css) ["../style/disney_experience_summary_only.css"])
-                 , pure $ listField "additional-js" (field "js" (return . itemBody)) (return $ map (\js -> Item (fromString js) js) ["https://d3js.org/d3.v7.min.js", "../js/disney-tag-filter.js", "../js/disney-experience-visualizations.js"])
-                  , pure siteCtx
-                  , pure defaultContext
-                  , constField "about-body"
-                        <$> loadSnapshotBody aboutIdent disneyExperienceSummarySnapshot
-                  , pure $ listField "disney-logs" (disneyLogCtx tagConfig) (return disneyLogs)
-                  , pure $ listField "unique-tags" (field "name" (return . itemBody) <> field "color" (return . flip getTagColor tagConfig . itemBody) <> field "link" (return . flip getTagLink tagConfig . itemBody)) (return $ map (\tag -> Item (fromString tag) tag) uniqueTags)
-                  , pure $ favoritesListField "favorite-works" "works" favorites
-                  , pure $ favoritesListField "favorite-characters" "characters" favorites
-                  , pure $ favoritesListField "favorite-park-contents" "park-contents" favorites
-                  , pure $ listField "hotel-stays" hotelCtx (return $ map (\h -> Item (fromString $ hotelCode h) h) hotels)
-                  , pure $ constField "hotels-last-modified" hotelsLastModified
-                  , pure $ constField "hotels-total-stays" (show totalStays)
-                  , pure $ constField "logs-total-count" (show totalLogs)
-                  , pure $ constField "logs-last-modified" logsLastModified
-                      ]
-                getResourceBody
-                    >>= applyAsTemplate disneyExperienceSummaryCtx
-                    >>= loadAndApplyTemplate rootTemplate disneyExperienceSummaryCtx
-                    >>= relativizeUrls
-                    >>= FA.render faIcons
+                    disneyExperienceSummaryCtx <- mconcatM [
+                        pure $ constField "title" "Ponchi's Disney Journey"
+                      , pure $ constField "font_path" "../fonts/waltograph42.otf"
+                      , pure $ constField "is_preview" (show isPreview)
+                      , pure $ listField "additional-css" (field "css" (return . itemBody)) (return $ map (\css -> Item (fromString css) css) ["../style/disney_experience_summary_only.css"])
+                     , pure $ listField "additional-js" (field "js" (return . itemBody)) (return $ map (\js -> Item (fromString js) js) ["https://d3js.org/d3.v7.min.js", "../js/disney-tag-filter.js", "../js/disney-experience-visualizations.js"])
+                      , pure siteCtx
+                      , pure defaultContext
+                      , constField "about-body"
+                            <$> loadSnapshotBody aboutIdent disneyExperienceSummarySnapshot
+                      , pure $ listField "disney-logs" (disneyLogCtx tagConfig) (return disneyLogs)
+                      , pure $ listField "unique-tags" (field "name" (return . itemBody) <> field "color" (return . flip getTagColor tagConfig . itemBody) <> field "link" (return . flip getTagLink tagConfig . itemBody)) (return $ map (\tag -> Item (fromString tag) tag) uniqueTags)
+                      , pure $ favoritesListField "favorite-works" "works" favorites
+                      , pure $ favoritesListField "favorite-characters" "characters" favorites
+                      , pure $ favoritesListField "favorite-park-contents" "park-contents" favorites
+                      , pure $ listField "hotel-stays" hotelCtx (return $ map (\h -> Item (fromString $ hotelCode h) h) hotels)
+                      , pure $ constField "hotels-last-modified" hotelsLastModified
+                      , pure $ constField "hotels-total-stays" (show totalStays)
+                      , pure $ constField "logs-total-count" (show totalLogs)
+                      , pure $ constField "logs-last-modified" logsLastModified
+                          ]
+                    getResourceBody
+                        >>= applyAsTemplate disneyExperienceSummaryCtx
+                        >>= loadAndApplyTemplate rootTemplate disneyExperienceSummaryCtx
+                        >>= relativizeUrls
+                        >>= FA.render faIcons
 
         createRedirects [
             (fromFilePath $ joinPath ["disney_experience_summary", "index.html"], joinPath ["/", "disney_experience_summary", "jp.html"]),
@@ -421,6 +424,7 @@ rules = do
           ]
     where
         disneyExperienceSummarySnapshot = "disneyExperienceSummarySS"
+        disneyConfigPath = fromRegex "^contents/config/disney/.+\\.dhall$"
         disneyExperienceSummaryJPPath = fromGlob $ joinPath [contentsRoot, "pages", "disney_experience_summary", "jp.html"]
         rootTemplate = fromFilePath $ joinPath [contentsRoot, "templates", "site", "default.html"]
 
