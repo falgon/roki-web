@@ -228,10 +228,10 @@ jobs:
           ${{ runner.os }}-stack-pantry-v2-
     - name: Install dependencies
       run: |
-        # Extract packages from the script header
-        PACKAGES=$(grep -o "package [a-z-]*" tools/github-actions/NotifyBuildCompletion.hs | sed 's/package //' | tr '\n' ' ')
-        # Pre-install packages to populate cache
-        stack --resolver lts-22.33 build $PACKAGES --only-dependencies
+        # Warm the stack cache via the script itself because `stack script`
+        # ignores the repository stack.yaml; this keeps pinned --extra-dep
+        # values coupled to the script header.
+        ./tools/github-actions/NotifyBuildCompletion.hs --help > /dev/null
     - name: Send Email Notification
       env:
         GMAIL_SENDER: ${{ secrets.GMAIL_SENDER }}

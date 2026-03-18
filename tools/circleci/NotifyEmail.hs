@@ -1,5 +1,7 @@
 #!/usr/bin/env stack
--- stack script --resolver lts-22.33 --package bytestring --package smtp-mail --package mime-mail --package optparse-applicative --package text
+-- stack script --resolver lts-22.33 --package bytestring --package smtp-mail --package mime-mail --package optparse-applicative --package text --extra-dep smtp-mail-0.5.0.0@rev:1
+-- NOTE: `stack script` ignores the repository stack.yaml, so snapshot-external
+-- packages must stay pinned here to keep notification jobs reproducible.
 
 {-# LANGUAGE OverloadedStrings #-}
 module Main where
