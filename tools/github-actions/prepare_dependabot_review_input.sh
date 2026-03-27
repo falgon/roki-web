@@ -33,6 +33,48 @@ review_decision="$(jq -r '.reviewDecision // "REVIEW_REQUIRED"' <<<"${pr_json}")
 has_label="$(
     jq -r 'any(.labels[]?; .name == "dependabot/npm")' <<<"${pr_json}"
 )"
+status_states_json="$(
+    jq -c '
+        def status_nodes:
+            if .statusCheckRollup == null then
+                []
+            elif (.statusCheckRollup | type) == "array" then
+                .statusCheckRollup
+            elif (.statusCheckRollup.contexts? | type) == "array" then
+                .statusCheckRollup.contexts
+            elif (.statusCheckRollup.contexts?.nodes? | type) == "array" then
+                .statusCheckRollup.contexts.nodes
+            else
+                []
+            end;
+
+        reduce status_nodes[] as $node
+            ({};
+             if $node.__typename == "CheckRun" then
+                 . + {
+                     ($node.name): {
+                         "state": ($node.conclusion // $node.status // "MISSING"),
+                         "passing": (
+                             ($node.status == "COMPLETED") and (
+                                 ($node.conclusion // "") == "SUCCESS" or
+                                 ($node.conclusion // "") == "SKIPPED" or
+                                 ($node.conclusion // "") == "NEUTRAL"
+                             )
+                         )
+                     }
+                 }
+             elif $node.__typename == "StatusContext" then
+                 . + {
+                     ($node.context): {
+                         "state": ($node.state // "MISSING"),
+                         "passing": (($node.state // "") == "SUCCESS")
+                     }
+                 }
+             else
+                 .
+             end)
+    ' <<<"${pr_json}"
+)"
 disallowed_files="$(
     jq -r '
         [
@@ -86,37 +128,86 @@ non_passing_checks="$(
 )"
 
 if [[ "${author_login}" != "app/dependabot" && "${author_login}" != "dependabot[bot]" ]]; then
-    skip "PR #${pr_number} is not authored by Dependabot."
+    skip "PR #${pr_number} は Dependabot 作成ではありません。"
     exit 0
 fi
 
 if [[ "${base_ref}" != "develop" ]]; then
-    skip "PR #${pr_number} does not target develop."
+    skip "PR #${pr_number} の対象ブランチが develop ではありません。"
     exit 0
 fi
 
 if [[ "${has_label}" != "true" ]]; then
-    skip "PR #${pr_number} does not have the dependabot/npm label."
+    skip "PR #${pr_number} に dependabot/npm ラベルがありません。"
     exit 0
 fi
 
 if [[ -n "${disallowed_files}" ]]; then
-    skip "PR #${pr_number} changes files outside the dependency manifest allowlist: ${disallowed_files}"
+    skip "PR #${pr_number} は許可対象外のファイルを変更しています: ${disallowed_files}"
     exit 0
 fi
 
 if [[ "${review_decision}" == "APPROVED" ]]; then
-    skip "PR #${pr_number} is already approved."
+    skip "PR #${pr_number} は既に承認済みです。"
     exit 0
 fi
 
 if [[ "${mergeable_state}" != "MERGEABLE" ]]; then
-    skip "PR #${pr_number} is not mergeable (state: ${mergeable_state})."
+    skip "PR #${pr_number} はマージ可能ではありません (state: ${mergeable_state})。"
+    exit 0
+fi
+
+if ! protection_json="$(gh api "repos/{owner}/{repo}/branches/${base_ref}/protection" 2>/dev/null)"; then
+    skip "PR #${pr_number} の branch protection を取得できないため判定できません。"
+    exit 0
+fi
+
+required_contexts_json="$(
+    jq -c '
+        (
+            ((.required_status_checks.checks // []) | map(.context)) +
+            (.required_status_checks.contexts // []) +
+            ["lint-and-test"]
+        )
+        | unique
+    ' <<<"${protection_json}"
+)"
+
+missing_required_checks="$(
+    jq -nr \
+        --argjson required_contexts "${required_contexts_json}" \
+        --argjson status_states "${status_states_json}" '
+            $required_contexts
+            | map(select($status_states[.] == null))
+            | join(", ")
+        '
+)"
+
+if [[ -n "${missing_required_checks}" ]]; then
+    skip "PR #${pr_number} は必須チェックがまだ出揃っていません: ${missing_required_checks}"
+    exit 0
+fi
+
+non_success_required_checks="$(
+    jq -nr \
+        --argjson required_contexts "${required_contexts_json}" \
+        --argjson status_states "${status_states_json}" '
+            $required_contexts
+            | map(
+                select(($status_states[.].passing // false) | not)
+                | . + ":" + ($status_states[.].state // "MISSING")
+            )
+            | join(", ")
+        '
+)"
+
+if [[ -n "${non_success_required_checks}" ]]; then
+    skip "PR #${pr_number} は必須チェックが未成功です: ${non_success_required_checks}"
     exit 0
 fi
 
 if [[ -n "${non_passing_checks}" ]]; then
-    skip "PR #${pr_number} has non-passing checks: ${non_passing_checks}"
+    skip "PR #${pr_number} に未成功のチェックがあります: ${non_passing_checks}"
     exit 0
 fi
 
