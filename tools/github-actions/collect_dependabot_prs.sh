@@ -22,6 +22,7 @@ else
             --state open \
             --base develop \
             --label "dependabot/npm" \
+            --label "automerge" \
             --json number,author \
             --limit 100 \
         | jq -c '

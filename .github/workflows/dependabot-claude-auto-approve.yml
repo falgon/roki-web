@@ -107,10 +107,11 @@ jobs:
             - approve may be true only when all of the following hold:
               - the PR is authored by Dependabot
               - the label dependabot/npm is present
+              - the label automerge is present
               - the base branch is develop
               - mergeable is MERGEABLE
               - no status checks are failing or pending
-              - the diff is limited to routine dependency-manifest/lockfile changes
+              - the diff is limited to package.json, package-lock.json, and, only for @biomejs/biome, the matching biome.json schema update
               - the update appears low-risk to merge without further human review
             - Do not suggest or perform file edits.
             - Return only the structured output.

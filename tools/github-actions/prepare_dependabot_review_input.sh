@@ -33,6 +33,9 @@ review_decision="$(jq -r '.reviewDecision // "REVIEW_REQUIRED"' <<<"${pr_json}")
 has_label="$(
     jq -r 'any(.labels[]?; .name == "dependabot/npm")' <<<"${pr_json}"
 )"
+has_automerge_label="$(
+    jq -r 'any(.labels[]?; .name == "automerge")' <<<"${pr_json}"
+)"
 status_states_json="$(
     jq -c '
         def status_nodes:
@@ -139,6 +142,11 @@ fi
 
 if [[ "${has_label}" != "true" ]]; then
     skip "PR #${pr_number} に dependabot/npm ラベルがありません。"
+    exit 0
+fi
+
+if [[ "${has_automerge_label}" != "true" ]]; then
+    skip "PR #${pr_number} に automerge ラベルがありません。"
     exit 0
 fi
 
