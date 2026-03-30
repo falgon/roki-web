@@ -1,5 +1,0 @@
-# Dependabot non-npm auto-approve is limited to workflow files that do not
-# require elevated GitHub permissions, privileged triggers, or repository
-# secrets/tokens.
-.github/workflows/cleanup-cache.yml
-.github/workflows/manually-cleanup-caches.yml
