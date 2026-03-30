@@ -36,7 +36,7 @@ jobs:
       dry-run: ${{ steps.collect.outputs.dry-run }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 1
 
@@ -80,7 +80,7 @@ jobs:
       REVIEW_INPUT_ROOT: .github/tmp/dependabot-auto-approve
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 1
 

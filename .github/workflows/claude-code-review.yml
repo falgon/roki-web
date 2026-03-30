@@ -256,7 +256,7 @@ jobs:
 
       - name: Checkout repository
         if: steps.load-pr.outputs.skip != 'true'
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: ${{ steps.load-pr.outputs.head-sha }}
           fetch-depth: 0
