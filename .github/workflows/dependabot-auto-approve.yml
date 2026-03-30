@@ -7,6 +7,7 @@ on:
       - CI-lint-test
       - CI-CodeQL
       - CI-Restyled
+      - Claude Code Review for Bot PRs
     types:
       - completed
   schedule:
@@ -15,12 +16,7 @@ on:
 
 jobs:
   collect-target-prs:
-    if: >-
-      github.repository == 'falgon/roki-web' &&
-      (
-        github.event_name != 'workflow_run' ||
-        github.event.workflow_run.conclusion == 'success'
-      )
+    if: github.repository == 'falgon/roki-web'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -43,13 +39,51 @@ jobs:
               );
             };
 
+            const isDependabotLogin = (login) =>
+              login === "app/dependabot" || login === "dependabot[bot]";
+
+            const isDependabotAutoApproveCandidate = (pullRequest) =>
+              pullRequest.state === "open" &&
+              pullRequest.base.ref === "develop" &&
+              isDependabotLogin(pullRequest.user.login) &&
+              pullRequest.labels.some(({ name }) => name === "automerge") &&
+              !pullRequest.labels.some(({ name }) => name === "dependabot/npm");
+
             if (context.eventName === "workflow_run") {
-              if (context.payload.workflow_run.event !== "pull_request") {
+              if (
+                context.payload.workflow_run.event !== "pull_request" ||
+                context.payload.workflow_run.conclusion !== "success"
+              ) {
                 return setPullRequests([]);
               }
 
+              const workflowRunPullNumbers = [
+                ...new Set(
+                  (context.payload.workflow_run.pull_requests ?? [])
+                    .map(({ number }) => Number(number))
+                    .filter(Number.isInteger),
+                ),
+              ];
+
+              if (workflowRunPullNumbers.length === 0) {
+                return setPullRequests([]);
+              }
+
+              const workflowRunPullRequests = await Promise.all(
+                workflowRunPullNumbers.map(async (pullNumber) => {
+                  const { data: pullRequest } = await github.rest.pulls.get({
+                    owner,
+                    repo,
+                    pull_number: pullNumber,
+                  });
+                  return pullRequest;
+                }),
+              );
+
               return setPullRequests(
-                (context.payload.workflow_run.pull_requests ?? []).map(({ number }) => number),
+                workflowRunPullRequests
+                  .filter(isDependabotAutoApproveCandidate)
+                  .map(({ number }) => number),
               );
             }
 
@@ -63,11 +97,7 @@ jobs:
 
             return setPullRequests(
               pullRequests
-                .filter(
-                  (pullRequest) =>
-                    pullRequest.user.login === "dependabot[bot]" &&
-                    pullRequest.labels.some(({ name }) => name === "automerge"),
-                )
+                .filter(isDependabotAutoApproveCandidate)
                 .map(({ number }) => number),
             );
 
@@ -75,15 +105,28 @@ jobs:
     needs: collect-target-prs
     if: >-
       github.repository == 'falgon/roki-web' &&
+      needs.collect-target-prs.result == 'success' &&
       needs.collect-target-prs.outputs.pr-numbers != '[]'
     runs-on: ubuntu-latest
+    concurrency:
+      group: dependabot-auto-approve-pr-${{ matrix.pr-number }}
+      cancel-in-progress: false
     permissions:
+      actions: read
       contents: read
+      pull-requests: write
     strategy:
       fail-fast: false
       matrix:
         pr-number: ${{ fromJson(needs.collect-target-prs.outputs.pr-numbers) }}
+    env:
+      REVIEW_INPUT_ROOT: .github/tmp/dependabot-auto-approve
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
       - name: Evaluate pull request risk and readiness
         id: evaluate
         uses: actions/github-script@v7
@@ -92,9 +135,15 @@ jobs:
         with:
           github-token: ${{ secrets.DEPENDABOT_AUTO_APPROVE_READ_BRANCH_PROTECTION_TOKEN }}
           script: |
+            const fs = require("fs");
+            const path = require("path");
             const owner = context.repo.owner;
             const repo = context.repo.repo;
             const pullNumber = Number(process.env.PR_NUMBER);
+            const supportedNonNpmWorkflowAllowlistPath = path.join(
+              process.env.GITHUB_WORKSPACE ?? process.cwd(),
+              "tools/github-actions/non_npm_workflow_manifest_allowlist.txt",
+            );
 
             const skip = (reason) => {
               core.info(reason);
@@ -112,7 +161,10 @@ jobs:
               return skip(`PR #${pr.number} is not open.`);
             }
 
-            if (pr.user.login !== "dependabot[bot]") {
+            const isDependabotLogin = (login) =>
+              login === "app/dependabot" || login === "dependabot[bot]";
+
+            if (!isDependabotLogin(pr.user.login)) {
               return skip(`PR #${pr.number} is not authored by Dependabot.`);
             }
 
@@ -124,6 +176,12 @@ jobs:
               return skip(`PR #${pr.number} does not have the automerge label.`);
             }
 
+            if (pr.labels.some(({ name }) => name === "dependabot/npm")) {
+              return skip(
+                `PR #${pr.number} は Dependabot Claude auto-approve workflow 側で判定します。`,
+              );
+            }
+
             const files = await github.paginate(github.rest.pulls.listFiles, {
               owner,
               repo,
@@ -132,213 +190,301 @@ jobs:
             });
 
             const changedFiles = files.map(({ filename }) => filename).sort();
-            const packageFiles = new Set(["package.json", "package-lock.json"]);
-            const biomeFiles = new Set(["package.json", "package-lock.json", "biome.json"]);
-            const isLockfileOnly =
-              changedFiles.length === 1 && changedFiles[0] === "package-lock.json";
-
-            const formatChanges = (changes) =>
-              changes.map(({ name, before, after }) => `${name}: ${before} -> ${after}`).join(", ");
-
-            if (!isLockfileOnly) {
-              if (!changedFiles.includes("package.json")) {
-                return skip(
-                  `PR #${pr.number} does not update package.json and is not lockfile-only: ${changedFiles.join(
-                    ", ",
-                  )}`,
-                );
-              }
-
-              const onlyPackageFiles = changedFiles.every((filename) => packageFiles.has(filename));
-              const onlyBiomeRelatedFiles = changedFiles.every((filename) => biomeFiles.has(filename));
-
-              if (!onlyPackageFiles && !onlyBiomeRelatedFiles) {
-                return skip(
-                  `PR #${pr.number} changes files outside the dependency manifest allowlist: ${changedFiles.join(
-                    ", ",
-                  )}`,
-                );
-              }
-
-              const parsePackageManifest = async (ref) => {
-                const { data } = await github.rest.repos.getContent({
-                  owner,
-                  repo,
-                  path: "package.json",
-                  ref,
+            const supportedNonNpmWorkflowFilenames = new Set(
+              fs
+                .readFileSync(supportedNonNpmWorkflowAllowlistPath, "utf8")
+                .split(/\r?\n/)
+                .map((line) => line.trim())
+                .filter((line) => line && !line.startsWith("#")),
+            );
+            const supportedNonNpmManifestPatterns = [
+              /^docker\/Dockerfile$/,
+              /^docker\/docker-compose(?:-[^/]+)?\.ya?ml$/,
+            ];
+            const isSupportedNonNpmManifest = (filename) =>
+              (
+                /^\.github\/workflows\/[^/]+\.ya?ml$/.test(filename) &&
+                supportedNonNpmWorkflowFilenames.has(filename)
+              ) ||
+              supportedNonNpmManifestPatterns.some((pattern) => pattern.test(filename));
+            const extractVersionContexts = (rawVersion) =>
+              [...rawVersion.matchAll(/\d+(?:\.\d+){0,2}/g)]
+                .filter((match) => match.index != null)
+                .map((match) => {
+                  const matchedVersion = match[0];
+                  const versionNumbers = matchedVersion.split(".").map(Number);
+                  return {
+                    prefix: rawVersion.slice(0, match.index),
+                    major: versionNumbers[0],
+                    minor: versionNumbers[1] ?? 0,
+                    patch: versionNumbers[2] ?? 0,
+                    suffix: rawVersion.slice(match.index + matchedVersion.length),
+                  };
                 });
+            const classifyVersionTransition = (beforeVersion, afterVersion) => {
+              const beforeContexts = extractVersionContexts(beforeVersion);
+              const afterContexts = extractVersionContexts(afterVersion);
 
-                if (Array.isArray(data) || !("content" in data)) {
-                  throw new Error("package.json content lookup returned an unexpected payload.");
+              if (beforeContexts.length === 0 || afterContexts.length === 0) {
+                return "unknown";
+              }
+
+              for (const beforeParts of beforeContexts) {
+                for (const afterParts of afterContexts) {
+                  if (
+                    beforeParts.prefix !== afterParts.prefix ||
+                    beforeParts.suffix !== afterParts.suffix
+                  ) {
+                    continue;
+                  }
+
+                  if (afterParts.major !== beforeParts.major) {
+                    return "major";
+                  }
+
+                  if (afterParts.minor !== beforeParts.minor) {
+                    return "minor";
+                  }
+
+                  if (afterParts.patch !== beforeParts.patch) {
+                    return "patch";
+                  }
+
+                  if (beforeVersion === afterVersion) {
+                    return "none";
+                  }
+                }
+              }
+
+              return beforeVersion === afterVersion ? "none" : "unknown";
+            };
+            const stripWrappingDelimiters = (rawValue) =>
+              rawValue.replace(/,$/, "").replace(/^['"]|['"]$/g, "");
+            const extractReferenceFromUsesLine = (line) => {
+              const match = line.match(/^[+-]\s*(?:-\s*)?uses:\s*([^#\s]+)/);
+              if (!match) {
+                return null;
+              }
+
+              const reference = stripWrappingDelimiters(match[1]);
+              const atIndex = reference.lastIndexOf("@");
+              if (atIndex === -1 || atIndex === reference.length - 1) {
+                return null;
+              }
+
+              const identity = reference.slice(0, atIndex);
+              const version = reference.slice(atIndex + 1);
+
+              if (!identity || !version) {
+                return null;
+              }
+
+              return { kind: "action", identity, version };
+            };
+            const extractReferenceFromDockerReferenceLine = (line) => {
+              const content = line.slice(1).trimStart();
+              let reference = "";
+              let contextKey = "-";
+
+              if (/^FROM\b/i.test(content)) {
+                const tokens = content.trim().split(/\s+/);
+                if (tokens.length < 2) {
+                  return null;
                 }
 
-                return JSON.parse(Buffer.from(data.content, data.encoding).toString("utf8"));
-              };
+                let tokenIndex = 1;
+                while (
+                  tokenIndex < tokens.length &&
+                  tokens[tokenIndex].startsWith("--")
+                ) {
+                  tokenIndex += 1;
+                }
 
-              const { data: compare } = await github.request(
-                "GET /repos/{owner}/{repo}/compare/{basehead}",
-                {
-                  owner,
-                  repo,
-                  basehead: `${pr.base.ref}...${pr.head.sha}`,
-                },
-              );
+                if (tokenIndex >= tokens.length) {
+                  return null;
+                }
 
-              const mergeBaseSha = compare.merge_base_commit?.sha;
+                reference = stripWrappingDelimiters(tokens[tokenIndex]);
+                const suffix = tokens.slice(tokenIndex + 1).join(" ");
+                contextKey = tokens[0];
+                if (tokenIndex > 1) {
+                  contextKey += ` ${tokens.slice(1, tokenIndex).join(" ")}`;
+                }
+                // Preserve the non-image parts of the line so platform/alias edits
+                // are not misclassified as a low-risk version-only bump.
+                contextKey += `\u001f${suffix}`;
+              } else if (/^image:\s*/.test(content)) {
+                const remainder = content.replace(/^image:\s*/, "");
+                const tokens = remainder.split(/\s+/).filter(Boolean);
+                if (tokens.length === 0) {
+                  return null;
+                }
 
-              if (!mergeBaseSha) {
-                return skip(`PR #${pr.number} does not expose a merge base for dependency diffing.`);
+                reference = stripWrappingDelimiters(tokens[0]);
+                contextKey = `image:\u001f${tokens.slice(1).join(" ")}`;
+              } else {
+                return null;
               }
 
-              const baseManifest = await parsePackageManifest(mergeBaseSha);
-              const headManifest = await parsePackageManifest(pr.head.sha);
+              if (!reference || reference.includes("$")) {
+                return null;
+              }
 
-              const stripDependencySections = (manifest) => {
-                const {
-                  dependencies = {},
-                  devDependencies = {},
-                  optionalDependencies = {},
-                  peerDependencies = {},
-                  ...rest
-                } = manifest;
-                return rest;
-              };
+              const referenceWithoutDigest = reference.replace(/@sha256:[0-9a-f]+$/i, "");
+              const lastColon = referenceWithoutDigest.lastIndexOf(":");
+              if (lastColon === -1) {
+                return null;
+              }
+
+              const identity = referenceWithoutDigest.slice(0, lastColon);
+              const version = referenceWithoutDigest.slice(lastColon + 1);
+              if (!identity || !version || version.includes("/")) {
+                return null;
+              }
+
+              return { kind: "docker", identity, version, contextKey };
+            };
+            const extractReferenceFromPatchLine = (line) =>
+              extractReferenceFromUsesLine(line) ??
+              extractReferenceFromDockerReferenceLine(line);
+            const isPatchMetadataLine = (line) =>
+              line === "" ||
+              line.startsWith("diff --git ") ||
+              line.startsWith("index ") ||
+              line.startsWith("---") ||
+              line.startsWith("+++") ||
+              line.startsWith("@@") ||
+              line.startsWith(" ") ||
+              line.startsWith("\\");
+            const extractReferencePairsFromPatch = (patch) => {
+              const removedReferences = [];
+              const addedReferences = [];
+
+              for (const line of patch.split("\n")) {
+                if (isPatchMetadataLine(line)) {
+                  continue;
+                }
+
+                if (!line.startsWith("-") && !line.startsWith("+")) {
+                  return null;
+                }
+
+                const reference = extractReferenceFromPatchLine(line);
+                if (!reference) {
+                  return null;
+                }
+
+                if (line.startsWith("-")) {
+                  removedReferences.push(reference);
+                } else if (line.startsWith("+")) {
+                  addedReferences.push(reference);
+                }
+              }
 
               if (
-                JSON.stringify(stripDependencySections(baseManifest)) !==
-                JSON.stringify(stripDependencySections(headManifest))
+                removedReferences.length === 0 ||
+                removedReferences.length !== addedReferences.length
               ) {
-                return skip(`PR #${pr.number} updates package.json outside dependency version fields.`);
+                return null;
               }
 
-              const sections = [
-                ["dependencies", baseManifest.dependencies ?? {}, headManifest.dependencies ?? {}],
-                ["devDependencies", baseManifest.devDependencies ?? {}, headManifest.devDependencies ?? {}],
-                ["optionalDependencies", baseManifest.optionalDependencies ?? {}, headManifest.optionalDependencies ?? {}],
-                ["peerDependencies", baseManifest.peerDependencies ?? {}, headManifest.peerDependencies ?? {}],
-              ];
+              return removedReferences.map((beforeReference, index) => ({
+                beforeReference,
+                afterReference: addedReferences[index],
+              }));
+            };
+            const classifyNonNpmVersionUpdateFromFiles = (patchFiles) => {
+              let overallUpdateType = "none";
+              let hasVersionPairs = false;
 
-              const dependencyChanges = sections.flatMap(([section, baseDeps, headDeps]) => {
-                const names = [...new Set([...Object.keys(baseDeps), ...Object.keys(headDeps)])].sort();
-                return names
-                  .filter((name) => baseDeps[name] !== headDeps[name])
-                  .map((name) => ({
-                    name,
-                    section,
-                    before: baseDeps[name] ?? null,
-                    after: headDeps[name] ?? null,
-                  }));
-              });
-
-              if (!dependencyChanges.length) {
-                return skip(`PR #${pr.number} does not change any dependency versions in package.json.`);
-              }
-
-              if (
-                dependencyChanges.some(({ before, after }) => before === null || after === null)
-              ) {
-                return skip(`PR #${pr.number} adds or removes dependencies: ${formatChanges(dependencyChanges)}`);
-              }
-
-              if (dependencyChanges.some(({ section }) => section !== "devDependencies")) {
-                return skip(
-                  `PR #${pr.number} updates non-dev dependencies: ${formatChanges(dependencyChanges)}`,
-                );
-              }
-
-              const allowlistedPatterns = [
-                /^@biomejs\/biome$/,
-                /^vitest$/,
-                /^@vitest\/.+$/,
-                /^@types\/.+$/,
-              ];
-
-              const isAllowlisted = (dependencyName) =>
-                allowlistedPatterns.some((pattern) => pattern.test(dependencyName));
-
-              const nonAllowlisted = dependencyChanges
-                .map(({ name }) => name)
-                .filter((name) => !isAllowlisted(name));
-
-              if (nonAllowlisted.length > 0) {
-                return skip(
-                  `PR #${pr.number} updates dependencies outside the auto-approve allowlist: ${[
-                    ...new Set(nonAllowlisted),
-                  ].join(", ")}`,
-                );
-              }
-
-              const normalizeVersion = (version) =>
-                version.match(/\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?/)?.[0] ?? null;
-
-              const semverUpdateType = (before, after) => {
-                const previous = normalizeVersion(before);
-                const next = normalizeVersion(after);
-
-                if (!previous || !next) {
+              for (const file of patchFiles) {
+                const referencePairs = extractReferencePairsFromPatch(file.patch ?? "");
+                if (!referencePairs) {
                   return "unknown";
                 }
 
-                const [previousMajor, previousMinor, previousPatch] = previous
-                  .split("-")[0]
-                  .split(".")
-                  .map(Number);
-                const [nextMajor, nextMinor, nextPatch] = next
-                  .split("-")[0]
-                  .split(".")
-                  .map(Number);
-
+                for (const { beforeReference, afterReference } of referencePairs) {
+                  hasVersionPairs = true;
                 if (
-                  [previousMajor, previousMinor, previousPatch, nextMajor, nextMinor, nextPatch].some(
-                    Number.isNaN,
-                  )
+                  beforeReference.kind !== afterReference.kind ||
+                  beforeReference.identity !== afterReference.identity ||
+                  (beforeReference.contextKey ?? "-") !==
+                    (afterReference.contextKey ?? "-")
                 ) {
                   return "unknown";
                 }
 
-                if (nextMajor !== previousMajor) {
-                  return "major";
+                  const updateType = classifyVersionTransition(
+                    beforeReference.version,
+                    afterReference.version,
+                  );
+
+                  if (updateType === "unknown" || updateType === "major") {
+                    return updateType;
+                  }
+
+                  if (updateType === "minor") {
+                    overallUpdateType = "minor";
+                  } else if (
+                    updateType === "patch" &&
+                    overallUpdateType === "none"
+                  ) {
+                    overallUpdateType = "patch";
+                  }
                 }
-
-                if (nextMinor !== previousMinor) {
-                  return "minor";
-                }
-
-                if (nextPatch !== previousPatch) {
-                  return "patch";
-                }
-
-                return "none";
-              };
-
-              const nonPatchChanges = dependencyChanges.filter(
-                ({ before, after }) => semverUpdateType(before, after) !== "patch",
-              );
-
-              if (nonPatchChanges.length > 0) {
-                return skip(
-                  `PR #${pr.number} is not a pure patch update: ${formatChanges(nonPatchChanges)}`,
-                );
               }
 
-              if (!changedFiles.every((filename) => packageFiles.has(filename))) {
-                const biomeOnly =
-                  changedFiles.every((filename) => biomeFiles.has(filename)) &&
-                  dependencyChanges.every(({ name }) => name === "@biomejs/biome");
+              return hasVersionPairs ? overallUpdateType : "unknown";
+            };
+            const disallowedFiles = changedFiles.filter(
+              (filename) => !isSupportedNonNpmManifest(filename),
+            );
 
-                if (!biomeOnly) {
+            if (disallowedFiles.length > 0) {
+              return skip(
+                `PR #${pr.number} changes files outside the supported non-npm dependency manifest allowlist: ${[
+                  ...new Set(disallowedFiles),
+                ].join(", ")}`,
+              );
+            }
+
+            const filesWithUnavailablePatch = files
+              .filter((file) => file.patch == null)
+              .map(({ filename }) => filename)
+              .sort();
+            if (filesWithUnavailablePatch.length === 0) {
+              const nonNpmVersionUpdateType =
+                classifyNonNpmVersionUpdateFromFiles(files);
+              if (nonNpmVersionUpdateType !== "patch") {
+                if (nonNpmVersionUpdateType === "unknown") {
                   return skip(
-                    `PR #${pr.number} changes biome.json for a dependency outside the dedicated allowlist.`,
+                    `PR #${pr.number} diff does not describe a patch-level non-npm dependency update.`,
                   );
                 }
+
+                return skip(
+                  `PR #${pr.number} is a ${nonNpmVersionUpdateType} non-npm dependency update; only patch updates are auto-approved.`,
+                );
               }
 
               core.setOutput(
                 "reason",
-                `Low-risk Dependabot update: ${formatChanges(dependencyChanges)}`,
+                `Low-risk patch-level non-npm Dependabot update limited to supported dependency manifests: ${changedFiles.join(
+                  ", ",
+                )}`,
               );
             } else {
-              core.setOutput("reason", "Lockfile-only Dependabot update.");
+              core.info(
+                `PR #${pr.number} omits patch details from pulls.listFiles for: ${filesWithUnavailablePatch.join(
+                  ", ",
+                )}. Deferring non-npm patch classification to the snapshot and approval scripts.`,
+              );
+              core.setOutput(
+                "reason",
+                `Dependabot non-npm candidate limited to supported dependency manifests; patch-level verification will use gh pr diff because pulls.listFiles omitted patch details for: ${filesWithUnavailablePatch.join(
+                  ", ",
+                )}`,
+              );
             }
 
             const { data: protection } = await github.request(
@@ -355,17 +501,76 @@ jobs:
               protection.required_status_checks?.contexts ??
               [];
             const additionalRequiredContexts = ["lint-and-test"];
-            const contextsToRequire = [
-              ...new Set([...requiredContexts, ...additionalRequiredContexts]),
+            // statusCheckRollup exposes job/check-run names rather than workflow names.
+            const monitoredCheckContexts = [
+              "build",
+              "lint-and-test",
+              "Analyze (javascript)",
+              "restyled",
             ];
+            const requireCurrentHeadClaudeReviewVerdict = true;
+            const claudeReviewCommentPrefix = "【Claude review】";
+            const verdictCommentMarker = "<!-- dependabot-claude-review-verdict -->";
+            const requiredOrMonitoredContexts = new Set([
+              ...requiredContexts,
+              ...additionalRequiredContexts,
+              ...monitoredCheckContexts,
+            ]);
+            const isPositiveInteger = (value) =>
+              Number.isInteger(value) && value > 0;
+            const trustedVerdictAuthorPermissions = new Set([
+              "admin",
+              "maintain",
+              "write",
+            ]);
+            const trustedClaudeReviewEvents = new Set([
+              "pull_request",
+              "schedule",
+            ]);
+            const collaboratorPermissionCache = new Map();
+
+            const resolveCollaboratorPermission = async (login) => {
+              if (!login) {
+                return "";
+              }
+
+              if (login === "github-actions[bot]") {
+                return login;
+              }
+
+              if (collaboratorPermissionCache.has(login)) {
+                return collaboratorPermissionCache.get(login);
+              }
+
+              let permission = "";
+              try {
+                const { data } =
+                  await github.rest.repos.getCollaboratorPermissionLevel({
+                    owner,
+                    repo,
+                    username: login,
+                  });
+                permission = String(data.permission ?? "");
+              } catch (error) {
+                permission = "";
+              }
+
+              collaboratorPermissionCache.set(login, permission);
+              return permission;
+            };
 
             const query = `
               query($owner: String!, $repo: String!, $number: Int!) {
                 repository(owner: $owner, name: $repo) {
                   pullRequest(number: $number) {
                     url
+                    headRefOid
+                    baseRefOid
                     reviewDecision
                     statusCheckRollup {
+                      commit {
+                        oid
+                      }
                       contexts(first: 100) {
                         nodes {
                           __typename
@@ -373,10 +578,13 @@ jobs:
                             name
                             conclusion
                             status
+                            completedAt
+                            startedAt
                           }
                           ... on StatusContext {
                             context
                             state
+                            createdAt
                           }
                         }
                       }
@@ -398,36 +606,370 @@ jobs:
               return skip(`PR #${pr.number} is already approved.`);
             }
 
-            const statuses = new Map();
+            const currentHeadSha = pullRequest.headRefOid ?? pr.head.sha;
+            if (currentHeadSha !== pr.head.sha) {
+              return skip(
+                `PR #${pr.number} head changed from ${pr.head.sha} to ${currentHeadSha} while evaluating required checks.`,
+              );
+            }
 
-            for (const node of pullRequest.statusCheckRollup?.contexts?.nodes ?? []) {
+            const currentBaseSha = pullRequest.baseRefOid ?? pr.base.sha;
+            if (currentBaseSha !== pr.base.sha) {
+              return skip(
+                `PR #${pr.number} base changed from ${pr.base.sha} to ${currentBaseSha} while evaluating required checks.`,
+              );
+            }
+
+            const statusRollupCommitSha = pullRequest.statusCheckRollup?.commit?.oid ?? "";
+            if (!statusRollupCommitSha) {
+              return skip(
+                `PR #${pr.number} required checks are not yet associated with the current head (${currentHeadSha}).`,
+              );
+            }
+
+            if (statusRollupCommitSha !== currentHeadSha) {
+              return skip(
+                `PR #${pr.number} required checks are attached to ${statusRollupCommitSha} instead of the current head (${currentHeadSha}).`,
+              );
+            }
+
+            const statuses = new Map();
+            const statusPriority = (status) => {
+              if (status.isActive) {
+                return 2;
+              }
+
+              if (status.timestamp) {
+                return 1;
+              }
+
+              return 0;
+            };
+
+            const expandStatusNames = (statusName) => {
+              if (/^claude-review \(.+\)$/.test(statusName)) {
+                return [statusName, "claude-review"];
+              }
+
+              return [statusName];
+            };
+
+            const updateLatestStatus = (statusName, nextStatus) => {
+              for (const normalizedStatusName of expandStatusNames(statusName)) {
+                const currentStatus = statuses.get(normalizedStatusName);
+                const currentPriority = currentStatus
+                  ? statusPriority(currentStatus)
+                  : -1;
+                const nextPriority = statusPriority(nextStatus);
+
+                if (
+                  !currentStatus ||
+                  nextPriority > currentPriority ||
+                  (nextPriority === currentPriority &&
+                    (currentStatus.timestamp < nextStatus.timestamp ||
+                      (currentStatus.timestamp === nextStatus.timestamp &&
+                        currentStatus.index < nextStatus.index)))
+                ) {
+                  statuses.set(normalizedStatusName, nextStatus);
+                }
+              }
+            };
+
+            for (const [index, node] of (
+              pullRequest.statusCheckRollup?.contexts?.nodes ?? []
+            ).entries()) {
               if (node.__typename === "CheckRun") {
-                statuses.set(node.name, node.conclusion ?? node.status ?? "MISSING");
+                updateLatestStatus(node.name, {
+                  state: node.conclusion ?? node.status ?? "MISSING",
+                  passing:
+                    node.status === "COMPLETED" &&
+                    ["SUCCESS", "SKIPPED", "NEUTRAL"].includes(node.conclusion ?? ""),
+                  isActive: node.status !== "COMPLETED",
+                  timestamp: node.completedAt ?? node.startedAt ?? "",
+                  index,
+                });
               } else if (node.__typename === "StatusContext") {
-                statuses.set(node.context, node.state ?? "MISSING");
+                updateLatestStatus(node.context, {
+                  state: node.state ?? "MISSING",
+                  passing: (node.state ?? "") === "SUCCESS",
+                  isActive: false,
+                  timestamp: node.createdAt ?? "",
+                  index,
+                });
               }
             }
 
+            const nonPassingChecks = [...statuses.entries()]
+              .filter(
+                ([statusName, { passing }]) =>
+                  requiredOrMonitoredContexts.has(statusName) && !passing,
+              )
+              .map(([statusName, { state }]) => `${statusName}:${state}`);
+
+            const contextsToRequire = [
+              ...new Set([
+                ...requiredContexts,
+                ...additionalRequiredContexts,
+                ...monitoredCheckContexts,
+              ]),
+            ];
+
             const incompleteContexts = contextsToRequire.filter(
-              (contextName) => statuses.get(contextName) !== "SUCCESS",
+              (contextName) => !(statuses.get(contextName)?.passing ?? false),
             );
 
             if (incompleteContexts.length > 0) {
               return skip(
-                `PR #${pr.number} is still waiting on required checks: ${incompleteContexts
-                  .map((contextName) => `${contextName}:${statuses.get(contextName) ?? "MISSING"}`)
+                `PR #${pr.number} is still waiting on required or monitored checks: ${incompleteContexts
+                  .map(
+                    (contextName) =>
+                      `${contextName}:${statuses.get(contextName)?.state ?? "MISSING"}`,
+                  )
                   .join(", ")}`,
               );
             }
 
+            if (nonPassingChecks.length > 0) {
+              return skip(
+                `PR #${pr.number} still has non-passing checks: ${nonPassingChecks.join(", ")}`,
+              );
+            }
+
+            if (requireCurrentHeadClaudeReviewVerdict) {
+              const issueComments = await github.paginate(
+                github.rest.issues.listComments,
+                {
+                  owner,
+                  repo,
+                  issue_number: pr.number,
+                  per_page: 100,
+                },
+              );
+              let verdictComment;
+              let claudeReviewVerdict;
+              let workflowRun;
+              let workflowRunStartedAt = "";
+              let verdictCommentUpdatedAt = "";
+              let trustedVerdictFailureReason = "";
+
+              for (const candidateComment of [...issueComments]
+                .filter(
+                  (comment) =>
+                    typeof comment.body === "string" &&
+                    comment.body.includes(verdictCommentMarker),
+                )
+                .sort(
+                  (left, right) =>
+                    Date.parse(right.updated_at ?? right.created_at ?? "") -
+                    Date.parse(left.updated_at ?? left.created_at ?? ""),
+                )) {
+                const candidateAuthorLogin = String(
+                  candidateComment.user?.login ?? "",
+                );
+                if (!candidateAuthorLogin) {
+                  continue;
+                }
+
+                const candidateAuthorPermission =
+                  await resolveCollaboratorPermission(candidateAuthorLogin);
+                if (
+                  candidateAuthorLogin !== "github-actions[bot]" &&
+                  !trustedVerdictAuthorPermissions.has(candidateAuthorPermission)
+                ) {
+                  continue;
+                }
+
+                const verdictMatch = candidateComment.body.match(
+                  /```json\s*([\s\S]*?)\s*```/,
+                );
+                if (!verdictMatch) {
+                  trustedVerdictFailureReason ||= `PR #${pr.number} has a malformed trusted Claude review verdict comment.`;
+                  continue;
+                }
+
+                let parsedVerdict;
+                try {
+                  parsedVerdict = JSON.parse(verdictMatch[1]);
+                } catch (error) {
+                  trustedVerdictFailureReason ||= `PR #${pr.number} has an unreadable trusted Claude review verdict JSON payload: ${error.message}`;
+                  continue;
+                }
+
+                if (Number(parsedVerdict.pr_number) !== pr.number) {
+                  trustedVerdictFailureReason ||= `PR #${pr.number} trusted Claude review verdict targets PR #${parsedVerdict.pr_number} instead.`;
+                  continue;
+                }
+
+                if (String(parsedVerdict.head_sha ?? "") !== currentHeadSha) {
+                  trustedVerdictFailureReason ||= `PR #${pr.number} trusted Claude review verdict is stale for head ${parsedVerdict.head_sha ?? "MISSING"}; current head is ${currentHeadSha}.`;
+                  continue;
+                }
+
+                if (String(parsedVerdict.base_sha ?? "") !== currentBaseSha) {
+                  trustedVerdictFailureReason ||= `PR #${pr.number} trusted Claude review verdict is stale for base ${parsedVerdict.base_sha ?? "MISSING"}; current base is ${currentBaseSha}.`;
+                  continue;
+                }
+
+                const claudeReviewSummary = String(parsedVerdict.summary ?? "")
+                  .replace(/\s+/g, " ")
+                  .trim();
+                if (
+                  parsedVerdict.review_status !== "pass" ||
+                  Number(parsedVerdict.finding_count) !== 0 ||
+                  claudeReviewSummary.length === 0
+                ) {
+                  trustedVerdictFailureReason ||= `PR #${pr.number} Claude review did not explicitly report zero findings for the current head/base: status=${parsedVerdict.review_status ?? "MISSING"}, finding_count=${parsedVerdict.finding_count ?? "MISSING"}, summary=${claudeReviewSummary || "MISSING"}`;
+                  break;
+                }
+
+                const workflowRunId = Number(parsedVerdict.workflow_run_id);
+                const workflowRunAttempt = Number(
+                  parsedVerdict.workflow_run_attempt,
+                );
+                const candidateVerdictCommentUpdatedAt =
+                  candidateComment.updated_at ?? candidateComment.created_at ?? "";
+                if (
+                  !isPositiveInteger(workflowRunId) ||
+                  !isPositiveInteger(workflowRunAttempt) ||
+                  !candidateVerdictCommentUpdatedAt
+                ) {
+                  trustedVerdictFailureReason ||= `PR #${pr.number} Claude review verdict is missing workflow run metadata.`;
+                  break;
+                }
+
+                let candidateWorkflowRun;
+                try {
+                  ({ data: candidateWorkflowRun } =
+                    await github.rest.actions.getWorkflowRun({
+                      owner,
+                      repo,
+                      run_id: workflowRunId,
+                    }));
+                } catch (error) {
+                  trustedVerdictFailureReason ||= `PR #${pr.number} Claude review workflow run ${workflowRunId} could not be loaded: ${error.message}`;
+                  break;
+                }
+
+                const candidateWorkflowRunStartedAt =
+                  candidateWorkflowRun.run_started_at ??
+                  candidateWorkflowRun.created_at ??
+                  "";
+                const candidateWorkflowRunCompletedAt =
+                  candidateWorkflowRun.completed_at ??
+                  candidateWorkflowRun.updated_at ??
+                  "";
+                const candidateWorkflowRunPullRequests = Array.isArray(
+                  candidateWorkflowRun.pull_requests,
+                )
+                  ? candidateWorkflowRun.pull_requests
+                  : [];
+                const candidateWorkflowRunTargetsCurrentPr =
+                  candidateWorkflowRunPullRequests.length === 0 ||
+                  candidateWorkflowRunPullRequests.some(
+                    (linkedPr) => Number(linkedPr.number ?? 0) === pr.number,
+                  );
+
+                if (
+                  Number(candidateWorkflowRun.run_attempt ?? 0) !==
+                    workflowRunAttempt ||
+                  !candidateWorkflowRunStartedAt ||
+                  !candidateWorkflowRunCompletedAt ||
+                  String(candidateWorkflowRun.name ?? "") !==
+                    "Claude Code Review for Bot PRs" ||
+                  !String(candidateWorkflowRun.path ?? "").includes(
+                    "claude-code-review.yml",
+                  ) ||
+                  !trustedClaudeReviewEvents.has(
+                    String(candidateWorkflowRun.event ?? ""),
+                  ) ||
+                  String(candidateWorkflowRun.head_sha ?? "") !== currentHeadSha ||
+                  !candidateWorkflowRunTargetsCurrentPr ||
+                  candidateVerdictCommentUpdatedAt < candidateWorkflowRunStartedAt ||
+                  candidateVerdictCommentUpdatedAt > candidateWorkflowRunCompletedAt
+                ) {
+                  trustedVerdictFailureReason ||= `PR #${pr.number} Claude review workflow run metadata no longer matches the trusted verdict.`;
+                  break;
+                }
+
+                verdictComment = candidateComment;
+                claudeReviewVerdict = parsedVerdict;
+                workflowRun = candidateWorkflowRun;
+                workflowRunStartedAt = candidateWorkflowRunStartedAt;
+                verdictCommentUpdatedAt = candidateVerdictCommentUpdatedAt;
+                break;
+              }
+
+              if (!verdictComment || !claudeReviewVerdict || !workflowRun) {
+                return skip(
+                  trustedVerdictFailureReason ||
+                    `PR #${pr.number} does not have a trusted machine-readable Claude review verdict comment yet.`,
+                );
+              }
+
+              const reviewComments = await github.paginate(
+                github.rest.pulls.listReviewComments,
+                {
+                  owner,
+                  repo,
+                  pull_number: pr.number,
+                  per_page: 100,
+                },
+              );
+              const trustedVerdictAuthorLogin = String(
+                verdictComment.user?.login ?? "",
+              );
+              const currentHeadClaudeFindings = reviewComments.filter((comment) => {
+                const commentCommitSha =
+                  comment.commit_id ?? comment.original_commit_id ?? "";
+                const commentTimestamp = comment.created_at ?? comment.updated_at ?? "";
+                return (
+                  comment.user?.login === trustedVerdictAuthorLogin &&
+                  commentCommitSha === currentHeadSha &&
+                  commentTimestamp <= verdictCommentUpdatedAt &&
+                  typeof comment.body === "string" &&
+                  comment.body.startsWith(claudeReviewCommentPrefix)
+                );
+              });
+
+              if (currentHeadClaudeFindings.length > 0) {
+                return skip(
+                  `PR #${pr.number} Claude review posted ${currentHeadClaudeFindings.length} inline finding comment(s) for the current head.`,
+                );
+              }
+            }
+
             core.setOutput("should-approve", "true");
             core.setOutput("pr-url", pr.html_url);
+            core.setOutput("head-sha", currentHeadSha);
+            core.setOutput("base-sha", currentBaseSha);
 
-      - name: Auto approve low-risk Dependabot PR
+      - name: Prepare approval snapshot
+        id: prepare
         if: steps.evaluate.outputs.should-approve == 'true'
         env:
-          PR_URL: ${{ steps.evaluate.outputs.pr-url }}
+          GH_TOKEN: ${{ secrets.DEPENDABOT_AUTO_APPROVE_READ_BRANCH_PROTECTION_TOKEN }}
+          PR_NUMBER: ${{ matrix.pr-number }}
+          REVIEW_INPUT_ROOT: ${{ env.REVIEW_INPUT_ROOT }}
+          DEPENDABOT_AUTO_APPROVE_CANDIDATE_KIND: non-npm
+          DEPENDABOT_AUTO_APPROVE_REQUIRE_CURRENT_HEAD_CLAUDE_REVIEW_VERDICT: "true"
+          EXPECTED_HEAD_SHA: ${{ steps.evaluate.outputs.head-sha }}
+          EXPECTED_BASE_SHA: ${{ steps.evaluate.outputs.base-sha }}
+        run: |
+          bash tools/github-actions/prepare_dependabot_review_input.sh
+
+      - name: Auto approve low-risk Dependabot PR
+        id: approve
+        if: steps.prepare.outputs.candidate == 'true'
+        env:
+          PR_NUMBER: ${{ matrix.pr-number }}
+          DEPENDABOT_AUTO_APPROVE_READ_BRANCH_PROTECTION_TOKEN: ${{ secrets.DEPENDABOT_AUTO_APPROVE_READ_BRANCH_PROTECTION_TOKEN }}
+          DEPENDABOT_AUTO_APPROVE_CANDIDATE_KIND: non-npm
+          DEPENDABOT_AUTO_APPROVE_REQUIRE_CURRENT_HEAD_CLAUDE_REVIEW_VERDICT: "true"
+          REVIEWED_HEAD_SHA: ${{ steps.prepare.outputs.head-sha }}
+          REVIEWED_BASE_SHA: ${{ steps.prepare.outputs.base-sha }}
+          REVIEWED_DIFF_PATH: ${{ steps.prepare.outputs.input-dir }}/diff.patch
           REVIEW_BODY: ${{ steps.evaluate.outputs.reason }}
+          REVIEW_DISMISSAL_FALLBACK_TOKEN: ${{ github.token }}
           KIIROTORI_GH_CONFIG_HOSTS: ${{ secrets.KIIROTORI_GH_CONFIG_HOSTS }}
           KIIROTORI_GH_CONFIG_CONFIG: ${{ secrets.KIIROTORI_GH_CONFIG_CONFIG }}
         run: |
@@ -435,14 +977,31 @@ jobs:
           mkdir -p "$GH_CONFIG_DIR"
           printf '%s' "$KIIROTORI_GH_CONFIG_HOSTS" > "$GH_CONFIG_DIR/hosts.yml"
           printf '%s' "$KIIROTORI_GH_CONFIG_CONFIG" > "$GH_CONFIG_DIR/config.yml"
-          gh pr review "$PR_URL" --approve --body "$REVIEW_BODY"
+          bash tools/github-actions/approve_dependabot_pr.sh
 
       - name: Summarize decision
         if: always()
+        env:
+          APPROVED: ${{ steps.approve.outputs.approved || '' }}
+          PREPARE_SKIP_REASON: ${{ steps.prepare.outputs.skip-reason || '' }}
+          APPROVE_SKIP_REASON: ${{ steps.approve.outputs.skip-reason || '' }}
         run: |
+          candidate="${{ steps.evaluate.outputs.should-approve || 'false' }}"
+          reason="${{ steps.evaluate.outputs.reason || 'No evaluation result.' }}"
+
+          if [[ -n "$PREPARE_SKIP_REASON" ]]; then
+            candidate="false"
+            reason="$PREPARE_SKIP_REASON"
+          elif [[ -n "$APPROVE_SKIP_REASON" ]]; then
+            candidate="false"
+            reason="$APPROVE_SKIP_REASON"
+          elif [[ "$APPROVED" == "true" ]]; then
+            reason="Approved low-risk Dependabot update."
+          fi
+
           {
             echo "## Dependabot auto-approve"
             echo
-            echo "* Candidate: \`${{ steps.evaluate.outputs.should-approve || 'false' }}\`"
-            echo "* Reason: ${{ steps.evaluate.outputs.reason || 'No evaluation result.' }}"
+            echo "* Candidate: \`${candidate}\`"
+            echo "* Reason: ${reason}"
           } >> "$GITHUB_STEP_SUMMARY"

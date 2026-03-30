@@ -17,3 +17,7 @@ CLAUDE.md
 .claude/settings.local.json
 .env
 AGENTS.md
+.stack-root*/
+dist-newstyle/
+tmp_worktree_base_*/
+tmp_worktree_target_*/
