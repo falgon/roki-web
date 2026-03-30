@@ -96,7 +96,7 @@ jobs:
         df -h
     - name: Login to GitHub Container Registry
       if: needs.setup.outputs.to_push == 'true'
-      uses: docker/login-action@v3
+      uses: docker/login-action@v4
       with:
         registry: ghcr.io
         username: ${{ github.actor }}
@@ -150,7 +150,7 @@ jobs:
         sudo rm -rfv "/usr/local/share/boost" "$AGENT_TOOLSDIRECTORY"
     - name: Login to GitHub Container Registry
       if: needs.setup.outputs.to_push == 'true'
-      uses: docker/login-action@v3
+      uses: docker/login-action@v4
       with:
         registry: ghcr.io
         username: ${{ github.actor }}
