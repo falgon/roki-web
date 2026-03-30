@@ -2,49 +2,287 @@ name: Claude Code Review for Bot PRs
 
 on:
   pull_request:
-    types: [opened, synchronize]
-    # Optional: Only run on specific file changes
-    # paths:
-    #   - "src/**/*.ts"
-    #   - "src/**/*.tsx"
-    #   - "src/**/*.js"
-    #   - "src/**/*.jsx"
+    types: [opened, synchronize, reopened]
+  schedule:
+    - cron: "*/15 * * * *"
 
 jobs:
-  claude-review:
-    if: |
-      github.event.pull_request.user.login == 'dependabot[bot]' ||
-      github.event.pull_request.user.login == 'github-actions[bot]'
-    
+  collect-target-prs:
+    if: github.repository == 'falgon/roki-web'
     runs-on: ubuntu-latest
-    # PR レビューコメント投稿のため write 権限が必要
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      pr-numbers: ${{ steps.collect.outputs.pr-numbers }}
+    steps:
+      - name: Collect target pull requests
+        id: collect
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.UPDATE_BIOME_SCHEMA_TOKEN }}
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const verdictCommentMarker = "<!-- dependabot-claude-review-verdict -->";
+            const claudeReviewCommentPrefix = "【Claude review】";
+
+            const setPullRequests = (numbers) => {
+              core.setOutput(
+                "pr-numbers",
+                JSON.stringify(
+                  [...new Set(numbers)]
+                    .filter(Number.isInteger)
+                    .sort((a, b) => a - b),
+                ),
+              );
+            };
+
+            const isSupportedBotLogin = (login) =>
+              login === "app/dependabot" ||
+              login === "dependabot[bot]" ||
+              login === "github-actions[bot]";
+
+            const isOpenDevelopBotPr = (pullRequest) =>
+              String(pullRequest.state ?? "").toLowerCase() === "open" &&
+              String(pullRequest.base?.ref ?? "") === "develop" &&
+              isSupportedBotLogin(String(pullRequest.user?.login ?? ""));
+
+            const parseClaudeVerdict = (commentBody) => {
+              if (
+                typeof commentBody !== "string" ||
+                !commentBody.includes(verdictCommentMarker)
+              ) {
+                return null;
+              }
+
+              const verdictMatch = commentBody.match(/```json\s*([\s\S]*?)\s*```/);
+              if (!verdictMatch) {
+                return null;
+              }
+
+              try {
+                return JSON.parse(verdictMatch[1]);
+              } catch (error) {
+                return null;
+              }
+            };
+
+            if (context.eventName === "pull_request") {
+              const pullRequest = context.payload.pull_request;
+              return setPullRequests(
+                pullRequest && isOpenDevelopBotPr(pullRequest)
+                  ? [Number(pullRequest.number)]
+                  : [],
+              );
+            }
+
+            let verdictPublisherLogin = "";
+            try {
+              const { data: authenticatedUser } =
+                await github.rest.users.getAuthenticated();
+              verdictPublisherLogin = String(authenticatedUser.login ?? "");
+            } catch (error) {
+              core.warning(
+                `Failed to resolve the authenticated verdict publisher: ${error.message}`,
+              );
+            }
+            if (!verdictPublisherLogin) {
+              core.warning(
+                "Scheduled Claude review runs will ignore existing verdict comments because the authenticated verdict publisher could not be resolved.",
+              );
+            }
+
+            const pullRequests = await github.paginate(github.rest.pulls.list, {
+              owner,
+              repo,
+              state: "open",
+              base: "develop",
+              per_page: 100,
+            });
+
+            const scheduledPullNumbers = await Promise.all(
+              pullRequests
+                .filter(isOpenDevelopBotPr)
+                .map(async (pullRequest) => {
+                  if (!verdictPublisherLogin) {
+                    return Number(pullRequest.number);
+                  }
+
+                  const currentHeadSha = String(pullRequest.head?.sha ?? "");
+                  const currentBaseSha = String(pullRequest.base?.sha ?? "");
+                  if (!currentHeadSha || !currentBaseSha) {
+                    return Number(pullRequest.number);
+                  }
+
+                  const issueComments = await github.paginate(
+                    github.rest.issues.listComments,
+                    {
+                      owner,
+                      repo,
+                      issue_number: pullRequest.number,
+                      per_page: 100,
+                    },
+                  );
+                  const hasCurrentHeadBasePassingVerdict = issueComments.some((comment) => {
+                    if (String(comment.user?.login ?? "") !== verdictPublisherLogin) {
+                      return false;
+                    }
+
+                    const parsedVerdict = parseClaudeVerdict(comment.body);
+                    if (!parsedVerdict) {
+                      return false;
+                    }
+
+                    return (
+                      Number(parsedVerdict.pr_number) === Number(pullRequest.number) &&
+                      String(parsedVerdict.head_sha ?? "") === currentHeadSha &&
+                      String(parsedVerdict.base_sha ?? "") === currentBaseSha &&
+                      String(parsedVerdict.review_status ?? "") === "pass" &&
+                      Number(parsedVerdict.finding_count) === 0 &&
+                      String(parsedVerdict.summary ?? "").trim().length > 0
+                    );
+                  });
+
+                  if (!hasCurrentHeadBasePassingVerdict) {
+                    return Number(pullRequest.number);
+                  }
+
+                  const reviewComments = await github.paginate(
+                    github.rest.pulls.listReviewComments,
+                    {
+                      owner,
+                      repo,
+                      pull_number: pullRequest.number,
+                      per_page: 100,
+                    },
+                  );
+                  const currentHeadFindingCount = reviewComments.filter(
+                    (comment) =>
+                      String(comment.user?.login ?? "") === verdictPublisherLogin &&
+                      String(comment.commit_id ?? comment.original_commit_id ?? "") ===
+                        currentHeadSha &&
+                      String(comment.body ?? "").startsWith(claudeReviewCommentPrefix),
+                  ).length;
+
+                  if (currentHeadFindingCount === 0) {
+                    core.info(
+                      `Skipping scheduled Claude review for PR #${pullRequest.number} because the current head/base already has a passing machine-readable verdict.`,
+                    );
+                    return null;
+                  }
+
+                  core.info(
+                    `Re-running scheduled Claude review for PR #${pullRequest.number} because the current head still has ${currentHeadFindingCount} Claude inline finding(s) despite a passing machine-readable verdict.`,
+                  );
+                  return Number(pullRequest.number);
+                }),
+            );
+
+            return setPullRequests(scheduledPullNumbers);
+
+  claude-review:
+    needs: collect-target-prs
+    if: >-
+      needs.collect-target-prs.result == 'success' &&
+      needs.collect-target-prs.outputs.pr-numbers != '[]'
+    runs-on: ubuntu-latest
+    concurrency:
+      group: claude-review-pr-${{ matrix.pr-number }}
+      cancel-in-progress: false
+    strategy:
+      fail-fast: false
+      matrix:
+        pr-number: ${{ fromJson(needs.collect-target-prs.outputs.pr-numbers) }}
     permissions:
       contents: read
       pull-requests: write
       issues: write
-    
     steps:
+      - name: Load pull request context
+        id: load-pr
+        env:
+          PR_NUMBER: ${{ matrix.pr-number }}
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.UPDATE_BIOME_SCHEMA_TOKEN }}
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const pullNumber = Number(process.env.PR_NUMBER);
+            const isSupportedBotLogin = (login) =>
+              login === "app/dependabot" ||
+              login === "dependabot[bot]" ||
+              login === "github-actions[bot]";
+
+            const skip = (reason) => {
+              core.info(reason);
+              core.setOutput("skip", "true");
+              core.setOutput("skip-reason", reason);
+            };
+
+            const { data: pullRequest } = await github.rest.pulls.get({
+              owner,
+              repo,
+              pull_number: pullNumber,
+            });
+
+            if (pullRequest.state !== "open") {
+              return skip(`PR #${pullNumber} is no longer open.`);
+            }
+
+            if (!isSupportedBotLogin(String(pullRequest.user?.login ?? ""))) {
+              return skip(`PR #${pullNumber} is not authored by a supported bot.`);
+            }
+
+            if (String(pullRequest.base?.ref ?? "") !== "develop") {
+              return skip(`PR #${pullNumber} does not target develop.`);
+            }
+
+            const headSha = String(pullRequest.head?.sha ?? "");
+            if (!headSha) {
+              throw new Error(`PR #${pullNumber} does not expose a head SHA.`);
+            }
+            const baseSha = String(pullRequest.base?.sha ?? "");
+            if (!baseSha) {
+              throw new Error(`PR #${pullNumber} does not expose a base SHA.`);
+            }
+
+            core.setOutput("skip", "false");
+            core.setOutput("skip-reason", "");
+            core.setOutput("pr-number", String(pullRequest.number));
+            core.setOutput("head-sha", headSha);
+            core.setOutput("base-sha", baseSha);
+
       - name: Checkout repository
+        if: steps.load-pr.outputs.skip != 'true'
         uses: actions/checkout@v4
         with:
+          ref: ${{ steps.load-pr.outputs.head-sha }}
           fetch-depth: 0
 
       - name: Run Claude Code Review
         id: claude-review
+        if: steps.load-pr.outputs.skip != 'true'
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          github_token: ${{ github.token }}
+          github_token: ${{ secrets.UPDATE_BIOME_SCHEMA_TOKEN }}
 
-          allowed_bots: "dependabot,github-actions,claude,kodiakhq"
+          allowed_bots: "app/dependabot,dependabot,github-actions,claude,kodiakhq"
 
           # Optional: Specify model and allowed tools via claude_args (API v1)
           claude_args: |
             --model 'haiku'
             --allowedTools mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),WebFetch,WebSearch
+            --json-schema '{"type":"object","additionalProperties":false,"required":["pr_number","head_sha","base_sha","review_status","finding_count","summary"],"properties":{"pr_number":{"type":"integer","minimum":1},"head_sha":{"type":"string","minLength":7},"base_sha":{"type":"string","minLength":7},"review_status":{"type":"string","enum":["pass","fail"]},"finding_count":{"type":"integer","minimum":0},"summary":{"type":"string","minLength":1}}}'
 
           # Prompt for automated review (no @claude mention needed)
           prompt: |
+            Pull request number: ${{ steps.load-pr.outputs.pr-number }}
+            Head SHA: ${{ steps.load-pr.outputs.head-sha }}
+            Base SHA: ${{ steps.load-pr.outputs.base-sha }}
+
             このプルリクエストを日本語でレビューし、以下の観点からフィードバックを提供せよ：
             - コード品質とベストプラクティス
             - 潜在的なバグや問題
@@ -56,12 +294,248 @@ jobs:
             この環境は non-interactive なので質問/確認をユーザーにすることはできない。
             できる限りの推論力を持ってレビュータスクを最後まで遂行せよ
             指摘事項（修正提案を伴うもの）がある場合は、必ず mcp__github_inline_comment__create_inline_comment を使って該当行に投稿せよ。
+            その inline comment の本文は必ず `【Claude review】` で始めること。
             行番号を特定できない指摘は投稿しないこと（推測での投稿は禁止）。
+            最終応答では本文を一切返さず、structured output のみを返すこと。
+            structured output は以下を満たさなければならない:
+            - pr_number は ${{ steps.load-pr.outputs.pr-number }} と一致させる
+            - head_sha は ${{ steps.load-pr.outputs.head-sha }} と一致させる
+            - base_sha は ${{ steps.load-pr.outputs.base-sha }} と一致させる
+            - review_status は、修正を要する指摘が 1 件でもある場合、または少しでも不確実なら fail にする
+            - review_status を pass にできるのは、今回 `【Claude review】` inline comment を 1 件も投稿しておらず、指摘が 0 件のときだけ
+            - finding_count は今回投稿した `【Claude review】` inline comment の件数と一致させる
+            - summary は日本語で 1-3 文の簡潔な要約にする
 
           # 同一PRでコメントを増やさずに追跡コメントを更新する
           use_sticky_comment: "true"
           track_progress: "true"
-          
+
+      - name: Publish machine-readable review verdict
+        id: publish-verdict
+        if: always() && steps.load-pr.outputs.skip != 'true'
+        uses: actions/github-script@v7
+        env:
+          CLAUDE_REVIEW_OUTCOME: ${{ steps.claude-review.outcome }}
+          CLAUDE_REVIEW_RESULT: ${{ steps.claude-review.outputs.structured_output || '' }}
+          PR_NUMBER: ${{ steps.load-pr.outputs.pr-number }}
+          PR_HEAD_SHA: ${{ steps.load-pr.outputs.head-sha }}
+          PR_BASE_SHA: ${{ steps.load-pr.outputs.base-sha }}
+        with:
+          github-token: ${{ secrets.UPDATE_BIOME_SCHEMA_TOKEN }}
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const issueNumber = Number(process.env.PR_NUMBER);
+            const headSha = process.env.PR_HEAD_SHA;
+            const baseSha = process.env.PR_BASE_SHA;
+            const verdictCommentMarker = "<!-- dependabot-claude-review-verdict -->";
+            const claudeReviewCommentPrefix = "【Claude review】";
+            const validationErrors = [];
+            const rawResult = process.env.CLAUDE_REVIEW_RESULT?.trim() ?? "";
+            let parsedResult = null;
+            let verdictPublisherLogin = "";
+            let currentHeadFindingCount = 0;
+
+            try {
+              const { data: authenticatedUser } =
+                await github.rest.users.getAuthenticated();
+              verdictPublisherLogin = String(authenticatedUser.login ?? "");
+            } catch (error) {
+              core.warning(
+                `Failed to resolve the authenticated verdict publisher: ${error.message}`,
+              );
+            }
+            if (!verdictPublisherLogin) {
+              validationErrors.push(
+                "Failed to resolve the authenticated verdict publisher login.",
+              );
+            }
+
+            if (process.env.CLAUDE_REVIEW_OUTCOME !== "success") {
+              validationErrors.push(
+                `Claude review step finished with outcome=${process.env.CLAUDE_REVIEW_OUTCOME}.`,
+              );
+            }
+
+            if (!rawResult) {
+              validationErrors.push(
+                "Claude review did not emit a machine-readable structured_output payload.",
+              );
+            } else {
+              try {
+                parsedResult = JSON.parse(rawResult);
+              } catch (error) {
+                validationErrors.push(
+                  `Failed to parse Claude review structured_output JSON: ${error.message}`,
+                );
+              }
+            }
+
+            if (verdictPublisherLogin) {
+              const reviewComments = await github.paginate(
+                github.rest.pulls.listReviewComments,
+                {
+                  owner,
+                  repo,
+                  pull_number: issueNumber,
+                  per_page: 100,
+                },
+              );
+              currentHeadFindingCount = reviewComments.filter(
+                (comment) =>
+                  String(comment.user?.login ?? "") === verdictPublisherLogin &&
+                  String(comment.commit_id ?? comment.original_commit_id ?? "") ===
+                    headSha &&
+                  String(comment.body ?? "").startsWith(claudeReviewCommentPrefix),
+              ).length;
+            }
+
+            if (parsedResult) {
+              if (Number(parsedResult.pr_number) !== issueNumber) {
+                validationErrors.push(
+                  `Claude review verdict pr_number=${parsedResult.pr_number} did not match PR #${issueNumber}.`,
+                );
+              }
+              if (String(parsedResult.head_sha ?? "") !== headSha) {
+                validationErrors.push(
+                  `Claude review verdict head_sha=${parsedResult.head_sha ?? ""} did not match ${headSha}.`,
+                );
+              }
+              if (String(parsedResult.base_sha ?? "") !== baseSha) {
+                validationErrors.push(
+                  `Claude review verdict base_sha=${parsedResult.base_sha ?? ""} did not match ${baseSha}.`,
+                );
+              }
+              if (!["pass", "fail"].includes(String(parsedResult.review_status ?? ""))) {
+                validationErrors.push("Claude review verdict review_status must be pass or fail.");
+              }
+              if (
+                !Number.isInteger(parsedResult.finding_count) ||
+                parsedResult.finding_count < 0
+              ) {
+                validationErrors.push(
+                  "Claude review verdict finding_count must be a non-negative integer.",
+                );
+              }
+              if (String(parsedResult.summary ?? "").trim().length === 0) {
+                validationErrors.push("Claude review verdict summary must be non-empty.");
+              }
+              if (
+                parsedResult.review_status === "pass" &&
+                Number(parsedResult.finding_count) !== 0
+              ) {
+                validationErrors.push(
+                  "Claude review verdict cannot report pass when finding_count is non-zero.",
+                );
+              }
+              if (Number(parsedResult.finding_count) !== currentHeadFindingCount) {
+                validationErrors.push(
+                  `Claude review verdict finding_count=${parsedResult.finding_count} did not match the actual inline finding count (${currentHeadFindingCount}).`,
+                );
+              }
+              if (
+                parsedResult.review_status === "pass" &&
+                currentHeadFindingCount !== 0
+              ) {
+                validationErrors.push(
+                  "Claude review verdict cannot report pass while current-head Claude inline findings still exist.",
+                );
+              }
+            }
+
+            const normalizedFindingCount = Number.isInteger(parsedResult?.finding_count)
+              ? parsedResult.finding_count
+              : 0;
+
+            const verdict =
+              validationErrors.length === 0
+                ? {
+                    pr_number: issueNumber,
+                    head_sha: headSha,
+                    base_sha: baseSha,
+                    review_status: parsedResult.review_status,
+                    finding_count: parsedResult.finding_count,
+                    summary: String(parsedResult.summary).trim(),
+                  }
+                : {
+                    pr_number: issueNumber,
+                    head_sha: headSha,
+                    base_sha: baseSha,
+                    review_status: "fail",
+                    finding_count: Math.max(
+                      normalizedFindingCount,
+                      currentHeadFindingCount,
+                      1,
+                    ),
+                    summary:
+                      "Claude review の機械可読 verdict を検証できなかったため、自動承認を停止します。",
+                  };
+
+            const verdictPayload = {
+              ...verdict,
+              workflow_run_id: context.runId,
+              workflow_run_attempt: context.runAttempt,
+            };
+            const body = [
+              verdictCommentMarker,
+              "Dependabot Claude review verdict",
+              "",
+              "```json",
+              JSON.stringify(verdictPayload, null, 2),
+              "```",
+            ].join("\n");
+            const { data: currentPullRequest } = await github.rest.pulls.get({
+              owner,
+              repo,
+              pull_number: issueNumber,
+            });
+            const currentHeadSha = String(currentPullRequest.head?.sha ?? "");
+            const currentBaseSha = String(currentPullRequest.base?.sha ?? "");
+
+            if (currentHeadSha !== headSha || currentBaseSha !== baseSha) {
+              core.info(
+                `Skipping verdict comment update for stale Claude review run on head=${headSha}, base=${baseSha}; current PR state is head=${currentHeadSha || "UNKNOWN"}, base=${currentBaseSha || "UNKNOWN"}.`,
+              );
+              return;
+            }
+
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner,
+              repo,
+              issue_number: issueNumber,
+              per_page: 100,
+            });
+            const existingComment = verdictPublisherLogin
+              ? [...comments]
+                  .reverse()
+                  .find(
+                    (comment) =>
+                      typeof comment.body === "string" &&
+                      comment.body.includes(verdictCommentMarker) &&
+                      comment.user?.login === verdictPublisherLogin,
+                  )
+              : null;
+
+            if (existingComment) {
+              await github.rest.issues.updateComment({
+                owner,
+                repo,
+                comment_id: existingComment.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number: issueNumber,
+                body,
+              });
+            }
+
+            if (validationErrors.length > 0) {
+              core.setFailed(validationErrors.join(" "));
+            }
+
           # Optional: Customize review based on file types
           # prompt: |
           #   Review this PR focusing on:
@@ -69,13 +543,13 @@ jobs:
           #   - For API endpoints: Security, input validation, and error handling
           #   - For React components: Performance, accessibility, and best practices
           #   - For tests: Coverage, edge cases, and test quality
-          
+
           # Optional: Different prompts for different authors
           # prompt: |
-          #   ${{ github.event.pull_request.author_association == 'FIRST_TIME_CONTRIBUTOR' && 
+          #   ${{ github.event.pull_request.author_association == 'FIRST_TIME_CONTRIBUTOR' &&
           #   'Welcome! Please review this PR from a first-time contributor. Be encouraging and provide detailed explanations for any suggestions.' ||
           #   'Please provide a thorough code review focusing on our coding standards and best practices.' }}
-          
+
           # Optional: Skip review for certain conditions
           # if: |
           #   !contains(github.event.pull_request.title, '[skip-review]') &&

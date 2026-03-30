@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     # Only run on Dependabot PRs that update @biomejs/biome
     if: |
-      github.actor == 'dependabot[bot]' &&
+      (github.actor == 'app/dependabot' || github.actor == 'dependabot[bot]') &&
       contains(github.head_ref, 'dependabot') &&
       contains(github.head_ref, 'biome')
     
