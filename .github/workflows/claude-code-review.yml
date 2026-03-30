@@ -18,7 +18,7 @@ jobs:
     steps:
       - name: Collect target pull requests
         id: collect
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           github-token: ${{ secrets.UPDATE_BIOME_SCHEMA_TOKEN }}
           script: |
@@ -203,7 +203,7 @@ jobs:
         id: load-pr
         env:
           PR_NUMBER: ${{ matrix.pr-number }}
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           github-token: ${{ secrets.UPDATE_BIOME_SCHEMA_TOKEN }}
           script: |
@@ -313,7 +313,7 @@ jobs:
       - name: Publish machine-readable review verdict
         id: publish-verdict
         if: always() && steps.load-pr.outputs.skip != 'true'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         env:
           CLAUDE_REVIEW_OUTCOME: ${{ steps.claude-review.outcome }}
           CLAUDE_REVIEW_RESULT: ${{ steps.claude-review.outputs.structured_output || '' }}
