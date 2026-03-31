@@ -156,7 +156,7 @@ jobs:
       env:
         POLLING_MAX: 10
         POLLING_DURATION_MILLISECONDS: 5000
-      uses: actions/github-script@v2
+      uses: actions/github-script@v8
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         result-encoding: string
