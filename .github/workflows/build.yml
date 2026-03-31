@@ -74,7 +74,7 @@ jobs:
         stack config set system-ghc --global true
         stack config set install-ghc --global false
     - name: Setup Node
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@v6
       with:
         node-version-file: '.nvmrc'
     - name: Export values
