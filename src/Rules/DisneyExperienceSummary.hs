@@ -1,7 +1,7 @@
 {-# LANGUAGE DeriveGeneric, DuplicateRecordFields, OverloadedStrings #-}
 module Rules.DisneyExperienceSummary (rules) where
 
-import           Control.Monad                    (filterM, forM_)
+import           Control.Monad                    (filterM)
 import           Control.Monad.Reader             (asks)
 import           Control.Monad.Trans              (MonadTrans (..))
 import           Data.Aeson                       (encode)
@@ -267,6 +267,19 @@ loadDisneyOfferPolicies = do
         then input auto "./contents/config/disney/OfferDeliveryPolicies.dhall"
         else return []
 
+loadActiveDisneyOffers :: IO [Offer]
+loadActiveDisneyOffers = filter offerIsActive <$> loadDisneyOffers
+
+loadActiveOfferCandidates :: IO [OfferCandidate]
+loadActiveOfferCandidates = do
+    activeOffers <- loadActiveDisneyOffers
+    offerPolicies <- loadDisneyOfferPolicies
+    pure $ buildOfferCandidates activeOffers offerPolicies
+
+loadActiveOfferRedirects :: IO [(String, String)]
+loadActiveOfferRedirects =
+    map (\offer -> (offerId offer, offerDestinationUrl offer)) <$> loadActiveDisneyOffers
+
 normalizeRatio :: Double -> Double
 normalizeRatio = max 0 . min 1
 
@@ -390,11 +403,11 @@ pickFeaturedOfferCandidate candidates = do
             <> compare (negate $ metricActualShare left) (negate $ metricActualShare right)
             <> compare (offerId $ candidateOffer $ metricCandidate right) (offerId $ candidateOffer $ metricCandidate left)
 
-offerRedirectPath :: Offer -> FilePath
-offerRedirectPath offer = joinPath ["disney_experience_summary", "go", offerId offer, "index.html"]
+offerRedirectPath :: FilePath
+offerRedirectPath = joinPath ["disney_experience_summary", "go", "index.html"]
 
 offerTrackingPath :: Offer -> String
-offerTrackingPath offer = Posix.makeRelative "disney_experience_summary" (offerRedirectPath offer)
+offerTrackingPath = offerDestinationUrl
 
 appendQueryParams :: String -> [(String, String)] -> String
 appendQueryParams rawUrl queryParams
@@ -437,20 +450,32 @@ escapeHtmlAttr = concatMap escapeChar
 escapeHtmlText :: String -> String
 escapeHtmlText = escapeHtmlAttr
 
-offerRedirectHtml :: String -> String
-offerRedirectHtml destinationUrl =
+offerRedirectHtml :: String -> [(String, String)] -> String
+offerRedirectHtml fallbackUrl destinations =
+    let destinationsJs = "{"
+            ++ intercalate "," (map renderDestination destinations)
+            ++ "}"
+        renderDestination (destinationId, destinationUrl) =
+            show destinationId ++ ":" ++ show destinationUrl
+    in
     "<!doctype html><html lang=\"ja\"><head><meta charset=\"utf-8\">"
     ++ "<meta name=\"robots\" content=\"noindex,nofollow\">"
     ++ "<meta http-equiv=\"refresh\" content=\"0;url="
-    ++ escapeHtmlAttr destinationUrl
+    ++ escapeHtmlAttr fallbackUrl
     ++ "\">"
     ++ "<title>Redirecting...</title>"
-    ++ "<script>window.location.replace("
-    ++ show destinationUrl
-    ++ ");</script>"
+    ++ "<script>"
+    ++ "const fallbackUrl="
+    ++ show fallbackUrl
+    ++ ";const destinations="
+    ++ destinationsJs
+    ++ ";const offerId=new URLSearchParams(window.location.search).get('offer');"
+    ++ "const destinationUrl=(offerId&&destinations[offerId])||fallbackUrl;"
+    ++ "window.location.replace(destinationUrl);"
+    ++ "</script>"
     ++ "</head><body><p>遷移中です。"
     ++ "<a href=\""
-    ++ escapeHtmlAttr destinationUrl
+    ++ escapeHtmlAttr fallbackUrl
     ++ "\">こちら</a></p></body></html>"
 
 renderFeaturedOfferHtml :: [OfferCandidate] -> String
@@ -624,18 +649,9 @@ rules = do
     mapM_ (mdRule disneyExperienceSummarySnapshot) items
     faIcons <- asks pcFaIcons
     isPreview <- asks pcIsPreview
-    favorites <- lift $ preprocess loadDisneyFavorites
-    hotels <- lift $ preprocess loadDisneyHotels
-    offers <- lift $ preprocess loadDisneyOffers
-    offerPolicies <- lift $ preprocess loadDisneyOfferPolicies
-    hotelsLastModified <- lift $ preprocess getHotelsLastModified
-    logsLastModified <- lift $ preprocess getLogsLastModified
-    tagConfig <- lift $ preprocess tagConfigMap
-    let activeOffers = filter offerIsActive offers
-        activeOfferCandidates = buildOfferCandidates activeOffers offerPolicies
-        featuredOfferHtml = renderFeaturedOfferHtml activeOfferCandidates
-    let totalStays = sum $ map stays hotels
+    disneyConfigDependency <- lift $ makePatternDependency disneyConfigPath
     lift $ do
+        match disneyConfigPath $ compile getResourceBody
         -- フォントファイルのコピー
         match (fromGlob $ joinPath [contentsRoot, "fonts", "*.otf"]) $ do
             route $ gsubRoute "contents/" $ const ""
@@ -646,11 +662,6 @@ rules = do
             route $ gsubRoute "contents/" $ const ""
             compile copyFileCompiler
 
-        forM_ activeOffers $ \offer -> do
-            create [fromFilePath $ offerRedirectPath offer] $ do
-                route idRoute
-                compile $ makeItem $ offerRedirectHtml $ offerDestinationUrl offer
-
         -- JSON可視化データの生成
         create [fromFilePath "data/disney-experience-visualization.json"] $ do
             route idRoute
@@ -659,48 +670,63 @@ rules = do
                 vizData <- generateVisualizationData disneyLogs
                 makeItem $ BL.toStrict $ encode vizData
 
-        match disneyExperienceSummaryJPPath $ do
-            route $ gsubRoute (contentsRoot </> "pages/") (const mempty)
-            compile $ do
-                disneyLogs <- sortByNum <$> loadAllSnapshots disneyLogsPattern disneyExperienceSummarySnapshot
-                let totalLogs = length disneyLogs
-                -- ユニークなタグリストを作成
-                uniqueTags <- do
-                    allTags <- sequence $ map (\logItem -> do
-                        mTags <- getMetadataField (itemIdentifier logItem) "disney-tags"
-                        case mTags of
-                            Just tagsStr -> return $ map trimMeta $ filter (not . null) $ splitAll "," tagsStr
-                            Nothing      -> return []
-                        ) disneyLogs
-                    return $ sort $ nub $ concat allTags
+        rulesExtraDependencies [disneyConfigDependency] $ do
+            create [fromFilePath offerRedirectPath] $ do
+                route idRoute
+                compile $ do
+                    activeOfferRedirects <- unsafeCompiler loadActiveOfferRedirects
+                    makeItem $ offerRedirectHtml disneyExperienceSummaryPagePath activeOfferRedirects
 
-                disneyExperienceSummaryCtx <- mconcatM [
-                    pure $ constField "title" "Ponchi's Disney Journey"
-                  , pure $ constField "font_path" "../fonts/waltograph42.otf"
-                  , pure $ constField "is_preview" (show isPreview)
-                  , pure $ listField "additional-css" (field "css" (return . itemBody)) (return $ map (\css -> Item (fromString css) css) ["../style/disney_experience_summary_only.css"])
-                 , pure $ listField "additional-js" (field "js" (return . itemBody)) (return $ map (\js -> Item (fromString js) js) ["https://d3js.org/d3.v7.min.js", "../js/disney-tag-filter.js", "../js/disney-experience-visualizations.js"])
-                  , pure siteCtx
-                  , pure defaultContext
-                  , constField "about-body"
-                        <$> loadSnapshotBody aboutIdent disneyExperienceSummarySnapshot
-                  , pure $ listField "disney-logs" (disneyLogCtx tagConfig) (return disneyLogs)
-                  , pure $ constField "featured-offer-html" featuredOfferHtml
-                  , pure $ listField "unique-tags" (field "name" (return . itemBody) <> field "color" (return . flip getTagColor tagConfig . itemBody) <> field "link" (return . flip getTagLink tagConfig . itemBody)) (return $ map (\tag -> Item (fromString tag) tag) uniqueTags)
-                  , pure $ favoritesListField "favorite-works" "works" favorites
-                  , pure $ favoritesListField "favorite-characters" "characters" favorites
-                  , pure $ favoritesListField "favorite-park-contents" "park-contents" favorites
-                  , pure $ listField "hotel-stays" hotelCtx (return $ map (\h -> Item (fromString $ hotelCode h) h) hotels)
-                  , pure $ constField "hotels-last-modified" hotelsLastModified
-                  , pure $ constField "hotels-total-stays" (show totalStays)
-                  , pure $ constField "logs-total-count" (show totalLogs)
-                  , pure $ constField "logs-last-modified" logsLastModified
+            match disneyExperienceSummaryJPPath $ do
+                route $ gsubRoute (contentsRoot </> "pages/") (const mempty)
+                compile $ do
+                    disneyLogs <- sortByNum <$> loadAllSnapshots disneyLogsPattern disneyExperienceSummarySnapshot
+                    favorites <- unsafeCompiler loadDisneyFavorites
+                    hotels <- unsafeCompiler loadDisneyHotels
+                    activeOfferCandidates <- unsafeCompiler loadActiveOfferCandidates
+                    hotelsLastModified <- unsafeCompiler getHotelsLastModified
+                    logsLastModified <- unsafeCompiler getLogsLastModified
+                    tagConfig <- unsafeCompiler tagConfigMap
+                    let totalLogs = length disneyLogs
+                        totalStays = sum $ map stays hotels
+                        featuredOfferHtml = renderFeaturedOfferHtml activeOfferCandidates
+                    -- ユニークなタグリストを作成
+                    uniqueTags <- do
+                        allTags <- sequence $ map (\logItem -> do
+                            mTags <- getMetadataField (itemIdentifier logItem) "disney-tags"
+                            case mTags of
+                                Just tagsStr -> return $ map trimMeta $ filter (not . null) $ splitAll "," tagsStr
+                                Nothing      -> return []
+                            ) disneyLogs
+                        return $ sort $ nub $ concat allTags
+
+                    disneyExperienceSummaryCtx <- mconcatM [
+                        pure $ constField "title" "Ponchi's Disney Journey"
+                      , pure $ constField "font_path" "../fonts/waltograph42.otf"
+                      , pure $ constField "is_preview" (show isPreview)
+                      , pure $ listField "additional-css" (field "css" (return . itemBody)) (return $ map (\css -> Item (fromString css) css) ["../style/disney_experience_summary_only.css"])
+                      , pure $ listField "additional-js" (field "js" (return . itemBody)) (return $ map (\js -> Item (fromString js) js) ["https://d3js.org/d3.v7.min.js", "../js/disney-tag-filter.js", "../js/disney-experience-visualizations.js"])
+                      , pure siteCtx
+                      , pure defaultContext
+                      , constField "about-body"
+                            <$> loadSnapshotBody aboutIdent disneyExperienceSummarySnapshot
+                      , pure $ listField "disney-logs" (disneyLogCtx tagConfig) (return disneyLogs)
+                      , pure $ constField "featured-offer-html" featuredOfferHtml
+                      , pure $ listField "unique-tags" (field "name" (return . itemBody) <> field "color" (return . flip getTagColor tagConfig . itemBody) <> field "link" (return . flip getTagLink tagConfig . itemBody)) (return $ map (\tag -> Item (fromString tag) tag) uniqueTags)
+                      , pure $ favoritesListField "favorite-works" "works" favorites
+                      , pure $ favoritesListField "favorite-characters" "characters" favorites
+                      , pure $ favoritesListField "favorite-park-contents" "park-contents" favorites
+                      , pure $ listField "hotel-stays" hotelCtx (return $ map (\h -> Item (fromString $ hotelCode h) h) hotels)
+                      , pure $ constField "hotels-last-modified" hotelsLastModified
+                      , pure $ constField "hotels-total-stays" (show totalStays)
+                      , pure $ constField "logs-total-count" (show totalLogs)
+                      , pure $ constField "logs-last-modified" logsLastModified
                       ]
-                getResourceBody
-                    >>= applyAsTemplate disneyExperienceSummaryCtx
-                    >>= loadAndApplyTemplate rootTemplate disneyExperienceSummaryCtx
-                    >>= relativizeUrls
-                    >>= FA.render faIcons
+                    getResourceBody
+                        >>= applyAsTemplate disneyExperienceSummaryCtx
+                        >>= loadAndApplyTemplate rootTemplate disneyExperienceSummaryCtx
+                        >>= relativizeUrls
+                        >>= FA.render faIcons
 
         createRedirects [
             (fromFilePath $ joinPath ["disney_experience_summary", "index.html"], joinPath ["/", "disney_experience_summary", "jp.html"]),
@@ -708,6 +734,8 @@ rules = do
           ]
     where
         disneyExperienceSummarySnapshot = "disneyExperienceSummarySS"
+        disneyConfigPath = fromRegex "^contents/config/disney/.+\\.dhall$"
+        disneyExperienceSummaryPagePath = "/disney_experience_summary/jp.html"
         disneyExperienceSummaryJPPath = fromGlob $ joinPath [contentsRoot, "pages", "disney_experience_summary", "jp.html"]
         rootTemplate = fromFilePath $ joinPath [contentsRoot, "templates", "site", "default.html"]
 

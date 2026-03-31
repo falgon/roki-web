@@ -59,15 +59,26 @@ rules :: [BlogConfig m] -> PageConfReader Rules ()
 rules bcs = do
     faIcons <- asks pcFaIcons
     wOpt <- asks pcWriterOpt
-    projs <- lift $ preprocess renderProjectsList
-    conts <- lift $ preprocess renderContributionsTable
+    projectsConfigDependency <- lift $ makePatternDependency projectsDependencyPath
+    contributionsConfigDependency <- lift $ makePatternDependency contributionsDependencyPath
     lift $ do
+        match projectsConfigPattern $ compile getResourceBody
+        match contributionsConfigPattern $ compile getResourceBody
+        match contributionsTypeConfigPath $ compile getResourceBody
         match aboutPattern $ compile $
             pandocCompilerWithTransformM readerOptions wOpt (walkM mermaidTransform)
                 >>= saveSnapshot aboutSnapshot
+        rulesExtraDependencies [projectsConfigDependency] $
+            create [projectsCachePath] $
+                compile $ makeItem =<< unsafeCompiler renderProjectsList
+        rulesExtraDependencies [contributionsConfigDependency] $
+            create [contributionsCachePath] $
+                compile $ makeItem =<< unsafeCompiler renderContributionsTable
         match indexPath $ do
             route $ gsubRoute (contentsRoot </> "pages/") (const mempty)
             compile $ do
+                projs <- loadBody projectsCachePath
+                conts <- loadBody contributionsCachePath
                 let baseCtx = mconcatMap (uncurry constField) [
                         ("title", siteName)
                       , ("projs", projs)
@@ -89,9 +100,14 @@ rules bcs = do
                     >>= FA.render faIcons
     where
         aboutPattern = fromGlob $ joinPath [contentsRoot, "about", "*.md"]
+        projectsConfigPattern = fromGlob $ joinPath [contentsRoot, "config", "contributions", "Projects.dhall"]
+        contributionsConfigPattern = fromGlob $ joinPath [contentsRoot, "config", "contributions", "Contributions.dhall"]
+        contributionsTypeConfigPath = fromRegex "^contents/config/contributions/Type/.+\\.dhall$"
+        projectsDependencyPath = projectsConfigPattern .||. contributionsTypeConfigPath
+        contributionsDependencyPath = contributionsConfigPattern .||. contributionsTypeConfigPath
+        projectsCachePath = fromFilePath "top-page-projects-cache"
+        contributionsCachePath = fromFilePath "top-page-contributions-cache"
         sitemapIdent = fromFilePath $ joinPath [contentsRoot, "about", "sitemap.md"]
         updatesIdent = fromFilePath $ joinPath [contentsRoot, "about", "updates.md"]
         indexPath = fromGlob $ joinPath [contentsRoot, "pages", "index.html"]
         rootTemplate = fromFilePath $ joinPath [contentsRoot, "templates", "site", "default.html"]
-
-

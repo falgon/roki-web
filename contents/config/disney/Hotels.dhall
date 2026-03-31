@@ -113,7 +113,7 @@ in  [ { hotelCodeRaw = "FSH"
       , hotelColorRaw = "#854454"
       }
     , { hotelCodeRaw = "DHM"
-      , staysRaw = 4
+      , staysRaw = 5
       , detailsRaw =
           detailsToPaths
             [ makeNode

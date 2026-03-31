@@ -9,24 +9,24 @@
         "url": "git+https://github.com/falgon/roki-web.git"
     },
     "devDependencies": {
-        "@biomejs/biome": "^2.4.3",
+        "@biomejs/biome": "^2.4.10",
         "@creativebulma/bulma-tooltip": "^1.2.0",
         "@fortawesome/fontawesome-svg-core": "^7.2.0",
         "@fortawesome/free-brands-svg-icons": "^7.2.0",
         "@fortawesome/free-solid-svg-icons": "^7.2.0",
         "@types/d3": "^7.4.3",
-        "@vitest/coverage-v8": "^4.0.18",
-        "@vitest/ui": "^4.0.18",
+        "@vitest/coverage-v8": "^4.1.2",
+        "@vitest/ui": "^4.1.0",
         "dotenv": "^17.3.1",
-        "happy-dom": "^20.6.3",
-        "katex": "^0.16.28",
+        "happy-dom": "^20.8.9",
+        "katex": "^0.16.44",
         "playwright": "^1.58.2",
-        "svgo": "^4.0.0",
-        "terser": "^5.46.0",
+        "svgo": "^4.0.1",
+        "terser": "^5.46.1",
         "tsx": "^4.21.0",
-        "typescript": "^5.9.3",
-        "vite": "^7.3.1",
-        "vitest": "^4.0.18"
+        "typescript": "^6.0.2",
+        "vite": "^8.0.3",
+        "vitest": "^4.1.0"
     },
     "scripts": {
         "gen:disney-logs": "tsx tools/gen-disney-logs.ts",
@@ -43,6 +43,6 @@
         "bulma": "^1.0.4",
         "d3": "^7.9.0",
         "mathjs": "^15.1.1",
-        "sass": "^1.97.3"
+        "sass": "^1.98.0"
     }
 }
