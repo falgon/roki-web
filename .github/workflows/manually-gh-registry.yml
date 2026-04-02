@@ -33,7 +33,7 @@ jobs:
       enable_notify: ${{ steps.enable_notify_step.outputs.flag }}
     steps:
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         submodules: true
     - name: Setup environment variables
@@ -83,7 +83,7 @@ jobs:
       success: ${{ steps.build.conclusion == 'success' }}
     steps:
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         submodules: true
     - name: Set up Docker Buildx
@@ -139,7 +139,7 @@ jobs:
       success: ${{ steps.build.conclusion == 'success' }}
     steps:
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         submodules: true
     - name: Set up Docker Buildx
@@ -187,7 +187,7 @@ jobs:
       name: manually-gh-registry
     steps:
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         sparse-checkout: |
           tools/github-actions
