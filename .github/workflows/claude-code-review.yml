@@ -1,4 +1,4 @@
-name: Claude Code Review for Bot PRs
+name: Claude Code Review for Bot PR
 
 on:
   pull_request:
@@ -15,14 +15,14 @@ jobs:
     if: |
       github.event.pull_request.user.login == 'dependabot[bot]' ||
       github.event.pull_request.user.login == 'github-actions[bot]'
-    
+
     runs-on: ubuntu-latest
     # PR レビューコメント投稿のため write 権限が必要
     permissions:
       contents: read
       pull-requests: write
       issues: write
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -61,7 +61,7 @@ jobs:
           # 同一PRでコメントを増やさずに追跡コメントを更新する
           use_sticky_comment: "true"
           track_progress: "true"
-          
+
           # Optional: Customize review based on file types
           # prompt: |
           #   Review this PR focusing on:
@@ -69,13 +69,13 @@ jobs:
           #   - For API endpoints: Security, input validation, and error handling
           #   - For React components: Performance, accessibility, and best practices
           #   - For tests: Coverage, edge cases, and test quality
-          
+
           # Optional: Different prompts for different authors
           # prompt: |
-          #   ${{ github.event.pull_request.author_association == 'FIRST_TIME_CONTRIBUTOR' && 
+          #   ${{ github.event.pull_request.author_association == 'FIRST_TIME_CONTRIBUTOR' &&
           #   'Welcome! Please review this PR from a first-time contributor. Be encouraging and provide detailed explanations for any suggestions.' ||
           #   'Please provide a thorough code review focusing on our coding standards and best practices.' }}
-          
+
           # Optional: Skip review for certain conditions
           # if: |
           #   !contains(github.event.pull_request.title, '[skip-review]') &&
