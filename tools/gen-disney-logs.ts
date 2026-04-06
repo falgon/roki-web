@@ -1615,12 +1615,26 @@ async function runCodexExec(
                 cwd: REPO_ROOT,
                 stdio: ["pipe", "ignore", "inherit"],
             });
+            let settled = false;
             let timedOut = false;
             let forceKillTimer: NodeJS.Timeout | null = null;
+            const clearDeadlineTimer = (): void => {
+                if (timeoutTimer !== null) {
+                    clearTimeout(timeoutTimer);
+                }
+            };
+            const clearForceKillTimer = (): void => {
+                if (forceKillTimer !== null) {
+                    clearTimeout(forceKillTimer);
+                }
+            };
             const timeoutTimer =
                 codexTimeoutSeconds === null
                     ? null
                     : setTimeout(() => {
+                          if (settled) {
+                              return;
+                          }
                           timedOut = true;
                           reportProgress(
                               `codex exec がタイムアウトしたため終了を試みます。seconds=${codexTimeoutSeconds}`,
@@ -1629,23 +1643,23 @@ async function runCodexExec(
                           forceKillTimer = setTimeout(() => child.kill("SIGKILL"), 5_000);
                       }, codexTimeoutSeconds * 1_000);
 
-            const clearTimers = (): void => {
-                if (timeoutTimer !== null) {
-                    clearTimeout(timeoutTimer);
-                }
-                if (forceKillTimer !== null) {
-                    clearTimeout(forceKillTimer);
-                }
-            };
-
             child.on("error", (error) => {
-                clearTimers();
+                settled = true;
+                clearDeadlineTimer();
+                clearForceKillTimer();
                 reject(error);
+            });
+            child.on("exit", () => {
+                settled = true;
+                clearDeadlineTimer();
+                clearForceKillTimer();
             });
             child.stdin.write(prompt);
             child.stdin.end();
             child.on("close", (code) => {
-                clearTimers();
+                settled = true;
+                clearDeadlineTimer();
+                clearForceKillTimer();
                 if (timedOut) {
                     reject(
                         new Error(
