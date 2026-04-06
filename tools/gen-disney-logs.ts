@@ -201,74 +201,151 @@ function parsePositiveIntegerOption(rawValue: string, optionName: string): numbe
     return parsedValue;
 }
 
+type ParsedArgsState = Omit<ParsedArgs, "urls">;
+
+type OptionParser = (
+    arg: string,
+    args: string[],
+    index: number,
+    state: ParsedArgsState,
+) => number | null;
+
+function createParsedArgsState(): ParsedArgsState {
+    return {
+        showHelp: false,
+        codexModel: null,
+        codexTimeoutSeconds: null,
+        selectFirstInstagramImageWithoutHumanCloseup: false,
+        instagramMinImageCount: DEFAULT_INSTAGRAM_MIN_IMAGE_COUNT,
+    };
+}
+
+function requireOptionValue(args: string[], index: number, errorMessage: string): string {
+    const nextArg = args[index + 1];
+    if (nextArg) {
+        return nextArg;
+    }
+    throw new Error(errorMessage);
+}
+
+function applyFlagOption(arg: string, state: ParsedArgsState): boolean {
+    switch (arg) {
+        case "--help":
+        case "-h":
+            state.showHelp = true;
+            return true;
+        case "--instagram-first-nonhuman-image":
+            state.selectFirstInstagramImageWithoutHumanCloseup = true;
+            return true;
+        case "--no-instagram-first-nonhuman-image":
+            state.selectFirstInstagramImageWithoutHumanCloseup = false;
+            return true;
+        default:
+            return false;
+    }
+}
+
+function parseInstagramMinImagesOption(
+    arg: string,
+    args: string[],
+    index: number,
+    state: ParsedArgsState,
+): number | null {
+    if (arg === "--instagram-min-images") {
+        state.instagramMinImageCount = parsePositiveIntegerOption(
+            requireOptionValue(args, index, "--instagram-min-images には整数を指定してください。"),
+            "--instagram-min-images",
+        );
+        return index + 1;
+    }
+    if (arg.startsWith("--instagram-min-images=")) {
+        state.instagramMinImageCount = parsePositiveIntegerOption(
+            arg.slice("--instagram-min-images=".length),
+            "--instagram-min-images",
+        );
+        return index;
+    }
+    return null;
+}
+
+function parseCodexModelOption(
+    arg: string,
+    args: string[],
+    index: number,
+    state: ParsedArgsState,
+): number | null {
+    if (arg === "--codex-model") {
+        state.codexModel = normalizeText(
+            requireOptionValue(args, index, "--codex-model にはモデル名を指定してください。"),
+        );
+        return index + 1;
+    }
+    if (arg.startsWith("--codex-model=")) {
+        state.codexModel = normalizeText(arg.slice("--codex-model=".length));
+        if (state.codexModel.length === 0) {
+            throw new Error("--codex-model= にはモデル名を指定してください。");
+        }
+        return index;
+    }
+    return null;
+}
+
+function parseCodexTimeoutSecondsOption(
+    arg: string,
+    args: string[],
+    index: number,
+    state: ParsedArgsState,
+): number | null {
+    if (arg === "--codex-timeout-seconds") {
+        state.codexTimeoutSeconds = parsePositiveIntegerOption(
+            requireOptionValue(args, index, "--codex-timeout-seconds には秒数を指定してください。"),
+            "--codex-timeout-seconds",
+        );
+        return index + 1;
+    }
+    if (arg.startsWith("--codex-timeout-seconds=")) {
+        state.codexTimeoutSeconds = parsePositiveIntegerOption(
+            arg.slice("--codex-timeout-seconds=".length),
+            "--codex-timeout-seconds",
+        );
+        return index;
+    }
+    return null;
+}
+
+const OPTION_PARSERS: readonly OptionParser[] = [
+    parseInstagramMinImagesOption,
+    parseCodexModelOption,
+    parseCodexTimeoutSecondsOption,
+];
+
+function parseOption(
+    arg: string,
+    args: string[],
+    index: number,
+    state: ParsedArgsState,
+): number | null {
+    for (const parser of OPTION_PARSERS) {
+        const nextIndex = parser(arg, args, index, state);
+        if (nextIndex !== null) {
+            return nextIndex;
+        }
+    }
+    return null;
+}
+
 function parseArgs(args: string[]): ParsedArgs {
     const urls: string[] = [];
-    let showHelp = false;
-    let codexModel: string | null = null;
-    let codexTimeoutSeconds: number | null = null;
-    let selectFirstInstagramImageWithoutHumanCloseup = false;
-    let instagramMinImageCount = DEFAULT_INSTAGRAM_MIN_IMAGE_COUNT;
+    const state = createParsedArgsState();
 
     for (let index = 0; index < args.length; index += 1) {
         const arg = args[index] ?? "";
-        if (arg === "--help" || arg === "-h") {
-            showHelp = true;
+        if (applyFlagOption(arg, state)) {
             continue;
         }
-        if (arg === "--instagram-first-nonhuman-image") {
-            selectFirstInstagramImageWithoutHumanCloseup = true;
-            continue;
-        }
-        if (arg === "--no-instagram-first-nonhuman-image") {
-            selectFirstInstagramImageWithoutHumanCloseup = false;
-            continue;
-        }
-        if (arg === "--instagram-min-images") {
-            const nextArg = args[index + 1];
-            if (!nextArg) {
-                throw new Error("--instagram-min-images には整数を指定してください。");
-            }
-            instagramMinImageCount = parsePositiveIntegerOption(nextArg, "--instagram-min-images");
-            index += 1;
-            continue;
-        }
-        if (arg.startsWith("--instagram-min-images=")) {
-            instagramMinImageCount = parsePositiveIntegerOption(
-                arg.slice("--instagram-min-images=".length),
-                "--instagram-min-images",
-            );
-            continue;
-        }
-        if (arg === "--codex-model") {
-            const nextArg = args[index + 1];
-            if (!nextArg) {
-                throw new Error("--codex-model にはモデル名を指定してください。");
-            }
-            codexModel = normalizeText(nextArg);
-            index += 1;
-            continue;
-        }
-        if (arg.startsWith("--codex-model=")) {
-            codexModel = normalizeText(arg.slice("--codex-model=".length));
-            if (codexModel.length === 0) {
-                throw new Error("--codex-model= にはモデル名を指定してください。");
-            }
-            continue;
-        }
-        if (arg === "--codex-timeout-seconds") {
-            const nextArg = args[index + 1];
-            if (!nextArg) {
-                throw new Error("--codex-timeout-seconds には秒数を指定してください。");
-            }
-            codexTimeoutSeconds = parsePositiveIntegerOption(nextArg, "--codex-timeout-seconds");
-            index += 1;
-            continue;
-        }
-        if (arg.startsWith("--codex-timeout-seconds=")) {
-            codexTimeoutSeconds = parsePositiveIntegerOption(
-                arg.slice("--codex-timeout-seconds=".length),
-                "--codex-timeout-seconds",
-            );
+        const nextIndex = parseOption(arg, args, index, state);
+        if (nextIndex !== null) {
+            index = nextIndex;
             continue;
         }
         urls.push(arg);
@@ -276,11 +353,7 @@ function parseArgs(args: string[]): ParsedArgs {
 
     return {
         urls,
-        showHelp,
-        codexModel,
-        codexTimeoutSeconds,
-        selectFirstInstagramImageWithoutHumanCloseup,
-        instagramMinImageCount,
+        ...state,
     };
 }
 
