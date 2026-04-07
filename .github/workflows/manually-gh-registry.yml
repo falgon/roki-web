@@ -33,7 +33,7 @@ jobs:
       enable_notify: ${{ steps.enable_notify_step.outputs.flag }}
     steps:
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         submodules: true
     - name: Setup environment variables
@@ -83,11 +83,11 @@ jobs:
       success: ${{ steps.build.conclusion == 'success' }}
     steps:
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         submodules: true
     - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
+      uses: docker/setup-buildx-action@v4
     - name: Clear disk space
       run: |
         docker system prune -a --volumes -f
@@ -96,7 +96,7 @@ jobs:
         df -h
     - name: Login to GitHub Container Registry
       if: needs.setup.outputs.to_push == 'true'
-      uses: docker/login-action@v3
+      uses: docker/login-action@v4
       with:
         registry: ghcr.io
         username: ${{ github.actor }}
@@ -139,18 +139,18 @@ jobs:
       success: ${{ steps.build.conclusion == 'success' }}
     steps:
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         submodules: true
     - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
+      uses: docker/setup-buildx-action@v4
     - name: Clear disk space
       run: |
         docker system prune -a --volumes -f
         sudo rm -rfv "/usr/local/share/boost" "$AGENT_TOOLSDIRECTORY"
     - name: Login to GitHub Container Registry
       if: needs.setup.outputs.to_push == 'true'
-      uses: docker/login-action@v3
+      uses: docker/login-action@v4
       with:
         registry: ghcr.io
         username: ${{ github.actor }}
@@ -187,7 +187,7 @@ jobs:
       name: manually-gh-registry
     steps:
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         sparse-checkout: |
           tools/github-actions
@@ -228,10 +228,10 @@ jobs:
           ${{ runner.os }}-stack-pantry-v2-
     - name: Install dependencies
       run: |
-        # Extract packages from the script header
-        PACKAGES=$(grep -o "package [a-z-]*" tools/github-actions/NotifyBuildCompletion.hs | sed 's/package //' | tr '\n' ' ')
-        # Pre-install packages to populate cache
-        stack --resolver lts-22.33 build $PACKAGES --only-dependencies
+        # Warm the stack cache via the script itself because `stack script`
+        # ignores the repository stack.yaml; this keeps pinned --extra-dep
+        # values coupled to the script header.
+        ./tools/github-actions/NotifyBuildCompletion.hs --help > /dev/null
     - name: Send Email Notification
       env:
         GMAIL_SENDER: ${{ secrets.GMAIL_SENDER }}

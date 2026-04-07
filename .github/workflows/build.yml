@@ -16,7 +16,7 @@ jobs:
     if: github.repository == 'falgon/roki-web'
     steps:
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         submodules: true
     - name: Site generator cache
@@ -74,7 +74,7 @@ jobs:
         stack config set system-ghc --global true
         stack config set install-ghc --global false
     - name: Setup Node
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@v6
       with:
         node-version-file: '.nvmrc'
     - name: Export values
@@ -149,14 +149,14 @@ jobs:
     needs: deploy
     if: github.repository == 'falgon/roki-web'
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
       with:
         submodules: false
     - name: Polling until deployed
       env:
         POLLING_MAX: 10
         POLLING_DURATION_MILLISECONDS: 5000
-      uses: actions/github-script@v2
+      uses: actions/github-script@v8
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         result-encoding: string
