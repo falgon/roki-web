@@ -8,9 +8,9 @@ import           Data.Aeson                       (encode)
 import qualified Data.ByteString.Lazy             as BL
 import           Data.Char                        (isDigit)
 import           Data.Disney.Experience.Generator
-import           Data.List                        (foldl', isPrefixOf,
-                                                   isSuffixOf, nub, sort,
-                                                   sortBy, sortOn)
+import           Data.List                        (foldl', intercalate,
+                                                   isPrefixOf, isSuffixOf, nub,
+                                                   sort, sortBy, sortOn)
 import qualified Data.Map                         as M
 import           Data.Maybe                       (fromMaybe)
 import           Data.Ord                         (comparing)
@@ -111,6 +111,53 @@ data LogImage = LogImage {
   , imageAlt :: String
   } deriving (Show)
 
+data Offer = Offer {
+    offerId          :: String
+  , offerTitle       :: String
+  , offerUrl         :: String
+  , offerCtaLabel    :: String
+  , offerDescription :: Maybe String
+  , offerUtmCampaign :: Maybe String
+  , offerIsActive    :: Bool
+  } deriving (Generic, Show)
+
+instance FromDhall Offer
+
+-- オファー配信ポリシー（公平性と配信最適化の設定）
+data OfferDeliveryPolicy = OfferDeliveryPolicy {
+    policyOfferId               :: String
+  , policyPartnerId             :: String
+  , policyPriority              :: Double
+  , policyTargetShare           :: Double
+  , policyMinShare              :: Double
+  , policyMaxShare              :: Double
+  , policyHistoricalImpressions :: Natural
+  , policyHistoricalClicks      :: Natural
+  , policyExplorationWeight     :: Double
+  } deriving (Generic, Show)
+
+instance FromDhall OfferDeliveryPolicy
+
+-- オファーと配信ポリシーを結合した内部データ
+data OfferCandidate = OfferCandidate {
+    candidateOffer                 :: Offer
+  , candidatePartnerId             :: String
+  , candidatePriority              :: Double
+  , candidateTargetShare           :: Double
+  , candidateMinShare              :: Double
+  , candidateMaxShare              :: Double
+  , candidateHistoricalImpressions :: Natural
+  , candidateHistoricalClicks      :: Natural
+  , candidateExplorationWeight     :: Double
+  } deriving (Show)
+
+-- featured選定時の中間評価情報
+data OfferCandidateMetric = OfferCandidateMetric {
+    metricCandidate   :: OfferCandidate
+  , metricActualShare :: Double
+  , metricScore       :: Double
+  } deriving (Show)
+
 -- Dhallファイルからタグ設定を読み込み
 loadDisneyTags :: IO [TagConfig]
 loadDisneyTags = input auto "./contents/config/disney/Tags.dhall"
@@ -208,6 +255,260 @@ mdRule ss pat = do
 
 loadDisneyFavorites :: IO [Favorite]
 loadDisneyFavorites = input auto "./contents/config/disney/Favorites.dhall"
+
+loadDisneyOffers :: IO [Offer]
+loadDisneyOffers = input auto "./contents/config/disney/Offers.dhall"
+
+loadDisneyOfferPolicies :: IO [OfferDeliveryPolicy]
+loadDisneyOfferPolicies = do
+    let policyPath = "./contents/config/disney/OfferDeliveryPolicies.dhall"
+    exists <- doesFileExist policyPath
+    if exists
+        then input auto "./contents/config/disney/OfferDeliveryPolicies.dhall"
+        else return []
+
+loadActiveDisneyOffers :: IO [Offer]
+loadActiveDisneyOffers = filter offerIsActive <$> loadDisneyOffers
+
+loadActiveOfferCandidates :: IO [OfferCandidate]
+loadActiveOfferCandidates = do
+    activeOffers <- loadActiveDisneyOffers
+    offerPolicies <- loadDisneyOfferPolicies
+    pure $ buildOfferCandidates activeOffers offerPolicies
+
+loadActiveOfferRedirects :: IO [(String, String)]
+loadActiveOfferRedirects =
+    map (\offer -> (offerId offer, offerDestinationUrl offer)) <$> loadActiveDisneyOffers
+
+normalizeRatio :: Double -> Double
+normalizeRatio = max 0 . min 1
+
+buildOfferCandidates :: [Offer] -> [OfferDeliveryPolicy] -> [OfferCandidate]
+buildOfferCandidates offers policies =
+    map (\offer -> toCandidate offer $ M.lookup (offerId offer) policyMap) offers
+  where
+    policyMap = M.fromList $ map (\policy -> (policyOfferId policy, policy)) policies
+
+    toCandidate :: Offer -> Maybe OfferDeliveryPolicy -> OfferCandidate
+    toCandidate offer mPolicy = case mPolicy of
+        Just policy ->
+            let minShare = normalizeRatio $ policyMinShare policy
+                maxShare = max minShare $ normalizeRatio $ policyMaxShare policy
+                targetShare = min maxShare $ max minShare $ normalizeRatio $ policyTargetShare policy
+            in OfferCandidate
+                { candidateOffer = offer
+                , candidatePartnerId = policyPartnerId policy
+                , candidatePriority = normalizeRatio $ policyPriority policy
+                , candidateTargetShare = targetShare
+                , candidateMinShare = minShare
+                , candidateMaxShare = maxShare
+                , candidateHistoricalImpressions = policyHistoricalImpressions policy
+                , candidateHistoricalClicks = policyHistoricalClicks policy
+                , candidateExplorationWeight = normalizeRatio $ policyExplorationWeight policy
+                }
+        Nothing ->
+            OfferCandidate
+                { candidateOffer = offer
+                , candidatePartnerId = offerId offer
+                , candidatePriority = 0.5
+                , candidateTargetShare = 0.1
+                , candidateMinShare = 0.0
+                , candidateMaxShare = 1.0
+                , candidateHistoricalImpressions = 0
+                , candidateHistoricalClicks = 0
+                , candidateExplorationWeight = 0.1
+                }
+
+buildOfferCandidateMetrics :: [OfferCandidate] -> [OfferCandidateMetric]
+buildOfferCandidateMetrics candidates =
+    map toMetric candidates
+  where
+    impressionsByPartner = foldl'
+            (\acc candidate ->
+                M.insertWith
+                    (+)
+                    (candidatePartnerId candidate)
+                    (fromIntegral (candidateHistoricalImpressions candidate) :: Double)
+                    acc
+            )
+            M.empty
+            candidates
+
+    totalPartnerImpressions = sum $ M.elems impressionsByPartner
+
+    partnerActualShare :: String -> Double
+    partnerActualShare partnerId
+        | totalPartnerImpressions <= 0 = 0
+        | otherwise = M.findWithDefault 0 partnerId impressionsByPartner / totalPartnerImpressions
+
+    toMetric :: OfferCandidate -> OfferCandidateMetric
+    toMetric candidate =
+        let impressions = fromIntegral (candidateHistoricalImpressions candidate) :: Double
+            clicks = fromIntegral (candidateHistoricalClicks candidate) :: Double
+            actualShare = partnerActualShare $ candidatePartnerId candidate
+            expectedCtr = (clicks + 1) / (impressions + 20)
+            fairnessGap = max 0 (candidateTargetShare candidate - actualShare)
+            fairnessBoost = 1 + fairnessGap
+            fatiguePenalty = 1 / (1 + (impressions / 400))
+            baseScore =
+                expectedCtr * 0.65
+                + candidatePriority candidate * 0.20
+                + candidateExplorationWeight candidate * 0.15
+            finalScore = baseScore * fairnessBoost * fatiguePenalty
+        in OfferCandidateMetric
+            { metricCandidate = candidate
+            , metricActualShare = actualShare
+            , metricScore = finalScore
+            }
+
+pickFeaturedOfferCandidate :: [OfferCandidate] -> Maybe OfferCandidate
+pickFeaturedOfferCandidate candidates = do
+    best <- pickBestMetric scoped
+    return $ metricCandidate best
+  where
+    metrics = buildOfferCandidateMetrics candidates
+    underMin =
+        filter
+            (\metric ->
+                metricActualShare metric
+                < candidateMinShare (metricCandidate metric)
+            )
+            metrics
+    withinMax =
+        filter
+            (\metric ->
+                metricActualShare metric
+                <= candidateMaxShare (metricCandidate metric)
+            )
+            metrics
+    scoped
+        | not $ null underMin = underMin
+        | not $ null withinMax = withinMax
+        | otherwise = metrics
+
+    pickBestMetric :: [OfferCandidateMetric] -> Maybe OfferCandidateMetric
+    pickBestMetric []            = Nothing
+    pickBestMetric (metric:rest) = Just $ foldl' chooseMetric metric rest
+
+    chooseMetric :: OfferCandidateMetric -> OfferCandidateMetric -> OfferCandidateMetric
+    chooseMetric current challenger =
+        case compareMetric challenger current of
+            GT -> challenger
+            _  -> current
+
+    compareMetric :: OfferCandidateMetric -> OfferCandidateMetric -> Ordering
+    compareMetric left right =
+        compare (metricScore left) (metricScore right)
+            <> compare (candidatePriority $ metricCandidate left) (candidatePriority $ metricCandidate right)
+            <> compare (negate $ metricActualShare left) (negate $ metricActualShare right)
+            <> compare (offerId $ candidateOffer $ metricCandidate right) (offerId $ candidateOffer $ metricCandidate left)
+
+offerRedirectPath :: FilePath
+offerRedirectPath = joinPath ["disney_experience_summary", "go", "index.html"]
+
+offerTrackingPath :: Offer -> String
+offerTrackingPath = offerDestinationUrl
+
+appendQueryParams :: String -> [(String, String)] -> String
+appendQueryParams rawUrl queryParams
+    | null queryParams = rawUrl
+    | otherwise        = basePart ++ queryJoiner ++ serializedParams ++ fragmentPart
+  where
+    (basePart, fragmentPart) = breakAt '#'
+    serializedParams = intercalate "&" $ map (\(k, v) -> k ++ "=" ++ v) queryParams
+    hasQuery = '?' `elem` basePart
+    queryJoiner
+        | not hasQuery = "?"
+        | null basePart = ""
+        | last basePart `elem` ("?&" :: String) = ""
+        | otherwise = "&"
+
+    breakAt :: Char -> (String, String)
+    breakAt delimiter = case break (== delimiter) rawUrl of
+        (prefix, [])     -> (prefix, "")
+        (prefix, suffix) -> (prefix, suffix)
+
+offerDestinationUrl :: Offer -> String
+offerDestinationUrl offer =
+    appendQueryParams
+        (offerUrl offer)
+        [ ("utm_source", "roki_disney")
+        , ("utm_medium", "referral")
+        , ("utm_campaign", fromMaybe ("offer_" ++ offerId offer) (offerUtmCampaign offer))
+        ]
+
+escapeHtmlAttr :: String -> String
+escapeHtmlAttr = concatMap escapeChar
+  where
+    escapeChar '&'  = "&amp;"
+    escapeChar '"'  = "&quot;"
+    escapeChar '\'' = "&#39;"
+    escapeChar '<'  = "&lt;"
+    escapeChar '>'  = "&gt;"
+    escapeChar ch   = [ch]
+
+escapeHtmlText :: String -> String
+escapeHtmlText = escapeHtmlAttr
+
+offerRedirectHtml :: String -> [(String, String)] -> String
+offerRedirectHtml fallbackUrl destinations =
+    let destinationsJs = "{"
+            ++ intercalate "," (map renderDestination destinations)
+            ++ "}"
+        renderDestination (destinationId, destinationUrl) =
+            show destinationId ++ ":" ++ show destinationUrl
+    in
+    "<!doctype html><html lang=\"ja\"><head><meta charset=\"utf-8\">"
+    ++ "<meta name=\"robots\" content=\"noindex,nofollow\">"
+    ++ "<meta http-equiv=\"refresh\" content=\"0;url="
+    ++ escapeHtmlAttr fallbackUrl
+    ++ "\">"
+    ++ "<title>Redirecting...</title>"
+    ++ "<script>"
+    ++ "const fallbackUrl="
+    ++ show fallbackUrl
+    ++ ";const destinations="
+    ++ destinationsJs
+    ++ ";const offerId=new URLSearchParams(window.location.search).get('offer');"
+    ++ "const destinationUrl=(offerId&&destinations[offerId])||fallbackUrl;"
+    ++ "window.location.replace(destinationUrl);"
+    ++ "</script>"
+    ++ "</head><body><p>遷移中です。"
+    ++ "<a href=\""
+    ++ escapeHtmlAttr fallbackUrl
+    ++ "\">こちら</a></p></body></html>"
+
+renderFeaturedOfferHtml :: [OfferCandidate] -> String
+renderFeaturedOfferHtml candidates = case pickFeaturedOfferCandidate candidates of
+    Nothing -> ""
+    Just candidate ->
+        let offer = candidateOffer candidate
+            descriptionHtml = case offerDescription offer of
+                Just desc | not (null desc) ->
+                    "<span class=\"featured-offer-description\">"
+                    ++ escapeHtmlText desc
+                    ++ "</span>"
+                _ ->
+                    ""
+        in "<a class=\"featured-offer-link offer-link\""
+            ++ " href=\"" ++ escapeHtmlAttr (offerTrackingPath offer) ++ "\""
+            ++ " target=\"_blank\""
+            ++ " rel=\"sponsored nofollow noopener\""
+            ++ " data-offer-id=\"" ++ escapeHtmlAttr (offerId offer) ++ "\""
+            ++ " data-offer-title=\"" ++ escapeHtmlAttr (offerTitle offer) ++ "\""
+            ++ " data-offer-partner-id=\"" ++ escapeHtmlAttr (candidatePartnerId candidate) ++ "\""
+            ++ " data-offer-placement=\"list-featured\">"
+            ++ "<span class=\"featured-offer-badge\">PR</span>"
+            ++ "<span class=\"featured-offer-main\">"
+            ++ "<span class=\"featured-offer-title\">"
+            ++ escapeHtmlText (offerTitle offer)
+            ++ "</span>"
+            ++ descriptionHtml
+            ++ "</span>"
+            ++ "<span class=\"featured-offer-cta\">"
+            ++ escapeHtmlText (offerCtaLabel offer)
+            ++ "</span>"
+            ++ "</a>"
 
 -- Dhallファイルからホテル情報を読み込み
 loadDisneyHotels :: IO [Hotel]
@@ -369,18 +670,26 @@ rules = do
                 vizData <- generateVisualizationData disneyLogs
                 makeItem $ BL.toStrict $ encode vizData
 
-        rulesExtraDependencies [disneyConfigDependency] $
+        rulesExtraDependencies [disneyConfigDependency] $ do
+            create [fromFilePath offerRedirectPath] $ do
+                route idRoute
+                compile $ do
+                    activeOfferRedirects <- unsafeCompiler loadActiveOfferRedirects
+                    makeItem $ offerRedirectHtml disneyExperienceSummaryPagePath activeOfferRedirects
+
             match disneyExperienceSummaryJPPath $ do
                 route $ gsubRoute (contentsRoot </> "pages/") (const mempty)
                 compile $ do
+                    disneyLogs <- sortByNum <$> loadAllSnapshots disneyLogsPattern disneyExperienceSummarySnapshot
                     favorites <- unsafeCompiler loadDisneyFavorites
                     hotels <- unsafeCompiler loadDisneyHotels
+                    activeOfferCandidates <- unsafeCompiler loadActiveOfferCandidates
                     hotelsLastModified <- unsafeCompiler getHotelsLastModified
                     logsLastModified <- unsafeCompiler getLogsLastModified
                     tagConfig <- unsafeCompiler tagConfigMap
-                    disneyLogs <- sortByNum <$> loadAllSnapshots disneyLogsPattern disneyExperienceSummarySnapshot
-                    let totalStays = sum $ map stays hotels
                     let totalLogs = length disneyLogs
+                        totalStays = sum $ map stays hotels
+                        featuredOfferHtml = renderFeaturedOfferHtml activeOfferCandidates
                     -- ユニークなタグリストを作成
                     uniqueTags <- do
                         allTags <- sequence $ map (\logItem -> do
@@ -396,12 +705,13 @@ rules = do
                       , pure $ constField "font_path" "../fonts/waltograph42.otf"
                       , pure $ constField "is_preview" (show isPreview)
                       , pure $ listField "additional-css" (field "css" (return . itemBody)) (return $ map (\css -> Item (fromString css) css) ["../style/disney_experience_summary_only.css"])
-                     , pure $ listField "additional-js" (field "js" (return . itemBody)) (return $ map (\js -> Item (fromString js) js) ["https://d3js.org/d3.v7.min.js", "../js/disney-tag-filter.js", "../js/disney-experience-visualizations.js"])
+                      , pure $ listField "additional-js" (field "js" (return . itemBody)) (return $ map (\js -> Item (fromString js) js) ["https://d3js.org/d3.v7.min.js", "../js/disney-tag-filter.js", "../js/disney-experience-visualizations.js"])
                       , pure siteCtx
                       , pure defaultContext
                       , constField "about-body"
                             <$> loadSnapshotBody aboutIdent disneyExperienceSummarySnapshot
                       , pure $ listField "disney-logs" (disneyLogCtx tagConfig) (return disneyLogs)
+                      , pure $ constField "featured-offer-html" featuredOfferHtml
                       , pure $ listField "unique-tags" (field "name" (return . itemBody) <> field "color" (return . flip getTagColor tagConfig . itemBody) <> field "link" (return . flip getTagLink tagConfig . itemBody)) (return $ map (\tag -> Item (fromString tag) tag) uniqueTags)
                       , pure $ favoritesListField "favorite-works" "works" favorites
                       , pure $ favoritesListField "favorite-characters" "characters" favorites
@@ -411,7 +721,7 @@ rules = do
                       , pure $ constField "hotels-total-stays" (show totalStays)
                       , pure $ constField "logs-total-count" (show totalLogs)
                       , pure $ constField "logs-last-modified" logsLastModified
-                          ]
+                      ]
                     getResourceBody
                         >>= applyAsTemplate disneyExperienceSummaryCtx
                         >>= loadAndApplyTemplate rootTemplate disneyExperienceSummaryCtx
@@ -425,6 +735,7 @@ rules = do
     where
         disneyExperienceSummarySnapshot = "disneyExperienceSummarySS"
         disneyConfigPath = fromRegex "^contents/config/disney/.+\\.dhall$"
+        disneyExperienceSummaryPagePath = "/disney_experience_summary/jp.html"
         disneyExperienceSummaryJPPath = fromGlob $ joinPath [contentsRoot, "pages", "disney_experience_summary", "jp.html"]
         rootTemplate = fromFilePath $ joinPath [contentsRoot, "templates", "site", "default.html"]
 
