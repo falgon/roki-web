@@ -153,6 +153,7 @@ jobs:
       with:
         submodules: false
     - name: Polling until deployed
+      id: set-result
       env:
         POLLING_MAX: 10
         POLLING_DURATION_MILLISECONDS: 5000
@@ -161,25 +162,30 @@ jobs:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         result-encoding: string
         script: |
-          let c = 0;
-          let res = false;
-          const it = setInterval(async () => {
-            const r = await github.repos.getLatestPagesBuild({
+          const maxAttempts = Number(process.env.POLLING_MAX);
+          const intervalMilliseconds = Number(process.env.POLLING_DURATION_MILLISECONDS);
+          const sleep = (milliseconds) =>
+            new Promise((resolve) => setTimeout(resolve, milliseconds));
+
+          for (let attempt = 0; attempt <= maxAttempts; attempt++) {
+            const r = await github.rest.repos.getLatestPagesBuild({
               owner: context.repo.owner,
               repo: context.repo.repo
             });
+
+            core.info(`GitHub Pages build status: ${r.data.status}`);
             if (r.data.status === "built") {
-              res = true;
-              clearInterval(it);
-            } else if (c > ${{ env.POLLING_MAX }}) {
-              res = false;
-              clearInterval(it);
+              return "true";
             }
-            ++c;
-          }, ${{ env.POLLING_DURATION_MILLISECONDS }});
-          return res.toString();
+
+            if (attempt < maxAttempts) {
+              await sleep(intervalMilliseconds);
+            }
+          }
+
+          return "false";
     - name: Get page insights
-      if: ${{ steps.set-result.outputs.result }} == "true"
+      if: ${{ steps.set-result.outputs.result == 'true' }}
       env:
         SP_THRESHOLD: 65
         PC_THRESHOLD: 90
