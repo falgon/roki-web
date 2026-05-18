@@ -15,13 +15,56 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.ref }}
 
-      - uses: restyled-io/actions/setup@v4
+      - id: restylable
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const files = await github.paginate(github.rest.pulls.listFiles, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.payload.pull_request.number,
+              per_page: 100,
+            });
+            const restylablePaths = files
+              .filter(
+                ({ filename, status }) =>
+                  status !== "removed" &&
+                  (filename.endsWith(".hs") || filename.endsWith(".dhall")),
+              )
+              .map(({ filename }) => filename);
+            const configChanged = files.some(
+              ({ filename, status }) =>
+                filename === ".restyled.yaml" ||
+                filename === ".stylish-haskell.yaml",
+            );
+            const validationPaths = [
+              "src/Archives.hs",
+              "contents/config/contributions/Projects.dhall",
+            ];
+            const shouldRun =
+              restylablePaths.length > 0 || configChanged;
+            const paths =
+              restylablePaths.length > 0 ? restylablePaths : validationPaths;
+
+            core.setOutput("restylable_changed", restylablePaths.length > 0 ? "true" : "false");
+            core.setOutput("found", shouldRun ? "true" : "false");
+            core.setOutput("paths", paths.join("\n"));
+
+      - if: steps.restylable.outputs.found == 'true'
+        uses: restyled-io/actions/setup@v4
       - id: restyler
+        if: steps.restylable.outputs.found == 'true'
         uses: restyled-io/actions/run@v4
         with:
           fail-on-differences: true
+          paths: ${{ steps.restylable.outputs.paths }}
+
+      - if: steps.restylable.outputs.found != 'true'
+        run: echo "No restylable files changed; skipping restyled."
 
       - if: |
+          steps.restylable.outputs.restylable_changed == 'true' &&
+          steps.restylable.outputs.found == 'true' &&
           !cancelled() &&
           steps.restyler.outputs.success == 'true' &&
           github.event.pull_request.head.repo.full_name == github.repository
