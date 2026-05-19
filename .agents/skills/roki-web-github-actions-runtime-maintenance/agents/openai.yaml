@@ -1,0 +1,4 @@
+interface:
+  display_name: "Roki Web GitHub Actions Runtime Maintenance"
+  short_description: "Maintain roki-web Actions runtime safety."
+  default_prompt: "Use $roki-web-github-actions-runtime-maintenance to update or review roki-web GitHub Actions runtime versions, action pins, generated workflow templates, and Actions cache safety."
