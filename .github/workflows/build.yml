@@ -20,7 +20,7 @@ jobs:
       with:
         submodules: true
     - name: Site generator cache
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       id: site-gen-cache
       with:
         path: ./site
@@ -45,18 +45,17 @@ jobs:
         stack-version: ${{ env.stack_version }}
     - name: stack cache
       if: steps.site-gen-cache.outputs.cache-hit != 'true'
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       id: stack-cache
       with:
         path: ~/.stack
         key: stack-v2-${{ runner.os }}-${{ hashFiles('stack.yaml') }}-${{ hashFiles('stack.yaml.lock') }}-${{ hashFiles('package.yaml') }}-${{ hashFiles('docker/.env') }}
     - name: Install tools (apt)
-      uses: awalsh128/cache-apt-pkgs-action@v1
-      with:
-        packages: libxml2-utils
-        version: 1.0
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y --no-install-recommends libxml2-utils
     - name: snap cache
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       env:
         cache-name: cache-snap-packages
       with:
@@ -82,7 +81,7 @@ jobs:
         echo "ROKI_WEB_GH_ACTIONS_NODE_VERSION=$(node --version)" >> "$GITHUB_ENV"
         echo "PUPPETEER_EXECUTABLE_PATH=$(which chromium)" >> "$GITHUB_ENV"
     - name: Node module cache
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       id: node-cache
       with:
         path: '**/node_modules'
@@ -124,7 +123,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     - name: Upload artifact
       if: github.ref == 'refs/heads/master'
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7.0.1
       with:
         name: roki.dev
         path: docs.tar.xz
@@ -134,13 +133,13 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/master' && github.repository == 'falgon/roki-web'
     steps:
     - name: Fetch archive
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8.0.1
       with:
         name: roki.dev
     - name: Unarchive docs
       run: tar xvf docs.tar.xz
     - name: Deploy
-      uses: peaceiris/actions-gh-pages@v3
+      uses: peaceiris/actions-gh-pages@84c30a85c19949d7eee79c4ff27748b70285e453 # v4.1.0
       with:
         deploy_key: ${{ secrets.ACTIONS_DEPLOY_KEY }}
         publish_dir: ./docs
