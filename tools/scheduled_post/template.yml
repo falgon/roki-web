@@ -20,7 +20,7 @@ jobs:
         with:
           ref: $branch-name$
       - name: $branch-name$ -> release
-        uses: devmasx/merge-branch@v1.3.1
+        uses: devmasx/merge-branch@a1752b9ba42bb417ec19be7dc974e2faf77d3ef2 # v1.3.1
         with:
           type: now
           from_branch: $branch-name$
