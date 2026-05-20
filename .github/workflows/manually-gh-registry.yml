@@ -33,7 +33,7 @@ jobs:
       enable_notify: ${{ steps.enable_notify_step.outputs.flag }}
     steps:
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         submodules: true
     - name: Setup environment variables
@@ -83,11 +83,11 @@ jobs:
       success: ${{ steps.build.conclusion == 'success' }}
     steps:
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         submodules: true
     - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
+      uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4
     - name: Clear disk space
       run: |
         docker system prune -a --volumes -f
@@ -96,7 +96,7 @@ jobs:
         df -h
     - name: Login to GitHub Container Registry
       if: needs.setup.outputs.to_push == 'true'
-      uses: docker/login-action@v3
+      uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4
       with:
         registry: ghcr.io
         username: ${{ github.actor }}
@@ -104,7 +104,7 @@ jobs:
     - name: Build and push AMD64 env image
       id: build
       continue-on-error: true
-      uses: docker/build-push-action@v5
+      uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f # v7.1.0
       with:
         context: .
         file: ./docker/Dockerfile
@@ -139,18 +139,18 @@ jobs:
       success: ${{ steps.build.conclusion == 'success' }}
     steps:
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         submodules: true
     - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
+      uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4
     - name: Clear disk space
       run: |
         docker system prune -a --volumes -f
         sudo rm -rfv "/usr/local/share/boost" "$AGENT_TOOLSDIRECTORY"
     - name: Login to GitHub Container Registry
       if: needs.setup.outputs.to_push == 'true'
-      uses: docker/login-action@v3
+      uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4
       with:
         registry: ghcr.io
         username: ${{ github.actor }}
@@ -158,7 +158,7 @@ jobs:
     - name: Build and push AMD64 dev image
       id: build
       continue-on-error: true
-      uses: docker/build-push-action@v5
+      uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f # v7.1.0
       with:
         context: .
         file: ./docker/Dockerfile
@@ -187,7 +187,7 @@ jobs:
       name: manually-gh-registry
     steps:
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         sparse-checkout: |
           tools/github-actions
@@ -203,13 +203,13 @@ jobs:
         yq_version: v4.44.3
 
     - name: Setup Haskell
-      uses: haskell-actions/setup@v2
+      uses: haskell-actions/setup@cd0d9bdd65b20557f41bea4dbe43d0b5fbbfe553 # v2
       with:
         ghc-version: ${{ env.ghc_version }}
         enable-stack: true
         stack-version: ${{ env.stack_version }}
     - name: Cache Stack dependencies
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: |
           ~/.stack
@@ -220,7 +220,7 @@ jobs:
           ${{ runner.os }}-stack-notify-v2-
           ${{ runner.os }}-stack-
     - name: Cache Stack package index
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: ~/.stack/pantry
         key: ${{ runner.os }}-stack-pantry-v2-${{ hashFiles('tools/github-actions/NotifyBuildCompletion.hs') }}
@@ -228,10 +228,10 @@ jobs:
           ${{ runner.os }}-stack-pantry-v2-
     - name: Install dependencies
       run: |
-        # Extract packages from the script header
-        PACKAGES=$(grep -o "package [a-z-]*" tools/github-actions/NotifyBuildCompletion.hs | sed 's/package //' | tr '\n' ' ')
-        # Pre-install packages to populate cache
-        stack --resolver lts-22.33 build $PACKAGES --only-dependencies
+        # Warm the stack cache via the script itself because `stack script`
+        # ignores the repository stack.yaml; this keeps pinned --extra-dep
+        # values coupled to the script header.
+        ./tools/github-actions/NotifyBuildCompletion.hs --help > /dev/null
     - name: Send Email Notification
       env:
         GMAIL_SENDER: ${{ secrets.GMAIL_SENDER }}

@@ -29,7 +29,6 @@
     "sourceMap": false,
     "removeComments": false,
     "importHelpers": false,
-    "downlevelIteration": true,
 
     // 相互運用性
     "esModuleInterop": true,

@@ -21,7 +21,7 @@ jobs:
     
     steps:
       - name: Checkout PR branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           token: ${{ secrets.UPDATE_BIOME_SCHEMA_TOKEN }}
           ref: ${{ github.head_ref }}

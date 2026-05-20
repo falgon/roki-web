@@ -32,6 +32,7 @@ interface ParsedArgs {
     urls: string[];
     showHelp: boolean;
     codexModel: string | null;
+    codexTimeoutSeconds: number | null;
     selectFirstInstagramImageWithoutHumanCloseup: boolean;
     instagramMinImageCount: number;
 }
@@ -43,6 +44,7 @@ interface InstagramGraphContext {
 
 interface DownloadInstagramImagesOptions {
     codexModelName: string;
+    codexTimeoutSeconds: number | null;
     selectFirstImageWithoutHumanCloseup: boolean;
     minimumImageCount: number;
 }
@@ -139,7 +141,7 @@ const NON_HUMAN_CLOSEUP_IMAGE_JUDGE_PROMPT = `次の画像について、人物�
 
 function showUsage(): void {
     console.error(
-        "使用方法: tsx tools/gen-disney-logs.ts [--codex-model <model>] [--instagram-first-nonhuman-image] [--instagram-min-images <number>] <url-1> [<url-2> ...]",
+        "使用方法: tsx tools/gen-disney-logs.ts [--codex-model <model>] [--codex-timeout-seconds <seconds>] [--instagram-first-nonhuman-image] [--instagram-min-images <number>] <url-1> [<url-2> ...]",
     );
     console.error("対応URL: x.com / twitter.com / instagram.com");
     console.error(
@@ -199,57 +201,151 @@ function parsePositiveIntegerOption(rawValue: string, optionName: string): numbe
     return parsedValue;
 }
 
+type ParsedArgsState = Omit<ParsedArgs, "urls">;
+
+type OptionParser = (
+    arg: string,
+    args: string[],
+    index: number,
+    state: ParsedArgsState,
+) => number | null;
+
+function createParsedArgsState(): ParsedArgsState {
+    return {
+        showHelp: false,
+        codexModel: null,
+        codexTimeoutSeconds: null,
+        selectFirstInstagramImageWithoutHumanCloseup: false,
+        instagramMinImageCount: DEFAULT_INSTAGRAM_MIN_IMAGE_COUNT,
+    };
+}
+
+function requireOptionValue(args: string[], index: number, errorMessage: string): string {
+    const nextArg = args[index + 1];
+    if (nextArg) {
+        return nextArg;
+    }
+    throw new Error(errorMessage);
+}
+
+function applyFlagOption(arg: string, state: ParsedArgsState): boolean {
+    switch (arg) {
+        case "--help":
+        case "-h":
+            state.showHelp = true;
+            return true;
+        case "--instagram-first-nonhuman-image":
+            state.selectFirstInstagramImageWithoutHumanCloseup = true;
+            return true;
+        case "--no-instagram-first-nonhuman-image":
+            state.selectFirstInstagramImageWithoutHumanCloseup = false;
+            return true;
+        default:
+            return false;
+    }
+}
+
+function parseInstagramMinImagesOption(
+    arg: string,
+    args: string[],
+    index: number,
+    state: ParsedArgsState,
+): number | null {
+    if (arg === "--instagram-min-images") {
+        state.instagramMinImageCount = parsePositiveIntegerOption(
+            requireOptionValue(args, index, "--instagram-min-images には整数を指定してください。"),
+            "--instagram-min-images",
+        );
+        return index + 1;
+    }
+    if (arg.startsWith("--instagram-min-images=")) {
+        state.instagramMinImageCount = parsePositiveIntegerOption(
+            arg.slice("--instagram-min-images=".length),
+            "--instagram-min-images",
+        );
+        return index;
+    }
+    return null;
+}
+
+function parseCodexModelOption(
+    arg: string,
+    args: string[],
+    index: number,
+    state: ParsedArgsState,
+): number | null {
+    if (arg === "--codex-model") {
+        state.codexModel = normalizeText(
+            requireOptionValue(args, index, "--codex-model にはモデル名を指定してください。"),
+        );
+        return index + 1;
+    }
+    if (arg.startsWith("--codex-model=")) {
+        state.codexModel = normalizeText(arg.slice("--codex-model=".length));
+        if (state.codexModel.length === 0) {
+            throw new Error("--codex-model= にはモデル名を指定してください。");
+        }
+        return index;
+    }
+    return null;
+}
+
+function parseCodexTimeoutSecondsOption(
+    arg: string,
+    args: string[],
+    index: number,
+    state: ParsedArgsState,
+): number | null {
+    if (arg === "--codex-timeout-seconds") {
+        state.codexTimeoutSeconds = parsePositiveIntegerOption(
+            requireOptionValue(args, index, "--codex-timeout-seconds には秒数を指定してください。"),
+            "--codex-timeout-seconds",
+        );
+        return index + 1;
+    }
+    if (arg.startsWith("--codex-timeout-seconds=")) {
+        state.codexTimeoutSeconds = parsePositiveIntegerOption(
+            arg.slice("--codex-timeout-seconds=".length),
+            "--codex-timeout-seconds",
+        );
+        return index;
+    }
+    return null;
+}
+
+const OPTION_PARSERS: readonly OptionParser[] = [
+    parseInstagramMinImagesOption,
+    parseCodexModelOption,
+    parseCodexTimeoutSecondsOption,
+];
+
+function parseOption(
+    arg: string,
+    args: string[],
+    index: number,
+    state: ParsedArgsState,
+): number | null {
+    for (const parser of OPTION_PARSERS) {
+        const nextIndex = parser(arg, args, index, state);
+        if (nextIndex !== null) {
+            return nextIndex;
+        }
+    }
+    return null;
+}
+
 function parseArgs(args: string[]): ParsedArgs {
     const urls: string[] = [];
-    let showHelp = false;
-    let codexModel: string | null = null;
-    let selectFirstInstagramImageWithoutHumanCloseup = false;
-    let instagramMinImageCount = DEFAULT_INSTAGRAM_MIN_IMAGE_COUNT;
+    const state = createParsedArgsState();
 
     for (let index = 0; index < args.length; index += 1) {
         const arg = args[index] ?? "";
-        if (arg === "--help" || arg === "-h") {
-            showHelp = true;
+        if (applyFlagOption(arg, state)) {
             continue;
         }
-        if (arg === "--instagram-first-nonhuman-image") {
-            selectFirstInstagramImageWithoutHumanCloseup = true;
-            continue;
-        }
-        if (arg === "--no-instagram-first-nonhuman-image") {
-            selectFirstInstagramImageWithoutHumanCloseup = false;
-            continue;
-        }
-        if (arg === "--instagram-min-images") {
-            const nextArg = args[index + 1];
-            if (!nextArg) {
-                throw new Error("--instagram-min-images には整数を指定してください。");
-            }
-            instagramMinImageCount = parsePositiveIntegerOption(nextArg, "--instagram-min-images");
-            index += 1;
-            continue;
-        }
-        if (arg.startsWith("--instagram-min-images=")) {
-            instagramMinImageCount = parsePositiveIntegerOption(
-                arg.slice("--instagram-min-images=".length),
-                "--instagram-min-images",
-            );
-            continue;
-        }
-        if (arg === "--codex-model") {
-            const nextArg = args[index + 1];
-            if (!nextArg) {
-                throw new Error("--codex-model にはモデル名を指定してください。");
-            }
-            codexModel = normalizeText(nextArg);
-            index += 1;
-            continue;
-        }
-        if (arg.startsWith("--codex-model=")) {
-            codexModel = normalizeText(arg.slice("--codex-model=".length));
-            if (codexModel.length === 0) {
-                throw new Error("--codex-model= にはモデル名を指定してください。");
-            }
+        const nextIndex = parseOption(arg, args, index, state);
+        if (nextIndex !== null) {
+            index = nextIndex;
             continue;
         }
         urls.push(arg);
@@ -257,10 +353,7 @@ function parseArgs(args: string[]): ParsedArgs {
 
     return {
         urls,
-        showHelp,
-        codexModel,
-        selectFirstInstagramImageWithoutHumanCloseup,
-        instagramMinImageCount,
+        ...state,
     };
 }
 
@@ -1486,6 +1579,7 @@ async function downloadInstagramImages(
                     imageBuffer,
                     extension,
                     options.codexModelName,
+                    options.codexTimeoutSeconds,
                 );
                 if (!selected) {
                     reportProgress(`人物アップ判定で除外しました: ${imageUrl}`);
@@ -1553,6 +1647,7 @@ ${serializedContents}
 async function runCodexExec(
     prompt: string,
     codexModelName: string,
+    codexTimeoutSeconds: number | null = null,
     imagePaths: string[] = [],
 ): Promise<string> {
     const tempDirectory = await mkdtemp(path.join(os.tmpdir(), "gen-disney-logs-"));
@@ -1563,6 +1658,11 @@ async function runCodexExec(
         reportProgress(
             "codex exec では project_doc_max_bytes=0 を指定し、AGENTS.md 読み込みを無効化します。",
         );
+        if (codexTimeoutSeconds !== null) {
+            reportProgress(
+                `codex exec のタイムアウトを有効化します。seconds=${codexTimeoutSeconds}`,
+            );
+        }
         if (imagePaths.length > 0) {
             reportProgress(`codex exec に画像を添付します。枚数: ${imagePaths.length}`);
         }
@@ -1588,11 +1688,59 @@ async function runCodexExec(
                 cwd: REPO_ROOT,
                 stdio: ["pipe", "ignore", "inherit"],
             });
+            let settled = false;
+            let timedOut = false;
+            let forceKillTimer: NodeJS.Timeout | null = null;
+            const clearDeadlineTimer = (): void => {
+                if (timeoutTimer !== null) {
+                    clearTimeout(timeoutTimer);
+                }
+            };
+            const clearForceKillTimer = (): void => {
+                if (forceKillTimer !== null) {
+                    clearTimeout(forceKillTimer);
+                }
+            };
+            const timeoutTimer =
+                codexTimeoutSeconds === null
+                    ? null
+                    : setTimeout(() => {
+                          if (settled) {
+                              return;
+                          }
+                          timedOut = true;
+                          reportProgress(
+                              `codex exec がタイムアウトしたため終了を試みます。seconds=${codexTimeoutSeconds}`,
+                          );
+                          child.kill("SIGTERM");
+                          forceKillTimer = setTimeout(() => child.kill("SIGKILL"), 5_000);
+                      }, codexTimeoutSeconds * 1_000);
 
-            child.on("error", reject);
+            child.on("error", (error) => {
+                settled = true;
+                clearDeadlineTimer();
+                clearForceKillTimer();
+                reject(error);
+            });
+            child.on("exit", () => {
+                settled = true;
+                clearDeadlineTimer();
+                clearForceKillTimer();
+            });
             child.stdin.write(prompt);
             child.stdin.end();
             child.on("close", (code) => {
+                settled = true;
+                clearDeadlineTimer();
+                clearForceKillTimer();
+                if (timedOut) {
+                    reject(
+                        new Error(
+                            `codex exec がタイムアウトしました (${String(codexTimeoutSeconds)} 秒)`,
+                        ),
+                    );
+                    return;
+                }
                 if (code === 0) {
                     resolve();
                     return;
@@ -1625,6 +1773,7 @@ async function isLikelyNoHumanCloseupByCodex(
     imageBuffer: Buffer,
     imageExtension: string,
     codexModelName: string,
+    codexTimeoutSeconds: number | null,
 ): Promise<boolean> {
     const tempDirectory = await mkdtemp(path.join(os.tmpdir(), "gen-disney-logs-image-judge-"));
     const tempImagePath = path.join(tempDirectory, `target${imageExtension}`);
@@ -1633,6 +1782,7 @@ async function isLikelyNoHumanCloseupByCodex(
         const codexOutput = await runCodexExec(
             NON_HUMAN_CLOSEUP_IMAGE_JUDGE_PROMPT,
             codexModelName,
+            codexTimeoutSeconds,
             [tempImagePath],
         );
         const judgeResult = parseAcceptOrReject(codexOutput);
@@ -1658,6 +1808,11 @@ async function main(): Promise<void> {
     const codexModelName = await resolveCodexModelName(parsedArgs.codexModel);
     reportProgress(`処理を開始します。入力URL数: ${parsedArgs.urls.length}`);
     reportProgress(`利用するCodexモデル: ${codexModelName}`);
+    if (parsedArgs.codexTimeoutSeconds !== null) {
+        reportProgress(`Codexタイムアウト秒数: ${parsedArgs.codexTimeoutSeconds}`);
+    } else {
+        reportProgress("Codexタイムアウト秒数: 未指定");
+    }
     reportProgress(
         `Instagram画像の最低取得枚数: ${parsedArgs.instagramMinImageCount}（足りない場合は取得可能な範囲で保存）`,
     );
@@ -1690,6 +1845,7 @@ async function main(): Promise<void> {
     reportProgress("Instagram画像の保存を開始します。");
     const downloadedImageFiles = await downloadInstagramImages(contents, nextLogNumber, {
         codexModelName,
+        codexTimeoutSeconds: parsedArgs.codexTimeoutSeconds,
         selectFirstImageWithoutHumanCloseup:
             parsedArgs.selectFirstInstagramImageWithoutHumanCloseup,
         minimumImageCount: parsedArgs.instagramMinImageCount,
@@ -1703,13 +1859,23 @@ async function main(): Promise<void> {
         nextLogNumber,
         downloadedImageFiles,
     );
-    const markdown = (await runCodexExec(codexPrompt, codexModelName)).trim();
+    const markdown = (
+        await runCodexExec(codexPrompt, codexModelName, parsedArgs.codexTimeoutSeconds)
+    ).trim();
     reportProgress("処理全体が完了しました。");
     process.stdout.write(`${markdown}\n`);
 }
 
-main().catch((error: unknown) => {
-    const message = stringifyError(error);
-    console.error(`エラー: ${message}`);
-    process.exit(1);
-});
+const isMainModule =
+    process.argv[1] !== undefined &&
+    path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+
+if (isMainModule) {
+    main().catch((error: unknown) => {
+        const message = stringifyError(error);
+        console.error(`エラー: ${message}`);
+        process.exit(1);
+    });
+}
+
+export { parseArgs, runCodexExec };

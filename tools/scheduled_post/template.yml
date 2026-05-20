@@ -11,16 +11,16 @@ env:
 
 jobs:
   post:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     steps:
       - name: Start time
         run: date
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v6
         with:
           ref: $branch-name$
       - name: $branch-name$ -> release
-        uses: devmasx/merge-branch@v1.3.1
+        uses: devmasx/merge-branch@a1752b9ba42bb417ec19be7dc974e2faf77d3ef2 # v1.3.1
         with:
           type: now
           from_branch: $branch-name$
@@ -32,7 +32,7 @@ jobs:
             mv "$${{ env.CONTENTS_DIR }}/roki.log" "$${{ env.PUBLISH_DIR }}/$${{ env.CONTENTS_DIR }}/"
             mv "$${{ env.CONTENTS_DIR }}/roki.diary" "$${{ env.PUBLISH_DIR }}/$${{ env.CONTENTS_DIR }}/"
       - name: Deploy to system repository
-        uses: peaceiris/actions-gh-pages@v3.7.3
+        uses: peaceiris/actions-gh-pages@84c30a85c19949d7eee79c4ff27748b70285e453 # v4.1.0
         with:
           deploy_key: $${{ secrets.ACTIONS_DEPLOY_TO_SYSTEM_KEY }}
           publish_dir: $${{ env.PUBLISH_DIR }}
@@ -42,13 +42,13 @@ jobs:
           enable_jekyll: true
           exclude_assets: ''
       - name: Checkout draft
-        uses: actions/checkout@v2
+        uses: actions/checkout@v6
         with:
           ref: $${{ env.SITE_POST_MAIN_BRANCH }}
       - name: Create clean commits
         run: rm .github/workflows/$branch-name$.yml
       - name: Create PR
-        uses: peter-evans/create-pull-request@v3.5.0
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8
         with:
           token: $${{ secrets.ACTIONS_PAT }}
           commit-message: "delete the completed workflow file"

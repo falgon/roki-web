@@ -23,6 +23,7 @@ build :: Tags
     -> BlogConfReader m Rules ()
 build tags y m = do
     footerPath <- asks $ fromFilePath . (<> "-footer.html") . blogName
+    recentPostsPath <- asks $ fromFilePath . (<> "-footer-recent-posts-cache") . blogName
     pen <- asks blogPageEntriesNum
     ep <- asks blogEntryPattern
     cs <- asks blogContentSnapshot
@@ -32,16 +33,23 @@ build tags y m = do
       , pure $ siteCtx
       , BlogCtx.footerAdditionalComponent
       ]
-    lift $ forM_ (Nothing : map (Just . fst) (archivesMap y)) $ \year -> maybe id version year $
-        create [footerPath] $
-            compile $ do
-                recent <- fmap (take pen) .  recentFirst =<<
-                    loadAllSnapshots ep cs
-                let ctx = mconcat [
-                        listField "recent-posts" pCtxForFooter (pure recent)
-                      , yearMonthArchiveField "archives" y m year
-                      , footerCtx
-                      ]
-                makeItem mempty
-                    >>= loadAndApplyTemplate (fromFilePath $ tmBlogRoot </> "footer.html") ctx
-                    >>= relativizeUrls
+    let recentPostsCompiler :: Compiler (Item String)
+        recentPostsCompiler =
+            makeItem =<< fmap (unlines . map (toFilePath . itemIdentifier) . take pen) . recentFirst
+                =<< (loadAllSnapshots ep cs :: Compiler [Item String])
+    lift $ do
+        create [recentPostsPath] $
+            compile recentPostsCompiler
+        forM_ (Nothing : map (Just . fst) (archivesMap y)) $ \year -> maybe id version year $
+            create [footerPath] $
+                compile $ do
+                    recentIds <- map fromFilePath . lines <$> loadBody recentPostsPath
+                    recent <- mapM (`loadSnapshot` cs) recentIds
+                    let ctx = mconcat [
+                            listField "recent-posts" pCtxForFooter (pure recent)
+                          , yearMonthArchiveField "archives" y m year
+                          , footerCtx
+                          ]
+                    makeItem mempty
+                        >>= loadAndApplyTemplate (fromFilePath $ tmBlogRoot </> "footer.html") ctx
+                        >>= relativizeUrls
