@@ -22,11 +22,11 @@ jobs:
     if: github.repository == 'falgon/roki-web'
     steps:
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         submodules: true
     - name: Stack cache
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       id: stack-cache
       with:
         path: ~/.stack
@@ -53,7 +53,7 @@ jobs:
         stack config set system-ghc --global true
         stack config set install-ghc --global false
     - name: stack-work cache
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       id: stack-work-cache
       with:
         path: ./.stack-work
@@ -66,7 +66,7 @@ jobs:
         tar cvfz haddock.tar.gz ./haddock
     - name: Upload artifact
       if: github.ref == 'refs/heads/master'
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7.0.1
       with:
         name: haddock
         path: haddock.tar.gz
@@ -76,13 +76,13 @@ jobs:
     if: github.repository == 'falgon/roki-web' && github.ref == 'refs/heads/master'
     steps:
     - name: Fetch archive
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8.0.1
       with:
         name: haddock
     - name: Unarchive haddock
       run: tar xvzf haddock.tar.gz
     - name: Push
-      uses: peaceiris/actions-gh-pages@v3
+      uses: peaceiris/actions-gh-pages@84c30a85c19949d7eee79c4ff27748b70285e453 # v4.1.0
       with:
         deploy_key: ${{ secrets.ACTIONS_ROKI_WEB_HADDOC_DEPLOY_KEY }}
         publish_dir: ./haddock

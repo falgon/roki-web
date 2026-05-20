@@ -20,19 +20,19 @@ jobs:
       mermaid_test_path: ${{ steps.build.outputs.mermaid_test_path }}
     steps:
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         submodules: true
         ref: ${{ github.head_ref }}
     - name: Site generator cache
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       id: site-gen-cache
       with:
         path: ./site
         key: site-gen-v3-${{ runner.os }}-${{ hashFiles('stack.yaml') }}-${{ hashFiles('stack.yaml.lock') }}-${{ hashFiles('package.yaml') }}-${{ hashFiles('src/**') }}-${{ hashFiles('app/**') }}-${{ hashFiles('docker/.env') }}
     - name: Stack cache
       if: steps.site-gen-cache.outputs.cache-hit != 'true'
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       id: stack-cache
       with:
         path: ~/.stack
@@ -56,12 +56,11 @@ jobs:
         enable-stack: true
         stack-version: ${{ env.stack_version }}
     - name: Install tools (apt)
-      uses: awalsh128/cache-apt-pkgs-action@v1
-      with:
-        packages: libxml2-utils parallel
-        version: 1.0
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y --no-install-recommends libxml2-utils parallel
     - name: snap cache
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       env:
         cache-name: cache-snap-packages
       with:
@@ -79,7 +78,7 @@ jobs:
         stack config set system-ghc --global true
         stack config set install-ghc --global false
     - name: Setup Node
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@v6
       with:
         node-version-file: '.nvmrc'
     - name: Export values
@@ -87,7 +86,7 @@ jobs:
         echo "ROKI_WEB_GH_ACTIONS_NODE_VERSION=$(node --version)" >> "$GITHUB_ENV"
         echo "PUPPETEER_EXECUTABLE_PATH=$(which chromium)" >> "$GITHUB_ENV"
     - name: Node module cache
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       id: node-cache
       with:
         path: '**/node_modules'
@@ -103,7 +102,7 @@ jobs:
         stack --local-bin-path . install --flag hakyll:-previewServer --flag hakyll:-watchServer
         ./site --version
     - name: Docs cache
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       id: docs-cache
       with:
         path: './docs'
@@ -204,7 +203,7 @@ jobs:
         DIARY_BLOG: roki.diary
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     - name: Upload artifact
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7.0.1
       with:
         name: roki.dev
         path: ${{ env.DOCS_TARXZ }}
@@ -215,26 +214,24 @@ jobs:
       gdrive_path: ${{ steps.upload.outputs.gdrive_path }}
     steps:
     - name: Fetch archive
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8.0.1
       with:
         name: roki.dev
     - name: Skicka cache
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       id: skicka-cache
       with:
+        # Do not cache Skicka credentials; PRs can restore base-branch caches.
         path: |
           ~/.go
           ~/.cache/go-build
-          ~/.skicka.tokencache.json
-          ~/.skicka.config
           ~/.skicka.metadata.cache
-        key: go-${{ env.GO_VERSION }}-v3-${{ runner.os }}
+        key: go-${{ env.GO_VERSION }}-v4-${{ runner.os }}
     - name: Setup Go Path
       run: |
         echo "GOPATH=$HOME/.go" >> "$GITHUB_ENV"
         echo "$HOME/.go/bin:$PATH" >> "$GITHUB_PATH"
-    - name: Setup Skicka
-      id: setup-skicka
+    - name: Install Skicka
       if: steps.skicka-cache.outputs.cache-hit != 'true'
       shell: bash
       run: |
@@ -242,6 +239,12 @@ jobs:
         tar -C "$HOME" -xzf "${{ env.GO_TARGZ }}"
         mv "$HOME/go" "$HOME/.go"
         go install github.com/google/skicka@latest
+      env:
+        GO_TARGZ: go${{ env.GO_VERSION }}.linux-amd64.tar.gz
+    - name: Configure Skicka
+      shell: bash
+      run: |
+        rm -f "$HOME/.skicka.tokencache.json" "$HOME/.skicka.config"
         skicka init
         echo -n "$SKICKA_TOKENCACHE_JSON" > "$HOME/.skicka.tokencache.json"
         sed -i -e "s/;clientid=YOUR_GOOGLE_APP_CLIENT_ID/clientid=$GOOGLE_CLIENT_ID/g" "$HOME/.skicka.config"
@@ -250,7 +253,6 @@ jobs:
         SKICKA_TOKENCACHE_JSON: ${{ secrets.SKICKA_TOKENCACHE_JSON }}
         GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
         GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
-        GO_TARGZ: go${{ env.GO_VERSION }}.linux-amd64.tar.gz
     - name: Setup variables
       id: setup-variables
       run: |

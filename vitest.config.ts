@@ -5,17 +5,12 @@ export default defineConfig({
         environment: "happy-dom",
         globals: true,
         setupFiles: ["contents/ts/__tests__/setup.ts"],
-        include: ["contents/ts/**/*.test.ts"],
+        include: ["contents/ts/**/*.test.ts", "tools/**/*.test.ts"],
         coverage: {
             provider: "v8",
             reporter: ["text", "json", "json-summary", "html"],
-            include: ["contents/ts/**/*.ts"],
-            exclude: [
-                "node_modules/",
-                "**/*.test.ts",
-                "**/*.config.ts",
-                "**/__tests__/**",
-            ],
+            include: ["contents/ts/**/*.ts", "tools/**/*.ts"],
+            exclude: ["node_modules/", "**/*.test.ts", "**/*.config.ts", "**/__tests__/**"],
         },
     },
 });
