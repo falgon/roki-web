@@ -6,7 +6,8 @@ import           Control.Monad.Reader             (asks)
 import           Control.Monad.Trans              (MonadTrans (..))
 import           Data.Aeson                       (encode)
 import qualified Data.ByteString.Lazy             as BL
-import           Data.Char                        (isDigit)
+import           Data.Char                        (isAlphaNum, isAscii, isDigit,
+                                                   toLower)
 import           Data.Disney.Experience.Generator
 import           Data.List                        (foldl', intercalate,
                                                    isPrefixOf, isSuffixOf, nub,
@@ -20,6 +21,10 @@ import           Data.Time                        (defaultTimeLocale,
 import           Dhall                            (FromDhall, Generic, Natural,
                                                    auto, input)
 import           Hakyll
+import           Network.URI                      (URI (..), URIAuth (..),
+                                                   escapeURIString,
+                                                   isUnreserved, parseURI)
+import           Numeric                          (showHex)
 import           System.Directory                 (doesFileExist,
                                                    getModificationTime,
                                                    listDirectory)
@@ -257,7 +262,11 @@ loadDisneyFavorites :: IO [Favorite]
 loadDisneyFavorites = input auto "./contents/config/disney/Favorites.dhall"
 
 loadDisneyOffers :: IO [Offer]
-loadDisneyOffers = input auto "./contents/config/disney/Offers.dhall"
+loadDisneyOffers = do
+    offers <- input auto "./contents/config/disney/Offers.dhall"
+    case offerValidationErrors offers of
+        []     -> pure offers
+        errors -> fail $ "Invalid Disney offer configuration:\n" ++ unlines errors
 
 loadDisneyOfferPolicies :: IO [OfferDeliveryPolicy]
 loadDisneyOfferPolicies = do
@@ -403,30 +412,102 @@ pickFeaturedOfferCandidate candidates = do
             <> compare (negate $ metricActualShare left) (negate $ metricActualShare right)
             <> compare (offerId $ candidateOffer $ metricCandidate right) (offerId $ candidateOffer $ metricCandidate left)
 
-offerRedirectPath :: FilePath
-offerRedirectPath = joinPath ["disney_experience_summary", "go", "index.html"]
+isValidOfferId :: String -> Bool
+isValidOfferId offerIdValue =
+    not (null offerIdValue)
+    && all (\ch -> isAscii ch && (isAlphaNum ch || ch == '-' || ch == '_')) offerIdValue
+
+allowedOfferHosts :: [String]
+allowedOfferHosts =
+    [ "www.tokyodisneyresort.jp"
+    ]
+
+offerValidationErrors :: [Offer] -> [String]
+offerValidationErrors offers =
+    invalidIdErrors ++ duplicateIdErrors ++ invalidUrlErrors
+  where
+    invalidIdErrors =
+        [ "Invalid offerId: " ++ offerId offer
+        | offer <- offers
+        , not $ isValidOfferId $ offerId offer
+        ]
+    duplicateIdErrors =
+        [ "Duplicate offerId: " ++ offerIdValue
+        | (offerIdValue, count) <- M.toList offerIdCounts
+        , count > (1 :: Int)
+        ]
+    offerIdCounts =
+        M.fromListWith (+) [(offerId offer, 1 :: Int) | offer <- offers]
+    invalidUrlErrors =
+        [ "Invalid offerUrl for " ++ offerId offer ++ ": " ++ offerUrl offer
+        | offer <- offers
+        , not $ isAllowedOfferUrl $ offerUrl offer
+        ]
+
+isAllowedOfferUrl :: String -> Bool
+isAllowedOfferUrl rawUrl =
+    all isSafeOfferUrlChar rawUrl
+    && case parseURI rawUrl of
+        Just uri -> isAllowedOfferUri uri
+        Nothing  -> False
+  where
+    isSafeOfferUrlChar ch =
+        isAscii ch
+        && ch > ' '
+        && ch `notElem` ("<>\"'`" :: String)
+
+    isAllowedOfferUri uri =
+        uriScheme uri == "https:"
+        && maybe False isAllowedAuthority (uriAuthority uri)
+
+    isAllowedAuthority URIAuth { uriUserInfo = userInfo, uriRegName = host, uriPort = port } =
+        null userInfo
+        && map toLower host `elem` allowedOfferHosts
+        && port `elem` ["", ":443"]
+
+offerRedirectIndexPath :: FilePath
+offerRedirectIndexPath = joinPath ["disney_experience_summary", "go", "index.html"]
 
 offerTrackingPath :: Offer -> String
-offerTrackingPath = offerDestinationUrl
+offerTrackingPath offer =
+    joinPath ["go", "index.html"] ++ "?offer=" ++ urlEncodeQueryComponent (offerId offer)
 
 appendQueryParams :: String -> [(String, String)] -> String
 appendQueryParams rawUrl queryParams
     | null queryParams = rawUrl
-    | otherwise        = basePart ++ queryJoiner ++ serializedParams ++ fragmentPart
+    | otherwise        = basePartWithoutUtm ++ queryJoiner ++ serializedParams ++ fragmentPart
   where
-    (basePart, fragmentPart) = breakAt '#'
-    serializedParams = intercalate "&" $ map (\(k, v) -> k ++ "=" ++ v) queryParams
-    hasQuery = '?' `elem` basePart
+    (urlWithoutFragment, fragmentPart) = breakAtIn '#' rawUrl
+    (pathPart, rawQueryPart) = breakAtIn '?' urlWithoutFragment
+    existingParams = filter (not . isUtmParam) $ splitQuery $ drop 1 rawQueryPart
+    basePartWithoutUtm
+        | null existingParams = pathPart
+        | otherwise = pathPart ++ "?" ++ intercalate "&" existingParams
+    serializedParams = intercalate "&" $ map renderQueryParam queryParams
+    hasQuery = '?' `elem` basePartWithoutUtm
     queryJoiner
         | not hasQuery = "?"
-        | null basePart = ""
-        | last basePart `elem` ("?&" :: String) = ""
+        | null basePartWithoutUtm = ""
+        | last basePartWithoutUtm `elem` ("?&" :: String) = ""
         | otherwise = "&"
 
-    breakAt :: Char -> (String, String)
-    breakAt delimiter = case break (== delimiter) rawUrl of
+    breakAtIn :: Char -> String -> (String, String)
+    breakAtIn delimiter source = case break (== delimiter) source of
         (prefix, [])     -> (prefix, "")
         (prefix, suffix) -> (prefix, suffix)
+
+    splitQuery ""    = []
+    splitQuery query = filter (not . null) $ splitAll "&" query
+
+    queryKey = takeWhile (/= '=')
+
+    isUtmParam param = "utm_" `isPrefixOf` map toLower (queryKey param)
+
+    renderQueryParam (key, value) =
+        urlEncodeQueryComponent key ++ "=" ++ urlEncodeQueryComponent value
+
+urlEncodeQueryComponent :: String -> String
+urlEncodeQueryComponent = escapeURIString isUnreserved
 
 offerDestinationUrl :: Offer -> String
 offerDestinationUrl offer =
@@ -450,13 +531,31 @@ escapeHtmlAttr = concatMap escapeChar
 escapeHtmlText :: String -> String
 escapeHtmlText = escapeHtmlAttr
 
+jsStringLiteral :: String -> String
+jsStringLiteral value = "\"" ++ concatMap escapeJsChar value ++ "\""
+  where
+    escapeJsChar '\\' = "\\\\"
+    escapeJsChar '"'  = "\\\""
+    escapeJsChar '<'  = "\\u003c"
+    escapeJsChar '>'  = "\\u003e"
+    escapeJsChar '&'  = "\\u0026"
+    escapeJsChar '\n' = "\\n"
+    escapeJsChar '\r' = "\\r"
+    escapeJsChar '\t' = "\\t"
+    escapeJsChar ch
+        | fromEnum ch < 0x20 = "\\u" ++ padLeft 4 '0' (showHex (fromEnum ch) "")
+        | otherwise = [ch]
+
+    padLeft width filler text =
+        replicate (max 0 $ width - length text) filler ++ text
+
 offerRedirectHtml :: String -> [(String, String)] -> String
 offerRedirectHtml fallbackUrl destinations =
     let destinationsJs = "{"
             ++ intercalate "," (map renderDestination destinations)
             ++ "}"
         renderDestination (destinationId, destinationUrl) =
-            show destinationId ++ ":" ++ show destinationUrl
+            jsStringLiteral destinationId ++ ":" ++ jsStringLiteral destinationUrl
     in
     "<!doctype html><html lang=\"ja\"><head><meta charset=\"utf-8\">"
     ++ "<meta name=\"robots\" content=\"noindex,nofollow\">"
@@ -466,7 +565,7 @@ offerRedirectHtml fallbackUrl destinations =
     ++ "<title>Redirecting...</title>"
     ++ "<script>"
     ++ "const fallbackUrl="
-    ++ show fallbackUrl
+    ++ jsStringLiteral fallbackUrl
     ++ ";const destinations="
     ++ destinationsJs
     ++ ";const offerId=new URLSearchParams(window.location.search).get('offer');"
@@ -671,7 +770,7 @@ rules = do
                 makeItem $ BL.toStrict $ encode vizData
 
         rulesExtraDependencies [disneyConfigDependency] $ do
-            create [fromFilePath offerRedirectPath] $ do
+            create [fromFilePath offerRedirectIndexPath] $ do
                 route idRoute
                 compile $ do
                     activeOfferRedirects <- unsafeCompiler loadActiveOfferRedirects
