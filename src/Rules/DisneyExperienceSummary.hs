@@ -427,6 +427,7 @@ rules = do
             route $ gsubRoute (contentsRoot </> "pages/") (const mempty)
             compile $ do
                 disneyLogs <- loadAllSnapshots disneyLogsPattern disneyExperienceSummarySnapshot :: Compiler [Item String]
+                logsLastModified <- unsafeCompiler getLogsLastModified
                 let totalLogs = length disneyLogs
                 disneyExperienceSummaryMediaKitCtx <- mconcatM [
                     pure $ constField "title" "Disney Experience Summary Media Kit"
