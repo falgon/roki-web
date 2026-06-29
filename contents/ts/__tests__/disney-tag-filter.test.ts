@@ -645,6 +645,52 @@ describe("disney-tag-filter.ts", () => {
             }
         });
 
+        it("marks a lazy slide loaded after the real image load event", () => {
+            const originalObserver = window.IntersectionObserver;
+            Object.defineProperty(window, "IntersectionObserver", {
+                configurable: true,
+                value: undefined,
+            });
+
+            document.body.innerHTML = `
+                ${modalHtml}
+                <div class="log-images" data-image-slideshow>
+                    <div class="log-image-viewport">
+                        <button class="log-image-slide" data-image-url="logs/80/sample-1.png" data-image-alt="A">
+                            <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" data-src="logs/80/sample-1.png" alt="A" />
+                        </button>
+                    </div>
+                    <button class="slideshow-control prev"></button>
+                    <button class="slideshow-control next"></button>
+                    <div class="slideshow-dots">
+                        <button class="slideshow-dot"></button>
+                    </div>
+                </div>
+            `;
+
+            try {
+                initializeLogImageSlideshows();
+
+                const viewport = document.querySelector(".log-image-viewport") as HTMLElement;
+                const slide = document.querySelector(".log-image-slide") as HTMLButtonElement;
+                const image = slide.querySelector("img") as HTMLImageElement;
+
+                expect(slide.dataset.imageLoaded).toBe("false");
+                expect(viewport.classList.contains("is-loading")).toBe(true);
+
+                image.dispatchEvent(new Event("load"));
+
+                expect(slide.dataset.imageLoaded).toBe("true");
+                expect(slide.classList.contains("is-image-loaded")).toBe(true);
+                expect(viewport.classList.contains("is-loading")).toBe(false);
+            } finally {
+                Object.defineProperty(window, "IntersectionObserver", {
+                    configurable: true,
+                    value: originalObserver,
+                });
+            }
+        });
+
         it("keeps viewport loading state when current slide fails but others are still loading", () => {
             const originalObserver = window.IntersectionObserver;
             Object.defineProperty(window, "IntersectionObserver", {
