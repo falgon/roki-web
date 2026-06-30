@@ -1,26 +1,11 @@
 name: Dependabot Auto Approve
 
 on:
-  workflow_run:
-    workflows:
-      - CI-pr
-      - CI-lint-test
-      - CI-CodeQL
-      - CI-Restyled
-    types:
-      - completed
-  schedule:
-    - cron: "*/15 * * * *"
   workflow_dispatch:
 
 jobs:
   collect-target-prs:
-    if: >-
-      github.repository == 'falgon/roki-web' &&
-      (
-        github.event_name != 'workflow_run' ||
-        github.event.workflow_run.conclusion == 'success'
-      )
+    if: github.repository == 'falgon/roki-web'
     runs-on: ubuntu-latest
     permissions:
       contents: read
