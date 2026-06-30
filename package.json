@@ -9,13 +9,13 @@
         "url": "git+https://github.com/falgon/roki-web.git"
     },
     "devDependencies": {
-        "@biomejs/biome": "^2.4.15",
+        "@biomejs/biome": "^2.4.16",
         "@creativebulma/bulma-tooltip": "^1.2.0",
         "@fortawesome/fontawesome-svg-core": "^7.2.0",
         "@fortawesome/free-brands-svg-icons": "^7.2.0",
         "@fortawesome/free-solid-svg-icons": "^7.2.0",
         "@types/d3": "^7.4.3",
-        "@vitest/coverage-v8": "^4.1.7",
+        "@vitest/coverage-v8": "^4.1.9",
         "@vitest/ui": "^4.1.0",
         "dotenv": "^17.4.2",
         "happy-dom": "^20.9.0",
@@ -23,7 +23,7 @@
         "playwright": "^1.60.0",
         "svgo": "^4.0.1",
         "terser": "^5.48.0",
-        "tsx": "^4.22.3",
+        "tsx": "^4.22.4",
         "typescript": "^6.0.3",
         "vite": "^8.1.0",
         "vitest": "^4.1.0"
