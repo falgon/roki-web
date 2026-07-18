@@ -11,9 +11,9 @@
     "devDependencies": {
         "@biomejs/biome": "^2.5.3",
         "@creativebulma/bulma-tooltip": "^1.2.0",
-        "@fortawesome/fontawesome-svg-core": "^7.3.0",
-        "@fortawesome/free-brands-svg-icons": "^7.3.0",
-        "@fortawesome/free-solid-svg-icons": "^7.3.0",
+        "@fortawesome/fontawesome-svg-core": "^7.3.1",
+        "@fortawesome/free-brands-svg-icons": "^7.3.1",
+        "@fortawesome/free-solid-svg-icons": "^7.3.1",
         "@types/d3": "^7.4.3",
         "@vitest/coverage-v8": "^4.1.10",
         "@vitest/ui": "^4.1.0",
