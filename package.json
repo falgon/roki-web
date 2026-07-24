@@ -18,7 +18,7 @@
         "@vitest/coverage-v8": "^4.1.10",
         "@vitest/ui": "^4.1.0",
         "dotenv": "^17.4.2",
-        "happy-dom": "^20.10.6",
+        "happy-dom": "^20.11.1",
         "katex": "^0.18.1",
         "playwright": "^1.61.1",
         "svgo": "^4.0.2",
