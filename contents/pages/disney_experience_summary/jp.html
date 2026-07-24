@@ -149,6 +149,11 @@
                     <span class="total-label">コンテンツ数:</span> $logs-total-count$
                 </div>
             </div>
+            $if(featured-offer-html)$
+            <div class="featured-offer-slot mb-3" aria-label="おすすめ情報">
+                $featured-offer-html$
+            </div>
+            $endif$
             <div class="search-filter mb-3" id="search-filter" style="display: none;">
                 <input
                     type="text"
