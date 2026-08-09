@@ -1,0 +1,4 @@
+interface:
+  display_name: "Resync Stale WIP Checks"
+  short_description: "Safely resync stale required WIP checks."
+  default_prompt: "Use $resync-stale-wip-checks to find ready open PRs in falgon/roki-web that are blocked only by an absent current-head WIP status and report the exact safe action without writing."
