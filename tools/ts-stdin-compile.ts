@@ -1,24 +1,19 @@
 #!/usr/bin/env tsx
 
-import * as ts from 'typescript';
+import { compileTypeScript } from "./ts-stdin-transform";
 
-let input = '';
-process.stdin.setEncoding('utf8');
-process.stdin.on('data', (chunk: string) => input += chunk);
-process.stdin.on('end', () => {
-  const result = ts.transpileModule(input, {
-    compilerOptions: {
-      target: ts.ScriptTarget.ES2020,
-      // module: ts.ModuleKind.CommonJS, // ブラウザ用にグローバルスコープで出力
-      lib: ['ES2020', 'DOM'],
-      strict: true,
-      skipLibCheck: true,
-      noEmitOnError: true,
-      sourceMap: false,
-      removeComments: true,
-      declaration: false,
-      esModuleInterop: true
+async function main(): Promise<void> {
+    let input = "";
+    process.stdin.setEncoding("utf8");
+
+    for await (const chunk of process.stdin) {
+        input += chunk;
     }
-  });
-  console.log(result.outputText);
-}); 
+
+    process.stdout.write(await compileTypeScript(input));
+}
+
+main().catch((error: unknown) => {
+    console.error(error instanceof Error ? error.message : error);
+    process.exitCode = 1;
+});
