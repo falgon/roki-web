@@ -32,7 +32,7 @@ jobs:
 
       - name: Run Claude Code
         id: claude
-        uses: anthropics/claude-code-action@beta
+        uses: anthropics/claude-code-action@6b082c41935b4c8a3b8b0ef85ba4ba4d9eeb8975 # v1.0.189
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
 
@@ -40,8 +40,10 @@ jobs:
           additional_permissions: |
             actions: read
           
-          # Optional: Specify model (defaults to Claude Sonnet 4, uncomment for Claude Opus 4.1)
-          model: "claude-opus-4-1-20250805"
+          # Follow the latest Sonnet release through Claude Code's rolling alias.
+          claude_args: |
+            --model 'sonnet'
+            --allowedTools 'Bash(*)'
           
           # Optional: Customize the trigger phrase (default: @claude)
           # trigger_phrase: "/claude"
@@ -49,16 +51,7 @@ jobs:
           # Optional: Trigger when specific user is assigned to an issue
           assignee_trigger: "claude-bot"
           
-          # Optional: Allow Claude to run specific commands
-          allowed_tools: "Bash(*)"
-          
-          # Optional: Add custom instructions for Claude to customize its behavior for your project
-          # custom_instructions: |
-          #   Follow our coding standards
-          #   Ensure all new code has tests
-          #   Use TypeScript for new files
-          
-          # Optional: Custom environment variables for Claude
-          # claude_env: |
-          #   NODE_ENV: test
+          # Optional: Configure Claude Code settings and environment variables
+          # settings: |
+          #   {"env":{"NODE_ENV":"test"}}
 
