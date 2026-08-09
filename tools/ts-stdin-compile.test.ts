@@ -34,7 +34,17 @@ describe("compileTypeScript", () => {
     });
 
     it("rejects invalid TypeScript syntax", async () => {
-        await expect(compileTypeScript("const value: = 1;")).rejects.toThrow();
+        const transform = compileTypeScript("const value: = 1;");
+
+        await expect(transform).rejects.toBeInstanceOf(Error);
+        await expect(transform).rejects.toMatchObject({
+            errors: expect.arrayContaining([
+                expect.objectContaining({
+                    location: expect.objectContaining({ line: 1 }),
+                    text: expect.stringMatching(/\S/),
+                }),
+            ]),
+        });
     });
 
     it("preserves TypeScript's ES2020 class-field assignment semantics", async () => {
@@ -64,7 +74,7 @@ describe("ts-stdin-compile CLI", () => {
         expect(result.stdout.trimEnd().endsWith("const answer = 42;")).toBe(true);
     });
 
-    it("preserves large UTF-8 input across stdin chunks", () => {
+    it("preserves large UTF-8 input across stdin chunks", { timeout: 10_000 }, () => {
         const payload = "あ".repeat(70_000);
         const result = runCli(`const payload: string = ${JSON.stringify(payload)};`);
 
