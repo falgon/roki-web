@@ -190,13 +190,14 @@ jobs:
         id: review
         if: steps.load-pr.outputs.skip != 'true'
         continue-on-error: true
-        uses: anthropics/claude-code-action@v1
+        uses: anthropics/claude-code-action@6b082c41935b4c8a3b8b0ef85ba4ba4d9eeb8975 # v1.0.189
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           github_token: ${{ secrets.DEPENDABOT_AUTO_APPROVE_READ_BRANCH_PROTECTION_TOKEN }}
           allowed_bots: "app/dependabot,dependabot,claude,kodiakhq"
+          # Follow the latest Sonnet release through Claude Code's rolling alias.
           claude_args: |
-            --model 'haiku'
+            --model 'sonnet'
             --allowedTools Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr checks:*)
             --json-schema '{"type":"object","additionalProperties":false,"required":["approve","summary","reason"],"properties":{"approve":{"type":"boolean"},"summary":{"type":"string","minLength":1},"reason":{"type":"string","minLength":1}}}'
           prompt: |
