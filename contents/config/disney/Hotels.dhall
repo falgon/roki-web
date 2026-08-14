@@ -1,7 +1,9 @@
 -- 任意の深さのホテル詳細をChurchエンコードで表現する
 let HotelDetailF =
       λ(r : Type) →
-        < HDText : Text | HDNode : { hdLabel : Text, hdChildren : List r } >
+        < HDStay : { stayLabel : Text, stayCount : Natural }
+        | HDNode : { hdLabel : Text, hdChildren : List r }
+        >
 
 let HotelDetail = ∀(r : Type) → (HotelDetailF r → r) → r
 
@@ -33,29 +35,40 @@ let listConcat =
           (λ(xs : List a) → λ(acc : List a) → xs # acc)
           ([] : List a)
 
+let DetailRaw = { detailPathRaw : List Text, stayCountRaw : Natural }
+
 let prependToEach =
       λ(prefix : Text) →
-      λ(paths : List (List Text)) →
+      λ(details : List DetailRaw) →
         listMap
-          (List Text)
-          (List Text)
-          (λ(path : List Text) → [ prefix ] # path)
-          paths
+          DetailRaw
+          DetailRaw
+          ( λ(detail : DetailRaw) →
+              { detailPathRaw = [ prefix ] # detail.detailPathRaw
+              , stayCountRaw = detail.stayCountRaw
+              }
+          )
+          details
 
 let detailToPaths
-    : HotelDetail → List (List Text)
+    : HotelDetail → List DetailRaw
     = foldHotelDetail
-        (List (List Text))
-        ( λ(detailF : HotelDetailF (List (List Text))) →
+        (List DetailRaw)
+        ( λ(detailF : HotelDetailF (List DetailRaw)) →
             merge
-              { HDText = λ(text : Text) → [ [ text ] ]
+              { HDStay =
+                  λ(stay : { stayLabel : Text, stayCount : Natural }) →
+                    [ { detailPathRaw = [ stay.stayLabel ]
+                      , stayCountRaw = stay.stayCount
+                      }
+                    ]
               , HDNode =
                   λ ( node
-                    : { hdLabel : Text, hdChildren : List (List (List Text)) }
+                    : { hdLabel : Text, hdChildren : List (List DetailRaw) }
                     ) →
-                    let childPaths = listConcat (List Text) node.hdChildren
+                    let childDetails = listConcat DetailRaw node.hdChildren
 
-                    in  prependToEach node.hdLabel childPaths
+                    in  prependToEach node.hdLabel childDetails
               }
               detailF
         )
@@ -63,15 +76,16 @@ let detailToPaths
 let detailsToPaths =
       λ(details : List HotelDetail) →
         listConcat
-          (List Text)
-          (listMap HotelDetail (List (List Text)) detailToPaths details)
+          DetailRaw
+          (listMap HotelDetail (List DetailRaw) detailToPaths details)
 
-let makeText
-    : Text → HotelDetail
-    = λ(text : Text) →
+let makeStay
+    : Text → Natural → HotelDetail
+    = λ(label : Text) →
+      λ(count : Natural) →
       λ(r : Type) →
       λ(alg : HotelDetailF r → r) →
-        alg ((HotelDetailF r).HDText text)
+        alg ((HotelDetailF r).HDStay { stayLabel = label, stayCount = count })
 
 let makeNode
     : Text → List HotelDetail → HotelDetail
@@ -92,51 +106,46 @@ let makeNode
               )
 
 let Hotel =
-      { hotelCodeRaw : Text
-      , staysRaw : Natural
-      , detailsRaw : List (List Text)
-      , hotelColorRaw : Text
-      }
+      { hotelCodeRaw : Text, detailsRaw : List DetailRaw, hotelColorRaw : Text }
 
-in  [ { hotelCodeRaw = "FSH"
-      , staysRaw = 7
-      , detailsRaw =
-          detailsToPaths
-            [ makeNode
-                "ファンタジーシャトー"
-                [ makeNode "スプリングスサイド" [ makeText "バルアル" ]
-                , makeNode
-                    "ローズコートサイド"
-                    [ makeText "スーペリア ×3", makeText "スーペリア・アルコーヴ ×2" ]
-                , makeNode "べイエリアサイド" [ makeText "スーペリア・アルコーヴ" ]
-                ]
-            ]
-      , hotelColorRaw = "#854454"
-      }
-    , { hotelCodeRaw = "DHM"
-      , staysRaw = 5
-      , detailsRaw =
-          detailsToPaths
-            [ makeNode
-                "スイート"
-                [ makeText "ハバグラ", makeText "ハバテラ ×2", makeText "ピアバル" ]
-            , makeNode "ポルトパラディーゾ" [ makeText "スーペリアルームハーバービュー" ]
-            ]
-      , hotelColorRaw = "#8A7501"
-      }
-    , { hotelCodeRaw = "TDH"
-      , staysRaw = 6
-      , detailsRaw =
-          detailsToPaths
-            [ makeNode "キャラ" [ makeText "美女野獣", makeText "シンデレラ" ]
-            , makeNode "スーペリア" [ makeText "コーナールーム ×2", makeText "パークグランドビュー" ]
-            , makeNode "コンシェルジュ" [ makeText "バルコニールーム パークグランドビュー" ]
-            ]
-      , hotelColorRaw = "#B95C00"
-      }
-    , { hotelCodeRaw = "TSH"
-      , staysRaw = 3
-      , detailsRaw = detailsToPaths [ makeText "スタンダードルーム ×3" ]
-      , hotelColorRaw = "#C28A02"
-      }
-    ]
+in    [ { hotelCodeRaw = "FSH"
+        , detailsRaw =
+            detailsToPaths
+              [ makeNode
+                  "ファンタジーシャトー"
+                  [ makeNode "スプリングスサイド" [ makeStay "バルアル" 1 ]
+                  , makeNode
+                      "ローズコートサイド"
+                      [ makeStay "スーペリア" 3, makeStay "スーペリア・アルコーヴ" 2 ]
+                  , makeNode "べイエリアサイド" [ makeStay "スーペリア・アルコーヴ" 1 ]
+                  ]
+              ]
+        , hotelColorRaw = "#854454"
+        }
+      , { hotelCodeRaw = "DHM"
+        , detailsRaw =
+            detailsToPaths
+              [ makeNode
+                  "スイート"
+                  [ makeStay "ハバグラ" 1, makeStay "ハバテラ" 2, makeStay "ピアバル" 1 ]
+              , makeNode "ポルトパラディーゾ" [ makeStay "スーペリアルームハーバービュー" 1 ]
+              ]
+        , hotelColorRaw = "#8A7501"
+        }
+      , { hotelCodeRaw = "TDH"
+        , detailsRaw =
+            detailsToPaths
+              [ makeNode "キャラ" [ makeStay "美女野獣" 1, makeStay "シンデレラ" 1 ]
+              , makeNode
+                  "スーペリア"
+                  [ makeStay "コーナールーム" 2, makeStay "パークグランドビュー" 1 ]
+              , makeNode "コンシェルジュ" [ makeStay "バルコニールーム パークグランドビュー" 1 ]
+              ]
+        , hotelColorRaw = "#B95C00"
+        }
+      , { hotelCodeRaw = "TSH"
+        , detailsRaw = detailsToPaths [ makeStay "スタンダードルーム" 3 ]
+        , hotelColorRaw = "#C28A02"
+        }
+      ]
+    : List Hotel
