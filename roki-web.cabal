@@ -48,6 +48,7 @@ library
       Contexts.Utils
       Data.Disney.Experience
       Data.Disney.Experience.Generator
+      Data.Disney.HotelStay
       Hakyll.Web.Feed.Extra
       Media
       Media.JS
@@ -180,6 +181,7 @@ test-suite roki-web-test
       Config.TopPageSpec
       Data.Disney.Experience.GeneratorSpec
       Data.Disney.ExperienceSpec
+      Data.Disney.HotelStaySpec
       Hakyll.Web.Feed.ExtraSpec
       TestHelpers
       Utils.BaseSpec
