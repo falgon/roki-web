@@ -1078,6 +1078,8 @@ const initializeClearButton = (
     });
 };
 
+const searchDebounceDelayMs = 300;
+
 // 検索入力のイベントハンドラーを初期化
 const initializeSearchInput = (
     searchInput: HTMLInputElement,
@@ -1099,7 +1101,7 @@ const initializeSearchInput = (
         searchDebounceTimer = setTimeout((): void => {
             filterLogEntries();
             searchDebounceTimer = null;
-        }, 300); // 300ms の遅延
+        }, searchDebounceDelayMs);
     });
 };
 
@@ -1122,6 +1124,14 @@ if (typeof window !== "undefined") {
             initializeLogImageSlideshows: typeof initializeLogImageSlideshows;
         }
     ).initializeLogImageSlideshows = initializeLogImageSlideshows;
+    (
+        window as typeof window & {
+            initializeSearchInput: typeof initializeSearchInput;
+            searchDebounceDelayMs: number;
+        }
+    ).initializeSearchInput = initializeSearchInput;
+    (window as typeof window & { searchDebounceDelayMs: number }).searchDebounceDelayMs =
+        searchDebounceDelayMs;
 }
 
 if (typeof document !== "undefined") {
