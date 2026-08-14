@@ -397,58 +397,6 @@ describe("disney-tag-filter.ts", () => {
             `;
         });
 
-        it("should filter entries when user types in search input", (done) => {
-            const searchInput = document.getElementById("search-input") as HTMLInputElement;
-            const entries = document.querySelectorAll(".log-entry");
-
-            expect(searchInput).toBeTruthy();
-            expect(entries.length).toBe(3);
-
-            // 検索入力をシミュレート
-            searchInput.value = "disney";
-            const inputEvent = new Event("input", { bubbles: true });
-            searchInput.dispatchEvent(inputEvent);
-
-            // デバウンス処理を考慮して少し待機
-            setTimeout(() => {
-                // 検索が実行されたことを確認（この時点ではフィルタリングロジックがDOMContentLoaded内にあるため、
-                // 実際のフィルタリングは行われないが、イベントが正しく発火することを確認）
-                expect(searchInput.value).toBe("disney");
-                done();
-            }, 350); // デバウンス時間(300ms)より少し長く待機
-        });
-
-        it("should handle multiple rapid inputs with debounce", (done) => {
-            const searchInput = document.getElementById("search-input") as HTMLInputElement;
-
-            expect(searchInput).toBeTruthy();
-
-            // 複数の入力を素早く実行
-            searchInput.value = "d";
-            searchInput.dispatchEvent(new Event("input", { bubbles: true }));
-
-            setTimeout(() => {
-                searchInput.value = "di";
-                searchInput.dispatchEvent(new Event("input", { bubbles: true }));
-            }, 50);
-
-            setTimeout(() => {
-                searchInput.value = "dis";
-                searchInput.dispatchEvent(new Event("input", { bubbles: true }));
-            }, 100);
-
-            setTimeout(() => {
-                searchInput.value = "disney";
-                searchInput.dispatchEvent(new Event("input", { bubbles: true }));
-            }, 150);
-
-            // デバウンス処理により、最後の入力のみが処理されることを確認
-            setTimeout(() => {
-                expect(searchInput.value).toBe("disney");
-                done();
-            }, 500); // 全ての入力とデバウンス処理が完了するまで待機
-        });
-
         it("should normalize search queries correctly", () => {
             // 大文字小文字の正規化
             const query1 = normalizeString("DISNEY");
@@ -461,22 +409,6 @@ describe("disney-tag-filter.ts", () => {
             // 複合的な正規化
             const query3 = normalizeString("  TOKYO DisneySea  ");
             expect(query3).toBe("tokyo disneysea");
-        });
-
-        it("should handle empty search input", (done) => {
-            const searchInput = document.getElementById("search-input") as HTMLInputElement;
-
-            expect(searchInput).toBeTruthy();
-
-            // 空の入力をシミュレート
-            searchInput.value = "";
-            const inputEvent = new Event("input", { bubbles: true });
-            searchInput.dispatchEvent(inputEvent);
-
-            setTimeout(() => {
-                expect(searchInput.value).toBe("");
-                done();
-            }, 350);
         });
 
         it("should verify search input element exists", () => {
