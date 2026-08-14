@@ -19,7 +19,7 @@
         "@vitest/ui": "^4.1.0",
         "dotenv": "^17.4.2",
         "esbuild": "^0.28.1",
-        "happy-dom": "^20.11.1",
+        "happy-dom": "^20.11.2",
         "katex": "^0.18.1",
         "playwright": "^1.62.1",
         "svgo": "^4.0.2",
