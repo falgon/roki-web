@@ -44,6 +44,17 @@ Available commands:
 stack exec site -- build --preview # fast build (This does not render KaTeX)
 stack exec site -- build # release build
 ```
+
+Creating a release pull request from `develop` to `master`:
+
+```sh
+make create-pr-master-develop
+# After verification, use the URL printed above to start the protected automerge flow.
+gh pr ready <PR URL>
+```
+
+The pull request remains a GitHub Draft until the explicit `gh pr ready` step.
+
 Scheduled posting
 ```sh
 stack exec spa -- --help
@@ -191,4 +202,3 @@ For more details, you can see [the dependency report of FOSSA](https://app.fossa
    
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Ffalgon%2Froki-web.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Ffalgon%2Froki-web?ref=badge_large)
 </div>
-
