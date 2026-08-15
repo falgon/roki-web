@@ -397,58 +397,6 @@ describe("disney-tag-filter.ts", () => {
             `;
         });
 
-        it("should filter entries when user types in search input", (done) => {
-            const searchInput = document.getElementById("search-input") as HTMLInputElement;
-            const entries = document.querySelectorAll(".log-entry");
-
-            expect(searchInput).toBeTruthy();
-            expect(entries.length).toBe(3);
-
-            // 検索入力をシミュレート
-            searchInput.value = "disney";
-            const inputEvent = new Event("input", { bubbles: true });
-            searchInput.dispatchEvent(inputEvent);
-
-            // デバウンス処理を考慮して少し待機
-            setTimeout(() => {
-                // 検索が実行されたことを確認（この時点ではフィルタリングロジックがDOMContentLoaded内にあるため、
-                // 実際のフィルタリングは行われないが、イベントが正しく発火することを確認）
-                expect(searchInput.value).toBe("disney");
-                done();
-            }, 350); // デバウンス時間(300ms)より少し長く待機
-        });
-
-        it("should handle multiple rapid inputs with debounce", (done) => {
-            const searchInput = document.getElementById("search-input") as HTMLInputElement;
-
-            expect(searchInput).toBeTruthy();
-
-            // 複数の入力を素早く実行
-            searchInput.value = "d";
-            searchInput.dispatchEvent(new Event("input", { bubbles: true }));
-
-            setTimeout(() => {
-                searchInput.value = "di";
-                searchInput.dispatchEvent(new Event("input", { bubbles: true }));
-            }, 50);
-
-            setTimeout(() => {
-                searchInput.value = "dis";
-                searchInput.dispatchEvent(new Event("input", { bubbles: true }));
-            }, 100);
-
-            setTimeout(() => {
-                searchInput.value = "disney";
-                searchInput.dispatchEvent(new Event("input", { bubbles: true }));
-            }, 150);
-
-            // デバウンス処理により、最後の入力のみが処理されることを確認
-            setTimeout(() => {
-                expect(searchInput.value).toBe("disney");
-                done();
-            }, 500); // 全ての入力とデバウンス処理が完了するまで待機
-        });
-
         it("should normalize search queries correctly", () => {
             // 大文字小文字の正規化
             const query1 = normalizeString("DISNEY");
@@ -461,22 +409,6 @@ describe("disney-tag-filter.ts", () => {
             // 複合的な正規化
             const query3 = normalizeString("  TOKYO DisneySea  ");
             expect(query3).toBe("tokyo disneysea");
-        });
-
-        it("should handle empty search input", (done) => {
-            const searchInput = document.getElementById("search-input") as HTMLInputElement;
-
-            expect(searchInput).toBeTruthy();
-
-            // 空の入力をシミュレート
-            searchInput.value = "";
-            const inputEvent = new Event("input", { bubbles: true });
-            searchInput.dispatchEvent(inputEvent);
-
-            setTimeout(() => {
-                expect(searchInput.value).toBe("");
-                done();
-            }, 350);
         });
 
         it("should verify search input element exists", () => {
@@ -637,6 +569,52 @@ describe("disney-tag-filter.ts", () => {
 
                 const image = document.querySelector(".log-image-slide img") as HTMLImageElement;
                 expect(image.getAttribute("src")).toBe("logs/80/sample-1.png");
+            } finally {
+                Object.defineProperty(window, "IntersectionObserver", {
+                    configurable: true,
+                    value: originalObserver,
+                });
+            }
+        });
+
+        it("marks a lazy slide loaded after the real image load event", () => {
+            const originalObserver = window.IntersectionObserver;
+            Object.defineProperty(window, "IntersectionObserver", {
+                configurable: true,
+                value: undefined,
+            });
+
+            document.body.innerHTML = `
+                ${modalHtml}
+                <div class="log-images" data-image-slideshow>
+                    <div class="log-image-viewport">
+                        <button class="log-image-slide" data-image-url="logs/80/sample-1.png" data-image-alt="A">
+                            <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" data-src="logs/80/sample-1.png" alt="A" />
+                        </button>
+                    </div>
+                    <button class="slideshow-control prev"></button>
+                    <button class="slideshow-control next"></button>
+                    <div class="slideshow-dots">
+                        <button class="slideshow-dot"></button>
+                    </div>
+                </div>
+            `;
+
+            try {
+                initializeLogImageSlideshows();
+
+                const viewport = document.querySelector(".log-image-viewport") as HTMLElement;
+                const slide = document.querySelector(".log-image-slide") as HTMLButtonElement;
+                const image = slide.querySelector("img") as HTMLImageElement;
+
+                expect(slide.dataset.imageLoaded).toBe("false");
+                expect(viewport.classList.contains("is-loading")).toBe(true);
+
+                image.dispatchEvent(new Event("load"));
+
+                expect(slide.dataset.imageLoaded).toBe("true");
+                expect(slide.classList.contains("is-image-loaded")).toBe(true);
+                expect(viewport.classList.contains("is-loading")).toBe(false);
             } finally {
                 Object.defineProperty(window, "IntersectionObserver", {
                     configurable: true,

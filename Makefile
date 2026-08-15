@@ -43,8 +43,10 @@ stop-watch-prebuild:
 		&& docker-compose --compatibility -f docker-compose-ghpr.yml stop preview \
 		; popd
 
+# GitHub Draft is the work-in-progress gate. After verification, pass the PR URL printed
+# by this target to `gh pr ready <PR URL>` to authorize automerge after every check succeeds.
 create-pr-master-develop:
-	@gh pr create -t "WIP master <- develop" \
+	@gh pr create --draft -t "master <- develop" \
 		-a @me \
 		-l automerge -l dependencies \
 		-B master \

@@ -8,17 +8,17 @@ import           Data.Aeson                       (encode)
 import qualified Data.ByteString.Lazy             as BL
 import           Data.Char                        (isDigit)
 import           Data.Disney.Experience.Generator
-import           Data.List                        (foldl', isPrefixOf,
-                                                   isSuffixOf, nub, sort,
-                                                   sortBy, sortOn)
+import           Data.Disney.HotelStay
+import           Data.List                        (isPrefixOf, isSuffixOf, nub,
+                                                   sort, sortBy, sortOn)
 import qualified Data.Map                         as M
 import           Data.Maybe                       (fromMaybe)
 import           Data.Ord                         (comparing)
 import           Data.String                      (IsString (..))
 import           Data.Time                        (defaultTimeLocale,
                                                    formatTime)
-import           Dhall                            (FromDhall, Generic, Natural,
-                                                   auto, input)
+import           Dhall                            (FromDhall, Generic, auto,
+                                                   input)
 import           Hakyll
 import           System.Directory                 (doesFileExist,
                                                    getModificationTime,
@@ -44,53 +44,6 @@ data Favorite = Favorite {
   } deriving (Generic, Show)
 
 instance FromDhall Favorite
-
--- ホテルの詳細情報の階層構造（任意階層対応）
-data HotelDetail
-  = HDText String
-  | HDNode { hdLabel :: String, hdChildren :: [HotelDetail] }
-  deriving (Generic, Show)
-
--- ホテル情報のデータ構造
-data Hotel = Hotel {
-    hotelCode  :: String
-  , stays      :: Natural
-  , details    :: [HotelDetail]
-  , hotelColor :: String
-  } deriving (Show)
-
--- Dhallから読み込むための中間データ構造
-data HotelRaw = HotelRaw {
-    hotelCodeRaw  :: String
-  , staysRaw      :: Natural
-  , detailsRaw    :: [[String]]
-  , hotelColorRaw :: String
-  } deriving (Generic, Show)
-
-instance FromDhall HotelRaw
-
-buildHotelDetails :: [[String]] -> [HotelDetail]
-buildHotelDetails = foldl' (flip insertPath) []
-
-insertPath :: [String] -> [HotelDetail] -> [HotelDetail]
-insertPath [] forest           = forest
-insertPath [leaf] forest       = insertLeaf leaf forest
-insertPath (label:rest) forest = insertBranch label rest forest
-
-insertLeaf :: String -> [HotelDetail] -> [HotelDetail]
-insertLeaf leaf [] = [HDText leaf]
-insertLeaf leaf (HDText txt : xs)
-    | txt == leaf = HDText txt : xs
-    | otherwise = HDText txt : insertLeaf leaf xs
-insertLeaf leaf (node@HDNode{} : xs) = node : insertLeaf leaf xs
-
-insertBranch :: String -> [String] -> [HotelDetail] -> [HotelDetail]
-insertBranch label rest [] =
-    [HDNode { hdLabel = label, hdChildren = insertPath rest [] }]
-insertBranch label rest (node@HDNode { hdLabel = lbl, hdChildren = chldn } : xs)
-    | lbl == label = HDNode lbl (insertPath rest chldn) : xs
-    | otherwise = node : insertBranch label rest xs
-insertBranch label rest (leaf@HDText{} : xs) = leaf : insertBranch label rest xs
 
 -- タグ設定のデータ構造
 data TagConfig = TagConfig {
@@ -211,21 +164,12 @@ loadDisneyFavorites = input auto "./contents/config/disney/Favorites.dhall"
 
 -- Dhallファイルからホテル情報を読み込み
 loadDisneyHotels :: IO [Hotel]
-loadDisneyHotels =
-    map convert <$> (input auto "./contents/config/disney/Hotels.dhall" :: IO [HotelRaw])
-  where
-    convert (HotelRaw codeRaw staysRaw detailPathsRaw colorRaw) =
-        Hotel
-            { hotelCode = codeRaw
-            , stays = staysRaw
-            , details = buildHotelDetails detailPathsRaw
-            , hotelColor = colorRaw
-            }
+loadDisneyHotels = loadHotels productionHotelsPath
 
 -- Hotels.dhallの最終更新日を取得
 getHotelsLastModified :: IO String
 getHotelsLastModified = do
-    modTime <- getModificationTime "./contents/config/disney/Hotels.dhall"
+    modTime <- getModificationTime productionHotelsPath
     return $ formatTime defaultTimeLocale "%Y/%m/%d" modTime
 
 -- ディズニーログの最終更新日を取得（最も新しいファイルの日付）
@@ -320,25 +264,11 @@ disneyLogCtx tagConfig = mconcat
 hotelCtx :: Context Hotel
 hotelCtx = mconcat
     [ field "hotel-code" (return . hotelCode . itemBody)
-    , field "stays-count" (return . show . stays . itemBody)
+    , field "stays-count" (return . show . hotelStayCount . itemBody)
     , field "hotel-color" (return . hotelColor . itemBody)
     , field "hotel-details-html" $ \item ->
-        return $ renderHotelDetails (details $ itemBody item)
+        return $ renderHotelDetailsHtml (details $ itemBody item)
     ]
-  where
-    -- 階層構造をHTMLに変換
-    renderHotelDetails :: [HotelDetail] -> String
-    renderHotelDetails = concatMap (renderDetail 0)
-
-    renderDetail :: Int -> HotelDetail -> String
-    renderDetail level (HDText text) = renderSpan level text
-    renderDetail level (HDNode {hdLabel = lbl, hdChildren = chldn}) =
-        renderSpan level lbl ++ concatMap (renderDetail (level + 1)) chldn
-
-    renderSpan :: Int -> String -> String
-    renderSpan level text =
-        let classLevel = min level 3
-        in "<span class=\"hotel-detail-item hotel-detail-level-" ++ show classLevel ++ "\">" ++ text ++ "</span>"
 
 rules :: PageConfReader Rules ()
 rules = do
@@ -379,7 +309,7 @@ rules = do
                     logsLastModified <- unsafeCompiler getLogsLastModified
                     tagConfig <- unsafeCompiler tagConfigMap
                     disneyLogs <- sortByNum <$> loadAllSnapshots disneyLogsPattern disneyExperienceSummarySnapshot
-                    let totalStays = sum $ map stays hotels
+                    let totalStays = sum $ map hotelStayCount hotels
                     let totalLogs = length disneyLogs
                     -- ユニークなタグリストを作成
                     uniqueTags <- do

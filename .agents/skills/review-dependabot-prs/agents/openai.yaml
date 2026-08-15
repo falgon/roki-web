@@ -1,0 +1,4 @@
+interface:
+  display_name: "Review Dependabot PRs"
+  short_description: "Review and safely approve Dependabot PRs."
+  default_prompt: "Use $review-dependabot-prs to review every open Dependabot PR in falgon/roki-web and report APPROVE, HOLD, or ALREADY APPROVED for each one without submitting reviews or performing GitHub writes."

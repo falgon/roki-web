@@ -596,12 +596,15 @@ const initializeLogImageSlideshows = (): void => {
         if (!image) return;
         const dataSrc = image.dataset.src;
         if (!dataSrc) return;
-        if (image.getAttribute("src") === dataSrc) return;
+        const previousSrc = image.getAttribute("src") ?? "";
+        if (previousSrc === dataSrc) return;
         // プレースホルダーの load で誤って loaded 扱いになった状態をリセットする
         slide.dataset.imageLoaded = "false";
         slide.classList.remove("is-image-loaded");
         image.setAttribute("src", dataSrc);
-        if (image.complete) {
+        const canTrustImmediateImageState =
+            previousSrc !== "" && previousSrc !== TRANSPARENT_PLACEHOLDER_GIF;
+        if (canTrustImmediateImageState && image.complete) {
             if (image.naturalWidth > 0) {
                 slide.dataset.imageLoaded = "true";
                 slide.classList.add("is-image-loaded");
@@ -1075,6 +1078,8 @@ const initializeClearButton = (
     });
 };
 
+const searchDebounceDelayMs = 300;
+
 // 検索入力のイベントハンドラーを初期化
 const initializeSearchInput = (
     searchInput: HTMLInputElement,
@@ -1096,7 +1101,7 @@ const initializeSearchInput = (
         searchDebounceTimer = setTimeout((): void => {
             filterLogEntries();
             searchDebounceTimer = null;
-        }, 300); // 300ms の遅延
+        }, searchDebounceDelayMs);
     });
 };
 
@@ -1119,6 +1124,14 @@ if (typeof window !== "undefined") {
             initializeLogImageSlideshows: typeof initializeLogImageSlideshows;
         }
     ).initializeLogImageSlideshows = initializeLogImageSlideshows;
+    (
+        window as typeof window & {
+            initializeSearchInput: typeof initializeSearchInput;
+            searchDebounceDelayMs: number;
+        }
+    ).initializeSearchInput = initializeSearchInput;
+    (window as typeof window & { searchDebounceDelayMs: number }).searchDebounceDelayMs =
+        searchDebounceDelayMs;
 }
 
 if (typeof document !== "undefined") {
