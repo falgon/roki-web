@@ -16,42 +16,80 @@ parameters:
 jobs:
   build:
     docker:
-    - image: cimg/go:1.25.8
+    - image: cimg/go:1.26.8@sha256:43f2fbef1551ce6c971782e58eabc99a103f113b2ae629b1f51e7174891354fb
     resource_class: large
     environment:
       TZ: /usr/share/zoneinfo/Asia/Tokyo
+      SKICKA_VERSION: v0.0.0-20200616214010-3c2bc8074c50
+      STACK_VERSION: 3.7.1
+      STACK_SHA256: c9ba670e7efd3f3807528e60ad09667dd37eba3d941c7edf6ab09d938abc70a8
     steps:
     - checkout
     - run:
         name: Set up environments
+        environment:
+          TARGET_REF: << pipeline.parameters.TARGET_REF >>
         command: |
-          git -c advice.detachedHead=false checkout << pipeline.parameters.TARGET_REF >>
+          # NotifyEmail is trusted code from protected upstream develop; PR files must not run with secrets.
+          git fetch --no-tags --depth=1 https://github.com/falgon/roki-web.git develop
+          if ! git show FETCH_HEAD:tools/circleci/NotifyEmail.hs > "$HOME/NotifyEmail.hs"; then
+            echo "NotifyEmail.hs is missing from trusted develop" >&2
+            exit 1
+          fi
+          chmod 700 "$HOME/NotifyEmail.hs"
+          if [[ ! "$TARGET_REF" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "TARGET_REF must be a 40-character commit SHA" >&2
+            exit 1
+          fi
+          git -c advice.detachedHead=false checkout --detach "$TARGET_REF"
           echo 'export GOPATH="$HOME/.go"' >> $BASH_ENV
-          echo 'export PATH="$HOME/.go/bin:$PATH"' >> $BASH_ENV
+          echo 'export PATH="$HOME/.local/bin:$HOME/.go/bin:$PATH"' >> $BASH_ENV
           echo "export ARTIFACTS_URL=\"https://output.circle-artifacts.com/output/job/$CIRCLE_WORKFLOW_JOB_ID/artifacts/$CIRCLE_NODE_INDEX/<< pipeline.parameters.ARTIFACT_PATH >>\"" >> $BASH_ENV
           echo 'export ARTIFACTS_GDRIVE_PATH="<< pipeline.parameters.GDRIVE_PATH >>"' >> $BASH_ENV
           source "$BASH_ENV"
-    - restore_cache:
-        key: skicka-2026-02-26-go1.25.8
     - run:
         name: Setup tools
         command: |
-          sudo apt-get -qq update && sudo apt-get install -qq -y --no-install-recommends jq nkf
-          if ! hash skicka 2>/dev/null; then
-            go install github.com/google/skicka@latest
-            skicka init
-            echo -n "$SKICKA_TOKEN_CACHE_JSON" | base64 --decode > $HOME/.skicka.tokencache.json
-            sed -i -e "s/;clientid=YOUR_GOOGLE_APP_CLIENT_ID/clientid=$GOOGLE_CLIENT_ID/g" $HOME/.skicka.config
-            sed -i -e "s/;clientsecret=YOUR_GOOGLE_APP_SECRET/clientsecret=$GOOGLE_CLIENT_SECRET/g" $HOME/.skicka.config
+          set -o pipefail
+          umask 077
+          sudo apt-get -qq update && sudo apt-get install -qq -y --no-install-recommends jq nkf python3 build-essential libffi-dev libgmp-dev libtinfo-dev xz-utils zlib1g-dev
+          mkdir -p "$HOME/.local/bin"
+          stack_binary=$(mktemp)
+          curl -fsSL "https://github.com/commercialhaskell/stack/releases/download/v${STACK_VERSION}/stack-${STACK_VERSION}-linux-x86_64-bin" -o "$stack_binary"
+          echo "${STACK_SHA256}  ${stack_binary}" | sha256sum --check -
+          install -m 0755 "$stack_binary" "$HOME/.local/bin/stack"
+          rm -f "$stack_binary"
+          "$HOME/.local/bin/stack" --version
+          (cd "$HOME" && GOTOOLCHAIN=local go install "github.com/google/skicka@${SKICKA_VERSION}")
+          rm -f "$HOME/.skicka.tokencache.json" "$HOME/.skicka.config"
+          skicka init
+          if [ -z "$SKICKA_TOKEN_CACHE_JSON" ]; then
+            echo "SKICKA_TOKEN_CACHE_JSON is empty" >&2
+            exit 1
           fi
-          curl -sSL https://get.haskellstack.org/ | sh
-    - save_cache:
-        key: skicka-2026-02-26-go1.25.8
-        paths:
-          - ~/.go/bin
-          - ~/.cache/go-build
-          - ~/.skicka.tokencache.json
-          - ~/.skicka.config
+          printf '%s' "$SKICKA_TOKEN_CACHE_JSON" | base64 --decode > "$HOME/.skicka.tokencache.json"
+          jq -e . "$HOME/.skicka.tokencache.json" >/dev/null
+          python3 - <<'PY'
+          from pathlib import Path
+          import os
+
+          config_path = Path.home() / ".skicka.config"
+          config = config_path.read_text()
+          for key, name, placeholder in (
+              ("clientid", "GOOGLE_CLIENT_ID", ";clientid=YOUR_GOOGLE_APP_CLIENT_ID"),
+              ("clientsecret", "GOOGLE_CLIENT_SECRET", ";clientsecret=YOUR_GOOGLE_APP_SECRET"),
+          ):
+              value = os.environ.get(name, "")
+              if not value:
+                  raise SystemExit(f"{name} is empty")
+              if "\n" in value or "\r" in value:
+                  raise SystemExit(f"{name} contains a newline")
+              if placeholder not in config:
+                  raise SystemExit(f"{placeholder!r} not found in .skicka.config")
+              config = config.replace(placeholder, f"{key}={value}")
+          config_path.write_text(config)
+          PY
+          chmod 600 "$HOME/.skicka.tokencache.json" "$HOME/.skicka.config"
     - run:
         name: Fetch artifact from Google Drive
         command: |
@@ -93,10 +131,9 @@ jobs:
                     "$pr_comment_url")
                   echo "$post_result" | jq -r '.html_url'
                 fi
-    - restore_cache:
-        key: v1-notify-email-{{ checksum "tools/circleci/NotifyEmail.hs" }}
     - run:
         name: Notify Email
+        no_output_timeout: 20m
         command: |
           if << pipeline.parameters.ENABLE_PR_COMMENT >>; then
             if [ -z "$(cat $PR_RESPONSE_TMP)" ]; then
@@ -108,17 +145,12 @@ jobs:
           else
             readonly pr_url="none"
           fi
-          # eval is needed for the CIRCLE_WORKING_DIRECTORY variable as it contains a non-expanded '~'
-          eval ${CIRCLE_WORKING_DIRECTORY}/tools/circleci/NotifyEmail.hs \
+          # NotifyEmail.hs pins its resolver/packages and is run outside the PR checkout.
+          (cd "$HOME" && "$HOME/NotifyEmail.hs" \
             --pr-url "$pr_url" \
             --artifacts-url "$ARTIFACTS_URL" \
             --from-email "$FROM_EMAIL" \
-            --to-email "$TO_EMAIL"
-
-    - save_cache:
-        key: v1-notify-email-{{ checksum "tools/circleci/NotifyEmail.hs" }}
-        paths:
-          - ~/.stack
+            --to-email "$TO_EMAIL")
 
 workflows:
   version: 2.1
