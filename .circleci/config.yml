@@ -69,7 +69,7 @@ jobs:
           fi
           printf '%s' "$SKICKA_TOKEN_CACHE_JSON" | base64 --decode > "$HOME/.skicka.tokencache.json"
           jq -e . "$HOME/.skicka.tokencache.json" >/dev/null
-          python3 - <<'PY'
+          python3 - \<<'PY'
           from pathlib import Path
           import os
 
