@@ -16,7 +16,7 @@
         "@fortawesome/free-solid-svg-icons": "^7.3.1",
         "@types/d3": "^7.4.3",
         "@vitest/coverage-v8": "^5.0.0",
-        "@vitest/ui": "^4.1.0",
+        "@vitest/ui": "^5.0.0",
         "dotenv": "^17.4.2",
         "esbuild": "^0.28.1",
         "happy-dom": "^20.11.2",
@@ -27,7 +27,7 @@
         "tsx": "^4.23.12",
         "typescript": "^7.0.2",
         "vite": "^8.2.1",
-        "vitest": "^4.1.0"
+        "vitest": "^5.0.0"
     },
     "scripts": {
         "gen:disney-logs": "tsx tools/gen-disney-logs.ts",
