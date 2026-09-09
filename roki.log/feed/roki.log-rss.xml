@@ -6,8 +6,189 @@
         <link>https://roki.dev/roki.log</link>
         <description><![CDATA[Roki tech blog]]></description>
         <atom:link href="https://roki.dev/roki.log/feed/roki.log-rss.xml" rel="self" type="application/rss+xml" />
-        <lastBuildDate>Wed, 16 Apr 2025 00:00:00 UT</lastBuildDate>
+        <lastBuildDate>Mon, 07 Sep 2026 00:00:00 UT</lastBuildDate>
         <item>
+    <title>chezmoi で AI エージェントの設定を一つの原稿から配布する</title>
+    <link>https://roki.dev/roki.log/2026/09/07/introducing-chezmoi-ai-agent-dotfiles-article/index.html</link>
+    <description><![CDATA[<p>先日, <a href="https://developers.cyberagent.co.jp/blog/">CyberAgent Developers Blog</a> にて私が執筆した以下の記事が公開された.</p>
+<article class="message is-info">
+<div class="message-body has-text-centered">
+<p><i class="fas fa-info-circle"></i></p>
+<p>👉 <a href="https://developers.cyberagent.co.jp/blog/archives/65099/">chezmoiで始めるdotfile管理 〜AIエージェント設定を複数ツールと複数マシンで共有する〜</a></p>
+</div>
+</article>
+<p>本記事では, 上記記事の宣伝と, Claude Code と Codex CLI という複数の AI エージェントの設定を
+chezmoi で一元管理するにあたって採った設計判断について技術的な観点からまとめている.
+併せて, その過程で踏んだ上流ツールの性能問題を切り分けて修正まで持っていった話にも触れる.</p>
+<!--more-->
+<h2 id="背景と課題">背景と課題</h2>
+<p>AI エージェントを日常的に使うようになると, その設定がホームディレクトリ配下へ際限なく増えていく.
+Claude Code なら <code>CLAUDE.md</code>, Codex CLI なら <code>AGENTS.md</code> というように,
+同じ趣旨の指示を書くファイルがツールごとに別の名前と別の場所で要求される.
+skills やポリシーの類も同様に, ツールごとのディレクトリへ分かれて置かれる.</p>
+<p>素朴な対処はコピーだが, これは以下の問題を生む.</p>
+<ul>
+<li>コピーした時点で独立した 2 ファイルになり, 片方だけ更新されて内容がずれる</li>
+<li>私用マシンと業務マシンの 2 台に配ると, 同期を保つべきファイルが 4 つに増える</li>
+<li>ずれたことに気付く契機がない. エージェントの挙動が違うと感じて初めて発覚する</li>
+</ul>
+<p>エージェントへの指示には「どのコマンドを実行してよいか」「どこまで自動で書き込んでよいか」が含まれる.
+そのため設定のずれが単なる不便では済まず, 事故に直結しうる.
+そこで共通ルールについては単一の原稿を正とし,
+そこから各ツール向けの形へ生成して配る構成を採ることにした.
+一方で, ツール固有の設定まで無理に共通化すると今度は表現できない差分が出る.
+「共通化する範囲をどこで切るか」が設計上の主要な論点であった.</p>
+<h2 id="chezmoi-について">chezmoi について</h2>
+<p><a href="https://www.chezmoi.io/">chezmoi</a> は, source state と target state を分離して扱う dotfile 管理ツールである.
+リポジトリ側に置く source state は必ずしも配布物そのものではなく,
+<code>chezmoi apply</code> の時点でホームディレクトリ上の target state へ変換される.
+今回の用途において有効だったのは以下の性質である.</p>
+<ul>
+<li>Go template を扱えるため, source state を「生成器」として書ける</li>
+<li><code>.chezmoi.homeDir</code> や <code>.chezmoi.os</code>, ホスト名, 独自定義の data を参照して環境差分を吸収できる</li>
+<li><code>chezmoi diff</code> や <code>chezmoi apply --dry-run --verbose</code> により, 適用前に差分を確認できる</li>
+<li><code>run_after_</code> などのスクリプトで, 適用後の処理をフックできる</li>
+</ul>
+<p>単なる symlink farm 型のツールでは「単一の原稿から複数の成果物を生成する」要件を満たせない.
+今回はその生成が構成の中心にあったため, テンプレート機構を持つ chezmoi を土台に選んだ.</p>
+<h2 id="一つの原稿から-claude.md-と-agents.md-を生成する">一つの原稿から CLAUDE.md と AGENTS.md を生成する</h2>
+<p>共通ルールは <code>.chezmoitemplates/agent-instructions/base.md.tmpl</code> に一本化した.
+ここへ置いたのは, 特定のツールに依存しない次のような規約である.</p>
+<ul>
+<li>コードを変更したら format, lint, test を通すこと</li>
+<li>破壊的な Git 操作や外部サービスへの書き込みを, 確認なしに実行しないこと</li>
+<li>レビューでは正しさ, 保守性, 運用時の失敗モードを見ること</li>
+</ul>
+<p>各ツール向けのファイルは, この共通テンプレートを読み込むだけの薄いラッパとして書く.
+読み込む際に, そのツールのホームディレクトリを引数として渡す.</p>
+<pre><code>{{ template &quot;agent-instructions/base.md.tmpl&quot;
+  (dict &quot;agent_home&quot; (printf &quot;%s/.claude&quot; .chezmoi.homeDir))
+}}</code></pre>
+<p><code>AGENTS.md.tmpl</code> 側は <code>.codex</code> を渡す点だけが異なる.
+この形にしたことで, 共通ルールを直す場所は一箇所に固定される.
+一方で hooks, permissions, agents 定義といったツール固有の設定はラッパ側に残るため,
+共通化できないものを無理に共通化する必要もない.
+「共通部分をテンプレートへ, 差分をラッパへ」という切り方が,
+先述した論点に対する回答である.</p>
+<h2 id="symlink-テンプレートで-skills-を共有する">symlink テンプレートで skills を共有する</h2>
+<p>skills のようにディレクトリ単位で持つ資産については, 実体を一方へ寄せ,
+もう一方は symlink テンプレートで参照する形にした.
+symlink 側のソースには, リンク先のパスを出力するテンプレートを書く.</p>
+<pre><code>{{ .chezmoi.homeDir }}/.claude/skills/review/SKILL.md</code></pre>
+<p>内容が完全に一致するものはこれで二重管理を避けられる.
+逆に, ツール固有の書き分けが必要になった時点で symlink をやめて実体を分ければよい.
+最初から全てを実体で持つのではなく,
+差分が生じたものだけを実体へ昇格させる運用にしている.</p>
+<h2 id="chezmoi-と-apm-の責務を分ける">chezmoi と APM の責務を分ける</h2>
+<p>skills や instructions を配布する手段としては,
+<a href="https://microsoft.github.io/apm/">APM (Agent Package Manager)</a> も存在する.
+両者は競合するように見えるが, 扱う対象の性質が異なるため以下のように責務を分けた.</p>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th></th>
+<th>chezmoi</th>
+<th>APM</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>対象</td>
+<td>ホームディレクトリ全体の土台</td>
+<td>再利用可能なエージェント primitive</td>
+</tr>
+<tr class="even">
+<td>具体例</td>
+<td>非公開のポリシー, 各ツールの設定, マシン差分, 暗号化, セットアップスクリプト</td>
+<td>公開パッケージとして配れる skills, instructions</td>
+</tr>
+<tr class="odd">
+<td>提供する機能</td>
+<td>生成と配置, 環境差分の吸収</td>
+<td>依存解決, lockfile, スキャン</td>
+</tr>
+</tbody>
+</table>
+<p>判断軸は「環境固有か, パッケージとして再利用できるか」である.
+私の手元の環境にしか意味を持たない設定は chezmoi が持ち,
+他プロジェクトや他者へ配れるものは APM が持つ.</p>
+<p>両者は独立に動かすのではなく, chezmoi の <code>run_after_</code> スクリプトから APM を起動して接続している.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb3-1"><a href="/roki.log/2026/09/07/introducing-chezmoi-ai-agent-dotfiles-article/#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co">#!/bin/sh</span></span>
+<span id="cb3-2"><a href="/roki.log/2026/09/07/introducing-chezmoi-ai-agent-dotfiles-article/#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="bu">set</span> <span class="at">-eu</span></span>
+<span id="cb3-3"><a href="/roki.log/2026/09/07/introducing-chezmoi-ai-agent-dotfiles-article/#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-4"><a href="/roki.log/2026/09/07/introducing-chezmoi-ai-agent-dotfiles-article/#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="bu">command</span> <span class="at">-v</span> apm <span class="op">&gt;</span>/dev/null <span class="dv">2</span><span class="op">&gt;&amp;</span><span class="dv">1</span><span class="kw">;</span> <span class="cf">then</span></span>
+<span id="cb3-5"><a href="/roki.log/2026/09/07/introducing-chezmoi-ai-agent-dotfiles-article/#cb3-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">apm</span> install <span class="at">--global</span></span>
+<span id="cb3-6"><a href="/roki.log/2026/09/07/introducing-chezmoi-ai-agent-dotfiles-article/#cb3-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">apm</span> compile <span class="at">--global</span></span>
+<span id="cb3-7"><a href="/roki.log/2026/09/07/introducing-chezmoi-ai-agent-dotfiles-article/#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="cf">fi</span></span></code></pre></div>
+<p>これにより, <code>chezmoi apply</code> 1 回でホームディレクトリの状態とパッケージの状態がそろう.</p>
+<h2 id="秘密情報を公開リポジトリへ持ち込まない">秘密情報を公開リポジトリへ持ち込まない</h2>
+<p>dotfile を公開リポジトリで管理する以上, 秘密情報の扱いは避けて通れない.
+ここで注意したいのが, <code>.chezmoiignore</code> は管理対象からの除外であって暗号化ではないという点である.
+除外だけに頼ると, 除外し忘れた瞬間に平文がコミットされる.</p>
+<p>採った対策は以下のとおりである.</p>
+<ul>
+<li>秘密そのものではなく, 取得方法をコミットする. パスワードマネージャからの参照をテンプレートに書き, <code>chezmoi apply</code> の時点で解決する</li>
+<li>手元に持たざるを得ない値は age や GPG で暗号化してから source state へ置く</li>
+<li><a href="https://github.com/j178/prek">prek</a> と <a href="https://github.com/secretlint/secretlint">secretlint</a> を組み合わせ, コミット時に自動検査する</li>
+<li>権限の強い skill や社内限定のポリシーは, そもそも別の非公開リポジトリへ分ける</li>
+</ul>
+<p>検査は最後の防波堤であり, 設計側で「平文を置かない」ことを先に決めておく方が確実である.</p>
+<h2 id="apm-の性能問題を切り分けてアップストリームへ返した">APM の性能問題を切り分けてアップストリームへ返した</h2>
+<p>構築の途中, <code>apm install --global --target claude</code> が
+<code>Integrating local .apm/ content...</code> の表示のまま長時間止まる事象に遭遇した.
+一方で検証用の環境では同じコマンドが数秒で完了する.
+ローカル固有の問題であることは明らかだったため, HOME を段階的に組み替えて切り分けた.</p>
+<ol type="1">
+<li>一時ディレクトリを HOME とし, <code>~/.apm</code> のみを置いて実行する</li>
+<li>そこへ <code>~/.claude</code> を加えて実行する</li>
+<li>さらに <code>~/.codex</code> を加えて実行する</li>
+</ol>
+<p>いずれも 1.7 秒から 4.1 秒で完了した.
+つまり <code>~/.claude</code> の内容量そのものではなく,
+原因は実 HOME 配下の広大な走査にある可能性が高いと絞り込めた.</p>
+<p>macOS のプロセスサンプリングを取ると <code>os.scandir</code> の呼び出しが繰り返し現れていた.
+APM のソースを追うと, user scope では deploy root が <code>Path.home()</code> になり,
+<code>~/.apm</code> が存在する場合の local integration が
+そこを起点に primitive を再帰的に探索する実装になっていた.
+私の HOME には無関係なディレクトリが大量にあるため, ここで時間を使い切っていた.</p>
+<p>この内容を <a href="https://github.com/microsoft/apm/issues/830">issue #830</a> として報告し,
+修正は <a href="https://github.com/microsoft/apm/pull/850">PR #850</a> として取り込まれた.
+探索範囲を <code>$HOME</code> から <code>~/.apm/</code> に限定しつつ,
+既存の integrator との互換性のために <code>install_path</code> は元の値を保つ形になっている.
+この修正は APM 0.9.3 に含まれている.</p>
+<p>ここから得られた知見は, 生成物ではなく生成器を共有する構成では,
+生成器側の性能特性が環境依存で顕在化するということである.
+再現しない不具合に見えても, 環境の差分を機械的に削っていけば原因の所在は特定できる.</p>
+<h2 id="成果と展望">成果と展望</h2>
+<p>この構成によって, 以下の成果が得られた.</p>
+<ul>
+<li>共通ルールを一箇所直せば両ツールへ反映されるため, 「片方だけ更新し忘れる」事故がなくなった</li>
+<li>新規マシンの立ち上げが <code>chezmoi init --apply</code> に集約され, 環境構築が再現可能になった</li>
+<li><code>chezmoi diff</code> により, 適用前に何が変わるかを確認できるようになった</li>
+</ul>
+<p>三点目は, エージェント設定においては特に重要である.
+指示ファイルの変更は実行を許可するコマンドや自動化の範囲に直結するため,
+差分を読まずに適用するのは危うい.
+source state と target state が分離しているという chezmoi の性質が,
+そのままレビュー可能性として効いている.</p>
+<p>現時点の構成は完成品ではなく, 動くところまで来た試作である.
+今後は共有 skill の拡充と, 設定変更に対するレビューフローの整備,
+および chezmoi と APM の境界の見直しを継続していく予定である.</p>
+<h2 id="最後に">最後に</h2>
+<p>本記事は, 私が個人として日常的に AI エージェントを使う中で直面した課題に対し,
+設計と実装, 運用に取り組んだ経験をもとに執筆したものである.
+記事内で紹介している構成や手法は, 複数のエージェントを併用している環境であれば応用可能であると考えている.
+興味を持たれた方は, ぜひ上記のリンクから記事全文をご覧いただきたい.</p>]]></description>
+    <pubDate>Mon, 07 Sep 2026 00:00:00 UT</pubDate>
+    <guid>https://roki.dev/roki.log/2026/09/07/introducing-chezmoi-ai-agent-dotfiles-article/index.html</guid>
+    <dc:creator>Roki</dc:creator>
+</item>
+<item>
     <title>Snipe-IT と MDM を連携してモバイル端末の資産管理を効率化</title>
     <link>https://roki.dev/roki.log/2025/04/16/introducing-mdm-snipe-it-asset-management-article/index.html</link>
     <description><![CDATA[<p>先日, <a href="https://developers.cyberagent.co.jp/blog/">CyberAgent Developers Blog</a> にて私が執筆した以下の記事が公開された.</p>
@@ -7830,102 +8011,6 @@ systemd D-Bus API を利用したいくつかの snippets を下記リポジト�
 </section>]]></description>
     <pubDate>Fri, 17 Aug 2018 00:00:00 UT</pubDate>
     <guid>https://roki.dev/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/index.html</guid>
-    <dc:creator>Roki</dc:creator>
-</item>
-<item>
-    <title>AWS EC2 の各種環境を自動構築して distcc による分散コンパイルを実行する</title>
-    <link>https://roki.dev/roki.log/2018/08/15/aws_ec2_distcc/index.html</link>
-    <description><![CDATA[<p>クラウド上でなにか作れというような大学の課題で,
-入力パラメータに応じて AWS EC2 インスタンス及びネットワーク周辺と distcc の環境構築を実行して,
-その上で分散コンパイルをして S3 へアップロードできれば,
-そこそこクラウドでやった意味があるといえるのかななどと思いつき, 軽い気持ちで作ってみた記録.</p>
-<!--more-->
-<h2 id="構成">構成</h2>
-<p>構成そのものはかなり単純だと思う. はじめに, いくつかのパラメータを指定する.
-数は多いが, AWS EC2 の環境構築に最低限必要となるような要素に限られているはず.</p>
-<div class="mb-2 mt-2" style="max-height: 400px; overflow-y: scroll;">
-<script src="https://emgithub.com/embed.js?target=https%3A%2F%2Fgithub.com%2Ffalgon%2Fedcc%2Fblob%2F5f4cd53830691275e5c250ef2051adca9d1162d6%2FREADME.md%23L11-L44&style=github&showLineNumbers=on&showFileMeta=on&fetchFromJsDelivr=on"></script>
-</div>
-<p>ここで指定したパラメータに応じて, 環境を構築する.
-その際, AWS のユーザーデータ<a href="/roki.log/2018/08/15/aws_ec2_distcc/#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a>機能を使って, distcc とコンパイラ<a href="/roki.log/2018/08/15/aws_ec2_distcc/#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a>のセットアップ,
-ホストインスタンス(実際にコンパイルを実行するインスタンス)の決定,
-各インスタンスの環境構築における進捗の同期等を行い,
-ビルドスクリプトを実行する.</p>
-<p>一応, ここに酷いアクティビティ図がある.</p>
-<div style="text-align:center; height: 400px; overflow-y: scroll;">
-<p><img width="700" src="https://raw.githubusercontent.com/falgon/edcc/4a052baece667b6baf6d3e41ff3f0741faee5bed/assets/fig.png" alt="ugly activity diagram"></p>
-</div>
-<h2 id="実装">実装</h2>
-<p>実装は, 次のリポジトリで管理している.</p>
-<div class="box has-text-centered is-shadowless">
-<p><i class="fab fa-github mr-2"></i>
-<a href="https://github.com/falgon/edcc">falgon/edcc - Simple and tiny comprehensive management tool for distributed compilation using distcc on AWS EC2.</a></p>
-</div>
-<p>まず, 起動したインスタンスのすべてに必要となるパッケージのインストールやセットアップを実行する必要があるが,
-これは構成にて述べたように, AWS EC2 の機能のうちの 1 つである, ユーザーデータ<a href="/roki.log/2018/08/15/aws_ec2_distcc/#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a>を利用して実行することとした.</p>
-<p>予め使用言語に対する指定として, Go で実装することを定められていたので,
-今回の実装を Go で行ったことに対する深い意味合いは特別ないが,
-とりあえずそこまで深く考えず Go の便利な標準パッケージ, <code>text/template</code>を利用して,
-一程度の情報伝達を行うこととした.
-<code>text/template</code>は, かなりお手軽に<a href="/roki.log/2018/07/23/ec2failover/">設定ファイルの生成</a>のほか,
-トークンの衝突さえなければ, コードに直接埋め込むことができるので, それを元にコードの生成をすることもでき, 大変良い.</p>
-<p>ビルドスクリプトおよびセットアップスクリプトは, それぞれ,
-ビルド実行のスクリプト<a href="/roki.log/2018/08/15/aws_ec2_distcc/#fn4" class="footnote-ref" id="fnref4" role="doc-noteref"><sup>4</sup></a>と,
-ユーザーデータとして渡される,
-必要パッケージのセットアップスクリプト<a href="/roki.log/2018/08/15/aws_ec2_distcc/#fn5" class="footnote-ref" id="fnref5" role="doc-noteref"><sup>5</sup></a>のことを示している.
-ビルドスクリプトは, 以下に示す変数を利用して任意に記述してもらう<a href="/roki.log/2018/08/15/aws_ec2_distcc/#fn6" class="footnote-ref" id="fnref6" role="doc-noteref"><sup>6</sup></a>ものとして,
-セットアップスクリプトは, 殆どの場合, 中身を弄る必要はないと思われる.
-今のところ, 各スクリプトは bash スクリプトとして記述する必要がある.
-それぞれで利用できる変数は, 次の通りである.</p>
-<div class="mb-2 mt-2" style="max-height: 400px; overflow-y: scroll;">
-<script src="https://emgithub.com/embed.js?target=https%3A%2F%2Fgithub.com%2Ffalgon%2Fedcc%2Fblob%2F5f4cd53830691275e5c250ef2051adca9d1162d6%2FREADME.md%23L47-L63&style=github&showLineNumbers=on&showFileMeta=on&fetchFromJsDelivr=on"></script>
-</div>
-<p>大体各変数の予測はつくだろうし, 説明にもあるとおりなのだが, 一点, 必ずビルドスクリプト内に記述しなければならないのは,
-<code>{{.build_success}}</code>または<code>{{.build_failed}}</code>である.
-これは, <code>{{.Include_WriteStatus}}</code>を予め記述しておくことで利用できるようになる.
-それぞれビルドの成功, また失敗といった結果を通知するための命令(内部はただの bash 関数)であるが,
-このどちらをも指定しなかった場合, ビルドはまだ終わっていないと認識して,
-永遠に停止することはない(マネジメントコンソールや awscli などで自分でクリーンナップを行う必要がある.).</p>
-<p>この仕様は, Travis CI を利用しているときに,
-ステータスコードが 0 以外の場合においても, 処理を続行したいときが個人的には何度かあったことに由来している.</p>
-<p>また, セットアップの進捗をインスタンス間でどのように同期するかであるが,
-EC2 においても各メタ情報を HTTP リクエストで取得できることを真似て,
-各インスタンスで nginx による HTTP サーバ<a href="/roki.log/2018/08/15/aws_ec2_distcc/#fn7" class="footnote-ref" id="fnref7" role="doc-noteref"><sup>7</sup></a>を稼働させ, そのトップページに自身の状態の JSON を出力しておき,
-それを curl で得るということにした.</p>
-<p>結局, そのほかの詳細はリポジトリ内の README を見てほしい.
-実行例は次の通りである.</p>
-<div class="mb-2 mt-2" style="max-height: 400px; overflow-y: scroll;">
-<script src="https://emgithub.com/embed.js?target=https%3A%2F%2Fgithub.com%2Ffalgon%2Fedcc%2Fblob%2F5f4cd53830691275e5c250ef2051adca9d1162d6%2FREADME.md%23L69-L102&style=github&showLineNumbers=on&showFileMeta=on&fetchFromJsDelivr=on"></script>
-</div>
-<h2 id="感想">感想</h2>
-<p>とにかく時間のない中であったので,
-妥協してしまった点がいくらかあり,
-その点で個人的には悔しい部分があるが,
-今回の実装で大分総合的に EC2 関係の IaaS やら SaaS 周りを活用できたかと思うので,
-取り組めたこと自体には満足をしている.</p>
-<p>別の話題だが,
-講義内で利用する AWS リソースの支払いは, ありがたい事に大学側が持っていてくれていたのだが,
-これでもう講義が終わってしまうので, 犬が西向きゃ尾は東というものであるが,
-続けて自分で本格的に取り組むのには, ある程度の出費が必要となる.
-今のところ, まだ無料利用枠は残っているので, それを利用できることが救いであるが,
-講義でよく使っていた t2.medium と無料利用枠対象の t2.micro とでは,
-やはり処理性能に若干の違いを感じる.
-なんだか今回のエントリには, やたらと諺が出てきて自分も奇怪に感じるが,
-まあこれは, 起きて半畳寝て一畳, 天下取っても二合半ということなのだろう.</p>
-<section id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes">
-<hr />
-<ol>
-<li id="fn1"><p>“Running Commands on Your Linux Instance at Launch” <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/user-data.html" class="uri">https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/user-data.html</a> 2018 年 8 月 15 日アクセス.<a href="/roki.log/2018/08/15/aws_ec2_distcc/#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-<li id="fn2"><p>デフォルト(<a href="https://github.com/falgon/edcc/blob/5f4cd53830691275e5c250ef2051adca9d1162d6/src/setup.sh">setup.sh</a>)では GCC 8.1.0<a href="/roki.log/2018/08/15/aws_ec2_distcc/#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-<li id="fn3"><p>“Running Commands on Your Linux Instance at Launch” <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/user-data.html" class="uri">https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/user-data.html</a> 2018 年 8 月 15 日アクセス.<a href="/roki.log/2018/08/15/aws_ec2_distcc/#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-<li id="fn4"><p>例として, 厳密性を多いに省けば, Travis CI で実行される, <code>.travis.yml</code>の<code>script</code>セクションようなもの.<a href="/roki.log/2018/08/15/aws_ec2_distcc/#fnref4" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-<li id="fn5"><p>同じく, Travis CI で実行される, <code>.travis.yml</code>の<code>install</code>セクションのようなもの.<a href="/roki.log/2018/08/15/aws_ec2_distcc/#fnref5" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-<li id="fn6"><p><a href="https://github.com/falgon/edcc/tree/5f4cd53830691275e5c250ef2051adca9d1162d6/build_script_example">build_script_example/</a>にいくつかのサンプルがある.<a href="/roki.log/2018/08/15/aws_ec2_distcc/#fnref6" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-<li id="fn7"><p>このとき 80 番ポートを利用するが, デフォルトの設定では VPC を 10.0.0.0/16, サブネットを 10.0.0.0/24 とし, 80 番ポートのインバウンド設定を, セキュリティグループにより 10.0.0.0/24 と設定するので, 外部からの HTTP アクセスに対して応答することはない. よって, インスタンスの状態がインターネットに漏れてしまうといった懸念は必要ない. なお自動構築時, このサブネット中にすべてのインスタンスを設定するため, 自ずと分散コンパイルを行うインスタンスの最大数は 256 となる. それよりも増やしたいのであれば, 単にパラメータを変えればよいが, あまり台数を増やしても, 然程効果はないと思われる.<a href="/roki.log/2018/08/15/aws_ec2_distcc/#fnref7" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-</ol>
-</section>]]></description>
-    <pubDate>Wed, 15 Aug 2018 00:00:00 UT</pubDate>
-    <guid>https://roki.dev/roki.log/2018/08/15/aws_ec2_distcc/index.html</guid>
     <dc:creator>Roki</dc:creator>
 </item>
 

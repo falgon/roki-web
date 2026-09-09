@@ -1,0 +1,561 @@
+<!DOCTYPE HTML>
+<html lang="ja">
+    <head>
+        <meta charset="utf-8" />
+        <meta http-equiv="x-ua-compatible" content="ie=edge" />
+        <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no" />
+        <meta content="Roki" name="author" />
+        
+        <meta content="先日, [CyberAgent Developers Blog](https://developers.cyberagent.co.jp/blog/) にて私が執筆した以下の記事が公開された.&lt;article class=" message is-info"><div class="message-b" name="description"></div>
+        <meta property="og:description" content="先日, [CyberAgent Developers Blog](https://developers.cyberagent.co.jp/blog/) にて私が執筆した以下の記事が公開された.&lt;article class=" message is-info"><div class="message-b"></div>
+        
+        <meta content="Hakyll" name="generator" />
+        <meta property="twitter:card" content="summary_large_image" />
+        <meta property="twitter:site" content="@roki_r7" />
+        <meta property="twitter:creator" content="roki_r7" />
+        <meta property="og:type" content="website" />
+        
+        
+            <title>chezmoi で AI エージェントの設定を一つの原稿から配布する - roki.dev/roki.log</title>
+            <meta property="og:title" content="chezmoi で AI エージェントの設定を一つの原稿から配布する" />
+        
+        <meta property="og:site_name" content="roki.dev/roki.log" />
+        
+        <meta property="og:image" content="https://roki.dev/images/ogp/roki-log-default.png" />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta property="twitter:image" content="https://roki.dev/images/ogp/roki-log-default.png" />
+        
+        
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP&amp;family=Ubuntu+Mono&amp;display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+        <link rel="stylesheet" href="../../../../../style/roki.log.css" />
+        <link rel="shortcut icon" href="../../../../../images/avator/favicon.ico" />
+        
+        
+        
+        <script type="text/javascript" src="../../../../../js/components.js"></script>
+        <script type="text/javascript">
+            addEventNavBar();
+            addEventModal();
+        </script>
+        
+        
+        <script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Roki","url":"https://roki.dev"},"dateModified":"2026-09-07T09:00:00","datePublished":"2026-09-07T09:00:00","description":"先日, [CyberAgent Developers Blog](https://developers.cyberagent.co.jp/blog/) にて私が執筆した以下の記事が公開された.<article class=\"message is-info\"><div class=\"message-b","headline":"chezmoi で AI エージェントの設定を一つの原稿から配布する","image":"https://roki.dev/images/avator/prof1000x1000.png","publisher":{"@type":"Organization","logo":{"@type":"ImageObject","url":"https://roki.dev/images/avator/prof1000x1000.png"},"name":"roki.dev"},"url":"https://roki.dev/roki.log/2026/09/07/introducing-chezmoi-ai-agent-dotfiles-article/index.html"}
+        </script>
+        
+        
+        <script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","item":"https://roki.dev","name":"ホーム","position":1},{"@type":"ListItem","item":"https://roki.dev/roki.log","name":"roki.log","position":2},{"@type":"ListItem","item":"https://roki.dev/roki.log/2026","name":"2026","position":3},{"@type":"ListItem","item":"https://roki.dev/roki.log/2026/09","name":"09","position":4},{"@type":"ListItem","item":"https://roki.dev/roki.log/2026/09/07","name":"07","position":5},{"@type":"ListItem","item":"https://roki.dev/roki.log/2026/09/07/introducing-chezmoi-ai-agent-dotfiles-article","name":"introducing-chezmoi-ai-agent-dotfiles-article","position":6},{"@type":"ListItem","item":"https://roki.dev/roki.log/2026/09/07/introducing-chezmoi-ai-agent-dotfiles-article/index.html","name":"chezmoi で AI エージェントの設定を一つの原稿から配布する","position":7}]}
+        </script>
+        
+        <meta name="google-site-verification" content="13X5cycw11yFEsfZrhsQ0m_cSI90r7HucdErNDQ8Za8" />
+        <!-- Global site tag (gtag.js) - Google Analytics -->
+		<script async src="https://www.googletagmanager.com/gtag/js?id=G-D7B9XXQWJE"></script>
+		<script>
+  		window.dataLayer = window.dataLayer || [];
+  		function gtag(){dataLayer.push(arguments);}
+  		gtag('js', new Date());
+  		gtag('config', 'G-D7B9XXQWJE');
+		</script>
+        <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5658861742931397" crossorigin="anonymous"></script>
+        
+        
+        
+        
+        <link rel="canonical" href="https://roki.dev/roki.log/2026/09/07/introducing-chezmoi-ai-agent-dotfiles-article/index.html">
+        
+    </head>
+
+    <body>
+        <div class="modal" id="modal-about">
+            <div class="modal-background"></div>
+            <div class="modal-card">
+                <header class="modal-card-head">
+                    <p class="modal-card-title">
+                    <svg role="img" viewBox="0 0 320 512" aria-hidden="true" data-prefix="fas" data-icon="question" class="svg-inline--fa fa-question fa-fw mr-2"><path d="M64 160c0-53 43-96 96-96s96 43 96 96c0 42.7-27.9 78.9-66.5 91.4-28.4 9.2-61.5 35.3-61.5 76.6l0 24c0 17.7 14.3 32 32 32s32-14.3 32-32l0-24c0-1.7 .6-4.1 3.5-7.3 3-3.3 7.9-6.5 13.7-8.4 64.3-20.7 110.8-81 110.8-152.3 0-88.4-71.6-160-160-160S0 71.6 0 160c0 17.7 14.3 32 32 32s32-14.3 32-32zm96 352c22.1 0 40-17.9 40-40s-17.9-40-40-40-40 17.9-40 40 17.9 40 40 40z" fill="currentColor"></path></svg>About
+                    </p>
+                    <button class="delete" aria-label="close"></button>
+                </header>
+                <section class="modal-card-body">
+                    <a href="../../../../../roki.log">roki.log</a><p class="is-inline"> is a blog written about efforts and learning related to technology, mathematics, etc (Most of the content of the article is written in Japanese).</p>
+                    <strong>All opinions expressed by Author on this blog is solely 
+                    Author’s opinions and do not reflect the opinions of the company to 
+                    which I belong.</strong>
+                    For more infomation about author Roki, see 
+                    <a href="../../../../../index.html">roki.dev</a>.
+                </section>
+            </div>
+        </div>
+
+        <nav class="navbar is-spaced" role="navigation" aria-label="main navigation">
+            <div class="navbar-brand">
+                <a style="background-color: transparent;" class="navbar-item title pt-5" href="../../../../../roki.log/index.html">
+                    roki.log
+                </a>
+                <a role="button" class="navbar-burger burger has-text-light" aria-label="menu" aria-expanded="false" data-target="roki-log-navbar">
+                    <span aria-hidden="true"></span>
+                    <span aria-hidden="true"></span>
+                    <span aria-hidden="true"></span>
+                </a>
+            </div>
+                
+            <div id="roki-log-navbar" class="navbar-menu">
+                <div class="navbar-end">
+                    <a class="navbar-item modal-target" data-target="modal-about">
+                        <svg role="img" viewBox="0 0 320 512" aria-hidden="true" data-prefix="fas" data-icon="question" class="svg-inline--fa fa-question fa-fw mr-2"><path d="M64 160c0-53 43-96 96-96s96 43 96 96c0 42.7-27.9 78.9-66.5 91.4-28.4 9.2-61.5 35.3-61.5 76.6l0 24c0 17.7 14.3 32 32 32s32-14.3 32-32l0-24c0-1.7 .6-4.1 3.5-7.3 3-3.3 7.9-6.5 13.7-8.4 64.3-20.7 110.8-81 110.8-152.3 0-88.4-71.6-160-160-160S0 71.6 0 160c0 17.7 14.3 32 32 32s32-14.3 32-32zm96 352c22.1 0 40-17.9 40-40s-17.9-40-40-40-40 17.9-40 40 17.9 40 40 40z" fill="currentColor"></path></svg>
+                        About
+                    </a>
+                    <div class="navbar-item has-dropdown is-hoverable">
+                        <a class="navbar-link">
+                            <svg role="img" viewBox="0 0 448 512" aria-hidden="true" data-prefix="fas" data-icon="rss" class="svg-inline--fa fa-rss mr-2"><path d="M0 64c0-17.7 14.3-32 32-32 229.8 0 416 186.2 416 416 0 17.7-14.3 32-32 32s-32-14.3-32-32C384 253.6 226.4 96 32 96 14.3 96 0 81.7 0 64zM0 416a64 64 0 1 1 128 0 64 64 0 1 1 -128 0zM32 160c159.1 0 288 128.9 288 288 0 17.7-14.3 32-32 32s-32-14.3-32-32c0-123.7-100.3-224-224-224-17.7 0-32-14.3-32-32s14.3-32 32-32z" fill="currentColor"></path></svg>
+                            Feed
+                        </a>
+                        <div class="navbar-dropdown">
+                            <a class="navbar-item" href="../../../../../roki.log/feed/roki.log.xml">
+                                <svg role="img" viewBox="0 0 448 512" aria-hidden="true" data-prefix="fas" data-icon="rss" class="svg-inline--fa fa-rss fa-fw mr-2"><path d="M0 64c0-17.7 14.3-32 32-32 229.8 0 416 186.2 416 416 0 17.7-14.3 32-32 32s-32-14.3-32-32C384 253.6 226.4 96 32 96 14.3 96 0 81.7 0 64zM0 416a64 64 0 1 1 128 0 64 64 0 1 1 -128 0zM32 160c159.1 0 288 128.9 288 288 0 17.7-14.3 32-32 32s-32-14.3-32-32c0-123.7-100.3-224-224-224-17.7 0-32-14.3-32-32s14.3-32 32-32z" fill="currentColor"></path></svg>
+                                Atom
+                            </a>
+                            <a class="navbar-item" href="../../../../../roki.log/feed/roki.log-rss.xml">
+                                <svg role="img" viewBox="0 0 448 512" aria-hidden="true" data-prefix="fas" data-icon="rss" class="svg-inline--fa fa-rss fa-fw mr-2"><path d="M0 64c0-17.7 14.3-32 32-32 229.8 0 416 186.2 416 416 0 17.7-14.3 32-32 32s-32-14.3-32-32C384 253.6 226.4 96 32 96 14.3 96 0 81.7 0 64zM0 416a64 64 0 1 1 128 0 64 64 0 1 1 -128 0zM32 160c159.1 0 288 128.9 288 288 0 17.7-14.3 32-32 32s-32-14.3-32-32c0-123.7-100.3-224-224-224-17.7 0-32-14.3-32-32s14.3-32 32-32z" fill="currentColor"></path></svg>
+                                RSS
+                            </a>
+                            <a class="navbar-item" href="https://feedly.com/i/subscription/feed/https://roki.dev/roki.log/feed/roki.log.xml" target="_blank" rel="nofollow noopener">
+                                <svg role="img" viewBox="0 0 448 512" aria-hidden="true" data-prefix="fas" data-icon="square-rss" class="svg-inline--fa fa-square-rss fa-fw mr-2"><path d="M64 32C28.7 32 0 60.7 0 96L0 416c0 35.3 28.7 64 64 64l320 0c35.3 0 64-28.7 64-64l0-320c0-35.3-28.7-64-64-64L64 32zM96 136c0-13.3 10.7-24 24-24 137 0 248 111 248 248 0 13.3-10.7 24-24 24s-24-10.7-24-24c0-110.5-89.5-200-200-200-13.3 0-24-10.7-24-24zm0 96c0-13.3 10.7-24 24-24 83.9 0 152 68.1 152 152 0 13.3-10.7 24-24 24s-24-10.7-24-24c0-57.4-46.6-104-104-104-13.3 0-24-10.7-24-24zm0 120a32 32 0 1 1 64 0 32 32 0 1 1 -64 0z" fill="currentColor"></path></svg>
+                                Feedly
+                            </a>
+                        </div>
+                    </div>
+                    <div class="navbar-item has-dropdown is-hoverable">
+                        <a class="navbar-link">
+                            <svg role="img" viewBox="0 0 192 512" aria-hidden="true" data-prefix="fas" data-icon="info" class="svg-inline--fa fa-info mr-2"><path d="M48 48a48 48 0 1 1 96 0 48 48 0 1 1 -96 0zM0 192c0-17.7 14.3-32 32-32l64 0c17.7 0 32 14.3 32 32l0 256 32 0c17.7 0 32 14.3 32 32s-14.3 32-32 32L32 512c-17.7 0-32-14.3-32-32s14.3-32 32-32l32 0 0-224-32 0c-17.7 0-32-14.3-32-32z" fill="currentColor"></path></svg>
+                            More
+                        </a>
+                        <div class="navbar-dropdown">
+                            <a class="navbar-item" href="../../../../../index.html">
+                                <svg role="img" viewBox="0 0 512 512" aria-hidden="true" data-prefix="fas" data-icon="house" class="svg-inline--fa fa-house fa-fw mr-2"><path d="M277.8 8.6c-12.3-11.4-31.3-11.4-43.5 0l-224 208c-9.6 9-12.8 22.9-8 35.1S18.8 272 32 272l16 0 0 176c0 35.3 28.7 64 64 64l288 0c35.3 0 64-28.7 64-64l0-176 16 0c13.2 0 25-8.1 29.8-20.3s1.6-26.2-8-35.1l-224-208zM240 320l32 0c26.5 0 48 21.5 48 48l0 96-128 0 0-96c0-26.5 21.5-48 48-48z" fill="currentColor"></path></svg>
+                                roki.dev
+                            </a>
+                            <hr class="navbar-divider">
+                            <a class="navbar-item" href="https://github.com/falgon/roki-web/issues/new/choose" target="_blank" rel="nofollow noopener">
+                                <svg role="img" viewBox="0 0 576 512" aria-hidden="true" data-prefix="fas" data-icon="bug" class="svg-inline--fa fa-bug fa-fw mr-2"><path d="M192 96c0-53 43-96 96-96s96 43 96 96l0 3.6c0 15.7-12.7 28.4-28.4 28.4l-135.1 0c-15.7 0-28.4-12.7-28.4-28.4l0-3.6zm345.6 12.8c10.6 14.1 7.7 34.2-6.4 44.8l-97.8 73.3c5.3 8.9 9.3 18.7 11.8 29.1l98.8 0c17.7 0 32 14.3 32 32s-14.3 32-32 32l-96 0 0 32c0 2.6-.1 5.3-.2 7.9l83.4 62.5c14.1 10.6 17 30.7 6.4 44.8s-30.7 17-44.8 6.4l-63.1-47.3c-23.2 44.2-66.5 76.2-117.7 83.9L312 280c0-13.3-10.7-24-24-24s-24 10.7-24 24l0 230.2c-51.2-7.7-94.5-39.7-117.7-83.9L83.2 473.6c-14.1 10.6-34.2 7.7-44.8-6.4s-7.7-34.2 6.4-44.8l83.4-62.5c-.1-2.6-.2-5.2-.2-7.9l0-32-96 0c-17.7 0-32-14.3-32-32s14.3-32 32-32l98.8 0c2.5-10.4 6.5-20.2 11.8-29.1L44.8 153.6c-14.1-10.6-17-30.7-6.4-44.8s30.7-17 44.8-6.4L192 184c12.3-5.1 25.8-8 40-8l112 0c14.2 0 27.7 2.8 40 8l108.8-81.6c14.1-10.6 34.2-7.7 44.8 6.4z" fill="currentColor"></path></svg>
+                                Report an issue
+                            </a>
+                        </div>
+                    </div>
+                    <div class="navbar-item field">
+                        <script async src="https://cse.google.com/cse.js?cx=002573853708615501531:c0ipiy0rxaw">
+                        </script>
+                        <div class="gcse-searchbox-only"></div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        
+
+
+<main class="section main" role="main">
+    <article class="container">
+        <div class="card mb-1 is-shadowless">
+            <div class="card-content">
+                <header>
+                    <h2 class="title is-3">
+                        <a href="../../../../../roki.log/2026/09/07/introducing-chezmoi-ai-agent-dotfiles-article/index.html">chezmoi で AI エージェントの設定を一つの原稿から配布する</a>
+                    </h2>
+                    <ul>
+                        <li>
+                            <svg role="img" viewBox="0 0 448 512" aria-hidden="true" data-prefix="fas" data-icon="calendar-days" class="svg-inline--fa fa-calendar-days fa-fw"><path d="M128 0c17.7 0 32 14.3 32 32l0 32 128 0 0-32c0-17.7 14.3-32 32-32s32 14.3 32 32l0 32 32 0c35.3 0 64 28.7 64 64l0 288c0 35.3-28.7 64-64 64L64 480c-35.3 0-64-28.7-64-64L0 128C0 92.7 28.7 64 64 64l32 0 0-32c0-17.7 14.3-32 32-32zM64 240l0 32c0 8.8 7.2 16 16 16l32 0c8.8 0 16-7.2 16-16l0-32c0-8.8-7.2-16-16-16l-32 0c-8.8 0-16 7.2-16 16zm128 0l0 32c0 8.8 7.2 16 16 16l32 0c8.8 0 16-7.2 16-16l0-32c0-8.8-7.2-16-16-16l-32 0c-8.8 0-16 7.2-16 16zm144-16c-8.8 0-16 7.2-16 16l0 32c0 8.8 7.2 16 16 16l32 0c8.8 0 16-7.2 16-16l0-32c0-8.8-7.2-16-16-16l-32 0zM64 368l0 32c0 8.8 7.2 16 16 16l32 0c8.8 0 16-7.2 16-16l0-32c0-8.8-7.2-16-16-16l-32 0c-8.8 0-16 7.2-16 16zm144-16c-8.8 0-16 7.2-16 16l0 32c0 8.8 7.2 16 16 16l32 0c8.8 0 16-7.2 16-16l0-32c0-8.8-7.2-16-16-16l-32 0zm112 16l0 32c0 8.8 7.2 16 16 16l32 0c8.8 0 16-7.2 16-16l0-32c0-8.8-7.2-16-16-16l-32 0c-8.8 0-16 7.2-16 16z" fill="currentColor"></path></svg>
+                            2026/09/07 09:00
+                        </li>
+                        
+                            <li>
+                                <div class="is-inline-block is-valign-middle">
+                                    <svg role="img" viewBox="0 0 576 512" aria-hidden="true" data-prefix="fas" data-icon="tags" class="svg-inline--fa fa-tags fa-fw"><path d="M401.2 39.1L549.4 189.4c27.7 28.1 27.7 73.1 0 101.2L393 448.9c-9.3 9.4-24.5 9.5-33.9 .2s-9.5-24.5-.2-33.9L515.3 256.8c9.2-9.3 9.2-24.4 0-33.7L367 72.9c-9.3-9.4-9.2-24.6 .2-33.9s24.6-9.2 33.9 .2zM32.1 229.5L32.1 96c0-35.3 28.7-64 64-64l133.5 0c17 0 33.3 6.7 45.3 18.7l144 144c25 25 25 65.5 0 90.5L285.4 418.7c-25 25-65.5 25-90.5 0l-144-144c-12-12-18.7-28.3-18.7-45.3zm144-85.5a32 32 0 1 0 -64 0 32 32 0 1 0 64 0z" fill="currentColor"></path></svg>
+                                </div>
+                                <div class="is-inline-block is-valign-middle">
+                                    <div class="tags">
+                                        <span class="tag is-dark"><a href="../../../../../roki.log/tags/chezmoi/index.html"><span>chezmoi</span></a></span><span class="tag is-dark"><a href="../../../../../roki.log/tags/dotfiles/index.html"><span>dotfiles</span></a></span><span class="tag is-dark"><a href="../../../../../roki.log/tags/ai-agent/index.html"><span>AI Agent</span></a></span>
+                                    </div>
+                                </div>
+                            </li>
+                        
+                    </ul>
+                </header>
+
+                
+                <div class="content has-text-centered mt-5">
+                <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5658861742931397" crossorigin="anonymous"></script><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-5658861742931397" data-ad-slot="9716211878" data-ad-format="auto" data-full-width-responsive="true"></ins><script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+                </div>
+                
+
+                <section class="mt-5 content">
+                    
+                    <p>先日, <a href="https://developers.cyberagent.co.jp/blog/" target="_blank" rel="nofollow noopener">CyberAgent Developers Blog</a> にて私が執筆した以下の記事が公開された.</p>
+<article class="message is-info">
+<div class="message-body has-text-centered">
+<p><i class="fas fa-info-circle"></i></p>
+<p>👉 <a href="https://developers.cyberagent.co.jp/blog/archives/65099/" target="_blank" rel="nofollow noopener">chezmoiで始めるdotfile管理 〜AIエージェント設定を複数ツールと複数マシンで共有する〜</a></p>
+</div>
+</article>
+<p>本記事では, 上記記事の宣伝と, Claude Code と Codex CLI という複数の AI エージェントの設定を
+chezmoi で一元管理するにあたって採った設計判断について技術的な観点からまとめている.
+併せて, その過程で踏んだ上流ツールの性能問題を切り分けて修正まで持っていった話にも触れる.</p>
+<!--more-->
+<h2 id="背景と課題">背景と課題</h2>
+<p>AI エージェントを日常的に使うようになると, その設定がホームディレクトリ配下へ際限なく増えていく.
+Claude Code なら <code>CLAUDE.md</code>, Codex CLI なら <code>AGENTS.md</code> というように,
+同じ趣旨の指示を書くファイルがツールごとに別の名前と別の場所で要求される.
+skills やポリシーの類も同様に, ツールごとのディレクトリへ分かれて置かれる.</p>
+<p>素朴な対処はコピーだが, これは以下の問題を生む.</p>
+<ul>
+<li>コピーした時点で独立した 2 ファイルになり, 片方だけ更新されて内容がずれる</li>
+<li>私用マシンと業務マシンの 2 台に配ると, 同期を保つべきファイルが 4 つに増える</li>
+<li>ずれたことに気付く契機がない. エージェントの挙動が違うと感じて初めて発覚する</li>
+</ul>
+<p>エージェントへの指示には「どのコマンドを実行してよいか」「どこまで自動で書き込んでよいか」が含まれる.
+そのため設定のずれが単なる不便では済まず, 事故に直結しうる.
+そこで共通ルールについては単一の原稿を正とし,
+そこから各ツール向けの形へ生成して配る構成を採ることにした.
+一方で, ツール固有の設定まで無理に共通化すると今度は表現できない差分が出る.
+「共通化する範囲をどこで切るか」が設計上の主要な論点であった.</p>
+<h2 id="chezmoi-について">chezmoi について</h2>
+<p><a href="https://www.chezmoi.io/" target="_blank" rel="nofollow noopener">chezmoi</a> は, source state と target state を分離して扱う dotfile 管理ツールである.
+リポジトリ側に置く source state は必ずしも配布物そのものではなく,
+<code>chezmoi apply</code> の時点でホームディレクトリ上の target state へ変換される.
+今回の用途において有効だったのは以下の性質である.</p>
+<ul>
+<li>Go template を扱えるため, source state を「生成器」として書ける</li>
+<li><code>.chezmoi.homeDir</code> や <code>.chezmoi.os</code>, ホスト名, 独自定義の data を参照して環境差分を吸収できる</li>
+<li><code>chezmoi diff</code> や <code>chezmoi apply --dry-run --verbose</code> により, 適用前に差分を確認できる</li>
+<li><code>run_after_</code> などのスクリプトで, 適用後の処理をフックできる</li>
+</ul>
+<p>単なる symlink farm 型のツールでは「単一の原稿から複数の成果物を生成する」要件を満たせない.
+今回はその生成が構成の中心にあったため, テンプレート機構を持つ chezmoi を土台に選んだ.</p>
+<h2 id="一つの原稿から-claude.md-と-agents.md-を生成する">一つの原稿から CLAUDE.md と AGENTS.md を生成する</h2>
+<p>共通ルールは <code>.chezmoitemplates/agent-instructions/base.md.tmpl</code> に一本化した.
+ここへ置いたのは, 特定のツールに依存しない次のような規約である.</p>
+<ul>
+<li>コードを変更したら format, lint, test を通すこと</li>
+<li>破壊的な Git 操作や外部サービスへの書き込みを, 確認なしに実行しないこと</li>
+<li>レビューでは正しさ, 保守性, 運用時の失敗モードを見ること</li>
+</ul>
+<p>各ツール向けのファイルは, この共通テンプレートを読み込むだけの薄いラッパとして書く.
+読み込む際に, そのツールのホームディレクトリを引数として渡す.</p>
+<pre><code>{{ template &quot;agent-instructions/base.md.tmpl&quot;
+  (dict &quot;agent_home&quot; (printf &quot;%s/.claude&quot; .chezmoi.homeDir))
+}}</code></pre>
+<p><code>AGENTS.md.tmpl</code> 側は <code>.codex</code> を渡す点だけが異なる.
+この形にしたことで, 共通ルールを直す場所は一箇所に固定される.
+一方で hooks, permissions, agents 定義といったツール固有の設定はラッパ側に残るため,
+共通化できないものを無理に共通化する必要もない.
+「共通部分をテンプレートへ, 差分をラッパへ」という切り方が,
+先述した論点に対する回答である.</p>
+<h2 id="symlink-テンプレートで-skills-を共有する">symlink テンプレートで skills を共有する</h2>
+<p>skills のようにディレクトリ単位で持つ資産については, 実体を一方へ寄せ,
+もう一方は symlink テンプレートで参照する形にした.
+symlink 側のソースには, リンク先のパスを出力するテンプレートを書く.</p>
+<pre><code>{{ .chezmoi.homeDir }}/.claude/skills/review/SKILL.md</code></pre>
+<p>内容が完全に一致するものはこれで二重管理を避けられる.
+逆に, ツール固有の書き分けが必要になった時点で symlink をやめて実体を分ければよい.
+最初から全てを実体で持つのではなく,
+差分が生じたものだけを実体へ昇格させる運用にしている.</p>
+<h2 id="chezmoi-と-apm-の責務を分ける">chezmoi と APM の責務を分ける</h2>
+<p>skills や instructions を配布する手段としては,
+<a href="https://microsoft.github.io/apm/" target="_blank" rel="nofollow noopener">APM (Agent Package Manager)</a> も存在する.
+両者は競合するように見えるが, 扱う対象の性質が異なるため以下のように責務を分けた.</p>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th></th>
+<th>chezmoi</th>
+<th>APM</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>対象</td>
+<td>ホームディレクトリ全体の土台</td>
+<td>再利用可能なエージェント primitive</td>
+</tr>
+<tr class="even">
+<td>具体例</td>
+<td>非公開のポリシー, 各ツールの設定, マシン差分, 暗号化, セットアップスクリプト</td>
+<td>公開パッケージとして配れる skills, instructions</td>
+</tr>
+<tr class="odd">
+<td>提供する機能</td>
+<td>生成と配置, 環境差分の吸収</td>
+<td>依存解決, lockfile, スキャン</td>
+</tr>
+</tbody>
+</table>
+<p>判断軸は「環境固有か, パッケージとして再利用できるか」である.
+私の手元の環境にしか意味を持たない設定は chezmoi が持ち,
+他プロジェクトや他者へ配れるものは APM が持つ.</p>
+<p>両者は独立に動かすのではなく, chezmoi の <code>run_after_</code> スクリプトから APM を起動して接続している.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb3-1"><a href="../../../../../roki.log/2026/09/07/introducing-chezmoi-ai-agent-dotfiles-article/#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co">#!/bin/sh</span></span>
+<span id="cb3-2"><a href="../../../../../roki.log/2026/09/07/introducing-chezmoi-ai-agent-dotfiles-article/#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="bu">set</span> <span class="at">-eu</span></span>
+<span id="cb3-3"><a href="../../../../../roki.log/2026/09/07/introducing-chezmoi-ai-agent-dotfiles-article/#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-4"><a href="../../../../../roki.log/2026/09/07/introducing-chezmoi-ai-agent-dotfiles-article/#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="bu">command</span> <span class="at">-v</span> apm <span class="op">&gt;</span>/dev/null <span class="dv">2</span><span class="op">&gt;&amp;</span><span class="dv">1</span><span class="kw">;</span> <span class="cf">then</span></span>
+<span id="cb3-5"><a href="../../../../../roki.log/2026/09/07/introducing-chezmoi-ai-agent-dotfiles-article/#cb3-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">apm</span> install <span class="at">--global</span></span>
+<span id="cb3-6"><a href="../../../../../roki.log/2026/09/07/introducing-chezmoi-ai-agent-dotfiles-article/#cb3-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">apm</span> compile <span class="at">--global</span></span>
+<span id="cb3-7"><a href="../../../../../roki.log/2026/09/07/introducing-chezmoi-ai-agent-dotfiles-article/#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="cf">fi</span></span></code></pre></div>
+<p>これにより, <code>chezmoi apply</code> 1 回でホームディレクトリの状態とパッケージの状態がそろう.</p>
+<h2 id="秘密情報を公開リポジトリへ持ち込まない">秘密情報を公開リポジトリへ持ち込まない</h2>
+<p>dotfile を公開リポジトリで管理する以上, 秘密情報の扱いは避けて通れない.
+ここで注意したいのが, <code>.chezmoiignore</code> は管理対象からの除外であって暗号化ではないという点である.
+除外だけに頼ると, 除外し忘れた瞬間に平文がコミットされる.</p>
+<p>採った対策は以下のとおりである.</p>
+<ul>
+<li>秘密そのものではなく, 取得方法をコミットする. パスワードマネージャからの参照をテンプレートに書き, <code>chezmoi apply</code> の時点で解決する</li>
+<li>手元に持たざるを得ない値は age や GPG で暗号化してから source state へ置く</li>
+<li><a href="https://github.com/j178/prek" target="_blank" rel="nofollow noopener">prek</a> と <a href="https://github.com/secretlint/secretlint" target="_blank" rel="nofollow noopener">secretlint</a> を組み合わせ, コミット時に自動検査する</li>
+<li>権限の強い skill や社内限定のポリシーは, そもそも別の非公開リポジトリへ分ける</li>
+</ul>
+<p>検査は最後の防波堤であり, 設計側で「平文を置かない」ことを先に決めておく方が確実である.</p>
+<h2 id="apm-の性能問題を切り分けてアップストリームへ返した">APM の性能問題を切り分けてアップストリームへ返した</h2>
+<p>構築の途中, <code>apm install --global --target claude</code> が
+<code>Integrating local .apm/ content...</code> の表示のまま長時間止まる事象に遭遇した.
+一方で検証用の環境では同じコマンドが数秒で完了する.
+ローカル固有の問題であることは明らかだったため, HOME を段階的に組み替えて切り分けた.</p>
+<ol type="1">
+<li>一時ディレクトリを HOME とし, <code>~/.apm</code> のみを置いて実行する</li>
+<li>そこへ <code>~/.claude</code> を加えて実行する</li>
+<li>さらに <code>~/.codex</code> を加えて実行する</li>
+</ol>
+<p>いずれも 1.7 秒から 4.1 秒で完了した.
+つまり <code>~/.claude</code> の内容量そのものではなく,
+原因は実 HOME 配下の広大な走査にある可能性が高いと絞り込めた.</p>
+<p>macOS のプロセスサンプリングを取ると <code>os.scandir</code> の呼び出しが繰り返し現れていた.
+APM のソースを追うと, user scope では deploy root が <code>Path.home()</code> になり,
+<code>~/.apm</code> が存在する場合の local integration が
+そこを起点に primitive を再帰的に探索する実装になっていた.
+私の HOME には無関係なディレクトリが大量にあるため, ここで時間を使い切っていた.</p>
+<p>この内容を <a href="https://github.com/microsoft/apm/issues/830" target="_blank" rel="nofollow noopener">issue #830</a> として報告し,
+修正は <a href="https://github.com/microsoft/apm/pull/850" target="_blank" rel="nofollow noopener">PR #850</a> として取り込まれた.
+探索範囲を <code>$HOME</code> から <code>~/.apm/</code> に限定しつつ,
+既存の integrator との互換性のために <code>install_path</code> は元の値を保つ形になっている.
+この修正は APM 0.9.3 に含まれている.</p>
+<p>ここから得られた知見は, 生成物ではなく生成器を共有する構成では,
+生成器側の性能特性が環境依存で顕在化するということである.
+再現しない不具合に見えても, 環境の差分を機械的に削っていけば原因の所在は特定できる.</p>
+<h2 id="成果と展望">成果と展望</h2>
+<p>この構成によって, 以下の成果が得られた.</p>
+<ul>
+<li>共通ルールを一箇所直せば両ツールへ反映されるため, 「片方だけ更新し忘れる」事故がなくなった</li>
+<li>新規マシンの立ち上げが <code>chezmoi init --apply</code> に集約され, 環境構築が再現可能になった</li>
+<li><code>chezmoi diff</code> により, 適用前に何が変わるかを確認できるようになった</li>
+</ul>
+<p>三点目は, エージェント設定においては特に重要である.
+指示ファイルの変更は実行を許可するコマンドや自動化の範囲に直結するため,
+差分を読まずに適用するのは危うい.
+source state と target state が分離しているという chezmoi の性質が,
+そのままレビュー可能性として効いている.</p>
+<p>現時点の構成は完成品ではなく, 動くところまで来た試作である.
+今後は共有 skill の拡充と, 設定変更に対するレビューフローの整備,
+および chezmoi と APM の境界の見直しを継続していく予定である.</p>
+<h2 id="最後に">最後に</h2>
+<p>本記事は, 私が個人として日常的に AI エージェントを使う中で直面した課題に対し,
+設計と実装, 運用に取り組んだ経験をもとに執筆したものである.
+記事内で紹介している構成や手法は, 複数のエージェントを併用している環境であれば応用可能であると考えている.
+興味を持たれた方は, ぜひ上記のリンクから記事全文をご覧いただきたい.</p>
+                </section>
+                <hr class="hr" />
+                <div class="has-text-right">
+    <style>
+    .social-icon a {
+        color: #363636;
+    }
+    </style>
+    <ul class="fa-ul">
+        <li class="fa-li is-inline social-icon">
+            <a href="http://twitter.com/share?url=https://roki.dev/roki.log/2026/09/07/introducing-chezmoi-ai-agent-dotfiles-article/index.html&amp;text=chezmoi で AI エージェントの設定を一つの原稿から配布する%20%7C%20roki.dev%2Froki.log&amp;via=530506" rel="nofollow noopener noreferrer" class="social-icon-twitter" target="_blank" rel="nofollow noopener">
+                <svg role="img" viewBox="0 0 448 512" aria-hidden="true" data-prefix="fab" data-icon="square-x-twitter" class="svg-inline--fa fa-square-x-twitter fa-lg"><path d="M64 32C28.7 32 0 60.7 0 96L0 416c0 35.3 28.7 64 64 64l320 0c35.3 0 64-28.7 64-64l0-320c0-35.3-28.7-64-64-64L64 32zm297.1 84l-103.8 118.6 122.1 161.4-95.6 0-74.8-97.9-85.7 97.9-47.5 0 111-126.9-117.1-153.1 98 0 67.7 89.5 78.2-89.5 47.5 0zM323.3 367.6l-169.9-224.7-28.3 0 171.8 224.7 26.4 0z" fill="currentColor"></path></svg>
+            </a>
+        </li>
+        <li class="fa-li is-inline social-icon">
+            <a href="https://www.facebook.com/sharer/sharer.php?u=https://roki.dev/roki.log/2026/09/07/introducing-chezmoi-ai-agent-dotfiles-article/index.html" rel="nofollow noopener noreferrer" class="social-icon-facebook" target="_blank" rel="nofollow noopener">
+                <svg role="img" viewBox="0 0 448 512" aria-hidden="true" data-prefix="fab" data-icon="square-facebook" class="svg-inline--fa fa-square-facebook fa-lg"><path d="M64 32C28.7 32 0 60.7 0 96L0 416c0 35.3 28.7 64 64 64l98.2 0 0-145.8-52.8 0 0-78.2 52.8 0 0-33.7c0-87.1 39.4-127.5 125-127.5 16.2 0 44.2 3.2 55.7 6.4l0 70.8c-6-.6-16.5-1-29.6-1-42 0-58.2 15.9-58.2 57.2l0 27.8 83.6 0-14.4 78.2-69.3 0 0 145.8 129 0c35.3 0 64-28.7 64-64l0-320c0-35.3-28.7-64-64-64L64 32z" fill="currentColor"></path></svg>
+            </a>
+        </li>
+        <li class="fa-li is-inline social-icon">
+            <a href="https://social-plugins.line.me/lineit/share?url=https://roki.dev/roki.log/2026/09/07/introducing-chezmoi-ai-agent-dotfiles-article/index.html" rel="nofollow noopener noreferrer" class="social-icon-line" target="_blank" rel="nofollow noopener">
+                <svg role="img" viewBox="0 0 512 512" aria-hidden="true" data-prefix="fab" data-icon="line" class="svg-inline--fa fa-line fa-lg"><path d="M311 196.8l0 81.3c0 2.1-1.6 3.7-3.7 3.7l-13 0c-1.3 0-2.4-.7-3-1.5L254 230 254 278.2c0 2.1-1.6 3.7-3.7 3.7l-13 0c-2.1 0-3.7-1.6-3.7-3.7l0-81.3c0-2.1 1.6-3.7 3.7-3.7l12.9 0c1.1 0 2.4 .6 3 1.6l37.3 50.3 0-48.2c0-2.1 1.6-3.7 3.7-3.7l13 0c2.1-.1 3.8 1.6 3.8 3.5l0 .1zm-93.7-3.7l-13 0c-2.1 0-3.7 1.6-3.7 3.7l0 81.3c0 2.1 1.6 3.7 3.7 3.7l13 0c2.1 0 3.7-1.6 3.7-3.7l0-81.3c0-1.9-1.6-3.7-3.7-3.7zm-31.4 68.1l-35.6 0 0-64.4c0-2.1-1.6-3.7-3.7-3.7l-13 0c-2.1 0-3.7 1.6-3.7 3.7l0 81.3c0 1 .3 1.8 1 2.5 .7 .6 1.5 1 2.5 1l52.2 0c2.1 0 3.7-1.6 3.7-3.7l0-13c0-1.9-1.6-3.7-3.5-3.7l.1 0zm193.7-68.1l-52.3 0c-1.9 0-3.7 1.6-3.7 3.7l0 81.3c0 1.9 1.6 3.7 3.7 3.7l52.2 0c2.1 0 3.7-1.6 3.7-3.7l0-13.1c0-2.1-1.6-3.7-3.7-3.7l-35.5 0 0-13.6 35.5 0c2.1 0 3.7-1.6 3.7-3.7l0-13.1c0-2.1-1.6-3.7-3.7-3.7l-35.5 0 0-13.7 35.5 0c2.1 0 3.7-1.6 3.7-3.7l0-13c-.1-1.9-1.7-3.7-3.7-3.7l.1 0zM512 93.4l0 326c-.1 51.2-42.1 92.7-93.4 92.6l-326 0C41.4 511.9-.1 469.8 0 418.6l0-326C.1 41.4 42.2-.1 93.4 0l326 0c51.2 .1 92.7 42.1 92.6 93.4zM441.6 233.5c0-83.4-83.7-151.3-186.4-151.3S68.8 150.1 68.8 233.5c0 74.7 66.3 137.4 155.9 149.3 21.8 4.7 19.3 12.7 14.4 42.1-.8 4.7-3.8 18.4 16.1 10.1s107.3-63.2 146.5-108.2c27-29.7 39.9-59.8 39.9-93.1l0-.2z" fill="currentColor"></path></svg>
+            </a>
+        </li>
+        <li class="fa-li is-inline social-icon">
+            <a href="https://getpocket.com/edit?url=https://roki.dev/roki.log/2026/09/07/introducing-chezmoi-ai-agent-dotfiles-article/index.html" rel="nofollow noopener noreferrer" class="social-icon-pocket" target="_blank" rel="nofollow noopener">
+                <svg role="img" viewBox="0 0 448 512" aria-hidden="true" data-prefix="fab" data-icon="get-pocket" class="svg-inline--fa fa-get-pocket fa-lg"><path d="M407.6 64l-367 0C18.5 64 0 82.5 0 104.6L0 239.8C0 364.5 99.7 464 224.2 464 348.2 464 448 364.5 448 239.8l0-135.2C448 82.2 430.3 64 407.6 64zm-162 268.5c-12.4 11.8-31.4 11.1-42.4 0-113.7-108.9-114.9-105.1-114.9-123.2 0-16.9 13.8-30.7 30.7-30.7 17 0 16.1 3.8 105.2 89.3 90.6-86.9 88.6-89.3 105.5-89.3s30.7 13.8 30.7 30.7c0 17.8-2.9 15.7-114.8 123.2z" fill="currentColor"></path></svg>
+            </a>
+        </li>
+    </ul>
+</div>
+
+                <div class="mt-2">
+                    <p class="has-text-centered is-block subtitle is-5 is-italic mt-4 mb-3">活動継続のためのご支援を募集しています</p>
+                    <ul class="buttons is-flex is-justify-content-center">
+                        <li class="mt-2">
+                            <a class="button is-link is-light" href="https://www.buymeacoffee.com/roki" target="_blank" rel="nofollow noopener">
+                                <span class="icon"><svg role="img" viewBox="0 0 576 512" aria-hidden="true" data-prefix="fas" data-icon="mug-hot" class="svg-inline--fa fa-mug-hot"><path d="M152-16c-13.3 0-24 10.7-24 24 0 38.9 23.4 59.4 39.1 73.1l1.1 1c16.3 14.3 23.8 21.8 23.8 37.9 0 13.3 10.7 24 24 24s24-10.7 24-24c0-38.9-23.4-59.4-39.1-73.1l-1.1-1C183.5 31.7 176 24.1 176 8 176-5.3 165.3-16 152-16zM96 192c-17.7 0-32 14.3-32 32l0 192c0 53 43 96 96 96l192 0c41.8 0 77.4-26.7 90.5-64l5.5 0c70.7 0 128-57.3 128-128S518.7 192 448 192L96 192zM448 384l0-128c35.3 0 64 28.7 64 64s-28.7 64-64 64zM288 8c0-13.3-10.7-24-24-24S240-5.3 240 8c0 38.9 23.4 59.4 39.1 73.1l1.1 1c16.3 14.3 23.8 21.8 23.8 37.9 0 13.3 10.7 24 24 24s24-10.7 24-24c0-38.9-23.4-59.4-39.1-73.1l-1.1-1C295.5 31.7 288 24.1 288 8z" fill="currentColor"></path></svg></span>
+                                <span>Buy Me a Coffee</span>
+                            </a>
+                        </li>
+                        <li class="mt-2">
+                            <a class="button is-link is-light" href="https://www.amazon.jp/hz/wishlist/ls/3UGS8VKEBGECO?ref_=wl_share" target="_blank" rel="nofollow noopener">
+                                <span class="icon"><svg role="img" viewBox="0 0 448 512" aria-hidden="true" data-prefix="fab" data-icon="amazon" class="svg-inline--fa fa-amazon"><path d="M257.7 162.7c-48.7 1.8-169.5 15.5-169.5 117.5 0 109.5 138.3 114 183.5 43.2 6.5 10.2 35.4 37.5 45.3 46.8l56.8-56s-32.3-25.3-32.3-52.8l0-147.1C341.5 89 317 32 229.2 32 141.2 32 94.5 87 94.5 136.3l73.5 6.8c16.3-49.5 54.2-49.5 54.2-49.5 40.7-.1 35.5 29.8 35.5 69.1zm0 86.8c0 80-84.2 68-84.2 17.2 0-47.2 50.5-56.7 84.2-57.8l0 40.6zM393.7 413c-7.7 10-70 67-174.5 67S34.7 408.5 10.2 379c-6.8-7.7 1-11.3 5.5-8.3 73.3 44.5 187.8 117.8 372.5 30.3 7.5-3.7 13.3 2 5.5 12zm39.8 2.2c-6.5 15.8-16 26.8-21.2 31-5.5 4.5-9.5 2.7-6.5-3.8s19.3-46.5 12.7-55c-6.5-8.3-37-4.3-48-3.2-10.8 1-13 2-14-.3-2.3-5.7 21.7-15.5 37.5-17.5 15.7-1.8 41-.8 46 5.7 3.7 5.1 0 27.1-6.5 43.1z" fill="currentColor"></path></svg></span>
+                                <span>Wishlist</span>
+                            </a>
+                        </li>
+                    </div>
+                </div>
+                <aside class="comments mt-4">
+                    <script src="https://giscus.app/client.js" data-repo="falgon/roki-web" data-repo-id="MDEwOlJlcG9zaXRvcnkyODA5MjI1NTI=" data-category="roki.log Comments" data-category-id="DIC_kwDOEL6JuM4C0724" data-mapping="pathname" data-strict="0" data-reactions-enabled="1" data-emit-metadata="0" data-input-position="bottom" data-theme="light" data-lang="ja" data-loading="lazy" crossorigin="anonymous" async>
+                    </script>
+                </aside>
+
+                <div class="container">
+                    <div class="card mb-1 is-shadowless" style="background-color: transparent;">
+                        <div class="card-content">
+                            <nav class="pagination is-centered" role="navigation" aria-label="pagination">
+                                
+                                <a href="../../../../../roki.log" class="pagination-previous">
+                                    <div class="is-inline-block is-valign-middle">
+                                        <svg role="img" viewBox="0 0 512 512" aria-hidden="true" data-prefix="fas" data-icon="house" class="svg-inline--fa fa-house mr-1"><path d="M277.8 8.6c-12.3-11.4-31.3-11.4-43.5 0l-224 208c-9.6 9-12.8 22.9-8 35.1S18.8 272 32 272l16 0 0 176c0 35.3 28.7 64 64 64l288 0c35.3 0 64-28.7 64-64l0-176 16 0c13.2 0 25-8.1 29.8-20.3s1.6-26.2-8-35.1l-224-208zM240 320l32 0c26.5 0 48 21.5 48 48l0 96-128 0 0-96c0-26.5 21.5-48 48-48z" fill="currentColor"></path></svg>
+                                    </div>
+                                    <div class="is-inline-block is-valign-middle">
+                                        <p>Home</p>
+                                    </div>
+                                </a>
+                                
+
+                                
+				                <a href="../../../../../roki.log/2025/04/16/introducing-mdm-snipe-it-asset-management-article/index.html" class="pagination-next">
+                                    <div class="is-inline-block is-valign-middle">
+                                        <svg role="img" viewBox="0 0 448 512" aria-hidden="true" data-prefix="fas" data-icon="calendar-days" class="svg-inline--fa fa-calendar-days mr-1"><path d="M128 0c17.7 0 32 14.3 32 32l0 32 128 0 0-32c0-17.7 14.3-32 32-32s32 14.3 32 32l0 32 32 0c35.3 0 64 28.7 64 64l0 288c0 35.3-28.7 64-64 64L64 480c-35.3 0-64-28.7-64-64L0 128C0 92.7 28.7 64 64 64l32 0 0-32c0-17.7 14.3-32 32-32zM64 240l0 32c0 8.8 7.2 16 16 16l32 0c8.8 0 16-7.2 16-16l0-32c0-8.8-7.2-16-16-16l-32 0c-8.8 0-16 7.2-16 16zm128 0l0 32c0 8.8 7.2 16 16 16l32 0c8.8 0 16-7.2 16-16l0-32c0-8.8-7.2-16-16-16l-32 0c-8.8 0-16 7.2-16 16zm144-16c-8.8 0-16 7.2-16 16l0 32c0 8.8 7.2 16 16 16l32 0c8.8 0 16-7.2 16-16l0-32c0-8.8-7.2-16-16-16l-32 0zM64 368l0 32c0 8.8 7.2 16 16 16l32 0c8.8 0 16-7.2 16-16l0-32c0-8.8-7.2-16-16-16l-32 0c-8.8 0-16 7.2-16 16zm144-16c-8.8 0-16 7.2-16 16l0 32c0 8.8 7.2 16 16 16l32 0c8.8 0 16-7.2 16-16l0-32c0-8.8-7.2-16-16-16l-32 0zm112 16l0 32c0 8.8 7.2 16 16 16l32 0c8.8 0 16-7.2 16-16l0-32c0-8.8-7.2-16-16-16l-32 0c-8.8 0-16 7.2-16 16z" fill="currentColor"></path></svg>2025/04/16 00:00:00
+                                        <svg role="img" viewBox="0 0 512 512" aria-hidden="true" data-prefix="fas" data-icon="pencil" class="svg-inline--fa fa-pencil ml-1 mr-1"><path d="M36.4 353.2c4.1-14.6 11.8-27.9 22.6-38.7l181.2-181.2 33.9-33.9c16.6 16.6 51.3 51.3 104 104l33.9 33.9-33.9 33.9-181.2 181.2c-10.7 10.7-24.1 18.5-38.7 22.6L30.4 510.6c-8.3 2.3-17.3 0-23.4-6.2S-1.4 489.3 .9 481L36.4 353.2zm55.6-3.7c-4.4 4.7-7.6 10.4-9.3 16.6l-24.1 86.9 86.9-24.1c6.4-1.8 12.2-5.1 17-9.7L91.9 349.5zm354-146.1c-16.6-16.6-51.3-51.3-104-104L308 65.5C334.5 39 349.4 24.1 352.9 20.6 366.4 7 384.8-.6 404-.6S441.6 7 455.1 20.6l35.7 35.7C504.4 69.9 512 88.3 512 107.4s-7.6 37.6-21.2 51.1c-3.5 3.5-18.4 18.4-44.9 44.9z" fill="currentColor"></path></svg>Snipe-...
+                                    </div>
+                                    <div class="ml-1 is-inline-block is-valign-middle">
+                                        <svg role="img" viewBox="0 0 448 512" aria-hidden="true" data-prefix="fas" data-icon="angles-right" class="svg-inline--fa fa-angles-right"><path d="M439.1 278.6c12.5-12.5 12.5-32.8 0-45.3l-160-160c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L371.2 256 233.9 393.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l160-160zm-352 160l160-160c12.5-12.5 12.5-32.8 0-45.3l-160-160c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L179.2 256 41.9 393.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0z" fill="currentColor"></path></svg>
+                                    </div>
+                                </a>
+                                
+                            </nav>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </article>
+</main>
+<footer class="footer">
+    <div class="container" style="display: flex; justify-content: center; align-items: center;">
+    <figure class="image">
+        <img class="footer-dec" />
+    </figure>
+</div>
+
+    <div class="container mt-3">
+        <div class="columns is-multiline">
+            <div class="column is-one-quarter">
+                <h4 class="title is-5">
+                    <svg role="img" viewBox="0 0 448 512" aria-hidden="true" data-prefix="fas" data-icon="user" class="svg-inline--fa fa-user"><path d="M224 248a120 120 0 1 0 0-240 120 120 0 1 0 0 240zm-29.7 56C95.8 304 16 383.8 16 482.3 16 498.7 29.3 512 45.7 512l356.6 0c16.4 0 29.7-13.3 29.7-29.7 0-98.5-79.8-178.3-178.3-178.3l-59.4 0z" fill="currentColor"></path></svg>
+                    About Me
+                </h4>
+                <figure class="image is-64x64 is-inline-block is-valign-middle" style="align: center;">
+                    <picture>
+                        <source type="image/webp" class="blured-my-prof-webp" srcset="../../../../../images/avator/prof1000x1000.png.webp"></source>
+                        <img class="blured-my-prof is-inline-block mt-0 is-valign-middle" />
+                    </picture>
+                </figure>
+                <div class="is-inline-block is-valign-middle">
+                    <h5 class="title is-6 mb-0">
+                        <svg role="img" viewBox="0 0 640 512" aria-hidden="true" data-prefix="fas" data-icon="signature" class="svg-inline--fa fa-signature fa-fw"><path d="M192 128c0-17.7 14.3-32 32-32s32 14.3 32 32l0 7.8c0 27.7-2.4 55.3-7.1 82.5l-84.4 25.3c-40.6 12.2-68.4 49.6-68.4 92l0 32.4-72 0c-13.3 0-24 10.7-24 24s10.7 24 24 24l72.5 0c4.2 36 34.8 64 72 64 26 0 50-13.9 62.9-36.5l13.9-24.3c26.8-47 46.5-97.7 58.4-150.5l94.4-28.3-12.5 37.5c-3.3 9.8-1.6 20.5 4.4 28.8S405.7 320 416 320l128 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-83.6 0 18-53.9c3.8-11.3 .9-23.8-7.4-32.4s-20.7-11.8-32.2-8.4L316.4 198.1c2.4-20.7 3.6-41.4 3.6-62.3l0-7.8c0-53-43-96-96-96s-96 43-96 96l0 32c0 17.7 14.3 32 32 32s32-14.3 32-32l0-32zm-9.2 177l49-14.7c-10.4 33.8-24.5 66.4-42.1 97.2l-13.9 24.3c-1.5 2.6-4.3 4.3-7.4 4.3-4.7 0-8.5-3.8-8.5-8.5l0-71.9c0-14.1 9.3-26.6 22.8-30.7zM616 416c13.3 0 24-10.7 24-24s-10.7-24-24-24l-292.9 0c-6.5 16.3-13.7 32.3-21.6 48L616 416z" fill="currentColor"></path></svg>
+                        Roki
+                    </h5>
+                    <i class="fas fa-question-circle fa-fw"></i>
+                    <a href="../../../../../">
+                        more info
+                    </a>
+                </div>
+            </div>
+            
+            <div class="column is-one-quarter">
+                <h4 class="title is-5">
+                    <svg role="img" viewBox="0 0 384 512" aria-hidden="true" data-prefix="fas" data-icon="file" class="svg-inline--fa fa-file"><path d="M64 0C28.7 0 0 28.7 0 64L0 448c0 35.3 28.7 64 64 64l256 0c35.3 0 64-28.7 64-64l0-277.5c0-17-6.7-33.3-18.7-45.3L258.7 18.7C246.7 6.7 230.5 0 213.5 0L64 0zM325.5 176L232 176c-13.3 0-24-10.7-24-24L208 58.5 325.5 176z" fill="currentColor"></path></svg>
+                    Recent posts
+                </h4>
+                <ul>
+                    
+                    <li>
+                        <svg role="img" viewBox="0 0 512 512" aria-hidden="true" data-prefix="fas" data-icon="pencil" class="svg-inline--fa fa-pencil"><path d="M36.4 353.2c4.1-14.6 11.8-27.9 22.6-38.7l181.2-181.2 33.9-33.9c16.6 16.6 51.3 51.3 104 104l33.9 33.9-33.9 33.9-181.2 181.2c-10.7 10.7-24.1 18.5-38.7 22.6L30.4 510.6c-8.3 2.3-17.3 0-23.4-6.2S-1.4 489.3 .9 481L36.4 353.2zm55.6-3.7c-4.4 4.7-7.6 10.4-9.3 16.6l-24.1 86.9 86.9-24.1c6.4-1.8 12.2-5.1 17-9.7L91.9 349.5zm354-146.1c-16.6-16.6-51.3-51.3-104-104L308 65.5C334.5 39 349.4 24.1 352.9 20.6 366.4 7 384.8-.6 404-.6S441.6 7 455.1 20.6l35.7 35.7C504.4 69.9 512 88.3 512 107.4s-7.6 37.6-21.2 51.1c-3.5 3.5-18.4 18.4-44.9 44.9z" fill="currentColor"></path></svg>
+                        <a href="../../../../../roki.log/2026/09/07/introducing-chezmoi-ai-agent-dotfiles-article/index.html">chezmoi で AI エージェントの設定を一つの原稿から配布する</a>
+                    </li>
+                    
+                    <li>
+                        <svg role="img" viewBox="0 0 512 512" aria-hidden="true" data-prefix="fas" data-icon="pencil" class="svg-inline--fa fa-pencil"><path d="M36.4 353.2c4.1-14.6 11.8-27.9 22.6-38.7l181.2-181.2 33.9-33.9c16.6 16.6 51.3 51.3 104 104l33.9 33.9-33.9 33.9-181.2 181.2c-10.7 10.7-24.1 18.5-38.7 22.6L30.4 510.6c-8.3 2.3-17.3 0-23.4-6.2S-1.4 489.3 .9 481L36.4 353.2zm55.6-3.7c-4.4 4.7-7.6 10.4-9.3 16.6l-24.1 86.9 86.9-24.1c6.4-1.8 12.2-5.1 17-9.7L91.9 349.5zm354-146.1c-16.6-16.6-51.3-51.3-104-104L308 65.5C334.5 39 349.4 24.1 352.9 20.6 366.4 7 384.8-.6 404-.6S441.6 7 455.1 20.6l35.7 35.7C504.4 69.9 512 88.3 512 107.4s-7.6 37.6-21.2 51.1c-3.5 3.5-18.4 18.4-44.9 44.9z" fill="currentColor"></path></svg>
+                        <a href="../../../../../roki.log/2025/04/16/introducing-mdm-snipe-it-asset-management-article/index.html">Snipe-IT と MDM を連携してモバイル端末の資産管理を効率化</a>
+                    </li>
+                    
+                    <li>
+                        <svg role="img" viewBox="0 0 512 512" aria-hidden="true" data-prefix="fas" data-icon="pencil" class="svg-inline--fa fa-pencil"><path d="M36.4 353.2c4.1-14.6 11.8-27.9 22.6-38.7l181.2-181.2 33.9-33.9c16.6 16.6 51.3 51.3 104 104l33.9 33.9-33.9 33.9-181.2 181.2c-10.7 10.7-24.1 18.5-38.7 22.6L30.4 510.6c-8.3 2.3-17.3 0-23.4-6.2S-1.4 489.3 .9 481L36.4 353.2zm55.6-3.7c-4.4 4.7-7.6 10.4-9.3 16.6l-24.1 86.9 86.9-24.1c6.4-1.8 12.2-5.1 17-9.7L91.9 349.5zm354-146.1c-16.6-16.6-51.3-51.3-104-104L308 65.5C334.5 39 349.4 24.1 352.9 20.6 366.4 7 384.8-.6 404-.6S441.6 7 455.1 20.6l35.7 35.7C504.4 69.9 512 88.3 512 107.4s-7.6 37.6-21.2 51.1c-3.5 3.5-18.4 18.4-44.9 44.9z" fill="currentColor"></path></svg>
+                        <a href="../../../../../roki.log/2023/12/06/add-new-web-api-send-plain-text/index.html">東京ガスの請求通知を自作 LINE Bot に喋らせる</a>
+                    </li>
+                    
+                    <li>
+                        <svg role="img" viewBox="0 0 512 512" aria-hidden="true" data-prefix="fas" data-icon="pencil" class="svg-inline--fa fa-pencil"><path d="M36.4 353.2c4.1-14.6 11.8-27.9 22.6-38.7l181.2-181.2 33.9-33.9c16.6 16.6 51.3 51.3 104 104l33.9 33.9-33.9 33.9-181.2 181.2c-10.7 10.7-24.1 18.5-38.7 22.6L30.4 510.6c-8.3 2.3-17.3 0-23.4-6.2S-1.4 489.3 .9 481L36.4 353.2zm55.6-3.7c-4.4 4.7-7.6 10.4-9.3 16.6l-24.1 86.9 86.9-24.1c6.4-1.8 12.2-5.1 17-9.7L91.9 349.5zm354-146.1c-16.6-16.6-51.3-51.3-104-104L308 65.5C334.5 39 349.4 24.1 352.9 20.6 366.4 7 384.8-.6 404-.6S441.6 7 455.1 20.6l35.7 35.7C504.4 69.9 512 88.3 512 107.4s-7.6 37.6-21.2 51.1c-3.5 3.5-18.4 18.4-44.9 44.9z" fill="currentColor"></path></svg>
+                        <a href="../../../../../roki.log/2022/04/10/LineBotDevelopment/index.html">簡易認証, 指定時間実行可能な LINE Bot の自作</a>
+                    </li>
+                    
+                    <li>
+                        <svg role="img" viewBox="0 0 512 512" aria-hidden="true" data-prefix="fas" data-icon="pencil" class="svg-inline--fa fa-pencil"><path d="M36.4 353.2c4.1-14.6 11.8-27.9 22.6-38.7l181.2-181.2 33.9-33.9c16.6 16.6 51.3 51.3 104 104l33.9 33.9-33.9 33.9-181.2 181.2c-10.7 10.7-24.1 18.5-38.7 22.6L30.4 510.6c-8.3 2.3-17.3 0-23.4-6.2S-1.4 489.3 .9 481L36.4 353.2zm55.6-3.7c-4.4 4.7-7.6 10.4-9.3 16.6l-24.1 86.9 86.9-24.1c6.4-1.8 12.2-5.1 17-9.7L91.9 349.5zm354-146.1c-16.6-16.6-51.3-51.3-104-104L308 65.5C334.5 39 349.4 24.1 352.9 20.6 366.4 7 384.8-.6 404-.6S441.6 7 455.1 20.6l35.7 35.7C504.4 69.9 512 88.3 512 107.4s-7.6 37.6-21.2 51.1c-3.5 3.5-18.4 18.4-44.9 44.9z" fill="currentColor"></path></svg>
+                        <a href="../../../../../roki.log/2021/07/10/SelfMadeTinyGit/index.html">技術書典 11 にて Git (一部) を自作する記事を執筆した</a>
+                    </li>
+                    
+                </ul>
+            </div>
+
+            <div class="column is-one-quarter">
+                <h4 class="title is-5">
+                    <svg role="img" viewBox="0 0 576 512" aria-hidden="true" data-prefix="fas" data-icon="tags" class="svg-inline--fa fa-tags"><path d="M401.2 39.1L549.4 189.4c27.7 28.1 27.7 73.1 0 101.2L393 448.9c-9.3 9.4-24.5 9.5-33.9 .2s-9.5-24.5-.2-33.9L515.3 256.8c9.2-9.3 9.2-24.4 0-33.7L367 72.9c-9.3-9.4-9.2-24.6 .2-33.9s24.6-9.2 33.9 .2zM32.1 229.5L32.1 96c0-35.3 28.7-64 64-64l133.5 0c17 0 33.3 6.7 45.3 18.7l144 144c25 25 25 65.5 0 90.5L285.4 418.7c-25 25-65.5 25-90.5 0l-144-144c-12-12-18.7-28.3-18.7-45.3zm144-85.5a32 32 0 1 0 -64 0 32 32 0 1 0 64 0z" fill="currentColor"></path></svg>
+                    Categories
+                </h4>
+                <div class="tags"><span class="tag is-dark"><a href="../../../../../roki.log/tags/ai-agent/index.html"><span>AI Agent</span></a></span><span class="tag is-dark"><a href="../../../../../roki.log/tags/aws/index.html"><span>AWS</span></a></span><span class="tag is-dark"><a href="../../../../../roki.log/tags/bot/index.html"><span>Bot</span></a></span><span class="tag is-dark"><a href="../../../../../roki.log/tags/c/index.html"><span>C++</span></a></span><span class="tag is-dark"><a href="../../../../../roki.log/tags/compiler/index.html"><span>Compiler</span></a></span><span class="tag is-dark"><a href="../../../../../roki.log/tags/elementary-number-theory/index.html"><span>Elementary number theory</span></a></span><span class="tag is-dark"><a href="../../../../../roki.log/tags/git/index.html"><span>Git</span></a></span><span class="tag is-dark"><a href="../../../../../roki.log/tags/googleappsscript/index.html"><span>GoogleAppsScript</span></a></span><span class="tag is-dark"><a href="../../../../../roki.log/tags/group-theory/index.html"><span>Group theory</span></a></span><span class="tag is-dark"><a href="../../../../../roki.log/tags/haskell/index.html"><span>Haskell</span></a></span><span class="tag is-dark"><a href="../../../../../roki.log/tags/line/index.html"><span>LINE</span></a></span><span class="tag is-dark"><a href="../../../../../roki.log/tags/lambda/index.html"><span>Lambda</span></a></span><span class="tag is-dark"><a href="../../../../../roki.log/tags/lazy-k/index.html"><span>Lazy K</span></a></span><span class="tag is-dark"><a href="../../../../../roki.log/tags/mdm/index.html"><span>MDM</span></a></span><span class="tag is-dark"><a href="../../../../../roki.log/tags/network/index.html"><span>Network</span></a></span><span class="tag is-dark"><a href="../../../../../roki.log/tags/networking/index.html"><span>Networking</span></a></span><span class="tag is-dark"><a href="../../../../../roki.log/tags/probability-theory/index.html"><span>Probability theory</span></a></span><span class="tag is-dark"><a href="../../../../../roki.log/tags/python/index.html"><span>Python</span></a></span><span class="tag is-dark"><a href="../../../../../roki.log/tags/quantum-mechanics/index.html"><span>Quantum mechanics</span></a></span><span class="tag is-dark"><a href="../../../../../roki.log/tags/security/index.html"><span>Security</span></a></span><span class="tag is-dark"><a href="../../../../../roki.log/tags/chezmoi/index.html"><span>chezmoi</span></a></span><span class="tag is-dark"><a href="../../../../../roki.log/tags/dotfiles/index.html"><span>dotfiles</span></a></span><span class="tag is-dark"><a href="../../../../../roki.log/tags/emscripten/index.html"><span>emscripten</span></a></span><span class="tag is-dark"><a href="../../../../../roki.log/tags/golang/index.html"><span>golang</span></a></span><span class="tag is-dark"><a href="../../../../../roki.log/tags/javascript/index.html"><span>javascript</span></a></span><span class="tag is-dark"><a href="../../../../../roki.log/tags/math/index.html"><span>math</span></a></span><span class="tag is-dark"><a href="../../../../../roki.log/tags/physics/index.html"><span>physics</span></a></span></div>
+            </div>
+
+            <div class="column">
+                <h4 class="title is-5">
+                    <svg role="img" viewBox="0 0 512 512" aria-hidden="true" data-prefix="fas" data-icon="box-archive" class="svg-inline--fa fa-box-archive"><path d="M0 64C0 46.3 14.3 32 32 32l448 0c17.7 0 32 14.3 32 32l0 32c0 17.7-14.3 32-32 32L32 128C14.3 128 0 113.7 0 96L0 64zM32 176l448 0 0 240c0 35.3-28.7 64-64 64L96 480c-35.3 0-64-28.7-64-64l0-240zm152 64c-13.3 0-24 10.7-24 24s10.7 24 24 24l144 0c13.3 0 24-10.7 24-24s-10.7-24-24-24l-144 0z" fill="currentColor"></path></svg>
+                    Archive
+                </h4>
+                <div class="archives">
+                <ul class="archive-tree"><li><input class="tree-toggle" type="checkbox" id="tree-label-2026" checked><label class="tree-toggle-button" for="tree-label-2026"><svg role="img" viewBox="0 0 256 512" aria-hidden="true" data-prefix="fas" data-icon="angle-right" class="svg-inline--fa fa-angle-right fa-fw"><path d="M247.1 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L179.2 256 41.9 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z" fill="currentColor"></path></svg><svg role="img" viewBox="0 0 384 512" aria-hidden="true" data-prefix="fas" data-icon="angle-down" class="svg-inline--fa fa-angle-down fa-fw"><path d="M169.4 374.6c12.5 12.5 32.8 12.5 45.3 0l160-160c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 306.7 54.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l160 160z" fill="currentColor"></path></svg></label><a href="../../../../../roki.log/2026/index.html">2026 (1)</a><ul class="tree-child"><li><a href="../../../../../roki.log/2026/09/index.html">2026/09 (1)</a></li></ul></li><li><input class="tree-toggle" type="checkbox" id="tree-label-2025"><label class="tree-toggle-button" for="tree-label-2025"><svg role="img" viewBox="0 0 256 512" aria-hidden="true" data-prefix="fas" data-icon="angle-right" class="svg-inline--fa fa-angle-right fa-fw"><path d="M247.1 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L179.2 256 41.9 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z" fill="currentColor"></path></svg><svg role="img" viewBox="0 0 384 512" aria-hidden="true" data-prefix="fas" data-icon="angle-down" class="svg-inline--fa fa-angle-down fa-fw"><path d="M169.4 374.6c12.5 12.5 32.8 12.5 45.3 0l160-160c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 306.7 54.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l160 160z" fill="currentColor"></path></svg></label><a href="../../../../../roki.log/2025/index.html">2025 (1)</a><ul class="tree-child"><li><a href="../../../../../roki.log/2025/04/index.html">2025/04 (1)</a></li></ul></li><li><input class="tree-toggle" type="checkbox" id="tree-label-2023"><label class="tree-toggle-button" for="tree-label-2023"><svg role="img" viewBox="0 0 256 512" aria-hidden="true" data-prefix="fas" data-icon="angle-right" class="svg-inline--fa fa-angle-right fa-fw"><path d="M247.1 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L179.2 256 41.9 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z" fill="currentColor"></path></svg><svg role="img" viewBox="0 0 384 512" aria-hidden="true" data-prefix="fas" data-icon="angle-down" class="svg-inline--fa fa-angle-down fa-fw"><path d="M169.4 374.6c12.5 12.5 32.8 12.5 45.3 0l160-160c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 306.7 54.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l160 160z" fill="currentColor"></path></svg></label><a href="../../../../../roki.log/2023/index.html">2023 (1)</a><ul class="tree-child"><li><a href="../../../../../roki.log/2023/12/index.html">2023/12 (1)</a></li></ul></li><li><input class="tree-toggle" type="checkbox" id="tree-label-2022"><label class="tree-toggle-button" for="tree-label-2022"><svg role="img" viewBox="0 0 256 512" aria-hidden="true" data-prefix="fas" data-icon="angle-right" class="svg-inline--fa fa-angle-right fa-fw"><path d="M247.1 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L179.2 256 41.9 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z" fill="currentColor"></path></svg><svg role="img" viewBox="0 0 384 512" aria-hidden="true" data-prefix="fas" data-icon="angle-down" class="svg-inline--fa fa-angle-down fa-fw"><path d="M169.4 374.6c12.5 12.5 32.8 12.5 45.3 0l160-160c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 306.7 54.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l160 160z" fill="currentColor"></path></svg></label><a href="../../../../../roki.log/2022/index.html">2022 (1)</a><ul class="tree-child"><li><a href="../../../../../roki.log/2022/04/index.html">2022/04 (1)</a></li></ul></li><li><input class="tree-toggle" type="checkbox" id="tree-label-2021"><label class="tree-toggle-button" for="tree-label-2021"><svg role="img" viewBox="0 0 256 512" aria-hidden="true" data-prefix="fas" data-icon="angle-right" class="svg-inline--fa fa-angle-right fa-fw"><path d="M247.1 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L179.2 256 41.9 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z" fill="currentColor"></path></svg><svg role="img" viewBox="0 0 384 512" aria-hidden="true" data-prefix="fas" data-icon="angle-down" class="svg-inline--fa fa-angle-down fa-fw"><path d="M169.4 374.6c12.5 12.5 32.8 12.5 45.3 0l160-160c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 306.7 54.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l160 160z" fill="currentColor"></path></svg></label><a href="../../../../../roki.log/2021/index.html">2021 (1)</a><ul class="tree-child"><li><a href="../../../../../roki.log/2021/07/index.html">2021/07 (1)</a></li></ul></li><li><input class="tree-toggle" type="checkbox" id="tree-label-2020"><label class="tree-toggle-button" for="tree-label-2020"><svg role="img" viewBox="0 0 256 512" aria-hidden="true" data-prefix="fas" data-icon="angle-right" class="svg-inline--fa fa-angle-right fa-fw"><path d="M247.1 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L179.2 256 41.9 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z" fill="currentColor"></path></svg><svg role="img" viewBox="0 0 384 512" aria-hidden="true" data-prefix="fas" data-icon="angle-down" class="svg-inline--fa fa-angle-down fa-fw"><path d="M169.4 374.6c12.5 12.5 32.8 12.5 45.3 0l160-160c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 306.7 54.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l160 160z" fill="currentColor"></path></svg></label><a href="../../../../../roki.log/2020/index.html">2020 (3)</a><ul class="tree-child"><li><a href="../../../../../roki.log/2020/12/index.html">2020/12 (1)</a></li><li><a href="../../../../../roki.log/2020/08/index.html">2020/08 (1)</a></li><li><a href="../../../../../roki.log/2020/03/index.html">2020/03 (1)</a></li></ul></li><li><input class="tree-toggle" type="checkbox" id="tree-label-2019"><label class="tree-toggle-button" for="tree-label-2019"><svg role="img" viewBox="0 0 256 512" aria-hidden="true" data-prefix="fas" data-icon="angle-right" class="svg-inline--fa fa-angle-right fa-fw"><path d="M247.1 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L179.2 256 41.9 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z" fill="currentColor"></path></svg><svg role="img" viewBox="0 0 384 512" aria-hidden="true" data-prefix="fas" data-icon="angle-down" class="svg-inline--fa fa-angle-down fa-fw"><path d="M169.4 374.6c12.5 12.5 32.8 12.5 45.3 0l160-160c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 306.7 54.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l160 160z" fill="currentColor"></path></svg></label><a href="../../../../../roki.log/2019/index.html">2019 (5)</a><ul class="tree-child"><li><a href="../../../../../roki.log/2019/05/index.html">2019/05 (1)</a></li><li><a href="../../../../../roki.log/2019/03/index.html">2019/03 (2)</a></li><li><a href="../../../../../roki.log/2019/01/index.html">2019/01 (2)</a></li></ul></li><li><input class="tree-toggle" type="checkbox" id="tree-label-2018"><label class="tree-toggle-button" for="tree-label-2018"><svg role="img" viewBox="0 0 256 512" aria-hidden="true" data-prefix="fas" data-icon="angle-right" class="svg-inline--fa fa-angle-right fa-fw"><path d="M247.1 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L179.2 256 41.9 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z" fill="currentColor"></path></svg><svg role="img" viewBox="0 0 384 512" aria-hidden="true" data-prefix="fas" data-icon="angle-down" class="svg-inline--fa fa-angle-down fa-fw"><path d="M169.4 374.6c12.5 12.5 32.8 12.5 45.3 0l160-160c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 306.7 54.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l160 160z" fill="currentColor"></path></svg></label><a href="../../../../../roki.log/2018/index.html">2018 (29)</a><ul class="tree-child"><li><a href="../../../../../roki.log/2018/12/index.html">2018/12 (1)</a></li><li><a href="../../../../../roki.log/2018/10/index.html">2018/10 (2)</a></li><li><a href="../../../../../roki.log/2018/09/index.html">2018/09 (3)</a></li><li><a href="../../../../../roki.log/2018/08/index.html">2018/08 (3)</a></li><li><a href="../../../../../roki.log/2018/07/index.html">2018/07 (7)</a></li><li><a href="../../../../../roki.log/2018/06/index.html">2018/06 (5)</a></li><li><a href="../../../../../roki.log/2018/05/index.html">2018/05 (3)</a></li><li><a href="../../../../../roki.log/2018/04/index.html">2018/04 (3)</a></li><li><a href="../../../../../roki.log/2018/03/index.html">2018/03 (2)</a></li></ul></li></ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="content has-text-centered mt-3">
+        
+        <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5658861742931397" crossorigin="anonymous"></script><ins class="adsbygoogle" style="display:block" data-ad-format="autorelaxed" data-ad-client="ca-pub-5658861742931397" data-ad-slot="7636558034"></ins><script>(adsbygoogle = window.adsbygoogle || []).push({});</script><a href="https://haskell.jp/blog/posts/links.html#roki.dev/roki.log/" target="_blank" rel="nofollow noopener"><img width="234" class="mt-1" src="https://haskell.jp/img/supported-by-haskell-jp.svg" alt="Supported By Haskell-jp."></a>
+        
+        <div class="content has-text-centered">
+    <small>copyright © 2016~ Roki All Rights Reserved.</small>
+    <p>Site proudly generated by <a href="http://jaspervdj.be/hakyll" target="_blank" rel="nofollow noopener">Hakyll</a></p>
+</div>
+
+    </div>
+</footer>
+
+
+    </body>
+</html>
