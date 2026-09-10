@@ -117,7 +117,7 @@ in    [ { hotelCodeRaw = "FSH"
                   , makeNode
                       "ローズコートサイド"
                       [ makeStay "スーペリア" 3, makeStay "スーペリア・アルコーヴ" 2 ]
-                  , makeNode "べイエリアサイド" [ makeStay "スーペリア・アルコーヴ" 1 ]
+                  , makeNode "ベイエリアサイド" [ makeStay "スーペリア・アルコーヴ" 2 ]
                   ]
               ]
         , hotelColorRaw = "#854454"
@@ -137,8 +137,11 @@ in    [ { hotelCodeRaw = "FSH"
             detailsToPaths
               [ makeNode "キャラ" [ makeStay "美女野獣" 1, makeStay "シンデレラ" 1 ]
               , makeNode
-                  "スーペリア"
-                  [ makeStay "コーナールーム" 2, makeStay "パークグランドビュー" 1 ]
+                  "スタンダード"
+                  [ makeStay "スーペリアルーム" 1
+                  , makeStay "コーナールーム" 2
+                  , makeStay "スーペリア・アルコーヴ（パークグランドビュー）" 1
+                  ]
               , makeNode "コンシェルジュ" [ makeStay "バルコニールーム パークグランドビュー" 1 ]
               ]
         , hotelColorRaw = "#B95C00"
