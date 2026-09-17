@@ -175,8 +175,8 @@ spec = do
             assertProductionHotelConfigExists
             hotels <- loadHotels productionHotelsPath
             map (\hotel -> (hotelCode hotel, hotelStayCount hotel)) (sortOn hotelCode hotels)
-                `shouldBe` [("DHM", 5), ("FSH", 7), ("TDH", 6), ("TSH", 3)]
-            sum (map hotelStayCount hotels) `shouldBe` 21
+                `shouldBe` [("DHM", 5), ("FSH", 8), ("TDH", 7), ("TSH", 3)]
+            sum (map hotelStayCount hotels) `shouldBe` 23
 
         it "renders the production hotel details exactly as before the migration" $ do
             assertProductionHotelConfigExists
@@ -229,8 +229,8 @@ expectedHotelDetailsHtml =
           , "<span class=\"hotel-detail-item hotel-detail-level-1\">ローズコートサイド</span>"
           , "<span class=\"hotel-detail-item hotel-detail-level-2\">スーペリア \x00D7\&3</span>"
           , "<span class=\"hotel-detail-item hotel-detail-level-2\">スーペリア・アルコーヴ \x00D7\&2</span>"
-          , "<span class=\"hotel-detail-item hotel-detail-level-1\">べイエリアサイド</span>"
-          , "<span class=\"hotel-detail-item hotel-detail-level-2\">スーペリア・アルコーヴ</span>"
+          , "<span class=\"hotel-detail-item hotel-detail-level-1\">ベイエリアサイド</span>"
+          , "<span class=\"hotel-detail-item hotel-detail-level-2\">スーペリア・アルコーヴ \x00D7\&2</span>"
           ]
       )
     , ( "DHM"
@@ -248,9 +248,10 @@ expectedHotelDetailsHtml =
           [ "<span class=\"hotel-detail-item hotel-detail-level-0\">キャラ</span>"
           , "<span class=\"hotel-detail-item hotel-detail-level-1\">美女野獣</span>"
           , "<span class=\"hotel-detail-item hotel-detail-level-1\">シンデレラ</span>"
-          , "<span class=\"hotel-detail-item hotel-detail-level-0\">スーペリア</span>"
+          , "<span class=\"hotel-detail-item hotel-detail-level-0\">スタンダード</span>"
+          , "<span class=\"hotel-detail-item hotel-detail-level-1\">スーペリアルーム</span>"
           , "<span class=\"hotel-detail-item hotel-detail-level-1\">コーナールーム \x00D7\&2</span>"
-          , "<span class=\"hotel-detail-item hotel-detail-level-1\">パークグランドビュー</span>"
+          , "<span class=\"hotel-detail-item hotel-detail-level-1\">スーペリア・アルコーヴ（パークグランドビュー）</span>"
           , "<span class=\"hotel-detail-item hotel-detail-level-0\">コンシェルジュ</span>"
           , "<span class=\"hotel-detail-item hotel-detail-level-1\">バルコニールーム パークグランドビュー</span>"
           ]
