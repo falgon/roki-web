@@ -76,15 +76,7 @@ authorCtx = mconcatMap (uncurry constField) [
   ]
     where
         fav = TL.unpack $ renderText $
-            ul_ [style_ "margin: 0;", class_ "comma-list"] $ do
-                li_ "Coffee"
-                li_ "Watches"
-                li_ $ a_
-                    [href_ "https://www.san-x.co.jp/rilakkuma/profile/#&gid=1&pid=3"]
-                    "Kiiroitori"
-                li_ $ a_
-                    [href_ "disney_experience_summary/jp.html"]
-                    "Disney"
+            ul_ [style_ "margin: 0;", class_ "comma-list"] $ li_ "Coffee"
 
 siteCtx :: Context String
 siteCtx = mconcat [
