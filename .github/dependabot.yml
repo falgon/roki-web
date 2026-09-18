@@ -23,9 +23,11 @@ updates:
     groups:
       vitest:
         # vitest関連パッケージをバージョン同期させる
-        # minor/patch更新は1つのPRにまとめ、major更新は個別PRとする
+        # vitest本体と@vitest/*はpeer dependencyでmajorが一致している必要があるため、
+        # major更新も1つのPRにまとめる（個別PRにするとERESOLVEで解決不能になる）
         # 注: セキュリティ更新は常に個別PRになります（Dependabot仕様）
         update-types:
+          - "major"
           - "minor"
           - "patch"
         patterns:
