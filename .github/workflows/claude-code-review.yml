@@ -22,6 +22,7 @@ jobs:
       contents: read
       pull-requests: write
       issues: write
+      actions: read # Required for Claude to read CI results on PRs
 
     steps:
       - name: Checkout repository
@@ -36,12 +37,21 @@ jobs:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           github_token: ${{ github.token }}
 
+          # The mcp__github_ci__* tools are already present in the resolved tool
+          # set, but reading CI results also needs the token scope above.
+          additional_permissions: |
+            actions: read
+
           allowed_bots: "dependabot,github-actions,claude,kodiakhq"
 
           # Follow the latest Sonnet release through Claude Code's rolling alias.
+          # Keep the tool list quoted: the Bash() patterns contain spaces, and an
+          # unquoted value is split on whitespace, which turns
+          # Bash(gh pr comment:*) into the useless fragments Bash(gh, pr and
+          # comment:*).
           claude_args: |
             --model 'sonnet'
-            --allowedTools mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),WebFetch,WebSearch
+            --allowedTools 'mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),WebFetch,WebSearch'
 
           # Prompt for automated review (no @claude mention needed)
           prompt: |
