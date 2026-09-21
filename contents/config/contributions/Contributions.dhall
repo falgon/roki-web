@@ -68,5 +68,10 @@ in    [ { text = "cpprefjp: Fix typo #388"
         , genre = g.genreToText (g.Genre.Haskell {=})
         , date = { yyyy = 2025, mm = 10, dd = 1 }
         }
+      , { text = "microsoft/apm: Report slow user-scope install (#830)"
+        , link = "https://github.com/microsoft/apm/issues/830"
+        , genre = g.genreToText (g.Genre.Python {=})
+        , date = { yyyy = 2026, mm = 4, dd = 22 }
+        }
       ]
     : List ./Type/Contribute.dhall
