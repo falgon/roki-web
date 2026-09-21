@@ -16,6 +16,16 @@ on:
 jobs:
   build:
     runs-on: ubuntu-24.04
+    # Building and validating roki.dev takes roughly 50 minutes. Without this,
+    # every push to a pull request leaves the previous build running to
+    # completion even though its result is already obsolete. Scope the group to
+    # the pull request so unrelated pull requests never cancel each other.
+    # Only this job is cancelled: upload and boot-circle-ci depend on it, so a
+    # cancelled build skips them, while an upload that already started is left
+    # to finish rather than being interrupted mid-transfer.
+    concurrency:
+      group: ci-pr-build-${{ github.event.pull_request.number || github.ref }}
+      cancel-in-progress: true
     permissions:
       repository-projects: read
       contents: read
