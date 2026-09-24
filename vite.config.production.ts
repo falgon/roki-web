@@ -13,7 +13,7 @@ export default defineConfig({
     build: {
         // ライブラリモードでビルド
         lib: {
-            entry: resolve(__dirname, "contents/ts/disney-experience-visualizations.ts"),
+            entry: resolve(import.meta.dirname, "contents/ts/disney-experience-visualizations.ts"),
             name: "DisneyExperienceVisualizations", // グローバル変数名（使用されない可能性あり）
             formats: ["iife"], // IIFE形式で出力
             fileName: () => "disney-experience-visualizations.js",
