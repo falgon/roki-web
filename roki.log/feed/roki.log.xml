@@ -8,8 +8,424 @@
         <name>Roki</name>
         <email>falgon53@yahoo.co.jp</email>
     </author>
-    <updated>2026-09-07T00:00:00Z</updated>
+    <updated>2026-09-21T00:00:00Z</updated>
     <entry>
+    <title>1 つの code-review-graph MCP セッションから worktree ごとに独立したグラフ DB を使い分ける</title>
+    <link href="https://roki.dev/roki.log/2026/09/21/parallel-worktree-code-review-graph-mcp/index.html" />
+    <id>https://roki.dev/roki.log/2026/09/21/parallel-worktree-code-review-graph-mcp/index.html</id>
+    <published>2026-09-21T00:00:00Z</published>
+    <updated>2026-09-21T00:00:00Z</updated>
+    <summary type="html"><![CDATA[<p><a href="https://github.com/tirth8205/code-review-graph">code-review-graph</a> は,
+コードベースの構造グラフを手元に持ち,
+影響範囲や実行フローの問い合わせを MCP 経由で提供する OSS である.
+これを PR レビューの補助証拠として使っていたのだが,
+<strong>1 つのセッションの中で複数 PR のレビューを並列に進める</strong>という使い方,
+すなわち PR ごとに Git worktree を分けて同時に扱おうとした時点で構成が破綻した.</p>
+<p>本記事は, その MCP ランチャーを 2 段階で作り直し,
+1 つの stdio MCP セッションから worktree ごとに独立した子プロセスとグラフ DB を
+安全に使い分けられるようにするまでの設計と実装をまとめたものである.
+実装は <a href="https://roki.dev/roki.log/2026/09/07/introducing-chezmoi-ai-agent-dotfiles-article/index.html">前回の記事</a>
+で触れた chezmoi 管理の dotfiles リポジトリに置いている.
+併せて, 同じ仕組みを上流の本体へ提案した際, 自前のラッパ層とは何を変えたかにも触れる.</p>
+<!--more-->
+<h2 id="code-review-graph-はどのようなツールか">code-review-graph はどのようなツールか</h2>
+<p>先に対象を説明しておく.
+code-review-graph は, リポジトリを <a href="https://tree-sitter.github.io/tree-sitter/">Tree-sitter</a> で解析して
+関数, クラス, インポートをノード, 呼び出し, 継承, テストの対応をエッジとする
+構造グラフを作り, それを <code>.code-review-graph/</code> 配下の SQLite ファイル 1 つへ持つツールである.
+ライセンスは MIT. 実装には Python 3.10 以上が必要になる.</p>
+<p>狙いは「AI コーディングツールにコードベース全体を読ませない」ことにある.
+変更されたファイルからグラフをたどって呼び出し元, 依存先, 関係するテストを列挙し
+(上流はこれを影響波及範囲, <code>blast radius</code> と呼ぶ),
+レビューに必要な最小限のファイル集合だけを返す.
+この問い合わせ口が MCP サーバとして実装されており, CLI とは同じ DB を共有する.</p>
+<p>実装を読むうえで効いてくる性質は次のあたりである.</p>
+<ul>
+<li><strong>増分更新</strong> — 変更ファイルの SHA-256 を見て, ハッシュが変わったものだけ再解析する. README の計測では約 3,000 ファイルのリポジトリで 2 ファイルの編集が約 2.5 秒 (うち約 1.4 秒はプロセス起動)</li>
+<li><strong>ローカル完結</strong> — 外部サービスへソースを送らない. 保存先は SQLite ファイル 1 つで, 外部の DB やクラウドを必要としない</li>
+<li><strong>リポジトリ単位のストレージ</strong> — デフォルトはリポジトリ直下の <code>.code-review-graph/graph.db</code>. <code>~/.code-review-graph/registry.json</code> へ複数リポジトリを登録でき, <code>data_dir</code> で保存先を個別に指定できる. 本記事で扱う問題は, まさにこの解釈がずれたことに起因する</li>
+<li><strong>広い言語対応</strong> — Tree-sitter の文法定義があるものはそれを使い, 無い言語には個別の代替処理を当てる. 独自言語も設定ファイルで追加できる</li>
+<li>そのほか Leiden 法によるコミュニティ検出, 実行フローの抽出, FTS5 による全文検索, 任意で有効にする埋め込み検索, CI 用の GitHub Action など</li>
+</ul>
+<p>README にはベンチマークも載っている.
+6 リポジトリ 13 コミットに対する計測で,
+質問 1 件あたりのトークン数が全文読みに比べて中央値で約 63 分の 1 (レンジは 35〜358 倍),
+影響解析の F1 が平均 0.693.
+ただし「recall 1.0」は正解集合を同じグラフから作っているので上界に過ぎない,
+という注記が README 自身に書かれている.
+測り方と限界まで開示してあるぶん, 数字をそのまま信じ込まずに扱える.</p>
+<h3 id="どれくらい活発なプロジェクトか">どれくらい活発なプロジェクトか</h3>
+<p>自前のラッパを挟むか, 本体へ手を入れるかの判断材料として, 上流の勢いも見ておいた.
+2026-09-21 時点の数字は次のとおりである.</p>
+<ul>
+<li>リポジトリ作成は 2026-02-26. 7 か月弱でスター約 31,700, フォーク約 2,900, コントリビュータ 123 人</li>
+<li>リリースは v2.3.0 (2026-04-11) から v2.3.9 (2026-09-18) まで, おおむね月 1 回程度の間隔</li>
+<li>コミット数は直近 4 週 231 件, 直近 12 週 654 件. ただし週ごとの偏りは大きく, 0 件の週もあれば 168 件の週もある</li>
+<li>未クローズの PR が 53 本, issue が 87 件. 通算で作られた PR は 648 本</li>
+<li>README は英語のほか中国語, 日本語, 韓国語, ヒンディー語が用意されている</li>
+</ul>
+<p>2026 年に始まったばかりのプロジェクトが短期間で一気に伸びており,
+開発はリリース前後に集中するバースト型である.
+裏を返せば, 個々の運用シナリオは各自が埋める前提の段階でもある.
+本記事のラッパ層は, まさにその埋め合わせとして始まったものだ.
+一方で, これだけ人と変更が集まっているなら本体へ出す価値もある,
+という判断が後半の上流への提案につながっている.</p>
+<p>なお本記事の構成は 2.3.8 を固定して使っており,
+記事中の検証もそのバージョンに対するものである.</p>
+<h2 id="課題">課題</h2>
+<p>レビュー待ちの PR が複数積まれる状況は常態化する.
+これをエージェントへ手伝わせるときの現実的な運用は,
+<strong>1 つのセッションを開き, その中で複数 PR のレビューを同時に進める</strong>形である.
+PR A の影響範囲をグラフへ問い合わせている間に PR B の差分を読み,
+必要なら両者の指摘を突き合わせてから順に投稿する, といった進め方である.
+PR ごとにセッションを立て直すのは, 立ち上げコストの面でも,
+レビュー観点をセッション間で共有できない面でも割に合わない.</p>
+<p>この形を取るなら, チェックアウトは PR ごとに分かれていなければならない.
+1 つのチェックアウトを <code>git switch</code> で往復させると,
+レビューの最中に足元のチェックアウトが別 PR の都合で動き, 読んでいた根拠が崩れる.
+グラフ DB は「ある時点の HEAD」を前提に構築されるため, 切り替えのたびに作り直しにもなる.
+PR ごとに独立した作業ツリーを Git の worktree 機能で用意すれば, この問題は解決する.</p>
+<p>問題は MCP 側であった.
+MCP の stdio 接続はセッション単位で 1 本張られ, レビューの途中で張り替えられない.
+にもかかわらず当時のランチャーは起動時の 1 つのリポジトリルートに固定されており,
+<code>tools/call</code> の <code>repo_root</code> に別 worktree を書いても宛先は変わらなかった.
+つまり実質「1 セッション : 1 worktree」でしか使えない.
+複数 PR を並列に扱うには, PR ごとに別の MCP 設定を用意してセッションを分けるか,
+グラフの利用自体を諦めるか, 結局は直列に戻すかしかなかった.
+本記事の変更は, この「1 セッション : N worktree」を成立させるためのものである.</p>
+<h2 id="変更前の構成とその制約">変更前の構成とその制約</h2>
+<p>初期実装のランチャーは POSIX sh で, 起動時の Git ルートを SHA-256 で要約し,
+MCP 専用の保存領域を作っていた.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb1-1"><a href="/roki.log/2026/09/21/parallel-worktree-code-review-graph-mcp/#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="va">repo_root</span><span class="op">=</span><span class="va">$(</span><span class="fu">git</span> rev-parse <span class="at">--show-toplevel</span><span class="va">)</span></span>
+<span id="cb1-2"><a href="/roki.log/2026/09/21/parallel-worktree-code-review-graph-mcp/#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="va">repo_hash</span><span class="op">=</span><span class="va">$(</span><span class="bu">printf</span> <span class="st">'%s'</span> <span class="st">&quot;</span><span class="va">$repo_root</span><span class="st">&quot;</span> <span class="kw">|</span> <span class="ex">shasum</span> <span class="at">-a</span> 256 <span class="kw">|</span> <span class="fu">awk</span> <span class="st">'{print $1}'</span><span class="va">)</span></span>
+<span id="cb1-3"><a href="/roki.log/2026/09/21/parallel-worktree-code-review-graph-mcp/#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="va">data_dir</span><span class="op">=</span><span class="st">&quot;</span><span class="va">$project</span><span class="st">/.crg-data/</span><span class="va">$repo_hash</span><span class="st">&quot;</span></span></code></pre></div>
+<p>これを <code>CRG_DATA_DIR</code> と <code>CRG_HOME</code> として <code>env -i</code> 経由で子プロセスへ渡していた.
+つまり <strong>ルートのハッシュ単位の隔離は元からあった</strong>.
+異なるルートを別々の MCP プロセスで起動すれば DB は確かに分かれるので,
+ここを「隔離がなかった」と書くのは不正確である.
+問題は隔離の有無ではなく, 粒度と CLI との不一致にあった.</p>
+<p>1 点目は <strong>1 プロセス = 1 ルート</strong>という粒度である.
+ランチャーは起動時のカレントディレクトリからルートを 1 つ決め,
+それを固定引数として境界検査プロセス (以下 guard) と上流サーバへ渡す.
+<code>tools/call</code> に別の <code>repo_root</code> を書いても,
+guard は「起動時ルートの配下か」を検証して弾くだけで, 宛先は変わらない.</p>
+<p>2 点目は <strong>CLI と MCP が別の DB を見ていた</strong>ことである.
+CLI は <code>~/.code-review-graph/registry.json</code> という登録簿 (以下 Registry) と
+リポジトリ直下の <code>.code-review-graph/graph.db</code> を使うのに対し,
+MCP はハッシュ名のディレクトリを使う.
+結果として CLI で構築したグラフが MCP から見えず,
+両者のノード数, 更新時刻, グラフ構築時の Git SHA がそろわない.
+当時の MCP は <code>build_or_update_graph_tool</code> を許可リストから外した読み取り専用構成で,
+構築は CLI 側でしか行えなかったため, この不一致は回避不能であった.
+レビューの根拠として使う以上, これは致命的である.</p>
+<h2 id="第-1-段階-ストレージ契約を-cli-とそろえる">第 1 段階: ストレージ契約を CLI とそろえる</h2>
+<p>最初に直したのは DB の解決規則である.
+方針は「全リポジトリで 1 つの DB にする」ことではない.
+<strong>同じリポジトリルートについて, CLI と MCP が同じ正規 DB を使う</strong>ことである.
+前者にすると別リポジトリのノードが混ざるため, この区別は重要である.</p>
+<p>新しい規則は次の 2 段で, これは CLI の解決規則そのものである.</p>
+<ol type="1">
+<li>Registry に対象ルートの <code>data_dir</code> が明示されていれば, それを使う</li>
+<li>明示されていなければ, そのルートの <code>.code-review-graph/graph.db</code> を使う</li>
+</ol>
+<p>あわせて, 全リポジトリへ一律に効いてしまう <code>CRG_DATA_DIR</code> はランチャーで明示的に拒否した.
+保存先をリポジトリ単位で変えたい場合は Registry の <code>data_dir</code> で指定する.
+<code>CRG_HOME</code> は CLI と基準がずれないよう絶対パスのみ受け付け,
+未設定なら <code>~/.code-review-graph</code> を使う.</p>
+<p>一方で上流サーバ自体には広い Registry を見せたくない.
+そこで guard は一時的なホームディレクトリを作り,
+対象ルート 1 件だけを書いた Registry を子プロセスへ渡す.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb2-1"><a href="/roki.log/2026/09/21/parallel-worktree-code-review-graph-mcp/#cb2-1" aria-hidden="true" tabindex="-1"></a>(child_crg_home <span class="op">/</span> <span class="st">&quot;registry.json&quot;</span>).write_text(</span>
+<span id="cb2-2"><a href="/roki.log/2026/09/21/parallel-worktree-code-review-graph-mcp/#cb2-2" aria-hidden="true" tabindex="-1"></a>    json.dumps({<span class="st">&quot;repos&quot;</span>: [{<span class="st">&quot;path&quot;</span>: <span class="bu">str</span>(repo_root), <span class="st">&quot;data_dir&quot;</span>: <span class="bu">str</span>(fixed_data_dir)}]})</span>
+<span id="cb2-3"><a href="/roki.log/2026/09/21/parallel-worktree-code-review-graph-mcp/#cb2-3" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div>
+<p>解決には共有 Registry を使い, 子プロセスへ渡すのは解決結果だけ.
+こうすることで CLI との一致と子プロセスの固定を両立させている.
+この段階で <code>build_or_update_graph_tool</code> も許可リストへ入れ,
+MCP からの更新が CLI と同じ DB へ書かれるようにした.</p>
+<h2 id="第-2-段階-振り分けプロセスで-1-セッションを多重化する">第 2 段階: 振り分けプロセスで 1 セッションを多重化する</h2>
+<p>ランチャーが guard を直接起動するのをやめ,
+間に振り分け役の Python プロセス (以下 dispatcher) を 1 つ挟む構成にした.</p>
+<figure class="has-text-centered image"><svg id="my-svg" width="100%" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" class="flowchart" style="max-width: 1121px; background-color: white;" viewBox="0 0 1121 736.7915649414062" role="graphics-document document" aria-roledescription="flowchart-v2"><style>#my-svg{font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:16px;fill:#333;}@keyframes edge-animation-frame{from{stroke-dashoffset:0;}}@keyframes dash{to{stroke-dashoffset:0;}}#my-svg .edge-animation-slow{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 50s linear infinite;stroke-linecap:round;}#my-svg .edge-animation-fast{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 20s linear infinite;stroke-linecap:round;}#my-svg .error-icon{fill:#552222;}#my-svg .error-text{fill:#552222;stroke:#552222;}#my-svg .edge-thickness-normal{stroke-width:1px;}#my-svg .edge-thickness-thick{stroke-width:3.5px;}#my-svg .edge-pattern-solid{stroke-dasharray:0;}#my-svg .edge-thickness-invisible{stroke-width:0;fill:none;}#my-svg .edge-pattern-dashed{stroke-dasharray:3;}#my-svg .edge-pattern-dotted{stroke-dasharray:2;}#my-svg .marker{fill:#333333;stroke:#333333;}#my-svg .marker.cross{stroke:#333333;}#my-svg svg{font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:16px;}#my-svg p{margin:0;}#my-svg .label{font-family:"trebuchet ms",verdana,arial,sans-serif;color:#333;}#my-svg .cluster-label text{fill:#333;}#my-svg .cluster-label span{color:#333;}#my-svg .cluster-label span p{background-color:transparent;}#my-svg .label text,#my-svg span{fill:#333;color:#333;}#my-svg .node rect,#my-svg .node circle,#my-svg .node ellipse,#my-svg .node polygon,#my-svg .node path{fill:#ECECFF;stroke:#9370DB;stroke-width:1px;}#my-svg .rough-node .label text,#my-svg .node .label text,#my-svg .image-shape .label,#my-svg .icon-shape .label{text-anchor:middle;}#my-svg .node .katex path{fill:#000;stroke:#000;stroke-width:1px;}#my-svg .rough-node .label,#my-svg .node .label,#my-svg .image-shape .label,#my-svg .icon-shape .label{text-align:center;}#my-svg .node.clickable{cursor:pointer;}#my-svg .root .anchor path{fill:#333333!important;stroke-width:0;stroke:#333333;}#my-svg .arrowheadPath{fill:#333333;}#my-svg .edgePath .path{stroke:#333333;stroke-width:1px;}#my-svg .flowchart-link{stroke:#333333;fill:none;}#my-svg .edgeLabel{background-color:rgba(232,232,232, 0.8);text-align:center;}#my-svg .edgeLabel p{background-color:rgba(232,232,232, 0.8);}#my-svg .edgeLabel rect{opacity:0.5;background-color:rgba(232,232,232, 0.8);fill:rgba(232,232,232, 0.8);}#my-svg .labelBkg{background-color:rgba(232, 232, 232, 0.5);}#my-svg .cluster rect{fill:#ffffde;stroke:#aaaa33;stroke-width:1px;}#my-svg .cluster text{fill:#333;}#my-svg .cluster span{color:#333;}#my-svg div.mermaidTooltip{position:absolute;text-align:center;max-width:200px;padding:2px;font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:12px;background:hsl(80, 100%, 96.2745098039%);border:1px solid #aaaa33;border-radius:2px;pointer-events:none;z-index:100;}#my-svg .flowchartTitleText{text-anchor:middle;font-size:18px;fill:#333;}#my-svg rect.text{fill:none;stroke-width:0;}#my-svg .icon-shape,#my-svg .image-shape{background-color:rgba(232,232,232, 0.8);text-align:center;}#my-svg .icon-shape p,#my-svg .image-shape p{background-color:rgba(232,232,232, 0.8);padding:2px;}#my-svg .icon-shape .label rect,#my-svg .image-shape .label rect{opacity:0.5;background-color:rgba(232,232,232, 0.8);fill:rgba(232,232,232, 0.8);}#my-svg .label-icon{display:inline-block;height:1em;overflow:visible;vertical-align:-0.125em;}#my-svg .node .label-icon path{fill:currentColor;stroke:revert;stroke-width:revert;}#my-svg .node .neo-node{stroke:#9370DB;}#my-svg [data-look="neo"].node rect,#my-svg [data-look="neo"].cluster rect,#my-svg [data-look="neo"].node polygon{stroke:#9370DB;filter:drop-shadow(1px 2px 2px rgba(185, 185, 185, 1));}#my-svg [data-look="neo"].swimlane.cluster rect{filter:none;}#my-svg [data-look="neo"].node path{stroke:#9370DB;stroke-width:1px;}#my-svg [data-look="neo"].node .outer-path{filter:drop-shadow(1px 2px 2px rgba(185, 185, 185, 1));}#my-svg [data-look="neo"].node .neo-line path{stroke:#9370DB;filter:none;}#my-svg [data-look="neo"].node circle{stroke:#9370DB;filter:drop-shadow(1px 2px 2px rgba(185, 185, 185, 1));}#my-svg [data-look="neo"].node circle .state-start{fill:#000000;}#my-svg [data-look="neo"].icon-shape .icon{fill:#9370DB;filter:drop-shadow(1px 2px 2px rgba(185, 185, 185, 1));}#my-svg [data-look="neo"].icon-shape .icon-neo path{stroke:#9370DB;filter:drop-shadow(1px 2px 2px rgba(185, 185, 185, 1));}#my-svg :root{--mermaid-font-family:"trebuchet ms",verdana,arial,sans-serif;}</style><g><marker id="my-svg_flowchart-v2-pointEnd" class="marker flowchart-v2" viewBox="0 0 10 10" refX="5" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></path></marker><marker id="my-svg_flowchart-v2-pointStart" class="marker flowchart-v2" viewBox="0 0 10 10" refX="4.5" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 5 L 10 10 L 10 0 z" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></path></marker><marker id="my-svg_flowchart-v2-pointEnd-margin" class="marker flowchart-v2" viewBox="0 0 11.5 14" refX="11.5" refY="7" markerUnits="userSpaceOnUse" markerWidth="10.5" markerHeight="14" orient="auto"><path d="M 0 0 L 11.5 7 L 0 14 z" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></path></marker><marker id="my-svg_flowchart-v2-pointStart-margin" class="marker flowchart-v2" viewBox="0 0 11.5 14" refX="1" refY="7" markerUnits="userSpaceOnUse" markerWidth="11.5" markerHeight="14" orient="auto"><polygon points="0,7 11.5,14 11.5,0" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></polygon></marker><marker id="my-svg_flowchart-v2-circleEnd" class="marker flowchart-v2" viewBox="0 0 10 10" refX="11" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></circle></marker><marker id="my-svg_flowchart-v2-circleStart" class="marker flowchart-v2" viewBox="0 0 10 10" refX="-1" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></circle></marker><marker id="my-svg_flowchart-v2-circleEnd-margin" class="marker flowchart-v2" viewBox="0 0 10 10" refY="5" refX="12.25" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></circle></marker><marker id="my-svg_flowchart-v2-circleStart-margin" class="marker flowchart-v2" viewBox="0 0 10 10" refX="-2" refY="5" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></circle></marker><marker id="my-svg_flowchart-v2-crossEnd" class="marker cross flowchart-v2" viewBox="0 0 11 11" refX="12" refY="5.2" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path d="M 1,1 l 9,9 M 10,1 l -9,9" class="arrowMarkerPath" style="stroke-width: 2; stroke-dasharray: 1, 0;"></path></marker><marker id="my-svg_flowchart-v2-crossStart" class="marker cross flowchart-v2" viewBox="0 0 11 11" refX="-1" refY="5.2" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path d="M 1,1 l 9,9 M 10,1 l -9,9" class="arrowMarkerPath" style="stroke-width: 2; stroke-dasharray: 1, 0;"></path></marker><marker id="my-svg_flowchart-v2-crossEnd-margin" class="marker cross flowchart-v2" viewBox="0 0 15 15" refX="17.7" refY="7.5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto"><path d="M 1,1 L 14,14 M 1,14 L 14,1" class="arrowMarkerPath" style="stroke-width: 2.5;"></path></marker><marker id="my-svg_flowchart-v2-crossStart-margin" class="marker cross flowchart-v2" viewBox="0 0 15 15" refX="-3.5" refY="7.5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto"><path d="M 1,1 L 14,14 M 1,14 L 14,1" class="arrowMarkerPath" style="stroke-width: 2.5; stroke-dasharray: 1, 0;"></path></marker><g class="root"><g class="clusters"><g class="cluster" id="my-svg-sub_b" data-look="classic"><rect style x="758" y="312" width="355" height="232"></rect><g class="cluster-label" transform="translate(848.59375, 312)"><foreignObject width="173.8125" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5;"><span class="nodeLabel"><p>子プロセス: 連結 worktree B</p></span></div></foreignObject></g></g><g class="cluster" id="my-svg-sub_a" data-look="classic"><rect style x="383" y="312" width="355" height="232"></rect><g class="cluster-label" transform="translate(474.0390625, 312)"><foreignObject width="172.921875" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5;"><span class="nodeLabel"><p>子プロセス: 連結 worktree A</p></span></div></foreignObject></g></g><g class="cluster" id="my-svg-sub_m" data-look="classic"><rect style x="8" y="312" width="355" height="232"></rect><g class="cluster-label" transform="translate(103.0546875, 312)"><foreignObject width="164.890625" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5;"><span class="nodeLabel"><p>子プロセス: 主チェックアウト</p></span></div></foreignObject></g></g></g><g class="edgePaths"><path d="M560.5,62L560.5,68.167C560.5,74.333,560.5,86.667,560.5,98.333C560.5,110,560.5,121,560.5,126.5L560.5,132" id="my-svg-L_client_dispatcher_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_client_dispatcher_0" data-points="W3sieCI6NTYwLjUsInkiOjYyfSx7IngiOjU2MC41LCJ5Ijo5OX0seyJ4Ijo1NjAuNSwieSI6MTM2fV0=" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"></path><path d="M410.031,222.31L372.609,231.092C335.188,239.873,260.344,257.437,222.922,272.385C185.5,287.333,185.5,299.667,185.5,309.333C185.5,319,185.5,326,185.5,329.5L185.5,333" id="my-svg-L_dispatcher_gm_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_dispatcher_gm_0" data-points="W3sieCI6NDEwLjAzMTI1LCJ5IjoyMjIuMzF9LHsieCI6MTg1LjUsInkiOjI3NX0seyJ4IjoxODUuNSwieSI6MzEyfSx7IngiOjE4NS41LCJ5IjozMzd9XQ==" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"></path><path d="M560.5,238L560.5,244.167C560.5,250.333,560.5,262.667,560.5,275C560.5,287.333,560.5,299.667,560.5,309.333C560.5,319,560.5,326,560.5,329.5L560.5,333" id="my-svg-L_dispatcher_ga_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_dispatcher_ga_0" data-points="W3sieCI6NTYwLjUsInkiOjIzOH0seyJ4Ijo1NjAuNSwieSI6Mjc1fSx7IngiOjU2MC41LCJ5IjozMTJ9LHsieCI6NTYwLjUsInkiOjMzN31d" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"></path><path d="M710.969,222.31L748.391,231.092C785.813,239.873,860.656,257.437,898.078,272.385C935.5,287.333,935.5,299.667,935.5,309.333C935.5,319,935.5,326,935.5,329.5L935.5,333" id="my-svg-L_dispatcher_gb_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_dispatcher_gb_0" data-points="W3sieCI6NzEwLjk2ODc1LCJ5IjoyMjIuMzF9LHsieCI6OTM1LjUsInkiOjI3NX0seyJ4Ijo5MzUuNSwieSI6MzEyfSx7IngiOjkzNS41LCJ5IjozMzd9XQ==" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"></path><path d="M185.5,391L185.5,395.167C185.5,399.333,185.5,407.667,185.5,415.333C185.5,423,185.5,430,185.5,433.5L185.5,437" id="my-svg-L_gm_sm_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_gm_sm_0" data-points="W3sieCI6MTg1LjUsInkiOjM5MX0seyJ4IjoxODUuNSwieSI6NDE2fSx7IngiOjE4NS41LCJ5Ijo0NDF9XQ==" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"></path><path d="M560.5,391L560.5,395.167C560.5,399.333,560.5,407.667,560.5,415.333C560.5,423,560.5,430,560.5,433.5L560.5,437" id="my-svg-L_ga_sa_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_ga_sa_0" data-points="W3sieCI6NTYwLjUsInkiOjM5MX0seyJ4Ijo1NjAuNSwieSI6NDE2fSx7IngiOjU2MC41LCJ5Ijo0NDF9XQ==" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"></path><path d="M935.5,391L935.5,395.167C935.5,399.333,935.5,407.667,935.5,415.333C935.5,423,935.5,430,935.5,433.5L935.5,437" id="my-svg-L_gb_sb_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_gb_sb_0" data-points="W3sieCI6OTM1LjUsInkiOjM5MX0seyJ4Ijo5MzUuNSwieSI6NDE2fSx7IngiOjkzNS41LCJ5Ijo0NDF9XQ==" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"></path><path d="M185.5,519L185.5,523.167C185.5,527.333,185.5,535.667,185.5,544C185.5,552.333,185.5,560.667,185.5,568.333C185.5,576,185.5,583,185.5,586.5L185.5,590" id="my-svg-L_sm_dbm_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_sm_dbm_0" data-points="W3sieCI6MTg1LjUsInkiOjUxOX0seyJ4IjoxODUuNSwieSI6NTQ0fSx7IngiOjE4NS41LCJ5Ijo1Njl9LHsieCI6MTg1LjUsInkiOjU5NH1d" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"></path><path d="M560.5,519L560.5,523.167C560.5,527.333,560.5,535.667,560.5,544C560.5,552.333,560.5,560.667,560.5,570.333C560.5,580,560.5,591,560.5,596.5L560.5,602" id="my-svg-L_sa_dba_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_sa_dba_0" data-points="W3sieCI6NTYwLjUsInkiOjUxOX0seyJ4Ijo1NjAuNSwieSI6NTQ0fSx7IngiOjU2MC41LCJ5Ijo1Njl9LHsieCI6NTYwLjUsInkiOjYwNn1d" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"></path><path d="M935.5,519L935.5,523.167C935.5,527.333,935.5,535.667,935.5,544C935.5,552.333,935.5,560.667,935.5,570.333C935.5,580,935.5,591,935.5,596.5L935.5,602" id="my-svg-L_sb_dbb_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_sb_dbb_0" data-points="W3sieCI6OTM1LjUsInkiOjUxOX0seyJ4Ijo5MzUuNSwieSI6NTQ0fSx7IngiOjkzNS41LCJ5Ijo1Njl9LHsieCI6OTM1LjUsInkiOjYwNn1d" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"></path></g><g class="edgeLabels"><g class="edgeLabel" transform="translate(560.5, 99)"><g class="label" data-id="L_client_dispatcher_0" transform="translate(-70.015625, -12)"><foreignObject width="140.03125" height="24"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"><p>1 本の stdio セッション</p></span></div></foreignObject></g></g><g class="edgeLabel" transform="translate(185.5, 275)"><g class="label" data-id="L_dispatcher_gm_0" transform="translate(-48, -12)"><foreignObject width="96" height="24"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"><p>主チェックアウト</p></span></div></foreignObject></g></g><g class="edgeLabel" transform="translate(560.5, 275)"><g class="label" data-id="L_dispatcher_ga_0" transform="translate(-37.796875, -12)"><foreignObject width="75.59375" height="24"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"><p>worktree A</p></span></div></foreignObject></g></g><g class="edgeLabel" transform="translate(935.5, 275)"><g class="label" data-id="L_dispatcher_gb_0" transform="translate(-38.234375, -12)"><foreignObject width="76.46875" height="24"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"><p>worktree B</p></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_gm_sm_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_ga_sa_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_gb_sb_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_sm_dbm_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_sa_dba_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_sb_dbb_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g></g><g class="nodes"><g class="node default" id="my-svg-flowchart-client-0" data-look="classic" transform="translate(560.5, 35)"><rect class="basic label-container" style x="-85.859375" y="-27" width="171.71875" height="54"></rect><g class="label" style transform="translate(-55.859375, -12)"><rect></rect><foreignObject width="111.71875" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 340px; text-align: center;"><span class="nodeLabel"><p>MCP クライアント</p></span></div></foreignObject></g></g><g class="node default" id="my-svg-flowchart-dispatcher-2" data-look="classic" transform="translate(560.5, 187)"><rect class="basic label-container" style x="-150.46875" y="-51" width="300.9375" height="102"></rect><g class="label" style transform="translate(-120.46875, -36)"><rect></rect><foreignObject width="240.9375" height="72"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 340px; text-align: center;"><span class="nodeLabel"><p>dispatcher<br />repo_root による子プロセスへの振り分け<br />delete_graph_tool の実装</p></span></div></foreignObject></g></g><g class="node default" id="my-svg-flowchart-gm-5" data-look="classic" transform="translate(185.5, 364)"><rect class="basic label-container" style x="-50.4609375" y="-27" width="100.921875" height="54"></rect><g class="label" style transform="translate(-20.4609375, -12)"><rect></rect><foreignObject width="40.921875" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 340px; text-align: center;"><span class="nodeLabel"><p>guard</p></span></div></foreignObject></g></g><g class="node default" id="my-svg-flowchart-ga-7" data-look="classic" transform="translate(560.5, 364)"><rect class="basic label-container" style x="-50.4609375" y="-27" width="100.921875" height="54"></rect><g class="label" style transform="translate(-20.4609375, -12)"><rect></rect><foreignObject width="40.921875" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 340px; text-align: center;"><span class="nodeLabel"><p>guard</p></span></div></foreignObject></g></g><g class="node default" id="my-svg-flowchart-gb-9" data-look="classic" transform="translate(935.5, 364)"><rect class="basic label-container" style x="-50.4609375" y="-27" width="100.921875" height="54"></rect><g class="label" style transform="translate(-20.4609375, -12)"><rect></rect><foreignObject width="40.921875" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 340px; text-align: center;"><span class="nodeLabel"><p>guard</p></span></div></foreignObject></g></g><g class="node default" id="my-svg-flowchart-sm-11" data-look="classic" transform="translate(185.5, 480)"><rect class="basic label-container" style x="-142.5" y="-39" width="285" height="78"></rect><g class="label" style transform="translate(-112.5, -24)"><rect></rect><foreignObject width="225" height="48"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 340px; text-align: center;"><span class="nodeLabel"><p>uv run code-review-graph serve<br />--repo 主チェックアウト</p></span></div></foreignObject></g></g><g class="node default" id="my-svg-flowchart-sa-13" data-look="classic" transform="translate(560.5, 480)"><rect class="basic label-container" style x="-142.5" y="-39" width="285" height="78"></rect><g class="label" style transform="translate(-112.5, -24)"><rect></rect><foreignObject width="225" height="48"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 340px; text-align: center;"><span class="nodeLabel"><p>uv run code-review-graph serve<br />--repo worktree A</p></span></div></foreignObject></g></g><g class="node default" id="my-svg-flowchart-sb-15" data-look="classic" transform="translate(935.5, 480)"><rect class="basic label-container" style x="-142.5" y="-39" width="285" height="78"></rect><g class="label" style transform="translate(-112.5, -24)"><rect></rect><foreignObject width="225" height="48"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 340px; text-align: center;"><span class="nodeLabel"><p>uv run code-review-graph serve<br />--repo worktree B</p></span></div></foreignObject></g></g><g class="node default" id="my-svg-flowchart-dbm-17" data-look="classic" transform="translate(185.5, 661.3957901000977)"><path d="M0,15.93052784327952 a109.78125,15.93052784327952 0,0,0 219.5625,0 a109.78125,15.93052784327952 0,0,0 -219.5625,0 l0,102.93052784327952 a109.78125,15.93052784327952 0,0,0 219.5625,0 l0,-102.93052784327952" class="basic label-container outer-path" style transform="translate(-109.78125, -67.39579176491928)"></path><g class="label" style transform="translate(-102.28125, -26)"><rect></rect><foreignObject width="204.5625" height="72"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 340px; text-align: center;"><span class="nodeLabel"><p>Registry の data_dir<br />または 主チェックアウトの<br />.code-review-graph/graph.db</p></span></div></foreignObject></g></g><g class="node default" id="my-svg-flowchart-dba-19" data-look="classic" transform="translate(560.5, 661.3957901000977)"><path d="M0,15.93052784327952 a109.78125,15.93052784327952 0,0,0 219.5625,0 a109.78125,15.93052784327952 0,0,0 -219.5625,0 l0,78.93052784327952 a109.78125,15.93052784327952 0,0,0 219.5625,0 l0,-78.93052784327952" class="basic label-container outer-path" style transform="translate(-109.78125, -55.39579176491928)"></path><g class="label" style transform="translate(-102.28125, -14)"><rect></rect><foreignObject width="204.5625" height="48"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 340px; text-align: center;"><span class="nodeLabel"><p>worktree A の<br />.code-review-graph/graph.db</p></span></div></foreignObject></g></g><g class="node default" id="my-svg-flowchart-dbb-21" data-look="classic" transform="translate(935.5, 661.3957901000977)"><path d="M0,15.93052784327952 a109.78125,15.93052784327952 0,0,0 219.5625,0 a109.78125,15.93052784327952 0,0,0 -219.5625,0 l0,78.93052784327952 a109.78125,15.93052784327952 0,0,0 219.5625,0 l0,-78.93052784327952" class="basic label-container outer-path" style transform="translate(-109.78125, -55.39579176491928)"></path><g class="label" style transform="translate(-102.28125, -14)"><rect></rect><foreignObject width="204.5625" height="48"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 340px; text-align: center;"><span class="nodeLabel"><p>worktree B の<br />.code-review-graph/graph.db</p></span></div></foreignObject></g></g></g></g></g><defs><filter id="my-svg-drop-shadow" height="130%" width="130%"><feDropShadow dx="4" dy="4" stdDeviation="0" flood-opacity="0.06" flood-color="#000000"></feDropShadow></filter></defs><defs><filter id="my-svg-drop-shadow-small" height="150%" width="150%"><feDropShadow dx="2" dy="2" stdDeviation="0" flood-opacity="0.06" flood-color="#000000"></feDropShadow></filter></defs></svg></figure>
+<p>クライアントから見れば stdio 接続は 1 本のままである.
+dispatcher は <code>tools/call</code> の <code>arguments.repo_root</code> を受け取り,
+正規化と認可を行ったうえで, そのルート専用の子プロセスを遅延起動して振り分ける.
+同じルートへの要求は同じ子プロセス, 同じ DB へ行き, 子プロセスは以降再利用される (上限 32).</p>
+<p>並列性はここで効く.
+dispatcher は要求を子プロセスの標準入力へ書いたら直ちに次の入力へ戻り,
+応答は子プロセスごとの読み取りスレッドが受け取って共有の標準出力へ書き戻す.
+したがって異なるルートへの要求を同時に処理でき,
+PR A への重いグラフ問い合わせが PR B の応答を塞がない.
+更新中の読み取り抑止 (後述の <code>graph_updating</code>) もルート単位で閉じているため,
+片方の worktree でグラフを更新していても, もう片方のレビューは進む.
+子プロセスの起動時にはクライアントが送ってきた <code>initialize</code> のパラメータを
+dispatcher 内部で生成した ID を使って再生するため,
+子プロセスは多重化を意識しない通常の MCP サーバとして振る舞えばよい.
+<code>tools/list</code> は主チェックアウトの子プロセスへ流し,
+応答に dispatcher 自身が実装する <code>delete_graph_tool</code> を追記する.</p>
+<p>多重化で最も壊れやすいのは要求 ID の対応付けである.</p>
+<ul>
+<li>ID は <code>json.dumps(value, sort_keys=True)</code> で正規化した文字列をキーにする. 数値と文字列の混同や, オブジェクト形式の ID のキー順の揺れを避けるため</li>
+<li>キーから子プロセスへの対応表を保持し, 同じ ID が同時に 2 つ飛ぶことを拒否する</li>
+<li>子プロセスから返った応答について「その ID の持ち主は本当にこの子プロセスか」を照合し, 一致しなければ応答を捨ててその子プロセスを落とす</li>
+<li>上限はメッセージ長 4 MiB, ID 長 4 KiB. 超過分は行単位で読み捨てて次のメッセージから復帰する. 送信済みでまだ応答が返っていない要求は, 子プロセスごとに 256 件まで受け付ける</li>
+<li>子プロセスの側から送られてくる要求は <code>ping</code> にのみ空の結果を返し, それ以外は <code>-32601</code> で拒否する</li>
+</ul>
+<p>子プロセスが死んだ場合, その子プロセスへ送ったまま応答待ちになっている要求を
+<code>-32001</code> のエラーとしてクライアントへ返し, 対応表から取り除く.
+後始末には一段の工夫が要った.
+guard は上流サーバを <code>start_new_session=True</code> で別セッションに置くため,
+guard を落としただけでは上流サーバの子孫が残りうる.
+そこで guard は起動直後, 上流サーバのプロセスグループ ID を
+<code>CRG_MCP_UPSTREAM_PGID_FD</code> で渡されたファイル記述子経由で dispatcher へ報告する.
+dispatcher はこれを保持し, 停止時には両者へ SIGTERM を送って一定時間後に SIGKILL へ昇格させる.</p>
+<p>診断ログの扱いも実務上効いた.
+子プロセスの標準エラー出力を同期で書き戻すと,
+クライアントが標準エラー出力を読まない場合に書き込みが詰まり,
+プロトコルの入出力ごと止まってしまう.
+そのため診断ログは上限 64 件のキューへ積み,
+ブロックしない設定のファイル記述子へ専用スレッドから書き,
+あふれた分と 64 KiB を超える行は捨てるか切り詰める.
+診断ログは可能な範囲で出せばよいものであり, JSON-RPC を止めてよい理由にはならない.</p>
+<h2 id="worktree-ごとの-db-分離と-ルートの許可">worktree ごとの DB 分離と, ルートの許可</h2>
+<p>「DB を分けること」と「ルートを許可すること」は別の話である.
+DB の分離は前述の Registry 規則が担い, ルートの許可は dispatcher が担う.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb3-1"><a href="/roki.log/2026/09/21/parallel-worktree-code-review-graph-mcp/#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> authorize_root(<span class="va">self</span>, raw_root: <span class="bu">object</span>) <span class="op">-&gt;</span> Path:</span>
+<span id="cb3-2"><a href="/roki.log/2026/09/21/parallel-worktree-code-review-graph-mcp/#cb3-2" aria-hidden="true" tabindex="-1"></a>    root, common <span class="op">=</span> canonical_git_root(raw_root)</span>
+<span id="cb3-3"><a href="/roki.log/2026/09/21/parallel-worktree-code-review-graph-mcp/#cb3-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> root <span class="op">==</span> <span class="va">self</span>.primary_root:</span>
+<span id="cb3-4"><a href="/roki.log/2026/09/21/parallel-worktree-code-review-graph-mcp/#cb3-4" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> root</span>
+<span id="cb3-5"><a href="/roki.log/2026/09/21/parallel-worktree-code-review-graph-mcp/#cb3-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> common <span class="op">==</span> <span class="va">self</span>.primary_common <span class="kw">and</span> root <span class="kw">in</span> <span class="va">self</span>.git_worktree_roots():</span>
+<span id="cb3-6"><a href="/roki.log/2026/09/21/parallel-worktree-code-review-graph-mcp/#cb3-6" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> root</span>
+<span id="cb3-7"><a href="/roki.log/2026/09/21/parallel-worktree-code-review-graph-mcp/#cb3-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">raise</span> DispatchError(</span>
+<span id="cb3-8"><a href="/roki.log/2026/09/21/parallel-worktree-code-review-graph-mcp/#cb3-8" aria-hidden="true" tabindex="-1"></a>        <span class="st">&quot;repo_root is not the current repository or an authorized linked worktree&quot;</span></span>
+<span id="cb3-9"><a href="/roki.log/2026/09/21/parallel-worktree-code-review-graph-mcp/#cb3-9" aria-hidden="true" tabindex="-1"></a>    )</span></code></pre></div>
+<p>許可されるのは起動時のルート自身か,
+<strong>同じ Git 共通ディレクトリ (<code>--git-common-dir</code>) に属し,
+かつ <code>git worktree list --porcelain</code> へ現れるルート</strong>だけである.
+共有 Registry は DB の保存先解決には使うが認可には使わず,
+無関係なリポジトリを Registry へ足しても認可範囲は広がらない.</p>
+<p><code>canonical_git_root</code> の側では, 絶対パスであること, シンボリックリンクでないこと,
+<code>resolve(strict=True)</code> できること,
+<code>git rev-parse --show-toplevel</code> の出力が自分自身と一致すること (= worktree のルートであること),
+<code>--git-common-dir</code> を解決できることを順に確認する.
+したがって任意のディレクトリ, 別のクローン,
+同じリポジトリに属さない一時クローンは許可されない.
+テストでは <code>.git</code> ファイルに主リポジトリの参照先を書いただけの偽 worktree が
+<code>-32602</code> で拒否されることを確認している.
+<code>git worktree list</code> に実在しない以上, <code>.git</code> の中身を真似ても通らない.</p>
+<p>同じルートへの同時アクセスは,
+guard が <code>CRG_HOME/.mcp-locks/&lt;sha256(data_dir)&gt;.lock</code> に共有ロックを取り,
+SQLite の WAL とビジー待ち, <code>BEGIN IMMEDIATE</code> による書き込みロックで整合性を担保する.
+同一 guard 内では, 更新の応答が返るまで読み取りと次の更新を <code>graph_updating</code> として拒否する.</p>
+<h2 id="セキュリティ境界">セキュリティ境界</h2>
+<p>「安全にした」で済ませると何も言っていないのと同じなので, 何を拒否するかを挙げておく.</p>
+<ul>
+<li><strong>ランチャー</strong>: 実行環境のディレクトリと <code>tools.txt</code> がシンボリックリンクでない実体であること. <code>tools.txt</code> の各要素が <code>^[a-z][a-z0-9_]*$</code> に一致すること. 書き込みを伴うツール (<code>apply_refactor_tool</code>, <code>embed_graph_tool</code>, <code>generate_wiki_tool</code>, <code>refactor_tool</code>, <code>run_postprocess_tool</code>) を含まないこと. <code>CRG_DATA_DIR</code> を拒否し, <code>CRG_HOME</code> は絶対パスのみ受け付ける. <code>env -i</code> で環境変数を許可リストに絞り, ホームディレクトリはリポジトリではなく専用の実行時ディレクトリ (権限 700) とする. Python は 3.10 以上 3.13 以下に固定し <code>UV_PYTHON_DOWNLOADS=never</code> を設定する</li>
+<li><strong>Git</strong>: <code>code-review-graph-git</code> という薄い中継スクリプトを <code>PATH</code> の先頭に置き, <code>filter.*.clean/smudge/process</code>, <code>diff.*.command/textconv</code>, <code>core.fsmonitor</code> がリポジトリ内の設定にあれば実行を拒否する. <code>git diff</code> には <code>--no-ext-diff --no-textconv</code> を強制する. リポジトリ内の <code>.gitattributes</code> とローカル設定の組み合わせで任意コマンドが動くのを防ぐため</li>
+<li><strong>Registry</strong>: 所有者が自分自身で, グループとその他から書き込めない 1 MiB 以下の通常ファイルであること. 各エントリの <code>path</code> / <code>data_dir</code> が絶対パスかつシンボリックリンクでないこと. 複数リポジトリが同一の <code>data_dir</code> を指さないこと, 同一ルートの重複エントリがないこと</li>
+<li><strong>DB</strong>: データディレクトリは権限 700 の実ディレクトリとする. 起動時にそのディレクトリのデバイス番号と inode 番号を控えておき, 以後の操作でこの 2 つが一致しなければ, 同じパスでも中身が別のディレクトリにすり替わったとみなして拒否する. <code>graph.db</code> と WAL / SHM / journal も通常ファイルであることを要求する</li>
+<li><strong>ツール引数</strong>: <code>repo_root</code> は子プロセス自身のルートと完全一致. <code>changed_files</code> と <code>file_path_pattern</code> はリポジトリ相対かつ実体が外へ出ないこと. <code>base</code> は <code>-</code> 始まりを禁止する (オプション注入の防止). <code>get_flow_tool</code> および <code>get_review_context_tool</code> / <code>detect_changes_tool</code> のソース出力は無効化する</li>
+</ul>
+<h2 id="古いグラフと誤った結び付きへの対策">古いグラフと誤った結び付きへの対策</h2>
+<p>グラフが古いまま黙って答えるのは, 誤ったレビュー結果を出すのと同義である.
+読み取り系のツールは次を満たさない限り結果を返さない.</p>
+<ul>
+<li>DB の <code>metadata</code> の <code>repository_root</code> が現在のルートと一致すること</li>
+<li><code>metadata</code> の <code>git_head_sha</code> が現在の HEAD と一致すること</li>
+<li>作業ツリーに未コミットの変更がないこと</li>
+<li><code>nodes</code> / <code>edges</code> の <code>file_path</code> がすべて現在のリポジトリ配下へ解決されること</li>
+</ul>
+<p>満たさない場合は <code>graph_not_ready</code> あるいは <code>stale_graph</code> を返す.
+DB が未構築のときだけ状態確認用に <code>get_minimal_context_tool</code> を通し,
+由来情報 (provenance) の不明な DB はこのツールも通さない.
+ここでいう由来情報とは「そのグラフがどのリポジトリの, どのコミットから作られたか」の記録である.</p>
+<p>更新側も対称に固めた.
+未コミットの変更があれば更新自体を拒否し,
+<code>git ls-files</code> で追跡対象を列挙して実体がリポジトリ外へ解決される
+シンボリックリンクがあれば構築を始めない.
+記録済みの SHA が現在の HEAD と異なる場合は,
+増分更新で古い由来情報が残り続けるのを避けるため全体の再構築へ切り替える.</p>
+<p>更新成功後には完了時点で再検証する.
+Registry と DB の結び付きが更新中に変わっていないこと,
+<code>nodes</code> の <code>file_hash</code> と実ファイルの SHA-256 が一致すること,
+再取得した <code>built_at_sha</code> の値が現在の HEAD かつ開始時の HEAD と一致し,
+作業ツリーに変更がないこと.
+いずれかが崩れていれば成功応答をエラーへ書き換え,
+DB の <code>metadata</code> に <code>mcp_validation_error</code> を書き込んで以後の読み取りを保守的に止める.
+この印は検証済みの再構築が完了した時点でのみ消える.
+読み取りについても, 開始時に結び付き, HEAD, 未コミット変更の有無,
+グラフ内容のダイジェストを記録し,
+応答を返す直前に照合して, 途中で動いていれば結果を捨てる.</p>
+<h2 id="グラフ削除の運用">グラフ削除の運用</h2>
+<p>レビュー中はグラフを読み取り専用の補助証拠として使い, 構築や更新で状態を変えない,
+というのが手順書 (skill) 側の方針である.
+そのうえで, 承認, Linear の更新, Slack のリアクションといった完了条件をすべて満たした後にだけ,
+対象 worktree に対して <code>delete_graph_tool</code> を実行する.
+このツールは dispatcher が実装しており, 次の制約を持つ.</p>
+<ul>
+<li>引数は <code>repo_root</code> と <code>confirmation</code> のちょうど 2 つで, <code>confirmation</code> は <code>"approved"</code> のみ</li>
+<li>ルートは <code>authorize_root</code> を通ること. さらに <strong>同一セッション中にそのルートへのグラフ操作が 1 回以上成功していること</strong>を要求する</li>
+<li>対象の子プロセスを停止し, データディレクトリが起動時に控えたデバイス番号と inode 番号のままであること, つまり削除しようとしている先が当初と同じ実体であることを確認する</li>
+<li>排他ロックを取得する. 他プロセスが使用中なら <code>graph_cleanup_busy</code> で停止する</li>
+<li><code>BEGIN IMMEDIATE</code> で書き込みロックを取り, DB の <code>metadata</code> の <code>repository_root</code> の一致を確認する</li>
+<li>由来情報のない旧形式の DB は, リポジトリ内のデフォルトの位置にある場合だけ削除できる. 外部の <code>data_dir</code> に置かれた旧形式の DB は所属を証明できないため削除しない</li>
+<li>削除対象は <code>graph.db</code> と WAL / SHM / journal の付随ファイルのみ. ソースファイル, worktree, Registry の登録, 任意のパスは削除しない</li>
+</ul>
+<p>指摘が残ったとき, 承認できなかったとき,
+MCP の失敗やグラフの古さを検出したときは削除せず, 次の再レビュー用にグラフを残す.
+そのため手順書側はグラフを使った時点の正規のルートを <code>graph_repo_root</code> として保持し,
+後続の削除処理へそのまま引き渡す.
+カレントディレクトリや推測したパスで代用してはならない.</p>
+<h2 id="テストと検証">テストと検証</h2>
+<h3 id="どのようなテストが要るか">どのようなテストが要るか</h3>
+<p>この構成で壊れると困るのは次の 3 種類で, いずれも関数単位のテストでは捕まえられない.</p>
+<ol type="1">
+<li><strong>境界</strong> — 許可していないルートや引数が本当に拒否されるか. 判定はランチャー (sh), dispatcher, guard, 上流サーバの 4 層に分散しているので, 全部つないで動かさないと確かめられない</li>
+<li><strong>ストレージの一致</strong> — CLI と MCP が同じ DB を指しているか. 片方だけ動かしても意味がなく, 両方を交互に動かして同じ値が出ることを見るしかない</li>
+<li><strong>プロセスの後始末</strong> — 子や孫のプロセスが確実に止まるか. 素直に終了する相手でテストしても何も検証したことにならない</li>
+</ol>
+<p>そこで実サーバを起動して標準入出力に JSON-RPC を流す形式を採り,
+確認したい失敗が実物では再現しにくい場合にだけ, 上流サーバを偽物に差し替えている.
+なお, 以下の確認項目の大半は「拒否されること」である.
+許可すべき経路は 1 本しかないのに対し, 拒否すべき経路は無数にあるためで,
+この層のテストは自然と否定形が主になる.</p>
+<h3 id="どう実装したか">どう実装したか</h3>
+<p>2 本とも POSIX sh で書き, その中からヒアドキュメントで Python を起こしてクライアント役をさせている.
+MCP のクライアントライブラリは使わず, 生の JSON-RPC を自分で組み立てて流す. 理由は 2 つある.</p>
+<ul>
+<li>ライブラリでは<strong>不正なメッセージを送れない</strong>. 4 MiB 超のメッセージ, 配列形式の一括要求, オブジェクトでない値, 4 KiB 超の ID といった「送ってはいけないもの」を意図的に送る必要がある</li>
+<li>応答の<strong>到着順とタイムアウトを自分で握りたい</strong>. 並列性の確認では 2 つの要求を続けて投げ, どちらが先に返ってもよい形で両方を待つ</li>
+</ul>
+<p>実行環境は毎回 <code>mktemp -d</code> の一時ディレクトリに閉じ込め,
+そこへ偽のホームディレクトリ, 偽のリポジトリ, 各スクリプトの配置を作る.
+実際のホームディレクトリや作業リポジトリには触れない.</p>
+<p>プロセス制御の確認には, <code>uv</code> のふりをする小さな Python スクリプトを 3 種類用意した.</p>
+<ul>
+<li>応答を返した直後に標準エラーへ 64 KiB 以上を吐き続ける「<strong>詰まらせる役</strong>」</li>
+<li>SIGTERM を無視する孫プロセスを作り, その PID をファイルへ書き残す「<strong>止まらない役</strong>」</li>
+<li>起動しただけで眠り続ける「<strong>初期化の途中で落とされる役</strong>」</li>
+</ul>
+<p>これらがないと, 診断ログの詰まりやプロセスグループ単位の停止は確かめようがない.
+逆にグラフの中身に関わる確認は偽物では無意味なので, そちらは実際の上流サーバを動かす.</p>
+<p>判定は素朴にしてある.
+Python 側は条件を満たさなければ例外を投げて即座に落ち, シェル側は <code>test</code> と <code>exit 1</code> で落ちる.
+テストフレームワークは使っていない.
+CLI と MCP の値を突き合わせる箇所だけは, MCP から得た値をいったんファイルへ書き出し,
+MCP プロセスを終了させてから, シェル側で <code>jq</code> と <code>sqlite3</code> を使って
+CLI の出力や DB の中身と比較する形にした.
+サーバが終了した後で見れば, 応答の数字が本当に DB へ書き終えられたものだと言えるためである.</p>
+<h3 id="何を確かめているか">何を確かめているか</h3>
+<p><code>code-review-graph-smoke-test.sh</code> は境界とプロセスの後始末を担当する.
+<code>uv lock --check</code>, 上流のバージョン一致 (2.3.8), <code>initialize</code> の応答確認,
+<code>tools/list</code> が許可リスト + <code>delete_graph_tool</code> と完全一致すること,
+<code>repo_root: "/"</code> や外部を指すシンボリックリンクを含む <code>changed_files</code> の拒否,
+一括要求 / 不正な JSON / オブジェクトでない値 / 4 KiB 超の ID の拒否,
+4 MiB 超のメッセージでの停止と, 1,100 段ネストした JSON を送った後でも <code>ping</code> が通ること,
+SIGTERM を無視する孫プロセスがプロセスグループ単位で確実に停止すること,
+標準エラー出力を読まないクライアントでも標準出力の応答が返ること,
+<code>.gitattributes</code> 経由の <code>diff</code> ドライバや <code>filter</code> を発火させないこと,
+そしてリポジトリ内に DB が作られていないことを確認する.</p>
+<p><code>code-review-graph-shared-storage-test.sh</code> は CLI と MCP の往復を実際の上流サーバで確認する.</p>
+<ul>
+<li>CLI で <code>register</code> / <code>build</code> した後, MCP の <code>list_graph_stats_tool</code> のノード数が CLI の <code>status --json</code> と一致すること. MCP から更新した後も CLI 側の値と, DB の <code>repository_root</code> / <code>git_head_sha</code> / <code>count(*) from nodes</code> が一致すること</li>
+<li>未コミットの変更がある状態と, コミット後に古くなったグラフがそれぞれ <code>stale_graph</code> で拒否されること</li>
+<li>Registry の <code>data_dir</code> 書き換えと重複エントリが拒否され, 一方で無関係なリポジトリの追加では稼働中の子プロセスが中断されないこと</li>
+<li><code>git worktree add</code> した連結 worktree について, 主チェックアウトと DB が別物であり, 1 本の MCP セッションから両方の統計を取得してそれぞれ CLI の値と一致し, かつ互いに異なること</li>
+<li>偽の worktree と不正な <code>confirmation</code> の拒否, 別途起動した guard がロックを保持している間の <code>graph_cleanup_busy</code>, ロック解放後の削除成功と付随ファイルの消滅, 他リポジトリの DB と Registry の登録が残ること, 削除後に <code>graph_not_ready</code> へ戻ること</li>
+<li>追跡対象に外部を指すシンボリックリンクを含むコミットへの更新が拒否され, DB の <code>git_head_sha</code> が更新されていないこと</li>
+</ul>
+<p>このほか静的な検査として <code>sh -n</code> によるシェルの構文検査と,
+<code>python -m py_compile</code> による dispatcher と guard のコンパイル検査を実施し, いずれも通っている.
+上記 2 本は上流パッケージの取得が要るためコミット時の自動検査には含めず,
+MCP 周りを変更したときに明示的に実行する運用としている.
+本記事の執筆時点で, いずれも成功することを確認済みである.</p>
+<h2 id="上流へ還元する---multi-worktree-モード">上流へ還元する: <code>--multi-worktree</code> モード</h2>
+<p>ここまでの構成は dotfiles 側のラッパ層に閉じている.
+しかし「1 セッションから複数 worktree を扱いたい」という要求自体は
+code-review-graph を使う誰にでも生じるものなので,
+同じ仕組みを本体側の,
+明示的に有効化したときだけ働くモードとして
+<a href="https://github.com/tirth8205/code-review-graph/pull/1063">PR #1063</a> で提案した.
+新規モジュール 1 本 (<code>multi_worktree.py</code>) と CLI フラグの追加が中心である.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="/roki.log/2026/09/21/parallel-worktree-code-review-graph-mcp/#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">code-review-graph</span> serve <span class="at">--multi-worktree</span> <span class="at">--repo</span> /path/to/primary-repository</span></code></pre></div>
+<p>差分から読み取れる方針は次のとおりである.</p>
+<p><strong>デフォルトの挙動を変えない.</strong>
+<code>--multi-worktree</code> を明示しない限り従来どおりの単一ルートのサーバが起動する.
+新モードは stdio 専用で, <code>--http</code> との併用は引数解析の段階で弾く.</p>
+<p><strong>責務をプロセス隔離と振り分けに絞る.</strong>
+本体がやるのは「ルートごとに通常の <code>serve --repo &lt;root&gt;</code> 子プロセスを遅延起動し, 要求を振り分ける」ことだけで,
+グラフの鮮度判定や由来情報の検証, 削除処理といった
+レビュー運用固有の関心は一切持ち込んでいない.
+それらは呼び出し側 (ラッパや手順書) の責務として残す.
+本体が引き受けるのは「worktree ごとに状態を混ぜない」という一点である.</p>
+<p><strong>認可規則はラッパ層と同じ.</strong>
+絶対パスであること, <code>git rev-parse --show-toplevel</code> の自己一致,
+<code>--git-common-dir</code> の一致, <code>git worktree list --porcelain</code> への実在を確認する.
+別リポジトリと, 既に削除された worktree のパスは通らない.
+Git 実行時は <code>GIT_*</code> を全て落として設定を隔離する.</p>
+<p><strong>DB の重複割り当てを直接拒否する.</strong>
+ラッパ層では Registry の <code>data_dir</code> の重複として検査していたが,
+本体側は DB パス解決関数の結果そのものをルートごとに保持し,
+既に別のルートが使っている DB へ解決されたら子プロセスの起動を断る.
+設定の書き方ではなく解決後のパスで見るぶん, こちらの方が確実である.
+プロセス全体に効く <code>CRG_DATA_DIR</code> は, 全 worktree を 1 つの DB へ縛るため起動時に拒否し,
+子プロセスの環境からも除去する.</p>
+<p><strong>子プロセスへ渡す環境変数を許可リストに絞る.</strong>
+<code>HOME</code> / <code>PATH</code> / 一部の <code>CRG_*</code> など必要なキーだけを渡す.
+起動は <code>python -c</code> から <code>runpy</code> で同じパッケージを呼ぶ形にし,
+冒頭で <code>sys.path.pop(0)</code> してレビュー対象リポジトリからの取り込みを防いでいる.</p>
+<p>ラッパ層から<strong>意図的に変えた</strong>点も 2 つある.</p>
+<p>1 つは, サーバ側から送られてくる要求の扱いである.
+ラッパ側は <code>ping</code> 以外を <code>-32601</code> で拒否していたが,
+本体側は ID を <code>multi-worktree-server-&lt;uuid&gt;</code> へ書き換えて親のクライアントへ転送し,
+返ってきた応答を元の ID に戻して発信元の子プロセスへ届ける.
+<code>roots/list</code> のようなクライアント側の機能を将来使えるようにするためで,
+プロトコルのメッセージを黙って落とさない方が安全だという判断である.
+<code>notifications/cancelled</code> も, 対象の要求を抱えている子プロセスだけへ送る.</p>
+<p>もう 1 つはメッセージ長の上限で, 親の標準入力側は 4 MiB のままだが,
+子プロセスの標準出力側は 64 MiB まで許している.
+グラフの応答は素直に大きくなりうるためである.</p>
+<p>検証は PR の記載によると ruff, <code>pytest -q</code> (32 件成功), <code>git diff --check</code>.
+エンドツーエンドのテストは 1 セッションから 2 つの worktree に対して
+<code>asyncio.gather</code> で同時に構築と問い合わせを投げ,
+worktree 固有のシンボルが片方にしか現れないこと,
+無関係なリポジトリが拒否されることを確認している.
+本記事の執筆時点でこの PR は未マージであり, 取り込まれるかは未定である.</p>
+<h2 id="制約と今後の課題">制約と今後の課題</h2>
+<p>明示しておくべき制約が 3 つある.</p>
+<p>第一に, 認可範囲は起動時のリポジトリと同じ Git 共通ディレクトリに閉じている.
+複数の独立したリポジトリを 1 セッションで横断する用途は想定していない.</p>
+<p>第二に, 層の切り分けを混同しないでほしい.
+初期 MCP ラッパのハッシュ単位の隔離, 上流 CLI が持つリポジトリ単位のストレージ規則,
+ラッパ層の dispatcher による同一セッション内の振り分け,
+そして上流本体の <code>--multi-worktree</code> は, それぞれ別の層の話である.
+現在手元で動いているのはラッパ層の構成であり,
+上流へは提案した段階で, 取り込まれる保証はない.
+仮に取り込まれてもラッパ層が不要になるわけではなく,
+グラフの鮮度検証と削除処理はラッパ側に残る.</p>
+<p>第三に, 並列化の効果について定量的な計測は行っていない.
+子プロセスの上限を 32, 子プロセスごとの応答待ち要求の上限を 256 と置いているのは
+暴走時の歯止めであって, 実測に基づく調整値ではない.</p>
+<h2 id="まとめ">まとめ</h2>
+<p>第一に, 隔離を語るときは粒度を先に決めるべきだった.
+初期実装にもルートのハッシュ単位の隔離はあったが,
+それは「1 プロセス = 1 ルート」であり,
+求めていた「1 セッション = N worktree」とは別物だった.
+問うべきは「隔離されているか」ではなく「何の単位で隔離されているか」である.</p>
+<p>第二に, 複数の経路から同じ状態を触るなら, 解決規則そのものを共有する.
+CLI と MCP で DB パスの導出を二重に実装していたことが不一致の原因であり,
+同じ 2 段の規則を両者が使う形にした時点で問題は消えた.
+DB を 1 つに統合したのではない. この点は何度でも強調しておきたい.</p>
+<p>第三に, グラフのような派生データは由来情報を持たないまま返してはならない.
+<code>repository_root</code> と <code>built_at_sha</code> を DB に持たせ,
+現在のルートと HEAD に照らして不一致なら答えない.
+この単純な規律が, 多重化で最も効いた安全装置であった.</p>
+<p>第四に, 手元で組んだ仕組みを上流へ出すときは, 責務を削るほうへ働く.
+ラッパ層では振り分け, 鮮度検証, 削除処理を 1 つの層に押し込めていたが,
+本体へ提案したのは振り分けとプロセス隔離だけである.
+誰にでも必要な機構は本体へ, 自分のレビュー運用に固有の規律はラッパへ.
+この線引きを先にやっておくと, 提案する差分は自然と小さくなる.</p>]]></summary>
+</entry>
+<entry>
     <title>chezmoi で AI エージェントの設定を一つの原稿から配布する</title>
     <link href="https://roki.dev/roki.log/2026/09/07/introducing-chezmoi-ai-agent-dotfiles-article/index.html" />
     <id>https://roki.dev/roki.log/2026/09/07/introducing-chezmoi-ai-agent-dotfiles-article/index.html</id>
@@ -7865,155 +8281,6 @@ f'(x)&amp;=&amp;\lim_{h\to 0}\frac{\cos(x+h)-\cos x}{h}\\
 <li>『<a id="ref1" href="http://www.ms.u-tokyo.ac.jp/~t-saito/jd/%E4%B8%89%E8%A7%92%E9%96%A2%E6%95%B0.pdf">三角関数とは何か</a>』2018 年 9 月 6 日アクセス.</li>
 <li><a id="ref2" class="disabled">高木貞治 (1983) 『解析概論』岩波書店</a></li>
 </ol>]]></summary>
-</entry>
-<entry>
-    <title>Haskell で D-Bus から systemd unit を制御する</title>
-    <link href="https://roki.dev/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/index.html" />
-    <id>https://roki.dev/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/index.html</id>
-    <published>2018-08-17T00:00:00Z</published>
-    <updated>2018-08-17T00:00:00Z</updated>
-    <summary type="html"><![CDATA[<p>D-Bus とはメッセージバスシステムであり, アプリケーション間で互いにやりとりを行うためのプロセス間通信実装の 1 つである.
-システムデーモン(新しいハードウェアデバイスの追加やプリンタキューの変更などのイベント等)と,
-ユーザー単位のログインセッションデーモン(ユーザーアプリケーション間の一般的なIPC)を提供する<a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a>.</p>
-<p>現代的な Linux カーネルの init プロセスにて起動される systemd デーモンおよびその補助デーモンは,
-D-Bus にいくつかの API を公開している.
-私の観測範囲内において, C や Python, Go 等でこれらを利用する例はそこそこ見たことがあるのだが,
-Haskell での取り組みは一切見たことがなかったので, 少々これらで遊んで見た日記として本エントリに記す.</p>
-<!--more-->
-<h2 id="d-bus-api-の確認">D-Bus API の確認</h2>
-<p>実行環境は, 次の通りである.</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb1-1"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> uname <span class="at">-a</span></span>
-<span id="cb1-2"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="ex">Linux</span> vagrant 4.15.0-20-generic <span class="co">#21-Ubuntu SMP Tue Apr 24 06:16:15 UTC 2018 x86_64 x86_64 x86_64 GNU/Linux</span></span>
-<span id="cb1-3"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> systemd <span class="at">--version</span></span>
-<span id="cb1-4"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="ex">systemd</span> 237</span>
-<span id="cb1-5"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="ex">+PAM</span> +AUDIT +SELINUX +IMA +APPARMOR +SMACK +SYSVINIT +UTMP +LIBCRYPTSETUP +GCRYPT +GNUTLS +ACL +XZ +LZ4 +SECCOMP +BLKID +ELFUTILS +KMOD <span class="at">-IDN2</span> +IDN <span class="at">-PCRE2</span> default-hierarchy=hybrid</span></code></pre></div>
-<p>D-Bus に公開されている API を利用する際は,
-とくに高度なラッパーライブラリを用いないような場合においては,
-<code>dbus-send</code>あるいは<code>gdbus</code>等で全体の構造,
-インタフェース, メソッドおよびフィールドメンバーを確認するとよい.</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb2-1"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> function syst<span class="er">(</span><span class="kw">){</span> <span class="va">r</span><span class="op">=</span><span class="va">$(</span><span class="ex">gdbus</span> introspect <span class="at">--system</span> <span class="at">--dest</span> org.freedesktop.systemd1 <span class="at">--object-path</span> /org/freedesktop/systemd1<span class="va">)</span><span class="kw">;</span> <span class="bu">echo</span> <span class="va">${r}</span> <span class="kw">|</span> <span class="fu">head</span> <span class="at">-n</span> <span class="va">$1</span> <span class="kw">&amp;&amp;</span> <span class="bu">echo</span> <span class="st">&quot;More than&quot;</span> <span class="va">$(($(</span><span class="bu">echo</span> <span class="va">${r}</span> <span class="kw">|</span> <span class="fu">wc</span> <span class="at">-l</span><span class="va">)</span> <span class="op">-</span> <span class="va">$1))</span> <span class="st">&quot;lines...&quot;</span><span class="kw">;</span> <span class="kw">}</span></span>
-<span id="cb2-2"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> syst 10</span>
-<span id="cb2-3"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="ex">node</span> /org/freedesktop/systemd1 {</span>
-<span id="cb2-4"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb2-4" aria-hidden="true" tabindex="-1"></a>  <span class="ex">interface</span> org.freedesktop.DBus.Peer {</span>
-<span id="cb2-5"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb2-5" aria-hidden="true" tabindex="-1"></a>    <span class="ex">methods:</span></span>
-<span id="cb2-6"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb2-6" aria-hidden="true" tabindex="-1"></a>      <span class="fu">Ping()</span><span class="kw">;</span></span>
-<span id="cb2-7"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb2-7" aria-hidden="true" tabindex="-1"></a>      <span class="ex">GetMachineId</span><span class="er">(</span><span class="ex">out</span> s machine_uuid<span class="kw">);</span></span>
-<span id="cb2-8"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb2-8" aria-hidden="true" tabindex="-1"></a>    <span class="ex">signals:</span></span>
-<span id="cb2-9"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb2-9" aria-hidden="true" tabindex="-1"></a>    <span class="ex">properties:</span></span>
-<span id="cb2-10"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb2-10" aria-hidden="true" tabindex="-1"></a>  <span class="er">}</span><span class="kw">;</span></span>
-<span id="cb2-11"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb2-11" aria-hidden="true" tabindex="-1"></a>  <span class="ex">interface</span> org.freedesktop.DBus.Introspectable {</span>
-<span id="cb2-12"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb2-12" aria-hidden="true" tabindex="-1"></a>    <span class="ex">methods:</span></span>
-<span id="cb2-13"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="ex">More</span> than 397 lines...</span></code></pre></div>
-<p>このインタフェース表記の意味するところに関する詳細は,
-D-bus 仕様の Type System セクション<a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a>に記載されている.</p>
-<h2 id="d-bus-の-haskell-バインドの利用">D-Bus の Haskell バインドの利用</h2>
-<p><a href="http://hackage.Haskell.org/package/dbus">dbus</a> が利用できる.
-例えば, 以下に示す<code>StartUnit</code>, <code>StopUnit</code>は,</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb3-1"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> gdbus introspect <span class="at">--system</span> <span class="at">--dest</span> org.freedesktop.systemd1 <span class="at">--object-path</span> /org/freedesktop/systemd1 <span class="kw">|</span> <span class="fu">grep</span> <span class="at">-e</span> StartUnit <span class="at">-e</span> StopUnit <span class="at">-w</span> <span class="at">-A</span> 2</span>
-<span id="cb3-2"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb3-2" aria-hidden="true" tabindex="-1"></a>      <span class="ex">StartUnit</span><span class="er">(in</span>  <span class="ex">s</span> arg_0,</span>
-<span id="cb3-3"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb3-3" aria-hidden="true" tabindex="-1"></a>                <span class="er">in</span>  <span class="ex">s</span> arg_1,</span>
-<span id="cb3-4"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb3-4" aria-hidden="true" tabindex="-1"></a>                <span class="ex">out</span> o arg_2<span class="kw">);</span></span>
-<span id="cb3-5"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="ex">--</span></span>
-<span id="cb3-6"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb3-6" aria-hidden="true" tabindex="-1"></a>      <span class="ex">StopUnit</span><span class="er">(in</span>  <span class="ex">s</span> arg_0,</span>
-<span id="cb3-7"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb3-7" aria-hidden="true" tabindex="-1"></a>               <span class="er">in</span>  <span class="ex">s</span> arg_1,</span>
-<span id="cb3-8"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb3-8" aria-hidden="true" tabindex="-1"></a>               <span class="ex">out</span> o arg_2<span class="kw">);</span></span></code></pre></div>
-<p>次のようにして呼び出せる.</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb4-1"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ot">{-# LANGUAGE OverloadedStrings #-}</span></span>
-<span id="cb4-2"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-3"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span> <span class="dt">DBus</span></span>
-<span id="cb4-4"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span> <span class="dt">DBus.Client</span></span>
-<span id="cb4-5"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span> <span class="dt">Data.Int</span> (<span class="dt">Int32</span>)</span>
-<span id="cb4-6"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb4-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-7"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> <span class="dt">Unit</span> <span class="ot">=</span> <span class="dt">String</span></span>
-<span id="cb4-8"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> <span class="dt">Mode</span> <span class="ot">=</span> <span class="dt">String</span></span>
-<span id="cb4-9"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> <span class="dt">SignalNum</span> <span class="ot">=</span> <span class="dt">Int32</span></span>
-<span id="cb4-10"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb4-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-11"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb4-11" aria-hidden="true" tabindex="-1"></a><span class="ot">systemdObjectPath ::</span> <span class="dt">ObjectPath</span></span>
-<span id="cb4-12"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb4-12" aria-hidden="true" tabindex="-1"></a>systemdObjectPath <span class="ot">=</span> objectPath_ <span class="st">&quot;/org/freedesktop/systemd1&quot;</span></span>
-<span id="cb4-13"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb4-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-14"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb4-14" aria-hidden="true" tabindex="-1"></a><span class="ot">systemdInterfaceName ::</span> <span class="dt">InterfaceName</span></span>
-<span id="cb4-15"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb4-15" aria-hidden="true" tabindex="-1"></a>systemdInterfaceName <span class="ot">=</span> interfaceName_ <span class="st">&quot;org.freedesktop.systemd1.Manager&quot;</span></span>
-<span id="cb4-16"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb4-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-17"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb4-17" aria-hidden="true" tabindex="-1"></a><span class="ot">systemdDestination ::</span> <span class="dt">BusName</span></span>
-<span id="cb4-18"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb4-18" aria-hidden="true" tabindex="-1"></a>systemdDestination <span class="ot">=</span> busName_ <span class="st">&quot;org.freedesktop.systemd1&quot;</span></span>
-<span id="cb4-19"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb4-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-20"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb4-20" aria-hidden="true" tabindex="-1"></a><span class="ot">methodSub ::</span> <span class="dt">String</span> <span class="ot">-&gt;</span> <span class="dt">MethodCall</span></span>
-<span id="cb4-21"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb4-21" aria-hidden="true" tabindex="-1"></a>methodSub <span class="ot">=</span> methodCall systemdObjectPath systemdInterfaceName <span class="op">.</span> memberName_</span>
-<span id="cb4-22"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb4-22" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-23"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb4-23" aria-hidden="true" tabindex="-1"></a><span class="ot">systemdCall ::</span> <span class="dt">Client</span> <span class="ot">-&gt;</span> <span class="dt">MethodCall</span> <span class="ot">-&gt;</span> <span class="dt">IO</span> [<span class="dt">Variant</span>]</span>
-<span id="cb4-24"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb4-24" aria-hidden="true" tabindex="-1"></a>systemdCall <span class="ot">=</span> (<span class="op">.</span>) (<span class="fu">fmap</span> methodReturnBody) <span class="op">.</span> call_</span>
-<span id="cb4-25"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb4-25" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-26"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb4-26" aria-hidden="true" tabindex="-1"></a><span class="ot">controlUnit ::</span> <span class="dt">String</span> <span class="ot">-&gt;</span> <span class="dt">Client</span> <span class="ot">-&gt;</span> <span class="dt">Unit</span> <span class="ot">-&gt;</span> <span class="dt">Mode</span> <span class="ot">-&gt;</span> <span class="dt">IO</span> [<span class="dt">Variant</span>]</span>
-<span id="cb4-27"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb4-27" aria-hidden="true" tabindex="-1"></a>controlUnit med cli unit mode <span class="ot">=</span> systemdCall cli (methodSub med) {</span>
-<span id="cb4-28"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb4-28" aria-hidden="true" tabindex="-1"></a>    methodCallDestination <span class="ot">=</span> <span class="dt">Just</span> systemdDestination,</span>
-<span id="cb4-29"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb4-29" aria-hidden="true" tabindex="-1"></a>    methodCallBody <span class="ot">=</span> <span class="fu">map</span> toVariant [unit, mode]</span>
-<span id="cb4-30"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb4-30" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb4-31"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb4-31" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-32"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb4-32" aria-hidden="true" tabindex="-1"></a><span class="ot">startUnit ::</span> <span class="dt">Client</span> <span class="ot">-&gt;</span> <span class="dt">Unit</span> <span class="ot">-&gt;</span> <span class="dt">Mode</span> <span class="ot">-&gt;</span> <span class="dt">IO</span> [<span class="dt">Variant</span>]</span>
-<span id="cb4-33"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb4-33" aria-hidden="true" tabindex="-1"></a>startUnit <span class="ot">=</span> controlUnit <span class="st">&quot;StartUnit&quot;</span></span>
-<span id="cb4-34"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb4-34" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-35"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb4-35" aria-hidden="true" tabindex="-1"></a><span class="ot">stopUnit ::</span> <span class="dt">Client</span> <span class="ot">-&gt;</span> <span class="dt">Unit</span> <span class="ot">-&gt;</span> <span class="dt">Mode</span> <span class="ot">-&gt;</span> <span class="dt">IO</span> [<span class="dt">Variant</span>]</span>
-<span id="cb4-36"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb4-36" aria-hidden="true" tabindex="-1"></a>stopUnit <span class="ot">=</span> controlUnit <span class="st">&quot;StopUnit&quot;</span></span></code></pre></div>
-<p>以下に示す<code>ListUnitsByNames</code><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a>は,</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb5-1"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> gdbus introspect <span class="at">--system</span> <span class="at">--dest</span> org.freedesktop.systemd1 <span class="at">--object-path</span> /org/freedesktop/systemd1 <span class="kw">|</span> <span class="fu">grep</span> ListUnitsByNames <span class="at">-w</span> <span class="at">-A</span> 1</span>
-<span id="cb5-2"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb5-2" aria-hidden="true" tabindex="-1"></a>      <span class="ex">ListUnitsByNames</span><span class="er">(in</span>  <span class="fu">as</span> arg_0,</span>
-<span id="cb5-3"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb5-3" aria-hidden="true" tabindex="-1"></a>                       <span class="ex">out</span> a<span class="er">(</span><span class="ex">ssssssouso</span><span class="kw">)</span> <span class="ex">arg_1</span><span class="kw">);</span></span></code></pre></div>
-<p>次のようにして呼び出せる.</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb6-1"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="ot">listUnitsByNames ::</span> <span class="dt">IsValue</span> a <span class="ot">=&gt;</span> <span class="dt">Client</span> <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> <span class="dt">IO</span> [<span class="dt">Variant</span>]</span>
-<span id="cb6-2"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb6-2" aria-hidden="true" tabindex="-1"></a>listUnitsByNames cli var <span class="ot">=</span> systemdCall cli (methodSub <span class="st">&quot;ListUnitsByNames&quot;</span>) {</span>
-<span id="cb6-3"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb6-3" aria-hidden="true" tabindex="-1"></a>    methodCallDestination <span class="ot">=</span> <span class="dt">Just</span> systemdDestination,</span>
-<span id="cb6-4"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb6-4" aria-hidden="true" tabindex="-1"></a>    methodCallBody <span class="ot">=</span> [toVariant var]</span>
-<span id="cb6-5"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb6-5" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
-<p>動作確認のためのユニットを適当に置いておく<a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#fn4" class="footnote-ref" id="fnref4" role="doc-noteref"><sup>4</sup></a>.</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb7-1"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> mkdir <span class="at">-p</span> /opt/writehello/bin</span>
-<span id="cb7-2"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> sudo sh <span class="at">-c</span> <span class="st">&quot;echo </span><span class="dt">\&quot;</span><span class="st">#\!/bin/bash\nwhile :\ndo\n\tsleep 3\n\techo </span><span class="dt">\&quot;</span><span class="st">hello</span><span class="dt">\&quot;</span><span class="st">\ndone</span><span class="dt">\&quot;</span><span class="st">&quot;</span> <span class="op">&gt;</span> writehello.sh</span>
-<span id="cb7-3"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> sudo chmod +x /opt/writehello/bin/writehello.sh</span>
-<span id="cb7-4"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> sudo sh <span class="at">-c</span> <span class="st">&quot;echo </span><span class="dt">\&quot;</span><span class="st">[Unit]\nDescription = hello daemon\nConditionPathExists = /opt/writehello/bin/writehello.sh\n\n[Service]\nExecStart = /opt/writehello/bin/writehello.sh\nRestart = always\nType = simple\n\n[Install]\nWantedBy = multi-user.target</span><span class="dt">\&quot;</span><span class="st">&quot;</span> <span class="op">&gt;</span> /etc/systemd/system/writehello.service</span>
-<span id="cb7-5"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> sudo chmod <span class="at">-x</span> /etc/systemd/system/writehello.service</span>
-<span id="cb7-6"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> sudo chmod o-w /etc/systemd/system/writehello.service</span>
-<span id="cb7-7"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb7-7" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> sudo systemd-analyze verify /etc/systemd/system/writehello.service</span>
-<span id="cb7-8"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb7-8" aria-hidden="true" tabindex="-1"></a><span class="ex">Attempted</span> to remove disk file system, and we can<span class="st">'t allow that.</span></span>
-<span id="cb7-9"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb7-9" aria-hidden="true" tabindex="-1"></a><span class="st">$ sudo systemctl daemon-reload</span></span>
-<span id="cb7-10"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb7-10" aria-hidden="true" tabindex="-1"></a><span class="st">$ sudo systemctl start writehello.service &amp;&amp; journalctl -f -u writehello.service &amp; sleep 10 &amp;&amp; sudo kill $! &amp;&amp; sudo systemctl stop writehello.service</span></span>
-<span id="cb7-11"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb7-11" aria-hidden="true" tabindex="-1"></a><span class="st">[1] 2001</span></span>
-<span id="cb7-12"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb7-12" aria-hidden="true" tabindex="-1"></a><span class="st">-- Logs begin at Fri 2018-08-17 16:19:05 UTC. --</span></span>
-<span id="cb7-13"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb7-13" aria-hidden="true" tabindex="-1"></a><span class="st">Aug 17 16:19:13 vagrant systemd[1]: Started hello daemon.</span></span>
-<span id="cb7-14"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb7-14" aria-hidden="true" tabindex="-1"></a><span class="st">Aug 17 16:19:16 vagrant writehello.sh[1989]: hello</span></span>
-<span id="cb7-15"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb7-15" aria-hidden="true" tabindex="-1"></a><span class="st">Aug 17 16:19:19 vagrant writehello.sh[1989]: hello</span></span>
-<span id="cb7-16"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb7-16" aria-hidden="true" tabindex="-1"></a><span class="st">Aug 17 16:19:22 vagrant writehello.sh[1989]: hello</span></span></code></pre></div>
-<p>先の関数らから writehello.service ユニットを制御する.</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb8-1"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="kw">module</span> <span class="dt">Main</span> <span class="kw">where</span></span>
-<span id="cb8-2"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb8-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-3"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span> <span class="dt">DBus.Client</span> (connectSystem)</span>
-<span id="cb8-4"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span> <span class="dt">System.Environment</span> (getArgs)</span>
-<span id="cb8-5"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span> <span class="dt">Control.Monad</span> (mapM_, (&lt;=&lt;))</span>
-<span id="cb8-6"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb8-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-7"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb8-7" aria-hidden="true" tabindex="-1"></a><span class="ot">main ::</span> <span class="dt">IO</span> ()</span>
-<span id="cb8-8"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb8-8" aria-hidden="true" tabindex="-1"></a>main <span class="ot">=</span> <span class="kw">do</span></span>
-<span id="cb8-9"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb8-9" aria-hidden="true" tabindex="-1"></a>    client <span class="ot">&lt;-</span> connectSystem</span>
-<span id="cb8-10"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb8-10" aria-hidden="true" tabindex="-1"></a>    args <span class="ot">&lt;-</span> getArgs</span>
-<span id="cb8-11"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb8-11" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mapM_</span> (<span class="fu">print</span> <span class="op">&lt;=&lt;</span> <span class="fu">flip</span> (startUnit client) <span class="st">&quot;replace&quot;</span>) args</span>
-<span id="cb8-12"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb8-12" aria-hidden="true" tabindex="-1"></a>    <span class="fu">print</span> <span class="op">=&lt;&lt;</span> listUnitsByNames client args</span></code></pre></div>
-<p>引数に writehello.service を指定してスーパーユーザで実行すると, 次のような出力が得られる.</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb9-1"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="ex">[Variant</span> <span class="er">(</span><span class="ex">ObjectPath</span> <span class="st">&quot;/org/freedesktop/systemd1/job/1053&quot;</span><span class="kw">)</span><span class="ex">]</span></span>
-<span id="cb9-2"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="ex">[Variant</span> [<span class="er">(</span><span class="st">&quot;writehello.service&quot;</span><span class="ex">,</span> <span class="st">&quot;hello daemon&quot;</span>, <span class="st">&quot;loaded&quot;</span>, <span class="st">&quot;active&quot;</span>, <span class="st">&quot;running&quot;</span>, <span class="st">&quot;&quot;</span>, ObjectPath <span class="st">&quot;/org/freedesktop/systemd1/unit/writehello_2eservice&quot;</span>, 0, <span class="st">&quot;&quot;</span>, ObjectPath <span class="st">&quot;/&quot;</span><span class="kw">)</span><span class="ex">]]</span></span></code></pre></div>
-<p>停止も忘れずに.</p>
-<div class="sourceCode" id="cb10"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb10-1"><a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">mapM_</span> (<span class="fu">print</span> <span class="op">&lt;=&lt;</span> <span class="fu">flip</span> (stopUnit client) <span class="st">&quot;replace&quot;</span>) args </span></code></pre></div>
-<p>なお, 本エントリにおける一連の実装とその他の
-systemd D-Bus API を利用したいくつかの snippets を下記リポジトリにて管理している.</p>
-<div class="box has-text-centered is-shadowless">
-<p><i class="fab fa-github mr-2"></i>
-<a href="https://bitbucket.org/r0ki/systemdplhs/src/master/">r0ki/systemdplhs - Snippets collection that controls systemd from D-Bus with Haskell.</a></p>
-</div>
-<section id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes">
-<hr />
-<ol>
-<li id="fn1"><p>説明は<a href="https://www.freedesktop.org/wiki/Software/dbus/#index1h1">公式ページ</a>から.<a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-<li id="fn2"><p>“D-Bus Specification”, <a href="https://dbus.freedesktop.org/doc/dbus-specification.html#type-system" class="uri">https://dbus.freedesktop.org/doc/dbus-specification.html#type-system</a> 2018 年 8 月 17 日アクセス.<a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-<li id="fn3"><p>Note: <code>ListUnitsByName</code> は systemd v230 以上を要する.<a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-<li id="fn4"><p><code>systemd-analyze verify</code>の結果で, <code>Attempted to remove disk file system, and we can't allow that.</code>というメッセージが出力されているが, これは systemd 237-4 および 238 でのバグ(<a href="https://github.com/systemd/systemd/issues/8592">#8592</a>)との報告がある.<a href="/roki.log/2018/08/17/controlSystemdByDBusAndHaskell/#fnref4" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-</ol>
-</section>]]></summary>
 </entry>
 
 </feed>
