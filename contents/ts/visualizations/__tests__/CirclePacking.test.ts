@@ -2,8 +2,7 @@
  * サークルパッキングのユニットテスト
  */
 
-import { beforeEach, describe, expect, it } from "vitest";
-import type { TagStats } from "../../types/disney-experience";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { CirclePacking } from "../CirclePacking";
 
 describe("CirclePacking", () => {
@@ -17,6 +16,11 @@ describe("CirclePacking", () => {
         container.id = "test-circle-packing";
         container.style.position = "relative";
         document.body.appendChild(container);
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+        vi.unstubAllGlobals();
     });
 
     describe("constructor", () => {
@@ -123,6 +127,40 @@ describe("CirclePacking", () => {
             // 各タグに対して円が作成されたことを確認
             const circles = container.querySelectorAll("circle");
             expect(circles.length).toBe(3);
+        });
+
+        it.each(["", "--tag-color: ;", "color: red"])(
+            "タグ色がない場合はフォールバック色を使用する (%s)",
+            (style) => {
+                const button = document.createElement("button");
+                button.className = "tag-filter-btn";
+                button.dataset.tag = "TDL";
+                button.setAttribute("style", style);
+                document.body.appendChild(button);
+
+                const circlePacking = new CirclePacking("#test-circle-packing");
+                circlePacking.render({ tags: [{ tag: "TDL", count: 10 }] });
+
+                expect(container.querySelector("circle")?.getAttribute("fill")).toBe("#1f77b4");
+            },
+        );
+
+        it("キーボード操作時はスクロールを含むページ座標にツールチップを表示する", () => {
+            vi.stubGlobal("scrollX", 100);
+            vi.stubGlobal("scrollY", 200);
+            const circlePacking = new CirclePacking("#test-circle-packing");
+            circlePacking.render({ tags: [{ tag: "TDL", count: 10 }] });
+            const circle = container.querySelector<SVGCircleElement>("circle");
+            if (!circle) throw new Error("Circle was not rendered");
+            vi.spyOn(circle, "getBoundingClientRect").mockReturnValue(new DOMRect(10, 20, 40, 60));
+
+            circle.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter" }));
+
+            const tooltip = container.querySelector<HTMLElement>(".visualization-tooltip");
+            expect(tooltip?.style.visibility).toBe("visible");
+            expect(tooltip?.style.left).toBe("140px");
+            expect(tooltip?.style.top).toBe("230px");
+            expect(tooltip?.textContent).toContain("TDL");
         });
     });
 
