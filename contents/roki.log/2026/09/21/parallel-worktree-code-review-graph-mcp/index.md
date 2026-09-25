@@ -170,10 +170,10 @@ MCP からの更新が CLI と同じ DB へ書かれるようにした.
 %%{init: {"flowchart": {"wrappingWidth": 340}}}%%
 graph TD
     client["MCP クライアント"]
-    client -->|"1 本の stdio セッション"| dispatcher
+    client -->|"1 本の stdio<br/>セッション"| dispatcher
     dispatcher["dispatcher<br/>repo_root による子プロセスへの振り分け<br/>delete_graph_tool の実装"]
 
-    dispatcher -->|"主チェックアウト"| gm
+    dispatcher -->|"主<br/>チェックアウト"| gm
     dispatcher -->|"worktree A"| ga
     dispatcher -->|"worktree B"| gb
 
