@@ -1,10 +1,3 @@
-// Window型の拡張
-declare global {
-    interface Window {
-        isPreview?: boolean;
-    }
-}
-
 // HTMLエスケープ関数
 const escapeHtml = (text: string): string => {
     const div = document.createElement("div");
@@ -540,15 +533,7 @@ const initLoadingScreen = (): void => {
     }, 15000);
 };
 
-declare global {
-    interface TagButton extends HTMLElement {
-        getAttribute(name: string): string | null;
-    }
-
-    interface LogEntry extends HTMLElement {
-        getAttribute(name: string): string | null;
-    }
-}
+type TagButton = HTMLElement;
 
 interface SlideshowState {
     slides: HTMLButtonElement[];
@@ -726,7 +711,8 @@ const initializeLogImageSlideshows = (): void => {
             const normalizedIndex = ((startIndex % total) + total) % total;
             for (let offset = 0; offset < total; offset += 1) {
                 const candidate = (normalizedIndex + offset) % total;
-                if (isSlideAvailable(slides[candidate])) {
+                const candidateSlide = slides[candidate];
+                if (candidateSlide && isSlideAvailable(candidateSlide)) {
                     return candidate;
                 }
             }
@@ -739,10 +725,6 @@ const initializeLogImageSlideshows = (): void => {
 
         const isSlideLoaded = (slide: HTMLButtonElement): boolean => {
             return slide.dataset.imageLoaded === "true";
-        };
-
-        const _isSlideReady = (slide: HTMLButtonElement): boolean => {
-            return isSlideLoaded(slide) || slide.dataset.imageLoadFailed === "true";
         };
 
         const slideshow: SlideshowState = {
@@ -784,7 +766,8 @@ const initializeLogImageSlideshows = (): void => {
 
                 slideshow.dots.forEach((dot, dotIndex) => {
                     const isActive = dotIndex === slideshow.currentIndex;
-                    const isAvailable = isSlideAvailable(slideshow.slides[dotIndex]);
+                    const slideForDot = slideshow.slides[dotIndex];
+                    const isAvailable = slideForDot ? isSlideAvailable(slideForDot) : false;
                     dot.classList.toggle("is-active", isActive);
                     dot.setAttribute("aria-selected", String(isActive));
                     dot.hidden = !isAvailable;

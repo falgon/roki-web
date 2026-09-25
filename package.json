@@ -34,6 +34,7 @@
         "format:ts": "biome check --write --unsafe contents/ts",
         "lint:ts": "biome lint contents/ts",
         "check:ts": "biome check contents/ts",
+        "typecheck:ts": "tsc --noEmit",
         "test": "vitest run",
         "test:watch": "vitest",
         "test:ui": "vitest --ui",

@@ -1,11 +1,13 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import "../uniq_tab";
 
-declare global {
-    const ACTIVE_CLASS: string;
-    function updateActiveTab(tabs: Element[], selected: Element): void;
-    function updateActiveContent(content: Element[], selected: string): void;
-    function initTabs(): void;
+function fixtureElements(selector: string): [HTMLElement, HTMLElement, HTMLElement] {
+    const elements = document.querySelectorAll<HTMLElement>(selector);
+    const [first, second, third] = elements;
+    if (elements.length !== 3 || !first || !second || !third) {
+        throw new Error(`Expected exactly three fixture elements for ${selector}`);
+    }
+    return [first, second, third];
 }
 
 describe("uniq_tab.ts", () => {
@@ -26,7 +28,7 @@ describe("uniq_tab.ts", () => {
 
     describe("updateActiveTab", () => {
         it("removes is-active from all tabs and adds to selected", () => {
-            const tabs = [...document.querySelectorAll("#tabs li")];
+            const tabs = fixtureElements("#tabs li");
             const secondTab = tabs[1];
 
             expect(tabs[0].classList.contains(ACTIVE_CLASS)).toBe(true);
@@ -41,7 +43,7 @@ describe("uniq_tab.ts", () => {
 
     describe("updateActiveContent", () => {
         it("removes is-active from all content and adds to matching data-content", () => {
-            const content = [...document.querySelectorAll("#tab-content div")];
+            const content = fixtureElements("#tab-content div");
 
             expect(content[0].classList.contains(ACTIVE_CLASS)).toBe(true);
             expect(content[1].classList.contains(ACTIVE_CLASS)).toBe(false);
@@ -53,7 +55,7 @@ describe("uniq_tab.ts", () => {
         });
 
         it("handles content with no matching data-content", () => {
-            const content = [...document.querySelectorAll("#tab-content div")];
+            const content = fixtureElements("#tab-content div");
 
             updateActiveContent(content, "nonexistent");
 
@@ -65,8 +67,8 @@ describe("uniq_tab.ts", () => {
 
     describe("initTabs", () => {
         it("sets up click handlers that switch tabs and content", () => {
-            const tabs = document.querySelectorAll<HTMLElement>("#tabs li");
-            const contents = document.querySelectorAll<HTMLElement>("#tab-content div");
+            const tabs = fixtureElements("#tabs li");
+            const contents = fixtureElements("#tab-content div");
 
             initTabs();
 
@@ -82,8 +84,8 @@ describe("uniq_tab.ts", () => {
         });
 
         it("handles clicking already active tab", () => {
-            const tabs = document.querySelectorAll<HTMLElement>("#tabs li");
-            const contents = document.querySelectorAll<HTMLElement>("#tab-content div");
+            const tabs = fixtureElements("#tabs li");
+            const contents = fixtureElements("#tab-content div");
 
             initTabs();
 
