@@ -112,6 +112,7 @@ tests:
         - pandoc
         - directory
         - aeson
+        - bytestring
         - containers
         - tagsoup
         - filepath
