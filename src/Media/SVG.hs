@@ -34,7 +34,8 @@ execMmdc = liftIO . readCreateProcessWithExitCode (proc "npx" args) . T.unpack >
     (ExitFailure _, _, err) -> throwString err
     (ExitSuccess, out, _)   -> pure $ toHtmlRaw $ T.pack out
     where
-        args = ["mmdc", "-i", "/dev/stdin", "-e", "svg", "-o", "-"]
+        -- Use Mermaid's stdin stream; reading /dev/stdin as a file can fail with EAGAIN.
+        args = ["mmdc", "-i", "-", "-e", "svg", "-o", "-"]
 
 styledSvg :: Monad m => [(String, T.Text)] -> SVGHtml m -> SVGHtml m
 styledSvg args svgHtml = figure_ [class_ "has-text-centered image"] $ do

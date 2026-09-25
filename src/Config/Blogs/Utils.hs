@@ -25,17 +25,18 @@ postRoot :: String -> FilePath
 postRoot blogName = joinPath [contentsRoot, blogName]
 
 -- contents/roki.log/year/month/day/title/index.md
+-- Reject unrelated provider files cheaply, keeping the blog-name regex semantics.
 entryPattern :: String -> H.Pattern
-entryPattern blogName = H.fromRegex $
+entryPattern blogName = H.fromGlob (joinPath [contentsRoot, "**"]) H..&&. H.fromRegex (
     "(^"
     <> joinPath [postRoot blogName, yyyy, mm, dd, ".+", "index\\.md"]
-    <> "$)"
+    <> "$)")
 
 entryFilesPattern :: String -> H.Pattern
-entryFilesPattern blogName = H.fromRegex $
+entryFilesPattern blogName = H.fromGlob (joinPath [contentsRoot, "**"]) H..&&. H.fromRegex (
     "(^"
     <> joinPath [postRoot blogName, yyyy, mm, dd, ".+", ".+"]
-    <> "$)"
+    <> "$)")
 
 {-# INLINE contentSnapshot #-}
 contentSnapshot :: String -> H.Snapshot
@@ -77,4 +78,3 @@ monthlyPagePath blogName (year, month) = joinPath [
 buildMonthlyArchives :: (H.MonadMetadata m, MonadFail m) => String -> m A.MonthlyArchives
 buildMonthlyArchives blogName = A.buildMonthlyArchives defaultTimeLocale' timeZoneJST (entryPattern blogName) $
     H.fromFilePath . monthlyPagePath blogName
-

@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Rules.Resume (rules) where
+module Rules.Resume (rules, resumeCareerPattern) where
 
 import           Control.Monad                 ((>=>))
 import           Control.Monad.Extra           (concatMapM)
@@ -35,11 +35,12 @@ aboutMeIdent = fromString
     $ joinPath [resumeRoot, "about_me.md"]
 
 resumeCareerPattern :: Pattern
-resumeCareerPattern = fromRegex $ mconcat
+resumeCareerPattern = fromGlob (joinPath [resumeRoot, "career", "**"])
+    .&&. fromRegex (mconcat
     [ "(^"
     , joinPath [resumeRoot, "career", "[0-9]+\\.md"]
     , "$)"
-    ]
+    ])
 
 skillsIdent :: Identifier
 skillsIdent = fromString
