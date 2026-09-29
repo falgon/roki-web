@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Rules.TopPage (rules) where
+module Rules.TopPage (rules, contributionsTypeConfigPath) where
 
 import           Control.Monad.Extra  (mconcatMapM)
 import           Control.Monad.Reader (ReaderT (..), asks)
@@ -55,6 +55,10 @@ mkBlogCtx = do
 aboutSnapshot :: Snapshot
 aboutSnapshot = "aboutSS"
 
+contributionsTypeConfigPath :: Pattern
+contributionsTypeConfigPath = fromGlob "contents/config/contributions/Type/**"
+    .&&. fromRegex "^contents/config/contributions/Type/.+\\.dhall$"
+
 rules :: [BlogConfig m] -> PageConfReader Rules ()
 rules bcs = do
     faIcons <- asks pcFaIcons
@@ -102,7 +106,6 @@ rules bcs = do
         aboutPattern = fromGlob $ joinPath [contentsRoot, "about", "*.md"]
         projectsConfigPattern = fromGlob $ joinPath [contentsRoot, "config", "contributions", "Projects.dhall"]
         contributionsConfigPattern = fromGlob $ joinPath [contentsRoot, "config", "contributions", "Contributions.dhall"]
-        contributionsTypeConfigPath = fromRegex "^contents/config/contributions/Type/.+\\.dhall$"
         projectsDependencyPath = projectsConfigPattern .||. contributionsTypeConfigPath
         contributionsDependencyPath = contributionsConfigPattern .||. contributionsTypeConfigPath
         projectsCachePath = fromFilePath "top-page-projects-cache"

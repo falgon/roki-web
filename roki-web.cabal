@@ -183,9 +183,12 @@ test-suite roki-web-test
       Data.Disney.ExperienceSpec
       Data.Disney.HotelStaySpec
       Hakyll.Web.Feed.ExtraSpec
+      Performance.PatternsSpec
+      Rules.Src.JavaScriptSpec
       TestHelpers
       Utils.BaseSpec
       Utils.HakyllSpec
+      Vendor.KaTeXSpec
       Paths_roki_web
   hs-source-dirs:
       test
@@ -193,6 +196,7 @@ test-suite roki-web-test
   build-depends:
       aeson
     , base
+    , bytestring
     , containers
     , directory
     , filepath
