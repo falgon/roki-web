@@ -1,17 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import "../components";
 
-declare global {
-    interface String {
-        format(...args: unknown[]): string;
-    }
-
-    function setupNavBar(): void;
-    function setupModal(): void;
-    function openLink(): void;
-    function initStringFormat(): void;
-}
-
 describe("components.ts", () => {
     beforeEach(() => {
         document.body.innerHTML = "";

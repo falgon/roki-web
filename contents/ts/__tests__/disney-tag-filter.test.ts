@@ -1,13 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import "../disney-tag-filter";
 
-declare global {
-    function escapeHtml(text: string): string;
-    function initLoadingScreen(): void;
-    function initializeLogImageSlideshows(): void;
-    function normalizeString(str: string): string;
-}
-
 describe("disney-tag-filter.ts", () => {
     beforeEach(() => {
         document.body.innerHTML = "";

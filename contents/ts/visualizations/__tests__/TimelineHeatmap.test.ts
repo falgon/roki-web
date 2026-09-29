@@ -3,8 +3,25 @@
  */
 
 import { beforeEach, describe, expect, it } from "vitest";
-import type { TimeSeriesData } from "../../types/disney-experience";
-import { TimelineHeatmap } from "../TimelineHeatmap";
+import { createHeatmapCells, TimelineHeatmap } from "../TimelineHeatmap";
+
+function requireCell(cell: HeatmapCell | undefined): HeatmapCell {
+    expect(cell).toBeDefined();
+    if (!cell) {
+        throw new Error("Expected a heatmap cell");
+    }
+    return cell;
+}
+
+function mouseEventAt(type: string, pageX: number, pageY: number): MouseEvent {
+    const event = new MouseEvent(type);
+    // happy-domはclient座標からpage座標を計算しないため、ブラウザの値を再現する。
+    Object.defineProperties(event, {
+        pageX: { value: pageX },
+        pageY: { value: pageY },
+    });
+    return event;
+}
 
 describe("TimelineHeatmap", () => {
     let container: HTMLElement;
@@ -119,6 +136,42 @@ describe("TimelineHeatmap", () => {
             const legend = container.querySelector(".legend");
             expect(legend).toBeDefined();
         });
+
+        it("マウスとキーボードでセルの強調とツールチップを操作できる", () => {
+            const heatmap = new TimelineHeatmap("#test-timeline-heatmap");
+            heatmap.render({ daily: [{ date: "2024-01-01", count: 2 }] });
+            const cell = container.querySelector<SVGRectElement>(
+                '.heatmap-cell[aria-label="2024年1月1日 体験記録2件"]',
+            );
+            const tooltip = container.querySelector<HTMLElement>(".visualization-tooltip");
+            if (!cell || !tooltip) {
+                throw new Error("Expected a rendered heatmap cell and tooltip");
+            }
+
+            cell.dispatchEvent(mouseEventAt("mouseover", 40, 60));
+            expect(cell.getAttribute("stroke")).toBe("#000");
+            expect(tooltip.textContent).toBe("2024年1月1日体験記録: 2件");
+            expect(tooltip.style.visibility).toBe("visible");
+            expect(tooltip.style.left).toBe("50px");
+            expect(tooltip.style.top).toBe("40px");
+
+            cell.dispatchEvent(mouseEventAt("mousemove", 60, 80));
+            expect(tooltip.style.left).toBe("70px");
+            expect(tooltip.style.top).toBe("60px");
+            cell.dispatchEvent(new MouseEvent("mouseout"));
+            expect(cell.getAttribute("stroke")).toBe("#fff");
+            expect(tooltip.style.visibility).toBe("hidden");
+
+            cell.dispatchEvent(new FocusEvent("focus"));
+            expect(cell.getAttribute("stroke")).toBe("#000");
+            cell.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter" }));
+            expect(tooltip.style.visibility).toBe("visible");
+            expect(tooltip.style.left).toBe("10px");
+            expect(tooltip.style.top).toBe("-20px");
+            cell.dispatchEvent(new FocusEvent("blur"));
+            expect(cell.getAttribute("stroke")).toBe("#fff");
+            expect(tooltip.style.visibility).toBe("hidden");
+        });
     });
 
     describe("clear", () => {
@@ -150,7 +203,32 @@ describe("TimelineHeatmap", () => {
         });
     });
 
-    describe("transformData - 年度全体表示機能", () => {
+    describe("createHeatmapCells - 年度全体表示機能", () => {
+        it("入力順を変更せずに日付順のセルを生成し、同じ日のカウントを合算する", () => {
+            const daily = [
+                { date: "2024-06-16", count: 2 },
+                { date: "2024-06-15", count: 3 },
+                { date: "2024-06-16", count: 4 },
+            ];
+            const original = daily.map((item) => ({ ...item }));
+
+            const result = createHeatmapCells(daily, 2024);
+            const saturday = requireCell(
+                result.find((cell) => cell.date.getTime() === new Date(2024, 5, 15).getTime()),
+            );
+            const sunday = requireCell(
+                result.find((cell) => cell.date.getTime() === new Date(2024, 5, 16).getTime()),
+            );
+
+            expect(daily).toEqual(original);
+            expect(result).toHaveLength(371);
+            expect(saturday.count).toBe(3);
+            expect(saturday.weekday).toBe(6);
+            expect(sunday.count).toBe(6);
+            expect(sunday.weekday).toBe(0);
+            expect(sunday.weekIndex).toBe(saturday.weekIndex + 1);
+        });
+
         it("年度指定あり - 通常年（365日）で正しい日数のセルが生成される", () => {
             // 2023年のテストデータ（通常年、365日）
             const data: TimeSeriesData = {
@@ -161,8 +239,7 @@ describe("TimelineHeatmap", () => {
                 ],
             };
 
-            const heatmap = new TimelineHeatmap("#test-timeline-heatmap");
-            const result = heatmap.transformData(data.daily, 2023);
+            const result = createHeatmapCells(data.daily, 2023);
 
             // 2023年1月1日は日曜日、12月31日も日曜日
             // 開始日: 2023-01-01（日曜日）
@@ -177,10 +254,10 @@ describe("TimelineHeatmap", () => {
                 const day = String(date.getDate()).padStart(2, "0");
                 return `${year}-${month}-${day}`;
             };
-            expect(formatDate(result[0].date)).toBe("2023-01-01");
+            expect(formatDate(requireCell(result[0]).date)).toBe("2023-01-01");
 
             // 最後のセルが2024-01-06であることを確認
-            expect(formatDate(result[result.length - 1].date)).toBe("2024-01-06");
+            expect(formatDate(requireCell(result[result.length - 1]).date)).toBe("2024-01-06");
         });
 
         it("年度指定あり - 閏年（366日）で2月29日を含むセルが生成される", () => {
@@ -192,8 +269,7 @@ describe("TimelineHeatmap", () => {
                 ],
             };
 
-            const heatmap = new TimelineHeatmap("#test-timeline-heatmap");
-            const result = heatmap.transformData(data.daily, 2024);
+            const result = createHeatmapCells(data.daily, 2024);
 
             // 2月29日のデータが存在することを確認
             const formatDate = (date: Date): string => {
@@ -227,8 +303,7 @@ describe("TimelineHeatmap", () => {
                 ],
             };
 
-            const heatmap = new TimelineHeatmap("#test-timeline-heatmap");
-            const result = heatmap.transformData(data.daily); // year パラメータなし
+            const result = createHeatmapCells(data.daily); // year パラメータなし
 
             // 年度全体より少ないセル数であることを確認
             expect(result.length).toBeLessThan(371);
@@ -241,10 +316,10 @@ describe("TimelineHeatmap", () => {
             };
 
             // 2024-03-15は金曜日なので、その週の日曜日は2024-03-10
-            expect(formatDate(result[0].date)).toBe("2024-03-10");
+            expect(formatDate(requireCell(result[0]).date)).toBe("2024-03-10");
 
             // 2024-03-20は水曜日なので、その週の土曜日は2024-03-23
-            expect(formatDate(result[result.length - 1].date)).toBe("2024-03-23");
+            expect(formatDate(requireCell(result[result.length - 1]).date)).toBe("2024-03-23");
 
             // 2週間分（14日）のセルが生成される
             expect(result.length).toBe(14);
@@ -259,8 +334,7 @@ describe("TimelineHeatmap", () => {
                 ],
             };
 
-            const heatmap = new TimelineHeatmap("#test-timeline-heatmap");
-            const result = heatmap.transformData(data.daily, 2024);
+            const result = createHeatmapCells(data.daily, 2024);
 
             const formatDate = (date: Date): string => {
                 const year = date.getFullYear();
@@ -286,8 +360,7 @@ describe("TimelineHeatmap", () => {
                 daily: [],
             };
 
-            const heatmap = new TimelineHeatmap("#test-timeline-heatmap");
-            const result = heatmap.transformData(data.daily, 2024);
+            const result = createHeatmapCells(data.daily, 2024);
 
             // 結果が空配列ではないことを確認（年度全体のセルが生成される）
             expect(result.length).toBeGreaterThan(0);
@@ -309,8 +382,7 @@ describe("TimelineHeatmap", () => {
                 daily: [],
             };
 
-            const heatmap = new TimelineHeatmap("#test-timeline-heatmap");
-            const result = heatmap.transformData(data.daily);
+            const result = createHeatmapCells(data.daily);
 
             // 結果が空配列であることを確認
             expect(result).toEqual([]);
@@ -326,12 +398,10 @@ describe("TimelineHeatmap", () => {
                 ],
             };
 
-            const heatmap = new TimelineHeatmap("#test-timeline-heatmap");
-
             // エラーがスローされないことを確認
-            expect(() => heatmap.transformData(data.daily, 2024)).not.toThrow();
+            expect(() => createHeatmapCells(data.daily, 2024)).not.toThrow();
 
-            const result = heatmap.transformData(data.daily, 2024);
+            const result = createHeatmapCells(data.daily, 2024);
 
             const formatDate = (date: Date): string => {
                 const year = date.getFullYear();
@@ -360,14 +430,13 @@ describe("TimelineHeatmap", () => {
 
             testYears.forEach(({ year, startDayOfWeek }) => {
                 it(`${year}年 - 1月1日が曜日${startDayOfWeek}の場合、正しい開始週が計算される`, () => {
-                    const heatmap = new TimelineHeatmap("#test-timeline-heatmap");
-                    const result = heatmap.transformData([], year);
+                    const result = createHeatmapCells([], year);
 
                     // 最初のセルが日曜日（weekday = 0）であることを確認
-                    expect(result[0].weekday).toBe(0);
+                    expect(requireCell(result[0]).weekday).toBe(0);
 
                     // 最初のセルの weekIndex が 0 であることを確認
-                    expect(result[0].weekIndex).toBe(0);
+                    expect(requireCell(result[0]).weekIndex).toBe(0);
 
                     // 1月1日のセルを検索
                     const formatDate = (date: Date): string => {
@@ -400,11 +469,10 @@ describe("TimelineHeatmap", () => {
 
             testYears.forEach(({ year, endDayOfWeek }) => {
                 it(`${year}年 - 12月31日が曜日${endDayOfWeek}の場合、正しい終了週が計算される`, () => {
-                    const heatmap = new TimelineHeatmap("#test-timeline-heatmap");
-                    const result = heatmap.transformData([], year);
+                    const result = createHeatmapCells([], year);
 
                     // 最後のセルが土曜日（weekday = 6）であることを確認
-                    expect(result[result.length - 1].weekday).toBe(6);
+                    expect(requireCell(result[result.length - 1]).weekday).toBe(6);
 
                     // 12月31日のセルを検索
                     const formatDate = (date: Date): string => {
@@ -426,8 +494,7 @@ describe("TimelineHeatmap", () => {
         describe("1件のみのデータ", () => {
             it("1件のみ + 年度指定あり - 年度全体が表示される", () => {
                 const data = [{ date: "2024-06-15", count: 5 }];
-                const heatmap = new TimelineHeatmap("#test-timeline-heatmap");
-                const result = heatmap.transformData(data, 2024);
+                const result = createHeatmapCells(data, 2024);
 
                 // 年度全体をカバーしていることを確認
                 expect(result.length).toBeGreaterThan(365);
@@ -447,8 +514,7 @@ describe("TimelineHeatmap", () => {
 
             it("1件のみ + 年度指定なし - その週のみ表示される", () => {
                 const data = [{ date: "2024-06-15", count: 5 }];
-                const heatmap = new TimelineHeatmap("#test-timeline-heatmap");
-                const result = heatmap.transformData(data);
+                const result = createHeatmapCells(data);
 
                 // 1週間分（7日）のセルが生成されることを確認
                 expect(result.length).toBe(7);

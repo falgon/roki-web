@@ -3,10 +3,11 @@
  * GitHub Contributions風のヒートマップを作成
  */
 
+import type { ScaleLinear } from "d3";
 import { createGroup, createSVG, createTooltip, hideTooltip, showTooltip } from "./base";
 
 // D3.jsのグローバル変数を宣言
-declare const d3: any;
+declare const d3: typeof import("d3");
 
 declare global {
     /**
@@ -38,13 +39,70 @@ const defaultHeatmapConfig: HeatmapConfig = {
 type YearData = YearlyTimeSeriesData;
 
 /**
+ * 日別カウントから表示する週全体のセルを生成する。入力データは変更しない。
+ */
+export function createHeatmapCells(dailyData: readonly DailyCount[], year?: number): HeatmapCell[] {
+    const sortedData = [...dailyData].sort(
+        (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+    );
+
+    let startDate: Date;
+    let endDate: Date;
+
+    if (year !== undefined) {
+        // 年度全体と、その両端を含む週を表示する
+        startDate = new Date(year, 0, 1);
+        endDate = new Date(year, 11, 31);
+    } else {
+        const first = sortedData[0];
+        const last = sortedData[sortedData.length - 1];
+        if (!first || !last) {
+            return [];
+        }
+        startDate = new Date(first.date);
+        endDate = new Date(last.date);
+    }
+
+    startDate.setDate(startDate.getDate() - startDate.getDay());
+    endDate.setDate(endDate.getDate() + (6 - endDate.getDay()));
+
+    // 同じ日付のカウントは合算する
+    const dataMap = new Map<string, number>();
+    for (const item of sortedData) {
+        const existingCount = dataMap.get(item.date) || 0;
+        dataMap.set(item.date, existingCount + item.count);
+    }
+
+    const heatmapData: HeatmapCell[] = [];
+    let weekIndex = 0;
+    const currentDate = new Date(startDate);
+
+    while (currentDate <= endDate) {
+        const dateStr = d3.timeFormat("%Y-%m-%d")(currentDate);
+        heatmapData.push({
+            date: new Date(currentDate),
+            count: dataMap.get(dateStr) || 0,
+            weekday: currentDate.getDay(),
+            weekIndex,
+        });
+
+        currentDate.setDate(currentDate.getDate() + 1);
+        if (currentDate.getDay() === 0) {
+            weekIndex++;
+        }
+    }
+
+    return heatmapData;
+}
+
+/**
  * タイムラインヒートマップクラス
  */
 export class TimelineHeatmap {
     private container: string;
     private config: HeatmapConfig;
-    private svg: any = null;
-    private tooltip: any = null;
+    private svg: ReturnType<typeof createSVG> | null = null;
+    private tooltip: ReturnType<typeof createTooltip> | null = null;
     private allYearData: YearData[] = [];
     private yearSelectorHandler: ((event: Event) => void) | null = null;
 
@@ -90,7 +148,7 @@ export class TimelineHeatmap {
      */
     private renderSingleData(data: TimeSeriesData, year?: number): void {
         // データを変換
-        const heatmapData = this.transformData(data.daily, year);
+        const heatmapData = createHeatmapCells(data.daily, year);
 
         if (heatmapData.length > 0) {
             const maxWeekIndex = d3.max(heatmapData, (d) => d.weekIndex) || 0;
@@ -135,8 +193,6 @@ export class TimelineHeatmap {
         };
         const getStrokeWidth = (count: number): number => strokeWidthScale(count);
 
-        // 週のラベルを取得
-        const _weeks = Array.from(new Set(heatmapData.map((d) => d.weekIndex)));
         const weekdays = ["日", "月", "火", "水", "木", "金", "土"];
 
         // 曜日ラベルを描画
@@ -173,7 +229,7 @@ export class TimelineHeatmap {
 
         // インタラクションを追加
         cells
-            .on("click", (_event, d) => {
+            .on("click", (_event: MouseEvent, d) => {
                 const dateStr = d3.timeFormat("%Y-%m-%d")(d.date);
                 const customEvent = new CustomEvent("heatmap-cell-click", {
                     detail: { date: dateStr },
@@ -181,7 +237,10 @@ export class TimelineHeatmap {
                 });
                 document.dispatchEvent(customEvent);
             })
-            .on("mouseover", (event, d) => {
+            .on("mouseover", (event: MouseEvent, d) => {
+                if (!(event.currentTarget instanceof SVGElement)) {
+                    return;
+                }
                 const baseStrokeWidth = getStrokeWidth(d.count);
                 d3.select(event.currentTarget)
                     .attr("stroke", "#000")
@@ -192,13 +251,16 @@ export class TimelineHeatmap {
                     showTooltip(this.tooltip, content, event);
                 }
             })
-            .on("mousemove", (event, d) => {
+            .on("mousemove", (event: MouseEvent, d) => {
                 const content = formatTooltipContent(d);
                 if (this.tooltip) {
                     showTooltip(this.tooltip, content, event);
                 }
             })
-            .on("mouseout", (event, d) => {
+            .on("mouseout", (event: MouseEvent, d) => {
+                if (!(event.currentTarget instanceof SVGElement)) {
+                    return;
+                }
                 const baseStrokeWidth = getStrokeWidth(d.count);
                 d3.select(event.currentTarget)
                     .attr("stroke", "#fff")
@@ -208,14 +270,20 @@ export class TimelineHeatmap {
                     hideTooltip(this.tooltip);
                 }
             })
-            .on("focus", (event, d) => {
+            .on("focus", (event: FocusEvent, d) => {
+                if (!(event.currentTarget instanceof SVGElement)) {
+                    return;
+                }
                 const baseStrokeWidth = getStrokeWidth(d.count);
                 d3.select(event.currentTarget)
                     .attr("stroke", "#000")
                     // フォーカス時は視覚的な枠を強調しつつ、元の段階的な太さを下回らないようにする
                     .attr("stroke-width", Math.max(baseStrokeWidth, 3));
             })
-            .on("blur", (event, d) => {
+            .on("blur", (event: FocusEvent, d) => {
+                if (!(event.currentTarget instanceof SVGElement)) {
+                    return;
+                }
                 const baseStrokeWidth = getStrokeWidth(d.count);
                 d3.select(event.currentTarget)
                     .attr("stroke", "#fff")
@@ -225,17 +293,20 @@ export class TimelineHeatmap {
                     hideTooltip(this.tooltip);
                 }
             })
-            .on("keydown", (event, d) => {
+            .on("keydown", (event: KeyboardEvent, d) => {
                 if (event.key === "Enter" || event.key === " " || event.key === "Spacebar") {
                     event.preventDefault();
 
-                    const target = event.currentTarget as SVGRectElement;
+                    const target = event.currentTarget;
+                    if (!(target instanceof SVGElement)) {
+                        return;
+                    }
                     const rect = target.getBoundingClientRect();
                     // キーボード操作時もマウスイベントに近い位置でツールチップを表示する
                     const syntheticEvent = {
                         pageX: window.scrollX + rect.x + rect.width / 2,
                         pageY: window.scrollY + rect.y + rect.height / 2,
-                    } as MouseEvent;
+                    };
 
                     const content = formatTooltipContent(d);
                     if (this.tooltip) {
@@ -249,102 +320,16 @@ export class TimelineHeatmap {
     }
 
     /**
-     * データを変換する
-     * @param dailyData 日別カウントデータ
-     * @param year 年度（指定された場合は年度全体を表示）
-     * @returns ヒートマップセルデータ
-     */
-    private transformData(dailyData: DailyCount[], year?: number): HeatmapCell[] {
-        // 日付でソート
-        const sortedData = dailyData.sort(
-            (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
-        );
-
-        // 空データの場合: year未指定時は空配列を返す
-        if (sortedData.length === 0 && year === undefined) {
-            return [];
-        }
-
-        // 開始日と終了日を決定
-        let startDate: Date;
-        let endDate: Date;
-
-        // 年度が指定されている場合は、その年の全日を対象にする
-        if (year !== undefined) {
-            // 年の最初の日（1月1日）
-            const yearStart = new Date(year, 0, 1);
-            // 年の最後の日（12月31日）
-            const yearEnd = new Date(year, 11, 31);
-
-            // 最初の日曜日を計算（年の開始日を含む週の日曜日）
-            startDate = new Date(yearStart);
-            startDate.setDate(startDate.getDate() - startDate.getDay());
-
-            // 最後の土曜日を計算（年の終了日を含む週の土曜日）
-            endDate = new Date(yearEnd);
-            endDate.setDate(endDate.getDate() + (6 - endDate.getDay()));
-        } else {
-            // 既存のロジック: データの範囲から計算
-            if (sortedData.length === 0) {
-                return [];
-            }
-
-            // 最初の日付と最後の日付を取得
-            const firstDate = new Date(sortedData[0].date);
-            const lastDate = new Date(sortedData[sortedData.length - 1].date);
-
-            // 最初の日曜日を計算
-            startDate = new Date(firstDate);
-            startDate.setDate(startDate.getDate() - startDate.getDay());
-
-            // 最後の土曜日を計算
-            endDate = new Date(lastDate);
-            endDate.setDate(endDate.getDate() + (6 - endDate.getDay()));
-        }
-
-        // データをMapに変換（重複データは合算）
-        const dataMap = new Map<string, number>();
-        for (const item of sortedData) {
-            const existingCount = dataMap.get(item.date) || 0;
-            dataMap.set(item.date, existingCount + item.count);
-        }
-
-        // ヒートマップデータを生成
-        const heatmapData: HeatmapCell[] = [];
-        let weekIndex = 0;
-        const currentDate = new Date(startDate);
-
-        while (currentDate <= endDate) {
-            const dateStr = d3.timeFormat("%Y-%m-%d")(currentDate);
-            const count = dataMap.get(dateStr) || 0;
-            const weekday = currentDate.getDay();
-
-            heatmapData.push({
-                date: new Date(currentDate),
-                count,
-                weekday,
-                weekIndex,
-            });
-
-            // 次の日に進む
-            currentDate.setDate(currentDate.getDate() + 1);
-
-            // 日曜日になったら週のインデックスを増やす
-            if (currentDate.getDay() === 0) {
-                weekIndex++;
-            }
-        }
-
-        return heatmapData;
-    }
-
-    /**
      * 凡例を追加する
      * @param g グループセレクション
      * @param colorScale カラースケール
      * @param maxCount 最大カウント
      */
-    private addLegend(g: any, colorScale: any, maxCount: number): void {
+    private addLegend(
+        g: ReturnType<typeof createGroup>,
+        colorScale: ScaleLinear<string, string>,
+        maxCount: number,
+    ): void {
         const legendData = [
             { label: "少", value: 0 },
             { label: "", value: maxCount * 0.25 },

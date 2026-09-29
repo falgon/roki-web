@@ -2,12 +2,13 @@
  * D3基盤モジュールのユニットテスト
  */
 
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
     calculateResponsiveSize,
     createCategoricalColorScale,
     createSequentialColorScale,
     defaultSVGConfig,
+    loadVisualizationData,
     showError,
 } from "../base";
 
@@ -15,6 +16,64 @@ describe("base module", () => {
     beforeEach(() => {
         // DOMをクリーンアップ
         document.body.innerHTML = "";
+    });
+
+    afterEach(() => {
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+        vi.unstubAllGlobals();
+    });
+
+    describe("loadVisualizationData", () => {
+        it.each(["network", "server"] as const)(
+            "%s エラーを1秒・2秒・4秒の間隔で再試行する",
+            async (failure) => {
+                vi.useFakeTimers();
+                const data: VisualizationData = {
+                    timeSeries: { daily: [] },
+                    tagStats: { tags: [] },
+                };
+                const fail = () =>
+                    failure === "network"
+                        ? Promise.reject(new TypeError("Failed to fetch"))
+                        : Promise.resolve(new Response("", { status: 503 }));
+                const fetchMock = vi
+                    .fn<typeof fetch>()
+                    .mockImplementationOnce(fail)
+                    .mockImplementationOnce(fail)
+                    .mockImplementationOnce(fail)
+                    .mockResolvedValueOnce(new Response(JSON.stringify(data)));
+                vi.stubGlobal("fetch", fetchMock);
+
+                const pending = loadVisualizationData("/data.json");
+                expect(fetchMock).toHaveBeenCalledTimes(1);
+                for (const [index, delay] of [1000, 2000, 4000].entries()) {
+                    await vi.advanceTimersByTimeAsync(delay - 1);
+                    expect(fetchMock).toHaveBeenCalledTimes(index + 1);
+                    await vi.advanceTimersByTimeAsync(1);
+                    expect(fetchMock).toHaveBeenCalledTimes(index + 2);
+                }
+
+                await expect(pending).resolves.toEqual(data);
+                expect(vi.getTimerCount()).toBe(0);
+            },
+        );
+
+        it("4回失敗した後は追加で再試行しない", async () => {
+            vi.useFakeTimers();
+            vi.spyOn(console, "error").mockImplementation(() => {});
+            const fetchMock = vi.fn<typeof fetch>().mockRejectedValue(new TypeError("offline"));
+            vi.stubGlobal("fetch", fetchMock);
+
+            const result = expect(loadVisualizationData("/data.json")).rejects.toMatchObject({
+                type: "network",
+            });
+            await vi.runAllTimersAsync();
+
+            await result;
+            expect(fetchMock).toHaveBeenCalledTimes(4);
+            expect(vi.getTimerCount()).toBe(0);
+        });
     });
 
     describe("defaultSVGConfig", () => {
