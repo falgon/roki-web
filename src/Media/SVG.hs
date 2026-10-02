@@ -38,7 +38,7 @@ execMmdc = liftIO . readCreateProcessWithExitCode (proc "npx" args) . T.unpack >
         args = ["mmdc", "-i", "-", "-e", "svg", "-o", "-"]
 
 styledSvg :: Monad m => [(String, T.Text)] -> SVGHtml m -> SVGHtml m
-styledSvg args svgHtml = figure_ [class_ "has-text-centered image"] $ do
+styledSvg args svgHtml = figure_ [class_ "has-text-centered image mermaid-diagram"] $ do
     svgHtml
     maybe mempty (figcaption_ [class_ "has-text-centered"] . toHtmlRaw) $ lookup "caption" args
 
