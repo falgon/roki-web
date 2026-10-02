@@ -1,6 +1,7 @@
 {
     "name": "roki-web",
     "type": "module",
+    "packageManager": "npm@10.9.9",
     "description": "roki web page",
     "version": "0.1.0",
     "license": "BSD-3-Clause",
