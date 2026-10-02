@@ -1,6 +1,7 @@
 {
     "name": "roki-web",
     "type": "module",
+    "packageManager": "npm@10.9.9",
     "description": "roki web page",
     "version": "0.1.0",
     "license": "BSD-3-Clause",
@@ -45,7 +46,7 @@
         "bulma": "^1.0.4",
         "d3": "^7.9.0",
         "mathjs": "^15.2.0",
-        "sass": "^1.104.1"
+        "sass": "^1.105.0"
     },
     "overrides": {
         "lodash-es": "4.18.1"
