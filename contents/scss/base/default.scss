@@ -63,6 +63,12 @@ body {
     font-family: 'Ubuntu Mono', monospace;
 }
 
+// Bulma's .label typography must not override Mermaid's measured SVG labels.
+figure.mermaid-diagram .label {
+    font-size: inherit;
+    font-weight: inherit;
+}
+
 a {
     -webkit-tap-highlight-color: rgba(0,0,0,0);
     cursor: pointer;
