@@ -22,7 +22,7 @@
         "esbuild": "^0.28.2",
         "happy-dom": "^20.14.5",
         "katex": "^0.18.9",
-        "playwright": "^1.63.0",
+        "playwright": "^1.64.0",
         "svgo": "^4.1.0",
         "terser": "^5.51.2",
         "tsx": "^4.23.15",
