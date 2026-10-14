@@ -117,7 +117,7 @@ in    [ { hotelCodeRaw = "FSH"
                   , makeNode
                       "ローズコートサイド"
                       [ makeStay "スーペリア" 3, makeStay "スーペリア・アルコーヴ" 2 ]
-                  , makeNode "ベイエリアサイド" [ makeStay "スーペリア・アルコーヴ" 2 ]
+                  , makeNode "ベイエリアサイド" [ makeStay "スーペリア・アルコーヴ" 3 ]
                   ]
               ]
         , hotelColorRaw = "#854454"
