@@ -17,12 +17,12 @@
         "@fortawesome/free-solid-svg-icons": "^7.3.1",
         "@types/d3": "^7.4.3",
         "@vitest/coverage-v8": "^5.0.3",
-        "@vitest/ui": "^5.0.0",
+        "@vitest/ui": "^5.0.5",
         "dotenv": "^18.0.5",
         "esbuild": "^0.28.2",
         "happy-dom": "^20.14.5",
         "katex": "^0.18.9",
-        "playwright": "^1.63.0",
+        "playwright": "^1.64.0",
         "svgo": "^4.1.0",
         "terser": "^5.51.2",
         "tsx": "^4.23.15",
@@ -46,7 +46,7 @@
         "bulma": "^1.0.4",
         "d3": "^7.9.0",
         "mathjs": "^15.2.0",
-        "sass": "^1.105.0"
+        "sass": "^1.105.1"
     },
     "overrides": {
         "lodash-es": "4.18.1"
