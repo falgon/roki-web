@@ -17,9 +17,14 @@ describe("Disney Experience Summary social links", () => {
             "https://www.instagram.com/ponchi.v/",
             "https://www.tiktok.com/@ponchi.v",
         ]);
+        expect(links.map((link) => link.getAttribute("aria-label"))).toEqual([
+            "ホーム",
+            "X (Twitter)",
+            "Instagram",
+            "TikTok",
+        ]);
 
         const tiktok = links[links.length - 1];
-        expect(tiktok?.getAttribute("aria-label")).toBe("TikTok");
         expect(tiktok?.querySelector("i.fab.fa-tiktok.fa-lg")?.getAttribute("aria-hidden")).toBe(
             "true",
         );
