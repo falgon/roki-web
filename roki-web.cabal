@@ -189,6 +189,7 @@ test-suite roki-web-test
       TestHelpers
       Utils.BaseSpec
       Utils.HakyllSpec
+      Vendor.FontAwesomeSpec
       Vendor.KaTeXSpec
       Paths_roki_web
   hs-source-dirs:
