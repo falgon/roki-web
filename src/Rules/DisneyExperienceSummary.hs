@@ -155,12 +155,10 @@ mdRule :: Snapshot
 mdRule ss pat = do
     wOpt <- asks pcWriterOpt
     katexRender <- asks pcKaTeXRender
-    faIcons <- asks pcFaIcons
     lift $ match pat $ compile $ do
         pandocCompilerWithTransformM readerOptions wOpt (walkM mermaidTransform)
             >>= modifyExternalLinkAttr
             >>= relativizeUrls
-            >>= FA.render faIcons
             >>= katexRender
             >>= saveSnapshot ss
 
@@ -351,7 +349,7 @@ rules = do
                         >>= applyAsTemplate disneyExperienceSummaryCtx
                         >>= loadAndApplyTemplate rootTemplate disneyExperienceSummaryCtx
                         >>= relativizeUrls
-                        >>= FA.render faIcons
+                        >>= FA.renderWithSprite faIcons
 
         createRedirects [
             (fromFilePath $ joinPath ["disney_experience_summary", "index.html"], joinPath ["/", "disney_experience_summary", "jp.html"]),
