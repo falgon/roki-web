@@ -3,7 +3,7 @@
     <head>
         <meta charset="utf-8" />
         <meta http-equiv="x-ua-compatible" content="ie=edge" />
-        <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no" />
+        <meta name="viewport" content="width=device-width,initial-scale=1" />
         <meta content="$author-name$" name="author" />
         $if(description)$
         <meta content="$description$" name="description" />
@@ -13,6 +13,9 @@
         <meta property="og:description" content="$site-description$" />
         $endif$
         <meta content="Hakyll" name="generator" />
+        $if(robots)$
+        <meta name="robots" content="$robots$" />
+        $endif$
         <meta property="twitter:card" content="summary_large_image" />
         <meta property="twitter:site" content="@$author-twitter$" />
         <meta property="twitter:creator" content="$author-twitter$" />
