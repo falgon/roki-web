@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Rules.TopPage (rules, contributionsTypeConfigPath) where
+module Rules.TopPage (rules, notFoundRules, contributionsTypeConfigPath) where
 
 import           Control.Monad.Extra  (mconcatMapM)
 import           Control.Monad.Reader (ReaderT (..), asks)
@@ -113,4 +113,19 @@ rules bcs = do
         sitemapIdent = fromFilePath $ joinPath [contentsRoot, "about", "sitemap.md"]
         updatesIdent = fromFilePath $ joinPath [contentsRoot, "about", "updates.md"]
         indexPath = fromGlob $ joinPath [contentsRoot, "pages", "index.html"]
-        rootTemplate = fromFilePath $ joinPath [contentsRoot, "templates", "site", "default.html"]
+
+notFoundRules :: Rules ()
+notFoundRules = match notFoundPath $ do
+    route $ constRoute "404.html"
+    compile $ getResourceBody
+        >>= applyAsTemplate ctx
+        >>= loadAndApplyTemplate rootTemplate ctx
+    where
+        notFoundPath = fromGlob $ joinPath [contentsRoot, "pages", "404.html"]
+        ctx = constField "title" ("404 ページが見つかりません - " <> siteName)
+            <> constField "robots" "noindex"
+            <> siteCtx
+            <> bodyField "body"
+
+rootTemplate :: Identifier
+rootTemplate = fromFilePath $ joinPath [contentsRoot, "templates", "site", "default.html"]
