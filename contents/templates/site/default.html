@@ -13,6 +13,9 @@
         <meta property="og:description" content="$site-description$" />
         $endif$
         <meta content="Hakyll" name="generator" />
+        $if(robots)$
+        <meta name="robots" content="$robots$" />
+        $endif$
         <meta property="twitter:card" content="summary_large_image" />
         <meta property="twitter:site" content="@$author-twitter$" />
         <meta property="twitter:creator" content="$author-twitter$" />
