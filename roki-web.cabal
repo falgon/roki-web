@@ -179,6 +179,7 @@ test-suite roki-web-test
       Config.RegexUtilsSpec
       Config.SiteSpec
       Config.TopPageSpec
+      Contexts.BlogSpec
       Data.Disney.Experience.GeneratorSpec
       Data.Disney.ExperienceSpec
       Data.Disney.HotelStaySpec
@@ -188,6 +189,7 @@ test-suite roki-web-test
       TestHelpers
       Utils.BaseSpec
       Utils.HakyllSpec
+      Vendor.FontAwesomeSpec
       Vendor.KaTeXSpec
       Paths_roki_web
   hs-source-dirs:
