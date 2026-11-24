@@ -35,6 +35,10 @@
         <meta property="twitter:image" content="https://roki.dev/images/ogp/default.png" />
         $endif$
         <link rel="shortcut icon" href="/images/avator/favicon.ico" />
+        $if(profile-srcset)$
+        <link rel="preload" as="image" type="image/webp" fetchpriority="high"
+            imagesrcset="$profile-srcset$" imagesizes="$profile-sizes$" />
+        $endif$
         
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
