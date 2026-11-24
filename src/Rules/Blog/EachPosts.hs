@@ -41,18 +41,20 @@ build faIcons ctx = do
 
     eachPostsSeries $ \s -> do
         route $ gsubRoute (contentsRoot <> "/") (const mempty) `composeRoutes` setExtension "html"
-        compile $ pandocCompilerWithTransformM readerOptions wOptions
-            (walkM mermaidTransform >=> return . injectTableOfContents)
-            >>= absolutizeUrls
-            >>= saveSnapshot feedContent
-            >>= katexRender
-            >>= saveSnapshot cs
-            >>= loadAndApplyTemplate (fromFilePath $ tmBlogRoot </> "post.html") (s <> giscusCtx)
-            >>= appendFooter t defaultTimeLocale' timeZoneJST
-            >>= loadAndApplyTemplate (fromFilePath $ tmBlogRoot </> "default.html") ctx
-            >>= modifyExternalLinkAttr
-            >>= relativizeUrls
-            >>= FA.render faIcons
+        compile $ do
+            post <- pandocCompilerWithTransformM readerOptions wOptions
+                (walkM mermaidTransform >=> return . injectTableOfContents)
+                >>= absolutizeUrls
+                >>= saveSnapshot feedContent
+            metaCtx <- BlogCtx.postMetaCtx post
+            katexRender post
+                >>= saveSnapshot cs
+                >>= loadAndApplyTemplate (fromFilePath $ tmBlogRoot </> "post.html") (s <> giscusCtx)
+                >>= appendFooter t defaultTimeLocale' timeZoneJST
+                >>= loadAndApplyTemplate (fromFilePath $ tmBlogRoot </> "default.html") (metaCtx <> ctx)
+                >>= modifyExternalLinkAttr
+                >>= relativizeUrls
+                >>= FA.render faIcons
 
     ep <- asks blogEntryFilesPattern
     lift $ match ep $ do

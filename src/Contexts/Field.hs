@@ -8,7 +8,7 @@ module Contexts.Field (
   , breadcrumbField
   , tagsField'
   , tagCloudField'
-  , descriptionField
+  , postDescription
   , imageField
   , ogImageField
   , yearMonthArchiveField
@@ -21,21 +21,23 @@ import           Data.Aeson              (Value, encode, object, (.=))
 import qualified Data.ByteString.Lazy    as BL
 import           Data.Function           (on)
 import           Data.Functor            ((<&>))
-import           Data.List               (inits, intercalate, isPrefixOf,
-                                          isSuffixOf, sortBy)
+import           Data.List               (inits, isPrefixOf, isSuffixOf, sortBy)
 import           Data.List.Extra         (mconcatMap)
 import           Data.Maybe              (catMaybes, fromMaybe)
 import qualified Data.Text               as T
 import qualified Data.Text.Lazy          as TL
 import qualified Data.Text.Lazy.Encoding as TLE
 import           Data.Time.Format        (TimeLocale (..), formatTime)
-import           Data.Time.LocalTime     (TimeZone (..), utcToLocalTime)
+import           Data.Time.LocalTime     (TimeZone (..), utcToLocalTime,
+                                          utcToZonedTime)
 import           Hakyll                  hiding (isExternal)
 import           Lucid.Base              (Html, ToHtml (..), renderText,
                                           renderTextT, toHtml)
 import           Lucid.Html5
-import           System.FilePath         (splitDirectories)
+import           System.FilePath         (joinPath, splitDirectories,
+                                          takeDirectory, takeFileName, (</>))
 import qualified Text.HTML.TagSoup       as TS
+import qualified Text.HTML.TagSoup.Tree  as TT
 
 import           Archives                (Archives (..), MonthlyArchives,
                                           YearlyArchives)
@@ -54,21 +56,24 @@ localDateField locale zone key format = field key $
     fmap (formatTime locale format . utcToLocalTime zone) . getItemUTC locale . itemIdentifier
 
 iso8601DateField :: String -> Context String
-iso8601DateField key = localDateField defaultTimeLocale' timeZoneJST key "%Y-%m-%dT%H:%M:%S%Ez"
+iso8601DateField key = field key $ publishedTime . itemIdentifier
+
+publishedTime :: Identifier -> Compiler String
+publishedTime = fmap formatDate . getItemUTC defaultTimeLocale'
+  where
+    formatDate = formatTime defaultTimeLocale' "%Y-%m-%dT%H:%M:%S%Ez" . utcToZonedTime timeZoneJST
 
 -- | JSON-LD Article Schema (BlogPosting) を生成するフィールド
 -- schema.org仕様に準拠したJSON-LDを出力
-jsonLdArticleField :: String -> Context String
-jsonLdArticleField key = field key $ \item -> do
+jsonLdArticleField :: String -> String -> Context String
+jsonLdArticleField key description = field key $ \item -> do
     -- メタデータからタイトルと更新日を取得
     metadata <- getMetadata (itemIdentifier item)
     let mTitle = lookupString "title" metadata
         mUpdated = lookupString "updated" metadata
 
     -- 日付をISO 8601形式で取得
-    let iso8601Format = "%Y-%m-%dT%H:%M:%S%Ez"
-        formatDate = formatTime defaultTimeLocale' iso8601Format . utcToLocalTime timeZoneJST
-    publishedDate <- formatDate <$> getItemUTC defaultTimeLocale' (itemIdentifier item)
+    publishedDate <- publishedTime (itemIdentifier item)
 
     -- dateModifiedはupdatedメタデータがあればそれを使用、なければpublishedDateと同じ
     let dateModified = fromMaybe publishedDate mUpdated
@@ -77,11 +82,7 @@ jsonLdArticleField key = field key $ \item -> do
     mRoute <- getRoute (itemIdentifier item)
     let articleUrl = maybe "" ((baseUrl <>) . toUrl) mRoute
 
-    -- リソースボディを1回だけ取得してパフォーマンス改善
     resourceBody <- itemBody <$> getResourceBody
-
-    -- 説明文を取得（最初の150文字）
-    let description = take 150 $ concat $ lines resourceBody
 
     -- 画像URLを取得（なければデフォルト画像）
     let defaultImage = baseUrl <> "/images/avator/prof1000x1000.png"
@@ -92,7 +93,7 @@ jsonLdArticleField key = field key $ \item -> do
 
     case mTitle of
         Nothing -> noResult $ "Field " ++ key ++ ": title not found"
-        Just title -> return $ TL.unpack $ TLE.decodeUtf8 $ encode $ object
+        Just title -> return $ renderJsonLd $ object
             [ "@context" .= ("https://schema.org" :: String)
             , "@type" .= ("BlogPosting" :: String)
             , "headline" .= title
@@ -115,6 +116,9 @@ jsonLdArticleField key = field key $ \item -> do
             , "description" .= description
             , "url" .= articleUrl
             ]
+
+renderJsonLd :: Value -> String
+renderJsonLd = TL.unpack . TL.replace "<" "\\u003c" . TLE.decodeUtf8 . encode
 
 -- | JSON-LD Person Schema を生成するフィールド
 -- サイト著者の構造化データを出力
@@ -166,36 +170,28 @@ mkListItem pos name url = object
     , "item" .= url
     ]
 
--- | パスセグメントからパンくず要素のリストを構築
--- ホーム要素を先頭に追加し、各セグメントに累積的な URL を設定
-buildBreadcrumbs :: String -> String -> [String] -> [Value]
-buildBreadcrumbs base finalTitle segments =
-    homeItem : zipWith3 mkListItem [2 ..] names urls
-  where
-    homeItem = mkListItem 1 "ホーム" base
-    names = init segments ++ [finalTitle]
-    urls = map ((base <>) . ("/" <>) . intercalate "/") $ tail $ inits segments
-
 -- | JSON-LD BreadcrumbList スキーマを生成するフィールド
--- パス構造から階層的なパンくずリストを構築し、schema.org 仕様に準拠した JSON-LD を出力
 breadcrumbField :: String -> Context String
-breadcrumbField key = field key $ \item ->
-    getRoute (itemIdentifier item) >>= \mRoute ->
-        case mRoute of
-            Nothing -> noResult $ "Field " ++ key ++ ": route not found"
-            Just route ->
-                let segments = filter (not . null) $ splitDirectories route
-                in case segments of
-                    [] -> noResult $ "Field " ++ key ++ ": empty route"
-                    _ -> do
-                        metadata <- getMetadata (itemIdentifier item)
-                        let title = fromMaybe (last segments) $ lookupString "title" metadata
-                            breadcrumbs = buildBreadcrumbs baseUrl title segments
-                        return $ TL.unpack $ TLE.decodeUtf8 $ encode $ object
-                            [ "@context" .= ("https://schema.org" :: String)
-                            , "@type" .= ("BreadcrumbList" :: String)
-                            , "itemListElement" .= breadcrumbs
-                            ]
+breadcrumbField key = field key $ \item -> do
+    let ident = itemIdentifier item
+    mRoute <- getRoute ident
+    case mRoute of
+        Nothing -> noResult $ "Field " ++ key ++ ": route not found"
+        Just route -> do
+            let parents = drop 1 $ inits $ splitDirectories $ takeDirectory route
+                pageUrl = absoluteUrl route
+            archives <- filter ((/= pageUrl) . snd) . catMaybes <$> mapM archiveCrumb parents
+            title <- fromMaybe (takeFileName route) <$> getMetadataField ident "title"
+            let crumbs = ("ホーム", baseUrl) : archives ++ [(title, pageUrl)]
+            return $ renderJsonLd $ object
+                [ "@context" .= ("https://schema.org" :: String)
+                , "@type" .= ("BreadcrumbList" :: String)
+                , "itemListElement" .= zipWith (uncurry . mkListItem) [1 ..] crumbs
+                ]
+  where
+    absoluteUrl = (baseUrl <>) . toUrl
+    archiveCrumb parts = fmap ((,) (last parts) . absoluteUrl)
+        <$> getRoute (fromFilePath $ joinPath parts </> "index.html")
 
 isExternal :: String -> Bool
 isExternal url = "http://" `isPrefixOf` url || "https://" `isPrefixOf` url
@@ -232,9 +228,27 @@ ogImageField key defaultImage = field key $ \item ->
     ensureLeadingSlash s@('/':_) = s
     ensureLeadingSlash s         = '/' : s
 
-descriptionField :: String -> Int -> Context String
-descriptionField key len = field key $ const $
-    take len . concat . lines . itemBody <$> getResourceBody
+postDescription :: Item String -> Compiler String
+postDescription item = do
+    explicit <- getMetadataField (itemIdentifier item) "description"
+    let provided = maybe [] words explicit
+        description = if null provided then words (bodyText $ itemBody item) else provided
+    pure $ take 150 $ unwords description
+  where
+    bodyText = concatMap nodeText . TT.tagTree . TS.canonicalizeTags . TS.parseTags
+    nodeText (TT.TagLeaf (TS.TagText value)) = value
+    nodeText (TT.TagLeaf (TS.TagOpen name _))
+        | name `elem` ["br", "hr"] = " "
+    nodeText (TT.TagBranch name attrs children)
+        | name `elem` ["script", "style"] = " "
+        | name == "div" && lookup "id" attrs == Just "toc" = " "
+        | name `elem` textBlocks = " " <> content <> " "
+        | otherwise = content
+      where
+        content = concatMap nodeText children
+    nodeText _ = ""
+    textBlocks = ["blockquote", "div", "h1", "h2", "h3", "h4", "h5", "h6",
+                  "li", "p", "pre", "td", "th"]
 
 tagsField' :: String -> Tags -> Context a
 tagsField' key tags = field key $ \item -> do
