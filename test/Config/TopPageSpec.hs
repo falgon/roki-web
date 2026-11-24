@@ -3,11 +3,11 @@ module Config.TopPageSpec (spec) where
 
 import           Config.TopPage
 import           Hakyll
-import qualified Rules.TopPage      as TopPage
-import           System.Directory   (copyFile, createDirectoryIfMissing)
-import           System.FilePath    (takeDirectory, (</>))
+import qualified Rules.TopPage    as TopPage
+import           System.Directory (copyFile, createDirectoryIfMissing)
+import           System.FilePath  (takeDirectory, (</>))
 import           Test.Hspec
-import           TestHelpers        (testCompile, withTestSite)
+import           TestHelpers      (testCompile, withTestSite)
 
 spec :: Spec
 spec = do
