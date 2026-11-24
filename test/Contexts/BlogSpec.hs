@@ -1,21 +1,21 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Contexts.BlogSpec (spec) where
 
-import           Config.Program         (readerOptions, tmBlogRoot,
-                                         writerPreviewOptions)
-import           Config.Site            (baseUrl)
-import           Contexts.Blog          (postMetaCtx)
-import           Contexts.Core          (siteCtx)
-import           Contexts.Field         (breadcrumbField)
-import qualified Data.Aeson             as A
-import qualified Data.Aeson.KeyMap      as KM
-import qualified Data.Text              as T
-import qualified Data.Text.Encoding     as TE
+import           Config.Program     (readerOptions, tmBlogRoot,
+                                     writerPreviewOptions)
+import           Config.Site        (baseUrl)
+import           Contexts.Blog      (postMetaCtx)
+import           Contexts.Core      (siteCtx)
+import           Contexts.Field     (breadcrumbField)
+import qualified Data.Aeson         as A
+import qualified Data.Aeson.KeyMap  as KM
+import qualified Data.Text          as T
+import qualified Data.Text.Encoding as TE
 import           Hakyll
-import           System.FilePath        ((</>))
+import           System.FilePath    ((</>))
 import           Test.Hspec
-import           TestHelpers            (testCompile, withTestSite)
-import qualified Text.HTML.TagSoup      as TS
+import           TestHelpers        (testCompile, withTestSite)
+import qualified Text.HTML.TagSoup  as TS
 
 type Page = [TS.Tag String]
 

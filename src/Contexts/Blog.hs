@@ -17,7 +17,8 @@ module Contexts.Blog (
 
 import           Contexts.Field       (breadcrumbField, imageField,
                                        iso8601DateField, jsonLdArticleField,
-                                       ogImageField, postDescription, tagsField')
+                                       ogImageField, postDescription,
+                                       tagsField')
 import           Control.Monad.Extra  (ifM)
 import           Control.Monad.Reader (asks, lift)
 import qualified Data.Text            as T

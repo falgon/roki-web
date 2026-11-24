@@ -4,7 +4,7 @@ module Contexts.Field.RokiLog.GAdsense (
   , gAdSenseFooter
 ) where
 
-import           Lucid.Base (Html)
+import           Lucid.Base  (Html)
 import           Lucid.Html5
 
 gAdSenseBeforeContentBody :: Html ()
