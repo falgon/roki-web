@@ -11,12 +11,13 @@ module Contexts.Blog (
   , giscus
   , katexJsCtx
   , postCtx
+  , postMetaCtx
   , listCtx
 ) where
 
-import           Contexts.Field       (breadcrumbField, descriptionField,
-                                       imageField, jsonLdArticleField,
-                                       ogImageField, tagsField')
+import           Contexts.Field       (breadcrumbField, imageField,
+                                       iso8601DateField, jsonLdArticleField,
+                                       ogImageField, postDescription, tagsField')
 import           Control.Monad.Extra  (ifM)
 import           Control.Monad.Reader (asks, lift)
 import qualified Data.Text            as T
@@ -24,6 +25,7 @@ import qualified Data.Text.Lazy       as TL
 import           Hakyll
 import           Lucid.Base           (Html, ToHtml (..), renderText, toHtml)
 import           Lucid.Html5
+import qualified Text.HTML.TagSoup    as TS
 
 import           Config.Blog          (BlogConfig (..))
 import           Config.Site          (GSuite (..), gSuiteConf)
@@ -101,16 +103,27 @@ postCtx tags = do
     mconcatM [
         pure $ dateCtx
       , pure $ tagsField' "tags" tags
-      , pure $ descriptionField "description" 150
       , pure $ imageField "image"
       , pure $ ogImageField "og-image" defaultOgImage
-      , pure $ jsonLdArticleField "json-ld-article"
       , pure $ breadcrumbField "json-ld-breadcrumb"
       , pure $ siteCtx
       , pure $ jsPathCtx
       , pure $ defaultContext
       , katexJsCtx
       ]
+
+postMetaCtx :: Item String -> Compiler (Context String)
+postMetaCtx item = do
+    summary <- postDescription item
+    tags <- getTags (itemIdentifier item)
+    let tagCtx = field "article-tag" $ pure . TS.escapeHTML . itemBody
+    pure $ mconcat
+        [ boolField "is-blog-post" (const True)
+        , constField "description" $ TS.escapeHTML summary
+        , iso8601DateField "article-published-time"
+        , listField "article-tags" tagCtx $ pure $ map (Item $ itemIdentifier item) tags
+        , jsonLdArticleField "json-ld-article" summary
+        ]
 
 listCtx :: Monad m
     => BlogConfReader n m (Context String)
