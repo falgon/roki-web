@@ -1,5 +1,4 @@
-@use "bulma/versions/bulma-no-dark-mode" as bl;
-@use "bulma/sass/helpers";
+@use "base/bulma" as bl;
 @use "base/colors" as c;
 
 @font-face  {
@@ -141,7 +140,6 @@ ul.is-unstyled {
 }
 
 .blured-my-prof {
-    content: url(../images/avator/prof1000x1000.png);
     margin-top: 27px;
     border-radius: 10px;
 }
@@ -208,7 +206,6 @@ span.both-lined:after {
 }
 
 .footer-dec {
-    content: url(../images/footer_dec.svg);
     max-width: 500px;
 }
 

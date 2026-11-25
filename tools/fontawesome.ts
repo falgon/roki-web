@@ -1,25 +1,23 @@
 #!/usr/bin/env tsx
 
-import { icon } from "@fortawesome/fontawesome-svg-core";
-import * as freeBrandsSvgIcons from "@fortawesome/free-brands-svg-icons";
-import * as freeSolidSvgIcons from "@fortawesome/free-solid-svg-icons";
+import { type AbstractElement, icon } from "@fortawesome/fontawesome-svg-core";
+import { fab } from "@fortawesome/free-brands-svg-icons";
+import { fas } from "@fortawesome/free-solid-svg-icons";
 
-const pkgs = [
-    freeBrandsSvgIcons,
-    freeSolidSvgIcons
-];
+const icons: Record<string, Record<string, AbstractElement>> = {};
+for (const [prefix, pack] of Object.entries({ fab, fas })) {
+    const names: Record<string, AbstractElement> = {};
+    for (const definition of new Set(Object.values(pack))) {
+        const [svg] = icon(definition).abstract;
+        if (!svg) continue;
 
-interface IconObject {
-    [prefix: string]: {
-        [iconName: string]: any;
-    };
-}
-
-const obj: IconObject = {};
-for (const p of pkgs) {
-    obj[p.prefix] = {};
-    for (const i of Object.values(p[p.prefix])) {
-        obj[p.prefix][(i as any).iconName] = icon(i as any).abstract[0];
+        names[definition.iconName] = svg;
+        for (const alias of definition.icon[2]) {
+            if (typeof alias === "string") {
+                names[alias] = svg;
+            }
+        }
     }
+    icons[prefix] = names;
 }
-process.stdout.write(JSON.stringify(obj)); 
+process.stdout.write(JSON.stringify(icons));

@@ -1,0 +1,59 @@
+/*! bulma.io v1.0.4 | MIT License | github.com/jgthms/bulma */
+// Preserve the upstream module order for the light-only build.
+@forward "bulma/sass/utilities";
+@use "bulma/sass/base";
+@use "bulma/sass/elements/box";
+@use "bulma/sass/elements/button";
+@use "bulma/sass/elements/content";
+@use "bulma/sass/elements/delete";
+@use "bulma/sass/elements/icon";
+@use "bulma/sass/elements/image";
+@use "bulma/sass/elements/notification";
+@use "bulma/sass/elements/progress";
+@use "bulma/sass/elements/table";
+@use "bulma/sass/elements/tag";
+@use "bulma/sass/elements/title";
+@use "bulma/sass/form";
+@use "bulma/sass/components";
+@use "bulma/sass/grid/columns";
+@use "bulma/sass/layout/container";
+@use "bulma/sass/layout/footer";
+@use "bulma/sass/layout/level";
+@use "bulma/sass/layout/media";
+@use "bulma/sass/layout/section";
+@use "bulma/sass/base/skeleton";
+@use "bulma/sass/helpers/flexbox";
+@use "bulma/sass/helpers/float";
+@use "bulma/sass/helpers/position";
+@use "bulma/sass/helpers/spacing";
+@use "bulma/sass/helpers/typography";
+@use "bulma/sass/helpers/visibility";
+@use "bulma/sass/helpers/other";
+@use "bulma/sass/themes/light";
+@use "bulma/sass/themes/setup";
+
+// Only the color helpers used by the site (bulma/sass/helpers/color emits ~160KB).
+.has-text-light {
+    color: hsl(var(--bulma-light-h), var(--bulma-light-s), var(--bulma-light-l)) !important;
+}
+
+a.has-text-light,
+button.has-text-light {
+    &:hover,
+    &:focus-visible {
+        color: hsl(var(--bulma-light-h), var(--bulma-light-s), calc(var(--bulma-light-l) + var(--bulma-hover-color-l-delta))) !important;
+    }
+
+    &:active {
+        color: hsl(var(--bulma-light-h), var(--bulma-light-s), calc(var(--bulma-light-l) + var(--bulma-active-color-l-delta))) !important;
+    }
+}
+
+.has-text-grey {
+    color: hsl(221, 14%, 48%) !important;
+}
+
+:root {
+    @include light.light-theme;
+    @include setup.setup-theme;
+}

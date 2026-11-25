@@ -196,7 +196,7 @@ diaryConf = B.BlogConfig {
   , B.blogPrevNextTitleMaxNum = 6
   , B.blogFeedRecentNum = 20
   , B.blogIsPreview = False
-  , B.blogHeaderAdditional = RokiDiary.gAdSenseHeader
+  , B.blogHeaderAdditional = mempty
   , B.blogBeforeContentBodyAdditional = RokiDiary.gAdSenseBeforeContentBody
   , B.blogFooterAdditional = RokiDiary.gAdSenseFooter
   , B.blogTagBuilder = AB.buildTags
@@ -254,6 +254,7 @@ main = do
           }
         mapM_ (runReaderT $ Blog.rules faIcons) blogConfs
         mapM_ (flip runReaderT pageConf) [TopPage.rules blogConfs, Resume.rules, DisneyExperienceSummary.rules]
+        TopPage.notFoundRules
         mapM_ (flip match (route idRoute >> compile copyFileCompiler)) ["CNAME", "ads.txt", "robots.txt"]
         match (fromString $ joinPath ["contents", "templates", "**"]) $
             compile templateBodyCompiler
