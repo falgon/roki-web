@@ -45,7 +45,7 @@
         "@mermaid-js/mermaid-cli": "^12.2.0",
         "bulma": "^1.0.4",
         "d3": "^7.9.2",
-        "mathjs": "^15.2.0",
+        "mathjs": "^15.3.0",
         "sass": "^1.108.2"
     },
     "overrides": {
