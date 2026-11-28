@@ -201,7 +201,10 @@ export class DisneyTabManager {
         }
 
         if (targetIndex !== null) {
-            this.switchToTab(this.tabs[targetIndex]);
+            const targetTab = this.tabs[targetIndex];
+            if (targetTab) {
+                this.switchToTab(targetTab);
+            }
         }
     }
 

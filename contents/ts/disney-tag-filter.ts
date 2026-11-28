@@ -1,10 +1,3 @@
-// Window型の拡張
-declare global {
-    interface Window {
-        isPreview?: boolean;
-    }
-}
-
 // HTMLエスケープ関数
 const escapeHtml = (text: string): string => {
     const div = document.createElement("div");
@@ -540,15 +533,7 @@ const initLoadingScreen = (): void => {
     }, 15000);
 };
 
-declare global {
-    interface TagButton extends HTMLElement {
-        getAttribute(name: string): string | null;
-    }
-
-    interface LogEntry extends HTMLElement {
-        getAttribute(name: string): string | null;
-    }
-}
+type TagButton = HTMLElement;
 
 interface SlideshowState {
     slides: HTMLButtonElement[];
@@ -681,6 +666,7 @@ const initializeLogImageSlideshows = (): void => {
         modal.classList.add("is-active");
         modal.setAttribute("aria-hidden", "false");
         document.body.style.overflow = "hidden";
+        modalCloseBtn?.focus();
     };
 
     const closeModal = (): void => {
@@ -689,6 +675,7 @@ const initializeLogImageSlideshows = (): void => {
         modal.setAttribute("aria-hidden", "true");
         document.body.style.overflow = "";
         if (activeModalSlideshow) {
+            activeModalSlideshow.slides[activeModalSlideshow.currentIndex]?.focus();
             activeModalSlideshow.startAutoplay();
         }
         activeModalSlideshow = null;
@@ -726,7 +713,8 @@ const initializeLogImageSlideshows = (): void => {
             const normalizedIndex = ((startIndex % total) + total) % total;
             for (let offset = 0; offset < total; offset += 1) {
                 const candidate = (normalizedIndex + offset) % total;
-                if (isSlideAvailable(slides[candidate])) {
+                const candidateSlide = slides[candidate];
+                if (candidateSlide && isSlideAvailable(candidateSlide)) {
                     return candidate;
                 }
             }
@@ -739,10 +727,6 @@ const initializeLogImageSlideshows = (): void => {
 
         const isSlideLoaded = (slide: HTMLButtonElement): boolean => {
             return slide.dataset.imageLoaded === "true";
-        };
-
-        const _isSlideReady = (slide: HTMLButtonElement): boolean => {
-            return isSlideLoaded(slide) || slide.dataset.imageLoadFailed === "true";
         };
 
         const slideshow: SlideshowState = {
@@ -763,9 +747,8 @@ const initializeLogImageSlideshows = (): void => {
                     });
                     slideshow.dots.forEach((dot) => {
                         dot.classList.remove("is-active");
-                        dot.setAttribute("aria-selected", "false");
+                        dot.removeAttribute("aria-current");
                         dot.hidden = true;
-                        dot.tabIndex = -1;
                     });
                     if (prevButton) prevButton.style.display = "none";
                     if (nextButton) nextButton.style.display = "none";
@@ -784,11 +767,15 @@ const initializeLogImageSlideshows = (): void => {
 
                 slideshow.dots.forEach((dot, dotIndex) => {
                     const isActive = dotIndex === slideshow.currentIndex;
-                    const isAvailable = isSlideAvailable(slideshow.slides[dotIndex]);
+                    const slideForDot = slideshow.slides[dotIndex];
+                    const isAvailable = slideForDot ? isSlideAvailable(slideForDot) : false;
                     dot.classList.toggle("is-active", isActive);
-                    dot.setAttribute("aria-selected", String(isActive));
+                    if (isActive) {
+                        dot.setAttribute("aria-current", "true");
+                    } else {
+                        dot.removeAttribute("aria-current");
+                    }
                     dot.hidden = !isAvailable;
-                    dot.tabIndex = isActive && isAvailable ? 0 : -1;
                 });
 
                 const availableCount = getAvailableSlidesCount();
@@ -799,7 +786,11 @@ const initializeLogImageSlideshows = (): void => {
             },
             startAutoplay: (): void => {
                 slideshow.stopAutoplay();
-                if (getAvailableSlidesCount() <= 1 || isModalOpen()) {
+                if (
+                    getAvailableSlidesCount() <= 1 ||
+                    isModalOpen() ||
+                    root.contains(document.activeElement)
+                ) {
                     return;
                 }
                 slideshow.autoplayTimer = setInterval((): void => {
@@ -971,10 +962,24 @@ const initializeLogImageSlideshows = (): void => {
     modalNextBtn?.addEventListener("dblclick", suppressDoubleClick);
     modalImage.addEventListener("dblclick", suppressDoubleClick);
 
+    const modalButtons = [modalCloseBtn, modalPrevBtn, modalNextBtn].filter(
+        (button) => button !== null,
+    );
     document.addEventListener("keydown", (event: KeyboardEvent): void => {
         if (!isModalOpen()) return;
         if (event.key === "Escape") {
+            event.preventDefault();
             closeModal();
+        } else if (event.key === "Tab") {
+            const first = modalButtons[0];
+            const last = modalButtons[modalButtons.length - 1];
+            if (event.shiftKey && document.activeElement === first) {
+                event.preventDefault();
+                last?.focus();
+            } else if (!event.shiftKey && document.activeElement === last) {
+                event.preventDefault();
+                first?.focus();
+            }
         } else if (event.key === "ArrowLeft") {
             moveModalImage(-1);
         } else if (event.key === "ArrowRight") {
@@ -1059,6 +1064,7 @@ const initializeTagButtons = (
                     selectedTags.add(clickedTag);
                 }
 
+                this.setAttribute("aria-pressed", String(selectedTags.has(clickedTag)));
                 updateSelectedTagsDisplay();
                 filterLogEntries();
             }
@@ -1172,6 +1178,7 @@ if (typeof document !== "undefined") {
             for (const btn of Array.from(tagFilterButtons)) {
                 btn.classList.remove("active");
                 btn.classList.add("is-outlined");
+                btn.setAttribute("aria-pressed", "false");
             }
 
             updateSelectedTagsDisplay();
@@ -1185,17 +1192,18 @@ if (typeof document !== "undefined") {
                 selectedTagsContainer.style.display = "none";
             } else {
                 selectedTagsContainer.style.display = "block";
-                const tagButtons: string = Array.from(selectedTags)
-                    .map((tag: string): string => {
-                        const button: TagButton | null = document.querySelector(
-                            `[data-tag="${escapeHtml(tag)}"]`,
-                        ) as TagButton;
-                        const color: string =
-                            button?.style.borderColor || button?.style.color || "#363636";
-                        return `<span class="tag is-small" style="background-color: ${escapeHtml(color)}; color: white; margin-right: 0.5rem;">${escapeHtml(tag)}</span>`;
-                    })
-                    .join("");
-                selectedTagsList.innerHTML = tagButtons;
+                const badges = Array.from(selectedTags, (tag) => {
+                    const button = Array.from(tagFilterButtons).find(
+                        (button) => button.getAttribute("data-tag") === tag,
+                    ) as TagButton | undefined;
+                    const badge = document.createElement("span");
+                    badge.className = "tag is-small";
+                    badge.textContent = tag;
+                    const color = button?.style.getPropertyValue("--accent-color");
+                    if (color) badge.style.setProperty("--accent-color", color);
+                    return badge;
+                });
+                selectedTagsList.replaceChildren(...badges);
             }
         };
 

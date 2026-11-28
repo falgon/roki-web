@@ -1,5 +1,4 @@
-@use "bulma/versions/bulma-no-dark-mode" as bl;
-@use "bulma/sass/helpers";
+@use "base/bulma" as bl;
 
 .disabled {
     color: bl.$grey-darker;

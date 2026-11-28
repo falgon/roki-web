@@ -30,7 +30,7 @@ compileWithVite :: Compiler (Item String)
 compileWithVite = do
     content <- unsafeCompiler $ withSystemTempDirectory "vite-build" $ \tmpDir -> do
         -- Viteでビルド（出力先を一時ディレクトリに指定）
-        callProcess "npx" ["vite", "build", "--config", "vite.config.production.ts", "--outDir", tmpDir]
+        callProcess "npx" ["vite", "build", "--config", "vite.config.production.ts", "--outDir", tmpDir, "--emptyOutDir"]
 
         -- 生成されたJavaScriptファイルを読み込む
         let outputFile = tmpDir </> "disney-experience-visualizations.js"

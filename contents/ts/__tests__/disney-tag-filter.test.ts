@@ -1,13 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import "../disney-tag-filter";
 
-declare global {
-    function escapeHtml(text: string): string;
-    function initLoadingScreen(): void;
-    function initializeLogImageSlideshows(): void;
-    function normalizeString(str: string): string;
-}
-
 describe("disney-tag-filter.ts", () => {
     beforeEach(() => {
         document.body.innerHTML = "";
@@ -417,54 +410,34 @@ describe("disney-tag-filter.ts", () => {
             expect(searchInput?.getAttribute("placeholder")).toBe("検索...");
         });
 
-        it("should add active class to tag button when clicked", () => {
+        it("updates a tag button's pressed state and preserves the selected badge color", () => {
             document.body.innerHTML = `
-                <button class="tag-filter-btn is-outlined" data-tag="tag1">Tag 1</button>
-                <button class="tag-filter-btn is-outlined" data-tag="tag2">Tag 2</button>
-            `;
-
-            const tagButton = document.querySelector('[data-tag="tag1"]');
-            expect(tagButton).toBeTruthy();
-            expect(tagButton?.classList.contains("is-outlined")).toBe(true);
-            expect(tagButton?.classList.contains("active")).toBe(false);
-
-            // クリックイベントをシミュレート（実際のイベントハンドラーはDOMContentLoadedで登録されるため、
-            // ここではクラスの状態変更のみを確認）
-            tagButton?.classList.add("active");
-            tagButton?.classList.remove("is-outlined");
-
-            expect(tagButton?.classList.contains("active")).toBe(true);
-            expect(tagButton?.classList.contains("is-outlined")).toBe(false);
-        });
-
-        it("should remove active class from all tag buttons after clear button click", () => {
-            document.body.innerHTML = `
-                <button class="tag-filter-btn active" data-tag="tag1">Tag 1</button>
-                <button class="tag-filter-btn active" data-tag="tag2">Tag 2</button>
+                <button class="tag-filter-btn is-outlined" data-tag="tag1" aria-pressed="false" style="--accent-color: #854454">Tag 1</button>
+                <div class="selected-tags"><span class="selected-tags-list"></span></div>
                 <button id="clear-selection">Clear</button>
             `;
 
-            const tagButtons = document.querySelectorAll(".tag-filter-btn");
-            expect(tagButtons.length).toBe(2);
+            document.dispatchEvent(new Event("DOMContentLoaded"));
 
-            // すべてのボタンがactiveクラスを持っていることを確認
-            tagButtons.forEach((button) => {
-                expect(button.classList.contains("active")).toBe(true);
-            });
+            const tagButton = document.querySelector<HTMLButtonElement>('[data-tag="tag1"]');
+            expect(tagButton?.getAttribute("aria-pressed")).toBe("false");
+            tagButton?.click();
 
-            // クリアボタンのクリックをシミュレート
-            // （実際のイベントハンドラーはDOMContentLoadedで登録されるため、
-            // ここでは手動でクラスをクリアして動作を確認）
-            tagButtons.forEach((button) => {
-                button.classList.remove("active");
-                button.classList.add("is-outlined");
-            });
+            expect(tagButton?.getAttribute("aria-pressed")).toBe("true");
+            expect(tagButton?.classList.contains("active")).toBe(true);
+            expect(tagButton?.classList.contains("is-outlined")).toBe(false);
+            const badge = document.querySelector<HTMLElement>(".selected-tags-list .tag");
+            expect(badge?.textContent).toBe("tag1");
+            expect(badge?.style.getPropertyValue("--accent-color")).toBe("#854454");
 
-            // すべてのボタンからactiveクラスが削除されていることを確認
-            tagButtons.forEach((button) => {
-                expect(button.classList.contains("active")).toBe(false);
-                expect(button.classList.contains("is-outlined")).toBe(true);
-            });
+            tagButton?.click();
+            expect(tagButton?.getAttribute("aria-pressed")).toBe("false");
+
+            tagButton?.click();
+            document.getElementById("clear-selection")?.click();
+            expect(tagButton?.getAttribute("aria-pressed")).toBe("false");
+            expect(tagButton?.classList.contains("active")).toBe(false);
+            expect(tagButton?.classList.contains("is-outlined")).toBe(true);
         });
 
         it("should toggle search filter visibility correctly", () => {
@@ -539,6 +512,14 @@ describe("disney-tag-filter.ts", () => {
             expect(slides[1]?.classList.contains("is-active")).toBe(false);
             expect(dots[0]?.classList.contains("is-active")).toBe(true);
             expect(dots[1]?.classList.contains("is-active")).toBe(false);
+            expect(dots[0]?.getAttribute("aria-current")).toBe("true");
+            expect(dots[1]?.hasAttribute("aria-current")).toBe(false);
+            expect(dots[1]?.tabIndex).toBe(0);
+
+            dots[1]?.click();
+
+            expect(dots[0]?.hasAttribute("aria-current")).toBe(false);
+            expect(dots[1]?.getAttribute("aria-current")).toBe("true");
         });
 
         it("loads slide image from data-src on initialization", () => {
@@ -698,7 +679,7 @@ describe("disney-tag-filter.ts", () => {
             expect(slides[1]?.classList.contains("is-active")).toBe(true);
         });
 
-        it("opens modal when slide is clicked", () => {
+        it("keeps focus in the image modal and returns it to the slide on Escape", () => {
             document.body.innerHTML = `
                 ${modalHtml}
                 <div class="log-images" data-image-slideshow>
@@ -718,12 +699,27 @@ describe("disney-tag-filter.ts", () => {
             const slide = document.querySelector(".log-image-slide") as HTMLButtonElement;
             const modal = document.getElementById("log-image-modal");
             const modalImage = document.getElementById("log-image-modal-img") as HTMLImageElement;
+            const close = modal?.querySelector(".log-image-modal-close");
+            const last = modal?.querySelector(".log-image-modal-nav.next");
 
+            slide.focus();
             slide.click();
 
             expect(modal?.classList.contains("is-active")).toBe(true);
             expect(modal?.getAttribute("aria-hidden")).toBe("false");
             expect(modalImage.src).toContain("/a.jpg");
+            expect(document.activeElement).toBe(close);
+
+            close?.dispatchEvent(
+                new KeyboardEvent("keydown", { key: "Tab", shiftKey: true, bubbles: true }),
+            );
+            expect(document.activeElement).toBe(last);
+            last?.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab", bubbles: true }));
+            expect(document.activeElement).toBe(close);
+
+            close?.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+            expect(modal?.getAttribute("aria-hidden")).toBe("true");
+            expect(document.activeElement).toBe(slide);
         });
     });
 });

@@ -4,7 +4,7 @@
  */
 
 // D3.jsのグローバル変数を宣言
-declare const d3: any;
+declare const d3: typeof import("d3");
 
 declare global {
     type VisualizationErrorType = "network" | "timeout" | "http" | "parse";
@@ -17,7 +17,7 @@ declare global {
 }
 
 const RETRY_DELAYS_MS = [1000, 2000, 4000];
-const MAX_RETRY_COUNT = 3;
+const MAX_RETRY_COUNT = RETRY_DELAYS_MS.length;
 const DEFAULT_TIMEOUT_MS = 10000;
 
 /**
@@ -32,6 +32,7 @@ async function fetchWithRetry(
     let lastError: VisualizationError | undefined;
 
     for (let attempt = 0; attempt <= MAX_RETRY_COUNT; attempt += 1) {
+        const retryDelay = RETRY_DELAYS_MS[attempt];
         const controller = new AbortController();
         const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs);
 
@@ -44,9 +45,9 @@ async function fetchWithRetry(
             }
 
             const isServerError = response.status >= 500 && response.status < 600;
-            if (isServerError && attempt < MAX_RETRY_COUNT) {
+            if (isServerError && retryDelay !== undefined) {
                 lastError = createHttpError(response);
-                await wait(RETRY_DELAYS_MS[Math.min(attempt, RETRY_DELAYS_MS.length - 1)]);
+                await wait(retryDelay);
                 continue;
             }
 
@@ -69,8 +70,8 @@ async function fetchWithRetry(
                     "network",
                     error.message,
                 );
-                if (attempt < MAX_RETRY_COUNT) {
-                    await wait(RETRY_DELAYS_MS[Math.min(attempt, RETRY_DELAYS_MS.length - 1)]);
+                if (retryDelay !== undefined) {
+                    await wait(retryDelay);
                     continue;
                 }
                 break;
@@ -197,7 +198,7 @@ export async function loadVisualizationData(url: string): Promise<VisualizationD
  * @param config SVG設定
  * @returns D3セレクション
  */
-export function createSVG(container: string, config: SVGConfig = defaultSVGConfig): any {
+export function createSVG(container: string, config: SVGConfig = defaultSVGConfig) {
     // 既存のSVGを削除
     d3.select(container).select("svg").remove();
 
@@ -224,7 +225,10 @@ export function createSVG(container: string, config: SVGConfig = defaultSVGConfi
  * @param config SVG設定
  * @returns グループセレクション
  */
-export function createGroup(svg: any, config: SVGConfig = defaultSVGConfig): any {
+export function createGroup(
+    svg: ReturnType<typeof createSVG>,
+    config: SVGConfig = defaultSVGConfig,
+) {
     return svg
         .append("g")
         .attr("transform", `translate(${config.margin.left}, ${config.margin.top})`);
@@ -235,7 +239,7 @@ export function createGroup(svg: any, config: SVGConfig = defaultSVGConfig): any
  * @param container コンテナのセレクタ
  * @returns ツールチップのD3セレクション
  */
-export function createTooltip(container: string): any {
+export function createTooltip(container: string) {
     // 既存のツールチップを削除
     d3.select(container).select(".visualization-tooltip").remove();
 
@@ -261,7 +265,11 @@ export function createTooltip(container: string): any {
  * @param content 表示するコンテンツ
  * @param event マウスイベント
  */
-export function showTooltip(tooltip: any, content: string, event: MouseEvent): void {
+export function showTooltip(
+    tooltip: ReturnType<typeof createTooltip>,
+    content: string,
+    event: Pick<MouseEvent, "pageX" | "pageY">,
+): void {
     tooltip
         .html(content)
         .style("visibility", "visible")
@@ -273,7 +281,7 @@ export function showTooltip(tooltip: any, content: string, event: MouseEvent): v
  * ツールチップを非表示にする
  * @param tooltip ツールチップのD3セレクション
  */
-export function hideTooltip(tooltip: any): void {
+export function hideTooltip(tooltip: ReturnType<typeof createTooltip>): void {
     tooltip.style("visibility", "hidden");
 }
 
@@ -310,7 +318,7 @@ export function calculateResponsiveSize(containerSelector: string, aspectRatio =
  * @param domain ドメイン配列
  * @returns D3カラースケール
  */
-export function createCategoricalColorScale(domain: string[]): any {
+export function createCategoricalColorScale(domain: string[]) {
     return d3.scaleOrdinal<string>().domain(domain).range(d3.schemeCategory10);
 }
 
@@ -323,7 +331,7 @@ export function createCategoricalColorScale(domain: string[]): any {
 export function createSequentialColorScale(
     domain: [number, number],
     range: [string, string] = ["#f0f0f0", "#d62728"],
-): any {
+) {
     return d3.scaleLinear<string>().domain(domain).range(range);
 }
 

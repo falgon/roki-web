@@ -1,6 +1,7 @@
 {
     "name": "roki-web",
     "type": "module",
+    "packageManager": "npm@10.9.9",
     "description": "roki web page",
     "version": "0.1.0",
     "license": "BSD-3-Clause",
@@ -9,24 +10,24 @@
         "url": "git+https://github.com/falgon/roki-web.git"
     },
     "devDependencies": {
-        "@biomejs/biome": "^2.5.14",
+        "@biomejs/biome": "^2.6.8",
         "@creativebulma/bulma-tooltip": "^1.2.0",
         "@fortawesome/fontawesome-svg-core": "^7.3.1",
         "@fortawesome/free-brands-svg-icons": "^7.3.1",
         "@fortawesome/free-solid-svg-icons": "^7.3.1",
         "@types/d3": "^7.4.3",
-        "@vitest/coverage-v8": "^5.0.1",
-        "@vitest/ui": "^5.0.0",
-        "dotenv": "^18.0.0",
+        "@vitest/coverage-v8": "^5.1.1",
+        "@vitest/ui": "^5.0.5",
+        "dotenv": "^18.0.10",
         "esbuild": "^0.28.2",
-        "happy-dom": "^20.14.5",
-        "katex": "^0.18.7",
-        "playwright": "^1.63.0",
+        "happy-dom": "^21.0.4",
+        "katex": "^0.19.1",
+        "playwright": "^1.65.1",
         "svgo": "^4.1.0",
-        "terser": "^5.51.2",
-        "tsx": "^4.23.13",
+        "terser": "^5.51.4",
+        "tsx": "^4.23.15",
         "typescript": "^7.0.2",
-        "vite": "^8.3.0",
+        "vite": "^8.3.8",
         "vitest": "^5.0.0"
     },
     "scripts": {
@@ -34,16 +35,20 @@
         "format:ts": "biome check --write --unsafe contents/ts",
         "lint:ts": "biome lint contents/ts",
         "check:ts": "biome check contents/ts",
+        "typecheck:ts": "tsc --noEmit",
         "test": "vitest run",
         "test:watch": "vitest",
         "test:ui": "vitest --ui",
         "test:coverage": "vitest run --coverage"
     },
     "dependencies": {
-        "@mermaid-js/mermaid-cli": "^11.17.0",
+        "@mermaid-js/mermaid-cli": "^12.2.0",
         "bulma": "^1.0.4",
-        "d3": "^7.9.0",
-        "mathjs": "^15.2.0",
-        "sass": "^1.104.1"
+        "d3": "^7.9.2",
+        "mathjs": "^15.3.0",
+        "sass": "^1.108.2"
+    },
+    "overrides": {
+        "lodash-es": "4.18.1"
     }
 }

@@ -1,4 +1,4 @@
-@use "bulma/versions/bulma-no-dark-mode" as bl;
+@use "base/bulma" as bl;
 @use "base" as b;
 @use "blog/mixins" as *;
 
@@ -63,22 +63,6 @@ article {
                     @extend .box, .has-text-centered, .is-shadowless, .mt-0, .mb-0;
                 }
                 @extend %math-system;
-                .column-comment {
-                    @extend .mt-4;
-                    border: solid 2px bl.$grey-lighter;
-                    border-radius: 12px;
-                    @extend .p-3;
-                    p {
-                        font-weight: normal;
-                        &:before {
-                            @extend .mb-6;
-                            @extend .is-size-5;
-                            content: "\f27a\a0コラム\A";
-                            font-family: FontAwesome;
-                            white-space: pre;
-                        }
-                    }
-                }
             }
         }
     }

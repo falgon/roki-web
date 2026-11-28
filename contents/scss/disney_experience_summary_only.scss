@@ -11,6 +11,10 @@ $button-small-padding-mobile: 0.2em 0.35em;
 $button-small-font-size-desktop: 0.75rem;
 $button-small-font-size-mobile: 0.65rem;
 
+$control-blue: #246a9d;
+$muted-text: #586170;
+$danger-red: #ae2546;
+
 // ローディング画面のスタイル
 .loading-overlay {
     position: fixed;
@@ -134,6 +138,25 @@ $button-small-font-size-mobile: 0.65rem;
         text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
     }
 
+    .log-tags .tag,
+    .tag-filter-btn,
+    .selected-tags-list .tag,
+    .hotel-badge {
+        --dark-accent-color: #{$control-blue};
+
+        @supports (color: color-mix(in srgb, black, white)) {
+            // 設定の色相を保ちつつ、白や薄いグレーと組み合わせる色を濃くする
+            --dark-accent-color: color-mix(in srgb, var(--accent-color, #{$control-blue}) 75%, black);
+        }
+    }
+
+    .log-tags .tag,
+    .selected-tags-list .tag,
+    .hotel-badge {
+        background-color: var(--dark-accent-color);
+        color: white;
+    }
+
     .log-entry {
         margin: 1rem 0;
         padding: 1rem;
@@ -159,7 +182,7 @@ $button-small-font-size-mobile: 0.65rem;
         .ai-generated-badge {
             flex-shrink: 0;
             padding: 0.2rem 0.6rem;
-            background: linear-gradient(135deg, #3CAADF 0%, #3e8ed0 100%);
+            background: linear-gradient(135deg, $control-blue 0%, #083963 100%);
             color: white;
             border-radius: 12px;
             font-size: 0.7rem;
@@ -229,7 +252,7 @@ $button-small-font-size-mobile: 0.65rem;
     }
 
     .log-date {
-        color: #6b7280;
+        color: $muted-text;
         font-size: 0.8rem;
         margin-bottom: 0.5rem;
         display: flex;
@@ -263,13 +286,13 @@ $button-small-font-size-mobile: 0.65rem;
         }
         
         a {
-            color: #6b7280;
+            color: $muted-text;
             text-decoration: none;
             transition: color 0.3s ease;
             flex-shrink: 0;  // リンクが縮小しないように
             
             &:hover {
-                color: #3CAADF;
+                color: $control-blue;
             }
             
             &.fa-youtube:hover {
@@ -594,15 +617,15 @@ $button-small-font-size-mobile: 0.65rem;
                 font-size: $button-small-font-size-desktop !important;
                 transition: color 0.3s ease, background-color 0.3s ease !important;
                 background-color: transparent !important;
-                border-color: #3e8ed0 !important;
-                color: #3e8ed0 !important;
+                border-color: $control-blue !important;
+                color: $control-blue !important;
                 flex-shrink: 0 !important;
                 white-space: nowrap !important;
                 
                 &:hover {
                     color: #fff !important;
-                    background-color: #3e8ed0 !important;
-                    border-color: #3e8ed0 !important;
+                    background-color: $control-blue !important;
+                    border-color: $control-blue !important;
                 }
                 
                 .icon {
@@ -732,12 +755,12 @@ $button-small-font-size-mobile: 0.65rem;
         }
         
         a {
-            color: #3CAADF;
+            color: $control-blue;
             text-decoration: none;
             transition: color 0.3s ease;
             
             &:hover {
-                color: rgba(60, 170, 223, 0.6);
+                color: #083963;
             }
         }
     }
@@ -831,36 +854,36 @@ $button-small-font-size-mobile: 0.65rem;
             // Bulmaの.button.is-outlinedデフォルトスタイルを明示的に上書き
             &[aria-expanded="false"] {
                 background-color: transparent !important;
-                border-color: #3e8ed0 !important;
-                color: #3e8ed0 !important;
+                border-color: $control-blue !important;
+                color: $control-blue !important;
             }
 
             // aria-expanded属性によるトグル状態のスタイル管理
             // フィルターが開いている時（aria-expanded="true"）のアクティブ状態
             &[aria-expanded="true"] {
-                background-color: #3e8ed0 !important;
-                border-color: #3e8ed0 !important;
+                background-color: $control-blue !important;
+                border-color: $control-blue !important;
                 color: white !important;
 
                 // ホバー時はさらに濃い青
                 &:hover {
-                    background-color: #3082c5 !important;
-                    border-color: #2f7bbf !important;
+                    background-color: #20628f !important;
+                    border-color: #20628f !important;
                 }
             }
 
             // 既存の:active/:focusスタイルを維持（一時的な状態用）
             &:active,
             &:focus {
-                background-color: #3e8ed0 !important;
-                border-color: #3e8ed0 !important;
+                background-color: $control-blue !important;
+                border-color: $control-blue !important;
                 color: white !important;
                 box-shadow: none !important;
             }
 
             &:hover {
-                background-color: #3e8ed0 !important;
-                border-color: #3e8ed0 !important;
+                background-color: $control-blue !important;
+                border-color: $control-blue !important;
                 color: white !important;
             }
         }
@@ -868,7 +891,7 @@ $button-small-font-size-mobile: 0.65rem;
         // コンテンツ数表示
         .content-count {
             font-size: 0.9rem;
-            color: #3e8ed0;
+            color: $control-blue;
 
             .total-label {
                 font-weight: 500;
@@ -977,16 +1000,20 @@ $button-small-font-size-mobile: 0.65rem;
                 box-sizing: border-box !important;
                 padding: 0.375em 0.75em !important;
                 min-height: 2.25em !important;
+                border-color: var(--dark-accent-color);
+                color: var(--dark-accent-color);
                 
-                &:hover {
+                &:hover,
+                &:focus-visible,
+                &.active {
                     transform: translateY(-2px);
                     box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-                    color: #fff !important;
-                    background-color: var(--tag-color, #3e8ed0) !important;
+                    border-color: var(--dark-accent-color);
+                    color: #fff;
+                    background-color: var(--dark-accent-color);
                 }
                 
                 &.active {
-                    transform: translateY(-2px);
                     box-shadow: 0 4px 8px rgba(0,0,0,0.15);
                 }
                 
@@ -1055,12 +1082,15 @@ $button-small-font-size-mobile: 0.65rem;
                 transition: background-color 0.3s ease !important;
                 line-height: 1 !important;
                 vertical-align: middle !important;
+                border-color: $danger-red;
+                color: $danger-red;
                 
-                &:hover {
+                &:hover,
+                &:focus-visible {
                     transform: translateY(-1px);
-                    background-color: #f14668 !important;
-                    color: #fff !important;
-                    border-color: #f14668 !important;
+                    background-color: $danger-red;
+                    color: #fff;
+                    border-color: $danger-red;
                 }
                 
                 .icon {
@@ -1227,7 +1257,7 @@ $button-small-font-size-mobile: 0.65rem;
 
             // エラーメッセージのスタイル
             .visualization-error {
-                color: #f14668;
+                color: $danger-red;
                 padding: 20px;
                 text-align: center;
                 font-size: 0.95rem;
@@ -1432,8 +1462,11 @@ $button-small-font-size-mobile: 0.65rem;
                     justify-content: center;
                     min-width: 50px;
                     padding: 0.3rem 0.6rem;
+                    border: 0;
                     border-radius: 6px;
                     color: white;
+                    cursor: inherit;
+                    font-family: inherit;
                     font-weight: bold;
                     font-size: 0.85rem;
                     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
@@ -1487,7 +1520,7 @@ $button-small-font-size-mobile: 0.65rem;
                             content: "◦";
                             position: absolute;
                             left: 1.6rem;
-                            color: #718096;
+                            color: $muted-text;
                             font-weight: normal;
                             font-size: 0.9em;
                         }
@@ -1496,14 +1529,14 @@ $button-small-font-size-mobile: 0.65rem;
                     // レベル2（第3階層）
                     &.hotel-detail-level-2 {
                         font-size: 0.75rem;
-                        color: #718096;
+                        color: $muted-text;
                         padding-left: 4.2rem;
                         
                         &::before {
                             content: "▪";
                             position: absolute;
                             left: 3.2rem;
-                            color: #a0aec0;
+                            color: $muted-text;
                             font-size: 0.8em;
                         }
                     }
@@ -1511,14 +1544,14 @@ $button-small-font-size-mobile: 0.65rem;
                     // レベル3以降（第4階層以降）
                     &.hotel-detail-level-3 {
                         font-size: 0.72rem;
-                        color: #a0aec0;
+                        color: $muted-text;
                         padding-left: 5.6rem;
                         
                         &::before {
                             content: "-";
                             position: absolute;
                             left: 4.8rem;
-                            color: #cbd5e0;
+                            color: $muted-text;
                             font-size: 0.9em;
                         }
                     }

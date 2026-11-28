@@ -1,5 +1,5 @@
 {-# LANGUAGE DeriveGeneric, DuplicateRecordFields, OverloadedStrings #-}
-module Rules.DisneyExperienceSummary (rules) where
+module Rules.DisneyExperienceSummary (rules, disneyLogsPattern, disneyConfigPath) where
 
 import           Control.Monad                    (filterM)
 import           Control.Monad.Reader             (asks)
@@ -122,13 +122,18 @@ aboutIdent = fromString
     $ joinPath [disneyExperienceSummaryRoot, "about.md"]
 
 disneyLogsPattern :: Pattern
-disneyLogsPattern = fromRegex $ mconcat
+disneyLogsPattern = fromGlob (joinPath [disneyExperienceSummaryRoot, "logs", "**"])
+    .&&. fromRegex (mconcat
     [ "(^"
     , joinPath [disneyExperienceSummaryRoot, "logs", "[0-9]+.md"]
     , "$)|(^"
     , joinPath [disneyExperienceSummaryRoot, "logs", "[0-9]+", "index.md"]
     , "$)"
-    ]
+    ])
+
+disneyConfigPath :: Pattern
+disneyConfigPath = fromGlob "contents/config/disney/**"
+    .&&. fromRegex "^contents/config/disney/.+\\.dhall$"
 
 sortByNum :: [Item a] -> [Item a]
 sortByNum = sortBy
@@ -150,12 +155,10 @@ mdRule :: Snapshot
 mdRule ss pat = do
     wOpt <- asks pcWriterOpt
     katexRender <- asks pcKaTeXRender
-    faIcons <- asks pcFaIcons
     lift $ match pat $ compile $ do
         pandocCompilerWithTransformM readerOptions wOpt (walkM mermaidTransform)
             >>= modifyExternalLinkAttr
             >>= relativizeUrls
-            >>= FA.render faIcons
             >>= katexRender
             >>= saveSnapshot ss
 
@@ -346,7 +349,7 @@ rules = do
                         >>= applyAsTemplate disneyExperienceSummaryCtx
                         >>= loadAndApplyTemplate rootTemplate disneyExperienceSummaryCtx
                         >>= relativizeUrls
-                        >>= FA.render faIcons
+                        >>= FA.renderWithSprite faIcons
 
         createRedirects [
             (fromFilePath $ joinPath ["disney_experience_summary", "index.html"], joinPath ["/", "disney_experience_summary", "jp.html"]),
@@ -354,7 +357,6 @@ rules = do
           ]
     where
         disneyExperienceSummarySnapshot = "disneyExperienceSummarySS"
-        disneyConfigPath = fromRegex "^contents/config/disney/.+\\.dhall$"
         disneyExperienceSummaryJPPath = fromGlob $ joinPath [contentsRoot, "pages", "disney_experience_summary", "jp.html"]
         rootTemplate = fromFilePath $ joinPath [contentsRoot, "templates", "site", "default.html"]
 

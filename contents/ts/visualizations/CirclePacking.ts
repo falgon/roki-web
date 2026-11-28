@@ -3,6 +3,7 @@
  * タグ訪問頻度を円グラフで表示
  */
 
+import type { D3ZoomEvent, ZoomBehavior } from "d3";
 import {
     createCategoricalColorScale,
     createGroup,
@@ -13,7 +14,7 @@ import {
 } from "./base";
 
 // D3.jsのグローバル変数を宣言
-declare const d3: any;
+declare const d3: typeof import("d3");
 
 declare global {
     /**
@@ -44,9 +45,9 @@ const defaultCirclePackingConfig: CirclePackingConfig = {
 export class CirclePacking {
     private container: string;
     private config: CirclePackingConfig;
-    private svg: any = null;
-    private tooltip: any = null;
-    private zoom: any = null;
+    private svg: ReturnType<typeof createSVG> | null = null;
+    private tooltip: ReturnType<typeof createTooltip> | null = null;
+    private zoom: ZoomBehavior<SVGSVGElement, unknown> | null = null;
 
     /**
      * コンストラクタ
@@ -84,8 +85,8 @@ export class CirclePacking {
         this.zoom = d3
             .zoom<SVGSVGElement, unknown>()
             .scaleExtent([0.5, 5])
-            .on("zoom", (event) => {
-                g.attr("transform", event.transform);
+            .on("zoom", (event: D3ZoomEvent<SVGSVGElement, unknown>) => {
+                g.attr("transform", event.transform.toString());
             });
 
         this.svg.call(this.zoom);
@@ -103,7 +104,7 @@ export class CirclePacking {
             .sort((a, b) => (b.value || 0) - (a.value || 0));
 
         // パックレイアウトを適用
-        pack(root);
+        const packedRoot = pack(root);
 
         // タグボタンからカラー情報を取得
         const tagColorMap = this.getTagColorsFromDOM();
@@ -117,7 +118,7 @@ export class CirclePacking {
         // ノードを描画
         const nodes = g
             .selectAll(".circle-node")
-            .data(root.descendants().filter((d) => d.depth === 1))
+            .data(packedRoot.descendants().filter((d) => d.depth === 1))
             .enter()
             .append("g")
             .attr("class", "circle-node")
@@ -158,22 +159,26 @@ export class CirclePacking {
 
         // インタラクションを追加
         circles
-            .on("mouseover", (event, d) => {
-                d3.select(event.currentTarget).attr("opacity", 1).attr("stroke-width", 3);
+            .on("mouseover", (event: MouseEvent, d) => {
+                d3.select(event.currentTarget as SVGCircleElement)
+                    .attr("opacity", 1)
+                    .attr("stroke-width", 3);
 
                 const content = `${d.data.name}<br/>体験記録: ${d.value}件`;
                 if (this.tooltip) {
                     showTooltip(this.tooltip, content, event);
                 }
             })
-            .on("mousemove", (event, d) => {
+            .on("mousemove", (event: MouseEvent, d) => {
                 const content = `${d.data.name}<br/>体験記録: ${d.value}件`;
                 if (this.tooltip) {
                     showTooltip(this.tooltip, content, event);
                 }
             })
-            .on("mouseout", (event) => {
-                d3.select(event.currentTarget).attr("opacity", 0.7).attr("stroke-width", 2);
+            .on("mouseout", (event: MouseEvent) => {
+                d3.select(event.currentTarget as SVGCircleElement)
+                    .attr("opacity", 0.7)
+                    .attr("stroke-width", 2);
 
                 if (this.tooltip) {
                     hideTooltip(this.tooltip);
@@ -206,17 +211,21 @@ export class CirclePacking {
                 ) as HTMLElement;
                 listTab?.click();
             })
-            .on("focus", (event) => {
-                d3.select(event.currentTarget).attr("opacity", 1).attr("stroke-width", 4);
+            .on("focus", (event: FocusEvent) => {
+                d3.select(event.currentTarget as SVGCircleElement)
+                    .attr("opacity", 1)
+                    .attr("stroke-width", 4);
             })
-            .on("blur", (event) => {
-                d3.select(event.currentTarget).attr("opacity", 0.7).attr("stroke-width", 2);
+            .on("blur", (event: FocusEvent) => {
+                d3.select(event.currentTarget as SVGCircleElement)
+                    .attr("opacity", 0.7)
+                    .attr("stroke-width", 2);
 
                 if (this.tooltip) {
                     hideTooltip(this.tooltip);
                 }
             })
-            .on("keydown", (event, d) => {
+            .on("keydown", (event: KeyboardEvent, d) => {
                 if (event.key !== "Enter" && event.key !== " " && event.key !== "Spacebar") {
                     return;
                 }
@@ -226,16 +235,14 @@ export class CirclePacking {
                 const { x, y, width, height } = target.getBoundingClientRect();
                 const centerX = x + width / 2;
                 const centerY = y + height / 2;
-                const syntheticEvent = new MouseEvent("keydown", {
-                    clientX: centerX,
-                    clientY: centerY,
+                const tooltipPosition = {
                     pageX: centerX + window.scrollX,
                     pageY: centerY + window.scrollY,
-                });
+                };
 
                 const content = `${d.data.name}<br/>体験記録: ${d.value}件`;
                 if (this.tooltip) {
-                    showTooltip(this.tooltip, content, syntheticEvent);
+                    showTooltip(this.tooltip, content, tooltipPosition);
                 }
 
                 d3.select(target).attr("opacity", 1).attr("stroke-width", 4);
@@ -274,7 +281,7 @@ export class CirclePacking {
             const tagName = button.getAttribute("data-tag");
             const style = button.getAttribute("style") || "";
             const colorMatch = style.match(/--tag-color:\s*([^;]+)/);
-            const color = colorMatch ? colorMatch[1].trim() : null;
+            const color = colorMatch?.[1]?.trim();
 
             if (tagName && color) {
                 colorMap.set(tagName, color);

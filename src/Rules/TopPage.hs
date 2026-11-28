@@ -1,10 +1,10 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Rules.TopPage (rules) where
+module Rules.TopPage (rules, notFoundRules, contributionsTypeConfigPath) where
 
 import           Control.Monad.Extra  (mconcatMapM)
 import           Control.Monad.Reader (ReaderT (..), asks)
 import           Control.Monad.Trans  (MonadTrans (..))
-import           Data.List.Extra      (mconcatMap)
+import           Data.List.Extra      (intercalate, mconcatMap)
 import           Data.Time.Format     (formatTime)
 import           Hakyll
 import           System.FilePath      (joinPath, (</>))
@@ -55,6 +55,10 @@ mkBlogCtx = do
 aboutSnapshot :: Snapshot
 aboutSnapshot = "aboutSS"
 
+contributionsTypeConfigPath :: Pattern
+contributionsTypeConfigPath = fromGlob "contents/config/contributions/Type/**"
+    .&&. fromRegex "^contents/config/contributions/Type/.+\\.dhall$"
+
 rules :: [BlogConfig m] -> PageConfReader Rules ()
 rules bcs = do
     faIcons <- asks pcFaIcons
@@ -83,6 +87,8 @@ rules bcs = do
                         ("title", siteName)
                       , ("projs", projs)
                       , ("contable", conts)
+                      , ("profile-srcset", profileSrcset)
+                      , ("profile-sizes", profileSizes)
                       ]
                 topCtx <- mconcatM [
                         pure baseCtx
@@ -99,10 +105,19 @@ rules bcs = do
                     >>= relativizeUrls
                     >>= FA.render faIcons
     where
+        profileSrcset = "/images/avator/prof300x300.webp 300w, "
+            <> "/images/avator/prof600x600.webp 600w"
+        -- Match the visible portrait's column and figure across the Bulma breakpoints.
+        profileSizes = intercalate ", " [
+                "(min-width: 1408px) calc(448px - 5rem)"
+              , "(min-width: 1216px) calc(384px - 5rem)"
+              , "(min-width: 1024px) calc(320px - 5rem)"
+              , "(min-width: 769px) calc(100vw / 3 - 5rem)"
+              , "min(300px, calc(100vw - 8.5rem))"
+            ]
         aboutPattern = fromGlob $ joinPath [contentsRoot, "about", "*.md"]
         projectsConfigPattern = fromGlob $ joinPath [contentsRoot, "config", "contributions", "Projects.dhall"]
         contributionsConfigPattern = fromGlob $ joinPath [contentsRoot, "config", "contributions", "Contributions.dhall"]
-        contributionsTypeConfigPath = fromRegex "^contents/config/contributions/Type/.+\\.dhall$"
         projectsDependencyPath = projectsConfigPattern .||. contributionsTypeConfigPath
         contributionsDependencyPath = contributionsConfigPattern .||. contributionsTypeConfigPath
         projectsCachePath = fromFilePath "top-page-projects-cache"
@@ -110,4 +125,19 @@ rules bcs = do
         sitemapIdent = fromFilePath $ joinPath [contentsRoot, "about", "sitemap.md"]
         updatesIdent = fromFilePath $ joinPath [contentsRoot, "about", "updates.md"]
         indexPath = fromGlob $ joinPath [contentsRoot, "pages", "index.html"]
-        rootTemplate = fromFilePath $ joinPath [contentsRoot, "templates", "site", "default.html"]
+
+notFoundRules :: Rules ()
+notFoundRules = match notFoundPath $ do
+    route $ constRoute "404.html"
+    compile $ getResourceBody
+        >>= applyAsTemplate ctx
+        >>= loadAndApplyTemplate rootTemplate ctx
+    where
+        notFoundPath = fromGlob $ joinPath [contentsRoot, "pages", "404.html"]
+        ctx = constField "title" ("404 ページが見つかりません - " <> siteName)
+            <> constField "robots" "noindex"
+            <> siteCtx
+            <> bodyField "body"
+
+rootTemplate :: Identifier
+rootTemplate = fromFilePath $ joinPath [contentsRoot, "templates", "site", "default.html"]
